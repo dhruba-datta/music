@@ -267,7 +267,11 @@ fun TrendingAppleMusicSection(
   val coroutineScope = rememberCoroutineScope()
 
   Column(modifier = Modifier.fillMaxWidth()) {
-    StageSectionHeader(title = "Apple Music Top 100", modifier = Modifier.padding(top = 32.dp), onMore = onMoreClick)
+    StageSectionHeader(
+      title = "Apple Music Top 100",
+      modifier = Modifier.padding(top = 32.dp),
+      onMore = onMoreClick
+    )
     Text(
       text = SuggestionRegionSlugToName[countryCode] ?: "Global Charts",
       style = MaterialTheme.typography.bodyMedium,
@@ -521,7 +525,11 @@ fun TrendingAlbumsSection(
 ) {
   if (albums.isEmpty()) return
   Column(modifier = Modifier.fillMaxWidth()) {
-    StageSectionHeader(title = "Trending Albums", modifier = Modifier.padding(top = 16.dp), onMore = onMoreClick)
+    StageSectionHeader(
+      title = "Trending Albums",
+      modifier = Modifier.padding(top = 16.dp),
+      onMore = onMoreClick
+    )
     LazyRow(
       contentPadding = PaddingValues(horizontal = 16.dp),
       horizontalArrangement = Arrangement.spacedBy(16.dp),

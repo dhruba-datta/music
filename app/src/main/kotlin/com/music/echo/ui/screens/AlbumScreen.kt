@@ -667,6 +667,6 @@ fun AlbumScreen(
         }
       }
     },
-    colors = stageHeroBarColors(heroUnderBar || inSelectMode)
+    colors = stageHeroBarColors(heroUnderBar && !inSelectMode)
   )
 }
