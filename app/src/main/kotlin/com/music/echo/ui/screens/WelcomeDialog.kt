@@ -26,12 +26,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
 import echo.music.iad1tya.BuildConfig
 import echo.music.iad1tya.R
+import echo.music.iad1tya.ui.component.StageButton
 
 @Composable
 fun WelcomeDialog(onDismissRequest: () -> Unit) {
@@ -42,17 +42,18 @@ fun WelcomeDialog(onDismissRequest: () -> Unit) {
     properties = DialogProperties(usePlatformDefaultWidth = false)
   ) {
     Card(
-      modifier = Modifier.padding(24.dp).fillMaxWidth(),
+      modifier = Modifier.padding(18.dp).fillMaxWidth(),
       shape = RoundedCornerShape(28.dp),
-      colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-      elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+      colors =
+        CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+      elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
       Column(
         modifier =
           Modifier.fillMaxWidth()
             .verticalScroll(rememberScrollState())
-            .padding(vertical = 20.dp, horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(22.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
       ) {
         // Main Header
         WelcomeAppCard()
@@ -118,37 +119,14 @@ fun WelcomeDialog(onDismissRequest: () -> Unit) {
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        Button(
-          onClick = { uriHandler.openUri("https://github.com/EchoMusicApp/Echo-Music") },
-          modifier = Modifier.fillMaxWidth().height(50.dp),
-          shape = RoundedCornerShape(16.dp),
-          colors =
-            ButtonDefaults.buttonColors(
-              containerColor = MaterialTheme.colorScheme.surfaceVariant,
-              contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        ) {
-          Icon(
-            painter = painterResource(id = R.drawable.star),
-            contentDescription = null,
-            modifier = Modifier.size(20.dp)
-          )
-          Spacer(modifier = Modifier.width(8.dp))
-          Text("Star the Repo", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-        }
+        StageButton(text = "Continue", onClick = onDismissRequest)
 
-        Button(
-          onClick = onDismissRequest,
-          modifier = Modifier.fillMaxWidth().height(50.dp),
-          shape = RoundedCornerShape(16.dp),
-          colors =
-            ButtonDefaults.buttonColors(
-              containerColor = MaterialTheme.colorScheme.primary,
-              contentColor = MaterialTheme.colorScheme.onPrimary
-            )
-        ) {
-          Text("Continue", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-        }
+        StageButton(
+          text = "Star the Repo",
+          onClick = { uriHandler.openUri("https://github.com/EchoMusicApp/Echo-Music") },
+          primary = false,
+          icon = R.drawable.star,
+        )
       }
     }
   }
@@ -158,10 +136,10 @@ fun WelcomeDialog(onDismissRequest: () -> Unit) {
 private fun WelcomeAppCard() {
   Card(
     modifier = Modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(28.dp),
+    shape = RoundedCornerShape(18.dp),
     colors =
       CardDefaults.cardColors(
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
       ),
     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
   ) {
@@ -177,7 +155,7 @@ private fun WelcomeAppCard() {
         modifier =
           Modifier.size(100.dp)
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surfaceContainer),
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
       )
       Spacer(Modifier.height(4.dp))
       Text(
@@ -217,15 +195,15 @@ private fun WelcomeSectionCard(
       text = title,
       style = MaterialTheme.typography.titleSmall,
       fontWeight = FontWeight.Bold,
-      color = MaterialTheme.colorScheme.primary,
+      color = MaterialTheme.colorScheme.onSurface,
       modifier = Modifier.padding(start = 6.dp),
     )
     Card(
       modifier = Modifier.fillMaxWidth(),
-      shape = RoundedCornerShape(28.dp),
+      shape = RoundedCornerShape(18.dp),
       colors =
         CardDefaults.cardColors(
-          containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+          containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
         ),
       elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
@@ -262,7 +240,7 @@ private fun WelcomeActionRow(
           scaleX = scale
           scaleY = scale
         }
-        .clip(RoundedCornerShape(22.dp))
+        .clip(RoundedCornerShape(14.dp))
         .clickable(
           interactionSource = interactionSource,
           indication = ripple(),
