@@ -219,6 +219,8 @@ android {
   }
 }
 
+findProperty("modVersion")?.toString()?.let { android.defaultConfig.versionName = it }
+
 protobuf {
   protoc { artifact = "com.google.protobuf:protoc:${libs.versions.protobuf.get()}" }
   generateProtoTasks {
