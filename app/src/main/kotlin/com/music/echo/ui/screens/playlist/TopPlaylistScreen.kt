@@ -5,7 +5,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -83,12 +82,12 @@ import echo.music.iad1tya.ui.component.ExpandableText
 import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.SongListItem
-import echo.music.iad1tya.ui.component.SortHeader
 import echo.music.iad1tya.ui.component.StageHero
 import echo.music.iad1tya.ui.component.StageHeroArtwork
 import echo.music.iad1tya.ui.component.StageHeroDownloadButton
 import echo.music.iad1tya.ui.component.StageHeroPlayButton
 import echo.music.iad1tya.ui.component.StageHeroShuffleButton
+import echo.music.iad1tya.ui.component.StagePeriodHeader
 import echo.music.iad1tya.ui.component.rememberStageHeroUnderBar
 import echo.music.iad1tya.ui.component.stageBarButton
 import echo.music.iad1tya.ui.component.stageHeroBarColors
@@ -318,28 +317,22 @@ fun TopPlaylistScreen(
           }
 
           item(key = "songs_header") {
-            Row(
-              verticalAlignment = Alignment.CenterVertically,
-              modifier = Modifier.padding(start = 16.dp, bottom = 8.dp),
-            ) {
-              SortHeader(
-                sortType = sortType,
-                sortDescending = false,
-                onSortTypeChange = { viewModel.topPeriod.value = it },
-                onSortDescendingChange = {},
-                sortTypeText = { sortType ->
-                  when (sortType) {
+            StagePeriodHeader(
+              selected = sortType,
+              options = MyTopFilter.entries,
+              label = { period ->
+                stringResource(
+                  when (period) {
                     MyTopFilter.ALL_TIME -> R.string.all_time
                     MyTopFilter.DAY -> R.string.past_24_hours
                     MyTopFilter.WEEK -> R.string.past_week
                     MyTopFilter.MONTH -> R.string.past_month
                     MyTopFilter.YEAR -> R.string.past_year
                   }
-                },
-                modifier = Modifier.weight(1f),
-                showDescending = false,
-              )
-            }
+                )
+              },
+              onSelect = { viewModel.topPeriod.value = it },
+            )
           }
         }
       }

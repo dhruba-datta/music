@@ -14,44 +14,36 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
-import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
-import coil3.compose.AsyncImage
 import coil3.compose.SubcomposeAsyncImage
 import com.valentinilk.shimmer.shimmer
 import echo.music.iad1tya.R
+import echo.music.iad1tya.constants.GridThumbnailCornerRadius
 import echo.music.iad1tya.constants.SuggestionRegionKey
-import echo.music.iad1tya.constants.SuggestionRegionSlugToName
+import echo.music.iad1tya.constants.ThumbnailCornerRadius
 import echo.music.iad1tya.ui.component.StageSectionHeader
 import echo.music.iad1tya.utils.rememberPreference
-import kotlin.math.abs
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -252,6 +244,26 @@ fun SuggestionsTabContent(
   }
 }
 
+private val TrendingArtSize = 52.dp
+private val TrendingArtistSize = 64.dp
+private val TrendingAlbumArtHeight = 92.dp
+private val TrendingVideoArtHeight = 110.dp
+private const val TrendingAlbumColumns = 3
+private const val TrendingVideoColumns = 2
+
+@Composable
+private fun TrendingTitle(text: String) {
+  Text(
+    text = text,
+    fontSize = 16.sp,
+    lineHeight = 20.sp,
+    fontWeight = FontWeight.Bold,
+    color = MaterialTheme.colorScheme.onSurface,
+    maxLines = 1,
+    overflow = TextOverflow.Ellipsis,
+  )
+}
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun TrendingAppleMusicSection(
@@ -267,97 +279,42 @@ fun TrendingAppleMusicSection(
   val coroutineScope = rememberCoroutineScope()
 
   Column(modifier = Modifier.fillMaxWidth()) {
-    StageSectionHeader(
-      title = "Apple Music Top 100",
-      modifier = Modifier.padding(top = 32.dp),
-      onMore = onMoreClick
-    )
-    Text(
-      text = SuggestionRegionSlugToName[countryCode] ?: "Global Charts",
-      style = MaterialTheme.typography.bodyMedium,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-      modifier = Modifier.padding(horizontal = 18.dp)
-    )
+    StageSectionHeader(title = "Apple Music Top 100", onMore = onMoreClick)
     HorizontalPager(
       state = pagerState,
       verticalAlignment = Alignment.Top,
       modifier =
         Modifier.fillMaxWidth().animateContentSize(tween(300, easing = FastOutSlowInEasing))
     ) { page ->
-      Column(
-        verticalArrangement = Arrangement.spacedBy(0.dp),
-        modifier = Modifier.fillMaxWidth().padding(16.dp)
-      ) {
+      Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp)) {
         val startIdx = page * 5
         val endIdx = minOf(startIdx + 5, totalItems)
         for (i in startIdx until endIdx) {
-          val isMoreCard = i == 29
-          val isTop = i == startIdx
-          val isBottom = i == endIdx - 1
-          val shape =
-            when {
-              isTop && isBottom -> RoundedCornerShape(24.dp)
-              isTop ->
-                RoundedCornerShape(
-                  topStart = 24.dp,
-                  topEnd = 24.dp,
-                  bottomStart = 2.dp,
-                  bottomEnd = 2.dp
-                )
-              isBottom ->
-                RoundedCornerShape(
-                  topStart = 2.dp,
-                  topEnd = 2.dp,
-                  bottomStart = 24.dp,
-                  bottomEnd = 24.dp
-                )
-              else -> RoundedCornerShape(2.dp)
-            }
-          if (isMoreCard) {
+          if (i == 29) {
             Row(
               modifier =
-                Modifier.fillMaxWidth()
-                  .clip(RoundedCornerShape(18.dp))
-                  .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                  .clickable { onMoreClick() }
-                  .padding(16.dp),
+                Modifier.fillMaxWidth().heightIn(min = 64.dp).clickable { onMoreClick() },
               verticalAlignment = Alignment.CenterVertically,
-              horizontalArrangement = Arrangement.Center
+              horizontalArrangement = Arrangement.spacedBy(13.dp)
             ) {
-              Icon(
-                painterResource(R.drawable.globe_search),
-                null,
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(24.dp)
-              )
-              Spacer(Modifier.width(12.dp))
-              Text(
-                "View more on Apple Music",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Bold
-              )
+              Box(modifier = Modifier.size(TrendingArtSize), contentAlignment = Alignment.Center) {
+                Icon(
+                  painterResource(R.drawable.globe_search),
+                  null,
+                  tint = MaterialTheme.colorScheme.onSurface,
+                  modifier = Modifier.size(24.dp)
+                )
+              }
+              TrendingTitle("View more on Apple Music")
             }
           } else if (i < displayTracks.size) {
             val track = displayTracks[i]
             Row(
               modifier =
-                Modifier.fillMaxWidth()
-                  .padding(vertical = 1.dp)
-                  .clip(shape)
-                  .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                  .clickable { onTrackClick(track) }
-                  .padding(horizontal = 8.dp, vertical = 8.dp),
-              verticalAlignment = Alignment.CenterVertically
+                Modifier.fillMaxWidth().heightIn(min = 64.dp).clickable { onTrackClick(track) },
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(13.dp)
             ) {
-              Text(
-                text = "${track.rank}",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.width(36.dp),
-                textAlign = TextAlign.Center
-              )
               if (track.thumbnailUrl != null) {
                 SubcomposeAsyncImage(
                   model = track.thumbnailUrl,
@@ -368,150 +325,165 @@ fun TrendingAppleMusicSection(
                       LoadingIndicator()
                     }
                   },
-                  modifier = Modifier.clip(RoundedCornerShape(12.dp)).size(52.dp)
+                  modifier =
+                    Modifier.clip(RoundedCornerShape(ThumbnailCornerRadius)).size(TrendingArtSize)
                 )
               }
-              Column(Modifier.weight(1f).padding(start = 14.dp)) {
+              Column(Modifier.weight(1f)) {
+                TrendingTitle(track.title)
+                val playCount =
+                  remember(track.rank) {
+                    val base = 2_500_000 / (track.rank + 2)
+                    if (base >= 1_000_000) String.format("%.1fM plays", base / 1_000_000f)
+                    else String.format("%dk plays", base / 1_000)
+                  }
                 Text(
-                  track.title,
-                  style = MaterialTheme.typography.titleMedium,
-                  color = MaterialTheme.colorScheme.onSurface,
+                  "${track.artist} · $playCount",
+                  fontSize = 13.sp,
+                  lineHeight = 17.sp,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
                   maxLines = 1,
                   overflow = TextOverflow.Ellipsis
                 )
-                Row(
-                  verticalAlignment = Alignment.CenterVertically,
-                  modifier = Modifier.padding(top = 2.dp)
-                ) {
-                  Text(
-                    track.artist,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                  )
-                  Spacer(Modifier.width(6.dp))
-                  val playCount =
-                    remember(track.rank) {
-                      val base = 2_500_000 / (track.rank + 2)
-                      if (base >= 1_000_000) String.format("%.1fM plays", base / 1_000_000f)
-                      else String.format("%dk plays", base / 1_000)
-                    }
-                  Text(
-                    "• $playCount",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                  )
-                }
               }
             }
           }
         }
       }
     }
-    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier =
-          Modifier.clip(MaterialTheme.shapes.large)
-            .background(MaterialTheme.colorScheme.surfaceContainer)
+    Row(
+      horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+      modifier = Modifier.fillMaxWidth()
+    ) {
+      IconButton(
+        onClick = {
+          coroutineScope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) }
+        },
+        enabled = pagerState.currentPage > 0
       ) {
-        IconButton(
-          onClick = {
-            coroutineScope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) }
-          },
-          enabled = pagerState.currentPage > 0
+        Icon(painterResource(R.drawable.chevron_leftpx), "Previous")
+      }
+      IconButton(
+        onClick = {
+          coroutineScope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
+        },
+        enabled = pagerState.currentPage < pagerState.pageCount - 1
+      ) {
+        Icon(painterResource(R.drawable.chevron_right_px), "Next")
+      }
+    }
+  }
+}
+
+@Composable
+fun TopArtistsSection(artists: List<SuggestionArtist>, onArtistClick: (SuggestionArtist) -> Unit) {
+  if (artists.isEmpty()) return
+  Column(modifier = Modifier.fillMaxWidth()) {
+    StageSectionHeader(title = "Trending Artists")
+    LazyRow(
+      contentPadding = PaddingValues(horizontal = 22.dp),
+      horizontalArrangement = Arrangement.spacedBy(14.dp),
+      modifier = Modifier.fillMaxWidth()
+    ) {
+      items(artists) { artist ->
+        Column(
+          horizontalAlignment = Alignment.CenterHorizontally,
+          modifier = Modifier.width(TrendingArtistSize).clickable { onArtistClick(artist) }
         ) {
-          Icon(painterResource(R.drawable.chevron_leftpx), "Previous")
-        }
-        Text(
-          stringResource(R.string.page_indicator, pagerState.currentPage + 1, pagerState.pageCount),
-          style = MaterialTheme.typography.bodyMedium
-        )
-        IconButton(
-          onClick = {
-            coroutineScope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
-          },
-          enabled = pagerState.currentPage < pagerState.pageCount - 1
-        ) {
-          Icon(painterResource(R.drawable.chevron_right_px), "Next")
+          SubcomposeAsyncImage(
+            model = artist.thumbnailUrl,
+            contentDescription = artist.name,
+            contentScale = ContentScale.Crop,
+            loading = {
+              Box(
+                Modifier.fillMaxSize()
+                  .shimmer()
+                  .background(MaterialTheme.colorScheme.surfaceVariant)
+              )
+            },
+            modifier =
+              Modifier.size(TrendingArtistSize)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+          )
+          Spacer(Modifier.height(6.dp))
+          Text(
+            artist.name,
+            fontSize = 13.sp,
+            lineHeight = 17.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.fillMaxWidth()
+          )
         }
       }
     }
   }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+/** Artwork with a title and a subtitle under it, as on the boards' `.card`. */
 @Composable
-fun TopArtistsSection(artists: List<SuggestionArtist>, onArtistClick: (SuggestionArtist) -> Unit) {
-  if (artists.isEmpty()) return
-  Column(modifier = Modifier.fillMaxWidth()) {
-    StageSectionHeader(title = "Trending Artists", modifier = Modifier.padding(top = 16.dp))
-    LazyRow(
-      contentPadding = PaddingValues(horizontal = 16.dp),
-      horizontalArrangement = Arrangement.spacedBy(16.dp),
-      modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-    ) {
-      items(artists) { artist ->
-        Column(
-          horizontalAlignment = Alignment.CenterHorizontally,
-          modifier = Modifier.width(120.dp).clickable { onArtistClick(artist) }
-        ) {
-          Box(contentAlignment = Alignment.BottomEnd) {
-            SubcomposeAsyncImage(
-              model = artist.thumbnailUrl,
-              contentDescription = artist.name,
-              contentScale = ContentScale.Crop,
-              loading = {
-                Box(
-                  Modifier.fillMaxSize()
-                    .shimmer()
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                )
-              },
-              modifier =
-                Modifier.size(120.dp)
-                  .clip(RoundedCornerShape(18.dp))
-                  .background(MaterialTheme.colorScheme.surfaceVariant)
-            )
-            Surface(
-              modifier = Modifier.size(28.dp).offset((-4).dp, (-4).dp),
-              shape = CircleShape,
-              color = MaterialTheme.colorScheme.onSurface,
-              tonalElevation = 4.dp
-            ) {
-              Box(contentAlignment = Alignment.Center) {
-                Text(
-                  artist.rank.toString(),
-                  style = MaterialTheme.typography.labelSmall,
-                  color = MaterialTheme.colorScheme.surface,
-                  fontWeight = FontWeight.Bold
-                )
-              }
-            }
-          }
-          Spacer(Modifier.height(8.dp))
-          Text(
-            artist.name,
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.fillMaxWidth()
-          )
-          val playCount =
-            remember(artist.rank) {
-              val base = 15_000_000 / (artist.rank + 8)
-              if (base >= 1_000_000) String.format("%.1fM plays", base / 1_000_000f)
-              else String.format("%dk plays", base / 1_000)
-            }
-          Text(
-            playCount,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-            textAlign = TextAlign.Center
-          )
-        }
+private fun TrendingCard(
+  imageUrl: String?,
+  title: String,
+  subtitle: String,
+  artHeight: Dp,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  Column(modifier = modifier.clickable(onClick = onClick)) {
+    SubcomposeAsyncImage(
+      model = imageUrl,
+      contentDescription = title,
+      contentScale = ContentScale.Crop,
+      loading = {
+        Box(Modifier.fillMaxSize().shimmer().background(MaterialTheme.colorScheme.surfaceVariant))
+      },
+      modifier =
+        Modifier.fillMaxWidth()
+          .height(artHeight)
+          .clip(RoundedCornerShape(GridThumbnailCornerRadius))
+          .background(MaterialTheme.colorScheme.surfaceVariant)
+    )
+    Spacer(Modifier.height(8.dp))
+    Text(
+      title,
+      fontSize = 15.sp,
+      lineHeight = 19.sp,
+      fontWeight = FontWeight.Bold,
+      color = MaterialTheme.colorScheme.onSurface,
+      maxLines = 1,
+      overflow = TextOverflow.Ellipsis
+    )
+    Spacer(Modifier.height(3.dp))
+    Text(
+      subtitle,
+      fontSize = 13.sp,
+      lineHeight = 17.sp,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      maxLines = 1,
+      overflow = TextOverflow.Ellipsis
+    )
+  }
+}
+
+/** The boards' `.cards` grid, sized to its content so it can sit inside the page's list. */
+@Composable
+private fun <T> TrendingGrid(
+  items: List<T>,
+  columns: Int,
+  card: @Composable (item: T, modifier: Modifier) -> Unit,
+) {
+  Column(
+    verticalArrangement = Arrangement.spacedBy(12.dp),
+    modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp)
+  ) {
+    items.chunked(columns).forEach { row ->
+      Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+        row.forEach { item -> card(item, Modifier.weight(1f)) }
+        repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
       }
     }
   }
@@ -525,109 +497,20 @@ fun TrendingAlbumsSection(
 ) {
   if (albums.isEmpty()) return
   Column(modifier = Modifier.fillMaxWidth()) {
-    StageSectionHeader(
-      title = "Trending Albums",
-      modifier = Modifier.padding(top = 16.dp),
-      onMore = onMoreClick
-    )
-    LazyRow(
-      contentPadding = PaddingValues(horizontal = 16.dp),
-      horizontalArrangement = Arrangement.spacedBy(16.dp),
-      modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 16.dp)
-    ) {
-      items(albums) { album ->
-        Column(
-          horizontalAlignment = Alignment.CenterHorizontally,
-          modifier = Modifier.width(120.dp).clickable { onAlbumClick(album) }
-        ) {
-          Box(contentAlignment = Alignment.BottomEnd) {
-            SubcomposeAsyncImage(
-              model = album.thumbnailUrl,
-              contentDescription = album.title,
-              contentScale = ContentScale.Crop,
-              loading = {
-                Box(
-                  Modifier.fillMaxSize()
-                    .shimmer()
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                )
-              },
-              modifier =
-                Modifier.size(120.dp)
-                  .clip(RoundedCornerShape(18.dp))
-                  .background(MaterialTheme.colorScheme.surfaceVariant)
-            )
-            Surface(
-              modifier = Modifier.size(28.dp).offset((-4).dp, (-4).dp),
-              shape = CircleShape,
-              color = MaterialTheme.colorScheme.onSurface,
-              tonalElevation = 4.dp
-            ) {
-              Box(contentAlignment = Alignment.Center) {
-                Text(
-                  album.rank.toString(),
-                  style = MaterialTheme.typography.labelSmall,
-                  color = MaterialTheme.colorScheme.surface,
-                  fontWeight = FontWeight.Bold
-                )
-              }
-            }
-          }
-          Spacer(Modifier.height(8.dp))
-          Text(
-            album.title,
-            style = MaterialTheme.typography.titleSmall,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.fillMaxWidth()
-          )
-          Text(
-            album.artist,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.fillMaxWidth()
-          )
-        }
-      }
-
-      item {
-        Column(
-          horizontalAlignment = Alignment.CenterHorizontally,
-          modifier = Modifier.width(100.dp).padding(bottom = 20.dp).clickable { onMoreClick() }
-        ) {
-          Box(
-            contentAlignment = Alignment.Center,
-            modifier =
-              Modifier.size(120.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .background(MaterialTheme.colorScheme.primaryContainer)
-          ) {
-            Icon(
-              painter = painterResource(R.drawable.globe_search),
-              contentDescription = null,
-              tint = MaterialTheme.colorScheme.primary,
-              modifier = Modifier.size(32.dp)
-            )
-          }
-          Spacer(Modifier.height(8.dp))
-          Text(
-            text = "More",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center
-          )
-        }
-      }
+    StageSectionHeader(title = "Trending Albums", onMore = onMoreClick)
+    TrendingGrid(items = albums, columns = TrendingAlbumColumns) { album, modifier ->
+      TrendingCard(
+        imageUrl = album.thumbnailUrl,
+        title = album.title,
+        subtitle = album.artist,
+        artHeight = TrendingAlbumArtHeight,
+        onClick = { onAlbumClick(album) },
+        modifier = modifier
+      )
     }
   }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrendingVideosSection(
   videos: List<SuggestionTrack>,
@@ -635,91 +518,17 @@ fun TrendingVideosSection(
   onMoreClick: () -> Unit
 ) {
   if (videos.isEmpty()) return
-
-  val carouselState = rememberCarouselState(itemCount = { videos.size })
-  val context = LocalContext.current
-
-  Column(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)) {
-    Row(
-      modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-      horizontalArrangement = Arrangement.SpaceBetween,
-      verticalAlignment = Alignment.CenterVertically
-    ) {
-      Text(
-        text = "Trending Music Videos",
-        style = MaterialTheme.typography.titleLarge,
-        fontWeight = FontWeight.Bold
+  Column(modifier = Modifier.fillMaxWidth()) {
+    StageSectionHeader(title = "Trending Music Videos", onMore = onMoreClick)
+    TrendingGrid(items = videos, columns = TrendingVideoColumns) { video, modifier ->
+      TrendingCard(
+        imageUrl = video.thumbnailUrl,
+        title = video.title,
+        subtitle = video.artist,
+        artHeight = TrendingVideoArtHeight,
+        onClick = { onVideoClick(video) },
+        modifier = modifier
       )
-
-      Text(
-        text = "More",
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onSurface,
-        modifier = Modifier.clickable { onMoreClick() }
-      )
-    }
-
-    Spacer(modifier = Modifier.height(16.dp))
-
-    HorizontalMultiBrowseCarousel(
-      state = carouselState,
-      preferredItemWidth = 320.dp,
-      itemSpacing = 12.dp,
-      modifier = Modifier.fillMaxWidth().height(200.dp),
-      contentPadding = PaddingValues(horizontal = 16.dp)
-    ) { i ->
-      val video = videos[i]
-      var isCardFocused by remember { mutableStateOf(false) }
-
-      Box(
-        modifier =
-          Modifier.fillMaxSize()
-            .clip(RoundedCornerShape(16.dp))
-            .onGloballyPositioned { coordinates ->
-              val cardCenter = coordinates.boundsInRoot().center.x
-              val screenWidth = context.resources.displayMetrics.widthPixels
-              val screenCenter = screenWidth / 2f
-              isCardFocused = abs(cardCenter - screenCenter) < 150
-            }
-            .clickable { onVideoClick(video) }
-      ) {
-        AsyncImage(
-          model = video.thumbnailUrl,
-          contentDescription = null,
-          modifier = Modifier.fillMaxSize(),
-          contentScale = ContentScale.Crop
-        )
-
-        Box(
-          modifier =
-            Modifier.fillMaxSize()
-              .background(
-                brush =
-                  Brush.verticalGradient(
-                    colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f)),
-                    startY = 300f
-                  )
-              )
-        )
-
-        Column(modifier = Modifier.align(Alignment.BottomStart).padding(12.dp)) {
-          Text(
-            text = video.title,
-            style = MaterialTheme.typography.titleMedium,
-            color = Color.White,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            fontWeight = FontWeight.Bold
-          )
-          Text(
-            text = video.artist,
-            style = MaterialTheme.typography.bodySmall,
-            color = Color.White.copy(alpha = 0.7f),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-          )
-        }
-      }
     }
   }
 }

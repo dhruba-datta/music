@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -196,7 +197,7 @@ fun SearchScreen(navController: NavController, pureBlack: Boolean) {
         Row(
           verticalAlignment = Alignment.CenterVertically,
           horizontalArrangement = Arrangement.spacedBy(6.dp),
-          modifier = Modifier.fillMaxWidth().padding(start = 18.dp, end = 12.dp, top = 8.dp)
+          modifier = Modifier.fillMaxWidth().padding(start = 18.dp, end = 12.dp, top = 18.dp)
         ) {
           Surface(
             shape = RoundedCornerShape(24.dp),
@@ -222,7 +223,7 @@ fun SearchScreen(navController: NavController, pureBlack: Boolean) {
                     searchActive = false
                   }
                 ),
-              textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface, fontSize = 16.sp),
+              textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp),
               cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
               decorationBox = { innerTextField ->
                 Row(
@@ -246,7 +247,8 @@ fun SearchScreen(navController: NavController, pureBlack: Boolean) {
                         ),
                       contentDescription =
                         if (searchActive) stringResource(R.string.dismiss) else null,
-                      tint = MaterialTheme.colorScheme.onSurface
+                      tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                      modifier = Modifier.size(20.dp)
                     )
                   }
                   Box(modifier = Modifier.weight(1f).padding(horizontal = 4.dp)) {
@@ -261,8 +263,8 @@ fun SearchScreen(navController: NavController, pureBlack: Boolean) {
                           ),
                         style =
                           TextStyle(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                            fontSize = 16.sp
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 15.sp
                           )
                       )
                     }
@@ -302,7 +304,6 @@ fun SearchScreen(navController: NavController, pureBlack: Boolean) {
             )
           }
         }
-        androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(16.dp))
       }
     },
     containerColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.background

@@ -2,7 +2,6 @@ package echo.music.iad1tya.ui.screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -24,7 +23,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
-import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.R
 import echo.music.iad1tya.constants.GridItemSize
 import echo.music.iad1tya.constants.GridItemsSizeKey
@@ -35,6 +33,8 @@ import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.YouTubeGridItem
 import echo.music.iad1tya.ui.component.shimmer.GridItemPlaceHolder
 import echo.music.iad1tya.ui.component.shimmer.ShimmerHost
+import echo.music.iad1tya.ui.component.stageGridFullWidth
+import echo.music.iad1tya.ui.component.stageGridPadding
 import echo.music.iad1tya.ui.menu.YouTubeAlbumMenu
 import echo.music.iad1tya.ui.menu.YouTubeArtistMenu
 import echo.music.iad1tya.ui.menu.YouTubePlaylistMenu
@@ -66,7 +66,7 @@ fun AccountScreen(
       GridCells.Adaptive(
         minSize = GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp
       ),
-    contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
+    contentPadding = stageGridPadding(),
   ) {
     item(span = { GridItemSpan(maxLineSpan) }) {
       ChipsRow(
@@ -78,6 +78,7 @@ fun AccountScreen(
           ),
         currentValue = selectedContentType,
         onValueUpdate = { viewModel.setSelectedContentType(it) },
+        modifier = Modifier.stageGridFullWidth(),
       )
     }
 

@@ -60,12 +60,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -195,6 +191,7 @@ fun RecognitionScreen(navController: NavController) {
           },
           onTryAgain = { startRecognition() },
           onClose = ::resetToReady,
+          onOpenHistory = { navController.navigate("recognition_history") },
           onSaveToHistory = ::saveToHistory
         )
       } else {
@@ -236,9 +233,9 @@ fun RecognitionScreen(navController: NavController) {
                   .windowInsetsPadding(
                     LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Bottom)
                   )
-                  .padding(16.dp),
+                  .padding(start = 16.dp, end = 16.dp, top = 70.dp),
               horizontalAlignment = Alignment.CenterHorizontally,
-              verticalArrangement = Arrangement.Center
+              verticalArrangement = Arrangement.Top
             ) {
               when (status) {
                 is RecognitionStatus.Ready -> {
@@ -300,18 +297,19 @@ private fun RecognitionDisc(
       content = content
     )
 
-    Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(18.dp))
 
     Text(
       text = title,
-      fontSize = 22.sp,
+      fontSize = 23.sp,
       fontWeight = FontWeight.ExtraBold,
       color = MaterialTheme.colorScheme.onSurface,
       textAlign = TextAlign.Center
     )
     Text(
       text = hint,
-      style = MaterialTheme.typography.bodyMedium,
+      fontSize = 15.sp,
+      lineHeight = 21.sp,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
       textAlign = TextAlign.Center,
       modifier = Modifier.padding(horizontal = 32.dp)
@@ -363,7 +361,7 @@ private fun ListeningState(onCancel: () -> Unit) {
     actions = {
       FilledTonalButton(
         onClick = onCancel,
-        modifier = Modifier.height(50.dp).fillMaxWidth().padding(horizontal = 18.dp)
+        modifier = Modifier.height(50.dp).fillMaxWidth().padding(horizontal = 2.dp)
       ) {
         Text(stringResource(R.string.cancel), fontWeight = FontWeight.ExtraBold)
       }
@@ -434,6 +432,7 @@ private fun SuccessState(
   onPlayOnApp: (RecognitionResult) -> Unit,
   onTryAgain: () -> Unit,
   onClose: () -> Unit,
+  onOpenHistory: () -> Unit,
   onSaveToHistory: (RecognitionResult) -> Unit
 ) {
   LaunchedEffect(result) { onSaveToHistory(result) }
@@ -442,31 +441,6 @@ private fun SuccessState(
     (result.coverArtHqUrl ?: result.coverArtUrl)?.replace("400x400", "1000x1000")
 
   Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-    // Blurred Background
-    AsyncImage(
-      model = highResImageUrl,
-      contentDescription = null,
-      modifier = Modifier.fillMaxSize().blur(radius = 48.dp).alpha(0.6f),
-      contentScale = ContentScale.Crop
-    )
-
-    // Gradient Overlay
-    Box(
-      modifier =
-        Modifier.fillMaxSize()
-          .background(
-            Brush.verticalGradient(
-              colors =
-                listOf(
-                  Color.Transparent,
-                  MaterialTheme.colorScheme.background.copy(alpha = 0.5f),
-                  MaterialTheme.colorScheme.background.copy(alpha = 0.8f),
-                  MaterialTheme.colorScheme.background
-                )
-            )
-          )
-    )
-
     Column(
       horizontalAlignment = Alignment.CenterHorizontally,
       modifier =
@@ -474,10 +448,9 @@ private fun SuccessState(
           .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
           .windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Bottom))
           .verticalScroll(rememberScrollState())
-          .padding(horizontal = 18.dp)
     ) {
       Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+        modifier = Modifier.fillMaxWidth().padding(start = 22.dp, end = 12.dp, top = 20.dp),
         verticalAlignment = Alignment.CenterVertically
       ) {
         Text(
@@ -490,17 +463,16 @@ private fun SuccessState(
           overflow = TextOverflow.Ellipsis,
           modifier = Modifier.weight(1f)
         )
-        androidx.compose.material3.IconButton(
-          onClick = onClose,
-          colors =
-            androidx.compose.material3.IconButtonDefaults.iconButtonColors(
-              containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.3f),
-              contentColor = MaterialTheme.colorScheme.onSurface
-            )
-        ) {
+        androidx.compose.material3.IconButton(onClick = onClose) {
           Icon(
             painter = painterResource(R.drawable.close),
             contentDescription = stringResource(R.string.close)
+          )
+        }
+        androidx.compose.material3.IconButton(onClick = onOpenHistory) {
+          Icon(
+            painter = painterResource(R.drawable.history),
+            contentDescription = stringResource(R.string.recognition_history)
           )
         }
       }
@@ -510,10 +482,7 @@ private fun SuccessState(
       AsyncImage(
         model = highResImageUrl,
         contentDescription = null,
-        modifier =
-          Modifier.size(220.dp)
-            .shadow(elevation = 32.dp, shape = RoundedCornerShape(28.dp))
-            .clip(RoundedCornerShape(28.dp)),
+        modifier = Modifier.size(220.dp).clip(RoundedCornerShape(28.dp)),
         contentScale = ContentScale.Crop
       )
 
@@ -527,42 +496,35 @@ private fun SuccessState(
         color = MaterialTheme.colorScheme.onBackground,
         textAlign = TextAlign.Center,
         maxLines = 2,
-        overflow = TextOverflow.Ellipsis
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.padding(horizontal = 22.dp)
       )
       Spacer(modifier = Modifier.height(2.dp))
       Text(
-        text = listOfNotNull(result.artist, result.album).joinToString(" • "),
-        style = MaterialTheme.typography.bodyLarge,
+        text = listOfNotNull(result.artist, result.album).joinToString(" · "),
+        fontSize = 15.sp,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
         maxLines = 2,
-        overflow = TextOverflow.Ellipsis
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.padding(horizontal = 22.dp)
       )
 
-      Spacer(Modifier.height(16.dp))
+      Spacer(Modifier.height(12.dp))
 
       androidx.compose.material3.Button(
         onClick = { onPlayOnApp(result) },
-        modifier = Modifier.fillMaxWidth().height(50.dp)
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp).height(50.dp)
       ) {
-        Icon(
-          painter = painterResource(R.drawable.play),
-          contentDescription = null,
-          modifier = Modifier.size(20.dp)
-        )
-        Spacer(Modifier.width(8.dp))
         Text(stringResource(R.string.play_on_app), fontWeight = FontWeight.ExtraBold)
       }
 
       Spacer(Modifier.height(8.dp))
 
-      FilledTonalButton(onClick = onTryAgain, modifier = Modifier.fillMaxWidth().height(50.dp)) {
-        Icon(
-          painter = painterResource(R.drawable.mic),
-          contentDescription = null,
-          modifier = Modifier.size(20.dp)
-        )
-        Spacer(Modifier.width(8.dp))
+      FilledTonalButton(
+        onClick = onTryAgain,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp).height(50.dp)
+      ) {
         Text(stringResource(R.string.re_listen), fontWeight = FontWeight.ExtraBold)
       }
 
@@ -580,14 +542,8 @@ private fun RecognitionFailure(title: String, message: String, icon: Int, onTryA
     actions = {
       androidx.compose.material3.Button(
         onClick = onTryAgain,
-        modifier = Modifier.height(50.dp).fillMaxWidth().padding(horizontal = 18.dp)
+        modifier = Modifier.height(50.dp).fillMaxWidth().padding(horizontal = 2.dp)
       ) {
-        Icon(
-          painter = painterResource(R.drawable.refresh),
-          contentDescription = null,
-          modifier = Modifier.size(20.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
         Text(stringResource(R.string.try_again), fontWeight = FontWeight.ExtraBold)
       }
     }
