@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
@@ -32,10 +33,14 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,6 +56,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.music.innertube.models.WatchEndpoint
+import androidx.media3.exoplayer.offline.Download
+import echo.music.iad1tya.LocalDownloadUtil
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.LocalPlayerConnection
 import echo.music.iad1tya.R
@@ -62,7 +69,10 @@ import echo.music.iad1tya.spotify.SpotifyMapper
 import echo.music.iad1tya.spotify.models.SpotifyTrack
 import echo.music.iad1tya.ui.component.ListItem
 import echo.music.iad1tya.ui.component.PlayingIndicator
+import echo.music.iad1tya.ui.component.DefaultDialog
 import echo.music.iad1tya.ui.component.StageHero
+import echo.music.iad1tya.ui.component.StageHeroDownloadButton
+import echo.music.iad1tya.ui.component.StagePillButton
 import echo.music.iad1tya.ui.component.StageHeroArtwork
 import echo.music.iad1tya.ui.component.StageHeroIconButton
 import echo.music.iad1tya.ui.component.StageHeroPlayButton
@@ -105,6 +115,50 @@ fun SpotifyPlaylistDetailScreen(
 
   val transparentAppBar by rememberStageHeroUnderBar(lazyListState)
 
+  val downloadUtil = LocalDownloadUtil.current
+  var downloadState by remember { mutableIntStateOf(Download.STATE_STOPPED) }
+  var showRemoveDownloadDialog by remember { mutableStateOf(false) }
+
+  LaunchedEffect(uiState.downloadSongIds) {
+    val ids = uiState.downloadSongIds
+    if (ids.isEmpty()) {
+      downloadState = Download.STATE_STOPPED
+      return@LaunchedEffect
+    }
+    downloadUtil.downloads.collect { downloads ->
+      downloadState =
+        if (ids.all { downloads[it]?.state == Download.STATE_COMPLETED }) {
+          Download.STATE_COMPLETED
+        } else {
+          Download.STATE_DOWNLOADING
+        }
+    }
+  }
+
+  if (showRemoveDownloadDialog) {
+    DefaultDialog(
+      onDismiss = { showRemoveDownloadDialog = false },
+      content = {
+        Text(
+          text = stringResource(R.string.remove_download_playlist_confirm, effectiveTitle),
+          style = MaterialTheme.typography.bodyLarge,
+          modifier = Modifier.padding(horizontal = 18.dp),
+        )
+      },
+      buttons = {
+        StagePillButton(onClick = {
+          showRemoveDownloadDialog = false
+          viewModel.removeDownloads()
+        }) {
+          Text(text = stringResource(android.R.string.ok))
+        }
+        StagePillButton(onClick = { showRemoveDownloadDialog = false }, primary = false) {
+          Text(text = stringResource(android.R.string.cancel))
+        }
+      },
+    )
+  }
+
   Box(modifier = Modifier.fillMaxSize()) {
     if (uiState.isLoading && uiState.tracks.isEmpty()) {
       Box(
@@ -130,6 +184,23 @@ fun SpotifyPlaylistDetailScreen(
             tracks = uiState.tracks,
             totalCount = if (uiState.totalCount > 0) uiState.totalCount else uiState.tracks.size,
             isPlaylistPlaying = isPlaylistPlaying,
+            downloadState =
+              if (uiState.isPreparingDownload) Download.STATE_DOWNLOADING else downloadState,
+            onDownload = {
+              when {
+                uiState.isPreparingDownload -> Unit
+                downloadState == Download.STATE_COMPLETED -> showRemoveDownloadDialog = true
+                downloadState == Download.STATE_DOWNLOADING -> viewModel.removeDownloads()
+                else ->
+                  viewModel.downloadAll(
+                    onError = {
+                      coroutineScope.launch {
+                        snackbarHostState.showSnackbar("Unable to match stream on YouTube/Addon")
+                      }
+                    }
+                  )
+              }
+            },
             onPlayClick = {
               if (isPlaylistCurrent) {
                 playerConnection?.togglePlayPause()
@@ -383,6 +454,8 @@ private fun SpotifyPlaylistHeader(
   tracks: List<SpotifyTrack>,
   totalCount: Int,
   isPlaylistPlaying: Boolean,
+  downloadState: Int,
+  onDownload: () -> Unit,
   onPlayClick: () -> Unit,
   onShuffle: () -> Unit,
   onShare: () -> Unit,
@@ -411,6 +484,7 @@ private fun SpotifyPlaylistHeader(
       },
     artwork = { StageHeroArtwork(coverUrl) },
     leadingActions = {
+      StageHeroDownloadButton(downloadState = downloadState, onClick = onDownload)
       StageHeroIconButton(
         icon = R.drawable.share,
         contentDescription = stringResource(R.string.share),
