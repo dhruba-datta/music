@@ -2473,7 +2473,7 @@ fun BottomSheetPlayer(
           Icon(
             painter = painterResource(R.drawable.bedtime),
             contentDescription = null,
-            tint = if (sleepTimerEnabled) iconButtonColor else TextBackgroundColor,
+            tint = TextBackgroundColor,
             modifier = Modifier.size(StageActionIconSize)
           )
         }

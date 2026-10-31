@@ -164,10 +164,10 @@ internal fun StageAction(
     Box(
       contentAlignment = Alignment.Center,
       modifier =
-        Modifier.size(StageActionTargetSize)
-          .then(if (active) Modifier.background(activeColor, CircleShape) else Modifier),
+        Modifier.size(StageActionTargetSize),
     ) {
       icon()
+      if (active) StageActiveDot(color = color, modifier = Modifier.align(Alignment.BottomCenter))
     }
     StageActionLabel(text = label, color = color)
   }
@@ -220,17 +220,26 @@ internal fun StageToggleIcon(
       modifier
         .size(StageHeaderButtonSize)
         .clip(CircleShape)
-        .then(if (active) Modifier.background(activeColor) else Modifier)
         .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
         .alpha(if (enabled) 1f else 0.35f),
   ) {
     Icon(
       painter = painterResource(icon),
       contentDescription = contentDescription,
-      tint = if (active) activeContentColor else color,
+      tint = color,
       modifier = Modifier.size(24.dp),
     )
+    if (active) StageActiveDot(color = color, modifier = Modifier.align(Alignment.BottomCenter))
   }
+}
+
+/** The small dot under a player control that is switched on. */
+@Composable
+private fun StageActiveDot(color: Color, modifier: Modifier = Modifier) {
+  Box(
+    modifier =
+      modifier.padding(bottom = 2.dp).size(4.dp).background(color, CircleShape)
+  )
 }
 
 @Composable
@@ -316,15 +325,14 @@ private fun StageDockTab(
       modifier
         .fillMaxHeight()
         .clip(CircleShape)
-        .then(if (active) Modifier.background(activeColor) else Modifier)
         .clickable(role = Role.Tab, onClick = onClick)
         .semantics { selected = active },
   ) {
     Text(
       text = text,
-      color = if (active) activeContentColor else color,
+      color = if (active) color else color.copy(alpha = 0.6f),
       fontSize = 14.sp,
-      fontWeight = FontWeight.Bold,
+      fontWeight = if (active) FontWeight.ExtraBold else FontWeight.Bold,
       maxLines = 1,
       overflow = TextOverflow.Ellipsis,
     )

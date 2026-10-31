@@ -54,20 +54,38 @@ fun Material3SettingsGroup(
   Column(modifier = Modifier.fillMaxWidth()) {
     title?.let { StageSettingsHeading(text = it, compact = compact) }
 
-    Card(
-      modifier = Modifier.fillMaxWidth().animateContentSize(),
-      shape = RoundedCornerShape(18.dp),
-      colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-      elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-      items.forEach { item ->
-        Box(
-          modifier =
-            if (item.isHighlighted) {
-              Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
-            } else {
-              Modifier
-            }
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+      items.forEachIndexed { index, item ->
+        val shape =
+          when {
+            items.size == 1 -> RoundedCornerShape(18.dp)
+            index == 0 ->
+              RoundedCornerShape(
+                topStart = 18.dp,
+                topEnd = 18.dp,
+                bottomStart = 4.dp,
+                bottomEnd = 4.dp
+              )
+            index == items.size - 1 ->
+              RoundedCornerShape(
+                topStart = 4.dp,
+                topEnd = 4.dp,
+                bottomStart = 18.dp,
+                bottomEnd = 18.dp
+              )
+            else -> RoundedCornerShape(4.dp)
+          }
+
+        Card(
+          modifier = Modifier.fillMaxWidth().animateContentSize(),
+          shape = shape,
+          colors =
+            CardDefaults.cardColors(
+              containerColor =
+                if (item.isHighlighted) MaterialTheme.colorScheme.surfaceVariant
+                else MaterialTheme.colorScheme.surfaceContainer
+            ),
+          elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
           Material3SettingsItemRow(
             item = item,
@@ -114,9 +132,6 @@ private fun Material3SettingsItemRow(
     }
   val tileShape = item.iconShape ?: RoundedCornerShape(if (tight) 10.dp else 12.dp)
   val iconSize = 24.dp
-  // Sub-page rows are plain text on the boards; a tile only appears where it was asked for.
-  val showPlainIcon =
-    compact || tight || item.iconBackground != null || !item.tintIcon || item.showBadge
 
   val iconTint =
     when {
@@ -135,8 +150,8 @@ private fun Material3SettingsItemRow(
           if (scrollState != null) Modifier.scrollToOnHighlight(scrollState, item.isHighlighted)
           else Modifier
         )
-        .heightIn(min = if (tight) 48.dp else 54.dp)
-        .padding(horizontal = 14.dp, vertical = if (tight) 3.dp else 6.dp),
+        .heightIn(min = if (compact) 54.dp else 64.dp)
+        .padding(horizontal = if (compact) 14.dp else 18.dp, vertical = if (compact) 6.dp else 14.dp),
     verticalAlignment = Alignment.CenterVertically
   ) {
     if (item.customIcon != null) {
@@ -146,8 +161,8 @@ private fun Material3SettingsItemRow(
       ) {
         item.customIcon.invoke()
       }
-      Spacer(modifier = Modifier.width(13.dp))
-    } else if (item.icon != null && showPlainIcon) {
+      Spacer(modifier = Modifier.width(16.dp))
+    } else if (item.icon != null) {
       val icon = item.icon
       Box(
         modifier =
@@ -184,15 +199,15 @@ private fun Material3SettingsItemRow(
         }
       }
 
-      Spacer(modifier = Modifier.width(13.dp))
+      Spacer(modifier = Modifier.width(16.dp))
     }
 
-    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
       ProvideTextStyle(
         TextStyle(
           fontSize = 16.sp,
           lineHeight = 20.sp,
-          fontWeight = FontWeight.Bold,
+          fontWeight = FontWeight.SemiBold,
           color =
             if (!item.enabled) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             else MaterialTheme.colorScheme.onSurface

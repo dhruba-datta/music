@@ -143,8 +143,8 @@ fun SettingsScreen(
           Material3SettingsItem(
             isHighlighted = (highlightKey == accountText),
             icon = painterResource(R.drawable.stage_account),
-            iconBackground = StageTile.Rose,
             title = { Text(accountText) },
+            description = { Text(accountDesc) },
             onClick = { navController.navigate("settings/account") }
           )
         )
@@ -154,7 +154,6 @@ fun SettingsScreen(
         add(
           Material3SettingsItem(
             icon = painterResource(echo.music.iad1tya.R.drawable.stage_history),
-            iconBackground = StageTile.Blue,
             title = { Text(stringResource(echo.music.iad1tya.R.string.listening_summary)) },
             onClick = { navController.navigate("settings/listening_summary") }
           )
@@ -169,8 +168,8 @@ fun SettingsScreen(
           Material3SettingsItem(
             isHighlighted = (highlightKey == appearanceText),
             icon = painterResource(R.drawable.stage_palette),
-            iconBackground = StageTile.Violet,
             title = { Text(appearanceText) },
+            description = { Text(appearanceDesc) },
             onClick = { navController.navigate("settings/appearance") }
           )
         )
@@ -182,8 +181,8 @@ fun SettingsScreen(
           Material3SettingsItem(
             isHighlighted = (highlightKey == playerText),
             icon = painterResource(R.drawable.stage_play),
-            iconBackground = StageTile.Blue,
             title = { Text(playerText) },
+            description = { Text(playerDesc) },
             onClick = { navController.navigate("settings/player") }
           )
         )
@@ -198,8 +197,8 @@ fun SettingsScreen(
           Material3SettingsItem(
             isHighlighted = (highlightKey == musicFlowText),
             icon = painterResource(R.drawable.stage_flow),
-            iconBackground = StageTile.Green,
             title = { Text(musicFlowText) },
+            description = { Text(musicFlowDesc) },
             onClick = { navController.navigate("settings/music_flow") }
           )
         )
@@ -212,8 +211,8 @@ fun SettingsScreen(
           Material3SettingsItem(
             isHighlighted = (highlightKey == listenTogetherText),
             icon = painterResource(R.drawable.stage_together),
-            iconBackground = StageTile.Green,
             title = { Text(listenTogetherText) },
+            description = { Text(listenTogetherDesc) },
             onClick = { navController.navigate(Screens.ListenTogether.route) }
           )
         )
@@ -226,8 +225,8 @@ fun SettingsScreen(
           Material3SettingsItem(
             isHighlighted = (highlightKey == contentText),
             icon = painterResource(R.drawable.stage_language),
-            iconBackground = StageTile.Slate,
             title = { Text(contentText) },
+            description = { Text(contentDesc) },
             onClick = { navController.navigate("settings/content") }
           )
         )
@@ -243,8 +242,8 @@ fun SettingsScreen(
           Material3SettingsItem(
             isHighlighted = (highlightKey == privacyText),
             icon = painterResource(R.drawable.stage_security),
-            iconBackground = StageTile.Slate,
             title = { Text(privacyText) },
+            description = { Text(privacyDesc) },
             onClick = { navController.navigate("settings/privacy") }
           )
         )
@@ -257,8 +256,8 @@ fun SettingsScreen(
           Material3SettingsItem(
             isHighlighted = (highlightKey == storageText),
             icon = painterResource(R.drawable.stage_storage),
-            iconBackground = StageTile.Slate,
             title = { Text(storageText) },
+            description = { Text(storageDesc) },
             onClick = { navController.navigate("settings/storage") }
           )
         )
@@ -272,8 +271,8 @@ fun SettingsScreen(
           Material3SettingsItem(
             isHighlighted = (highlightKey == backupText),
             icon = painterResource(R.drawable.stage_restore),
-            iconBackground = StageTile.Slate,
             title = { Text(backupText) },
+            description = { Text(backupDesc) },
             onClick = { navController.navigate("settings/backup_restore") }
           )
         )
@@ -289,7 +288,6 @@ fun SettingsScreen(
               painterResource(
                 if (isUpdateAvailable) R.drawable.ic_launcher_nobg else R.drawable.stage_update
               ),
-            iconBackground = StageTile.Slate,
             title = { Text(systemUpdateText) },
             description =
               if (isUpdateAvailable) {
@@ -312,8 +310,8 @@ fun SettingsScreen(
             Material3SettingsItem(
               isHighlighted = (highlightKey == "supported links"),
               icon = painterResource(R.drawable.stage_link),
-            iconBackground = StageTile.Slate,
               title = { Text("Supported Links") },
+              description = { Text("App linking settings") },
               onClick = {
                 try {
                   val intent =
@@ -346,8 +344,8 @@ fun SettingsScreen(
           Material3SettingsItem(
             isHighlighted = (highlightKey == aboutText),
             icon = painterResource(R.drawable.stage_info),
-            iconBackground = StageTile.Slate,
             title = { Text(aboutText) },
+            description = { Text(aboutDesc) },
             onClick = { navController.navigate("settings/about") }
           )
         )
@@ -367,7 +365,6 @@ fun SettingsScreen(
             .map { setting ->
               Material3SettingsItem(
                 icon = painterResource(R.drawable.search),
-                iconBackground = StageTile.Slate,
                 title = { Text(setting.title) },
                 description = {
                   if (setting.description != null) {
@@ -401,7 +398,23 @@ fun SettingsScreen(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
       )
     } else {
-      Material3SettingsGroup(tight = true, scrollState = scrollState, items = finalItemsList)
+      Spacer(modifier = Modifier.height(12.dp))
+      if (searchQuery.isNotEmpty()) {
+        Material3SettingsGroup(scrollState = scrollState, items = finalItemsList)
+      } else {
+        // Account, Listening summary, then the look, data and system groups.
+        listOf(
+            itemsList.take(1),
+            itemsList.drop(1).take(1),
+            itemsList.drop(2).take(4),
+            itemsList.drop(6).take(4),
+            itemsList.drop(10),
+          )
+          .forEach { group ->
+            Material3SettingsGroup(scrollState = scrollState, items = group)
+            Spacer(modifier = Modifier.height(16.dp))
+          }
+      }
     }
 
     Spacer(modifier = Modifier.height(24.dp))

@@ -1109,13 +1109,10 @@ fun HomeScreen(
                     val columns = if (maxWidth >= 600.dp) 8 else 4
                     val itemsPerPage = 8
                     // The random and Downloads tiles always sit first on the first page.
-                    val tiles = remember(items) { listOf<YTItem?>(null, null) + items }
+                    val tiles = remember(items) { (listOf<YTItem?>(null, null) + items).take(itemsPerPage) }
                     val rows = if (columns == 4 && tiles.size > 4) 2 else 1
 
-                    val pagerState =
-                      rememberPagerState(
-                        pageCount = { (tiles.size + itemsPerPage - 1) / itemsPerPage }
-                      )
+                    val pagerState = rememberPagerState(pageCount = { 1 })
 
                     Column(
                       modifier = Modifier.fillMaxWidth().animateItem(),

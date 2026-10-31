@@ -980,23 +980,12 @@ private fun FavoriteButton(
   Box(
     contentAlignment = Alignment.Center,
     modifier =
-      Modifier.size(40.dp)
-        .clip(CircleShape)
-        .border(
-          width = 1.dp,
-          color = if (isLiked) errorColor.copy(alpha = 0.5f) else outlineColor.copy(alpha = 0.3f),
-          shape = CircleShape
-        )
-        .background(
-          color = if (isLiked) errorColor.copy(alpha = 0.1f) else Color.Transparent,
-          shape = CircleShape
-        )
-        .clickable { playerConnection.service.toggleLike() }
+      Modifier.size(44.dp).clip(CircleShape).clickable { playerConnection.service.toggleLike() }
   ) {
     HeartBurstIcon(
       isLiked = isLiked,
-      iconSize = 20.dp,
-      unlikedColor = onSurfaceColor.copy(alpha = 0.7f)
+      iconSize = 24.dp,
+      unlikedColor = onSurfaceColor
     )
   }
 }
