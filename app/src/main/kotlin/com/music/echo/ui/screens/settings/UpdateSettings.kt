@@ -121,7 +121,7 @@ fun UpdateSettings(
           Material3SettingsItem(
             isHighlighted = (highlightKey == stringResource(R.string.system_update)),
             icon = painterResource(R.drawable.update),
-            title = { Text(stringResource(R.string.system_update)) },
+            title = { Text("Check for updates") },
             description = {
               if (isUpdateAvailable) {
                 Text(
