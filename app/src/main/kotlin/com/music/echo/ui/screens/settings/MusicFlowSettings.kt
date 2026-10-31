@@ -51,31 +51,29 @@ fun MusicFlowSettings(
   fun toggle(
     key: Preferences.Key<Boolean>,
     default: Boolean,
-    icon: Int,
     title: Int,
-    description: Int,
+    description: Int? = null,
   ): Material3SettingsItem {
     val (checked, onCheckedChange) = rememberPreference(key, defaultValue = default)
     return Material3SettingsItem(
-      icon = painterResource(icon),
       title = { Text(stringResource(title)) },
-      description = { Text(stringResource(description)) },
+      description = description?.let { { Text(stringResource(it)) } },
       trailingContent = { StageSwitch(checked = checked, onCheckedChange = onCheckedChange) },
       onClick = { onCheckedChange(!checked) })
   }
 
   val general =
     listOf(
-      toggle(MusicFlowEnabledKey, true, R.drawable.swipe, R.string.music_flow_enable, R.string.music_flow_enable_description),
-      toggle(MusicFlowAutoplayKey, true, R.drawable.play, R.string.music_flow_autoplay, R.string.music_flow_autoplay_description),
-      toggle(MusicFlowAutoNextKey, true, R.drawable.skip_next, R.string.music_flow_auto_next, R.string.music_flow_auto_next_description),
-      toggle(MusicFlowHideRecentKey, true, R.drawable.history, R.string.music_flow_hide_recent, R.string.music_flow_hide_recent_description),
+      toggle(MusicFlowEnabledKey, true, R.string.music_flow_enable, R.string.stage_music_flow_enable_description),
+      toggle(MusicFlowAutoplayKey, true, R.string.music_flow_autoplay),
+      toggle(MusicFlowAutoNextKey, true, R.string.music_flow_auto_next),
+      toggle(MusicFlowHideRecentKey, true, R.string.music_flow_hide_recent),
     )
   val visuals =
     listOf(
-      toggle(MusicFlowAnimatedBackgroundKey, inheritedCanvas, R.drawable.graphic_eq, R.string.music_flow_animated_background, R.string.music_flow_animated_background_description),
-      toggle(MusicFlowLyricsKey, true, R.drawable.lyrics, R.string.music_flow_lyrics, R.string.music_flow_lyrics_description),
-      toggle(MusicFlowCellularPrefetchKey, true, R.drawable.music_note, R.string.music_flow_cellular_prefetch, R.string.music_flow_cellular_prefetch_description),
+      toggle(MusicFlowAnimatedBackgroundKey, inheritedCanvas, R.string.music_flow_animated_background),
+      toggle(MusicFlowLyricsKey, true, R.string.music_flow_lyrics),
+      toggle(MusicFlowCellularPrefetchKey, true, R.string.music_flow_cellular_prefetch),
     )
 
   Column(
@@ -86,8 +84,7 @@ fun MusicFlowSettings(
     Spacer(Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Top)))
     Spacer(modifier = Modifier.height(12.dp))
 
-    Material3SettingsGroup(scrollState = scrollState, title = stringResource(R.string.music_flow), items = general)
-    Spacer(modifier = Modifier.height(12.dp))
+    Material3SettingsGroup(scrollState = scrollState, items = general)
 
     Material3SettingsGroup(scrollState = scrollState, title = stringResource(R.string.appearance), items = visuals)
     Spacer(modifier = Modifier.height(16.dp))

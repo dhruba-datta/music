@@ -202,6 +202,8 @@ fun LyricsMenu(
       },
     ) {
       OutlinedTextField(
+        colors = echo.music.iad1tya.ui.component.stageFieldColors(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
         value = titleField,
         onValueChange = onTitleFieldChange,
         singleLine = true,
@@ -211,6 +213,8 @@ fun LyricsMenu(
       Spacer(Modifier.height(12.dp))
 
       OutlinedTextField(
+        colors = echo.music.iad1tya.ui.component.stageFieldColors(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
         value = artistField,
         onValueChange = onArtistFieldChange,
         singleLine = true,

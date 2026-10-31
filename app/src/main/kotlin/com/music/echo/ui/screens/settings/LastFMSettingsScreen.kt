@@ -133,6 +133,8 @@ fun LastFMSettingsScreen(navController: NavController) {
           verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
           OutlinedTextField(
+        colors = echo.music.iad1tya.ui.component.stageFieldColors(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
             value = tempUsername,
             onValueChange = {
               tempUsername = it
@@ -143,6 +145,8 @@ fun LastFMSettingsScreen(navController: NavController) {
             enabled = !isLoggingIn,
           )
           OutlinedTextField(
+        colors = echo.music.iad1tya.ui.component.stageFieldColors(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
             value = tempPassword,
             onValueChange = {
               tempPassword = it
@@ -308,7 +312,7 @@ fun LastFMSettingsScreen(navController: NavController) {
               },
               trailingContent = {
                 if (isLoggedIn) {
-                  OutlinedButton(
+                  echo.music.iad1tya.ui.component.StageChip(
                     onClick = {
                       lastfmSession = ""
                       lastfmUsername = ""
@@ -317,7 +321,7 @@ fun LastFMSettingsScreen(navController: NavController) {
                     Text(stringResource(R.string.action_logout))
                   }
                 } else {
-                  OutlinedButton(onClick = { showLoginDialog = true }) {
+                  echo.music.iad1tya.ui.component.StageChip(onClick = { showLoginDialog = true }) {
                     Text(stringResource(R.string.action_login))
                   }
                 }

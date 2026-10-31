@@ -591,7 +591,7 @@
     <string name="ai_auto_translate">Auto Translate</string>
     <string name="ai_auto_translate_desc">Automatically translate lyrics when available</string>
     <string name="lyrics_translation_menu">Lyrics Translation</string>
-    <string name="ai_recommendations">AI Recommendations</string>
+    <string name="ai_recommendations">AI recommendations</string>
     <string name="ai_recommendations_desc">Daily update of a custom playlist based on your taste</string>
     <string name="ai_recommendations_refresh">Refresh Recommendations</string>
     <string name="about_desc">Manage About settings</string>
@@ -997,4 +997,10 @@
     <string name="stage_tempo">Tempo</string>
     <string name="stage_pitch">Pitch</string>
     <string name="stage_stop_after">Stop after</string>
+    <string name="stage_guest">Guest</string>
+    <string name="stage_exports">Exports</string>
+    <string name="stage_recommendations">Recommendations</string>
+    <string name="stage_music_flow_enable_description">Adds a shortcut to Home</string>
+    <string name="stage_in_the_room">In the room</string>
+    <string name="stage_your_room">Your room</string>
 </resources>

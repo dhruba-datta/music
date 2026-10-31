@@ -122,7 +122,7 @@ fun ThemeScreen(navController: NavController, highlightKey: String? = null) {
       verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
       item {
-        StageSettingsHeading(text = stringResource(R.string.theme_mode))
+        StageSettingsHeading(text = "Theme mode")
 
         Column(
           verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -186,7 +186,7 @@ fun ThemeScreen(navController: NavController, highlightKey: String? = null) {
       }
 
       item {
-        StageSettingsHeading(text = stringResource(R.string.color_palette))
+        StageSettingsHeading(text = "Colors")
 
         Card(
           modifier = Modifier.fillMaxWidth(),

@@ -522,10 +522,14 @@ private fun ThumbnailHeader(
     listenTogetherManager?.guestPlaybackRestricted?.collectAsState(initial = false)
       ?: remember { mutableStateOf(false) }
   val roleStyle =
-    if (stage) MaterialTheme.typography.labelMedium else MaterialTheme.typography.titleMedium
+    if (stage) {
+      MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+    } else {
+      MaterialTheme.typography.titleMedium
+    }
   val sourceStyle =
     if (stage) {
-      MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+      MaterialTheme.typography.titleSmall.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold)
     } else {
       MaterialTheme.typography.titleMedium
     }
@@ -553,7 +557,7 @@ private fun ThumbnailHeader(
         Text(
           text = stringResource(R.string.now_playing),
           style = roleStyle,
-          color = textColor
+          color = if (stage) textColor.copy(alpha = StageMutedAlpha) else textColor
         )
       }
       val playingFrom = albumTitle ?: queueTitle
@@ -569,7 +573,7 @@ private fun ThumbnailHeader(
           Text(
             text = text,
             style = sourceStyle,
-            color = textColor.copy(alpha = 0.8f),
+            color = if (stage) textColor else textColor.copy(alpha = 0.8f),
             maxLines = 1,
             modifier = Modifier.basicMarquee()
           )

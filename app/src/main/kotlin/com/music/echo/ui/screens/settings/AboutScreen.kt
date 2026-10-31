@@ -41,6 +41,11 @@ import androidx.navigation.NavController
 import echo.music.iad1tya.BuildConfig
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.R
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.unit.sp
 import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.Material3SettingsGroup
 import echo.music.iad1tya.ui.component.Material3SettingsItem
@@ -122,9 +127,9 @@ fun AboutScreen(
           ),
       contentPadding =
         PaddingValues(
-          start = 16.dp,
-          top = innerPadding.calculateTopPadding() + 8.dp,
-          end = 16.dp,
+          start = 18.dp,
+          top = innerPadding.calculateTopPadding(),
+          end = 18.dp,
           bottom =
             androidx.compose.foundation.layout.WindowInsets.systemBars
               .asPaddingValues()
@@ -134,101 +139,78 @@ fun AboutScreen(
     ) {
       item { AboutAppCard() }
 
-      if (contributors.isNotEmpty()) {
-        item {
-          Column(modifier = Modifier.fillMaxWidth()) {
-            echo.music.iad1tya.ui.component.PreferenceGroupTitle(title = "Contributors")
-            Row(
-              modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-              horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-              contributors.forEach { contributor ->
-                coil3.compose.AsyncImage(
-                  model = contributor.avatarUrl,
-                  contentDescription = contributor.login,
-                  modifier =
-                    Modifier.size(48.dp).clip(CircleShape).clickable {
-                      uriHandler.openUri(contributor.htmlUrl)
-                    },
-                  contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                )
+      item {
+        Column(
+          modifier =
+            Modifier.fillMaxWidth()
+              .clip(RoundedCornerShape(18.dp))
+              .background(MaterialTheme.colorScheme.surfaceContainer)
+        ) {
+          if (contributors.isNotEmpty()) {
+            AboutExpandableRow(title = "Contributors") {
+              Row(
+                modifier =
+                  Modifier.fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(start = 14.dp, end = 14.dp, top = 4.dp, bottom = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+              ) {
+                contributors.forEach { contributor ->
+                  coil3.compose.AsyncImage(
+                    model = contributor.avatarUrl,
+                    contentDescription = contributor.login,
+                    modifier =
+                      Modifier.size(48.dp).clip(CircleShape).clickable {
+                        uriHandler.openUri(contributor.htmlUrl)
+                      },
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                  )
+                }
               }
             }
           }
+
+          AboutExpandableRow(title = "Developer", subtitle = "Website, Instagram, X (Twitter)") {
+            AboutLinkRow(painterResource(R.drawable.website), "Website", "iad1tya.cyou") {
+              uriHandler.openUri("https://iad1tya.cyou")
+            }
+            AboutLinkRow(painterResource(R.drawable.ic_instagram_new), "Instagram", "@iad1tya") {
+              uriHandler.openUri("https://instagram.com/iad1tya")
+            }
+            AboutLinkRow(painterResource(R.drawable.ic_x_new), "X (Twitter)", "@xad1tya") {
+              uriHandler.openUri("https://x.com/xad1tya")
+            }
+          }
+
+          AboutExpandableRow(title = "Support", subtitle = "Buy Me a Coffee, Patreon, UPI") {
+            AboutLinkRow(painterResource(R.drawable.coffee), "Buy Me a Coffee", "buymeacoffee.com/iad1tya") {
+              uriHandler.openUri("https://buymeacoffee.com/iad1tya")
+            }
+            AboutLinkRow(painterResource(R.drawable.ic_patreon_new), "Patreon", "patreon.com/cw/iad1tya") {
+              uriHandler.openUri("https://www.patreon.com/cw/iad1tya")
+            }
+            AboutLinkRow(painterResource(R.drawable.upi_new), "UPI", "iad1tya@upi") {
+              uriHandler.openUri(
+                "https://intradeus.github.io/http-protocol-redirector/?r=upi://pay?pa=iad1tya@upi&pn=Aditya%20Yadav&am=&tn=Thank%20You%20so%20much%20for%20this%20support"
+              )
+            }
+          }
+
+          AboutExpandableRow(title = "Community", subtitle = "Discord") {
+            AboutLinkRow(painterResource(R.drawable.ic_discord_new), "Discord", "discord.gg/Xt5hgsJJuA") {
+              uriHandler.openUri("https://discord.gg/Xt5hgsJJuA")
+            }
+          }
+
+          AboutExpandableRow(title = "App", subtitle = "GitHub, Telegram") {
+            AboutLinkRow(painterResource(R.drawable.github), "GitHub", "EchoMusicApp/Echo-Music") {
+              uriHandler.openUri("https://github.com/EchoMusicApp/Echo-Music")
+            }
+            AboutLinkRow(painterResource(R.drawable.ic_telegram_new), "Telegram", "t.me/EchoMusicApp") {
+              uriHandler.openUri("https://t.me/EchoMusicApp")
+            }
+          }
         }
-      }
-
-      item {
-        Material3SettingsGroup(
-          title = "Developer",
-          items =
-            listOf(
-              Material3SettingsItem(
-                icon = painterResource(R.drawable.website),
-                title = { Text("Website") },
-                description = { Text("iad1tya.cyou") },
-                onClick = { uriHandler.openUri("https://iad1tya.cyou") }
-              ),
-              Material3SettingsItem(
-                icon = painterResource(R.drawable.ic_instagram_new),
-                title = { Text("Instagram") },
-                description = { Text("@iad1tya") },
-                onClick = { uriHandler.openUri("https://instagram.com/iad1tya") }
-              ),
-              Material3SettingsItem(
-                icon = painterResource(R.drawable.ic_x_new),
-                title = { Text("X (Twitter)") },
-                description = { Text("@xad1tya") },
-                onClick = { uriHandler.openUri("https://x.com/xad1tya") }
-              )
-            )
-        )
-      }
-
-      item {
-        Material3SettingsGroup(
-          title = "Support",
-          items =
-            listOf(
-              Material3SettingsItem(
-                icon = painterResource(R.drawable.coffee),
-                title = { Text("Buy Me a Coffee") },
-                description = { Text("buymeacoffee.com/iad1tya") },
-                onClick = { uriHandler.openUri("https://buymeacoffee.com/iad1tya") }
-              ),
-              Material3SettingsItem(
-                icon = painterResource(R.drawable.ic_patreon_new),
-                title = { Text("Patreon") },
-                description = { Text("patreon.com/cw/iad1tya") },
-                onClick = { uriHandler.openUri("https://www.patreon.com/cw/iad1tya") }
-              ),
-              Material3SettingsItem(
-                icon = painterResource(R.drawable.upi_new),
-                title = { Text("UPI") },
-                description = { Text("iad1tya@upi") },
-                onClick = {
-                  uriHandler.openUri(
-                    "https://intradeus.github.io/http-protocol-redirector/?r=upi://pay?pa=iad1tya@upi&pn=Aditya%20Yadav&am=&tn=Thank%20You%20so%20much%20for%20this%20support"
-                  )
-                }
-              )
-            )
-        )
-      }
-
-      item {
-        Material3SettingsGroup(
-          title = "Community",
-          items =
-            listOf(
-              Material3SettingsItem(
-                icon = painterResource(R.drawable.ic_discord_new),
-                title = { Text("Discord") },
-                description = { Text("discord.gg/Xt5hgsJJuA") },
-                onClick = { uriHandler.openUri("https://discord.gg/Xt5hgsJJuA") }
-              )
-            )
-        )
       }
 
       /* item {
@@ -260,15 +242,96 @@ fun AboutScreen(
   }
 }
 
+/** A row that opens to show the links it stands for. */
+@Composable
+private fun AboutExpandableRow(
+  title: String,
+  subtitle: String? = null,
+  content: @Composable () -> Unit,
+) {
+  var expanded by remember { mutableStateOf(false) }
+  Row(
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(13.dp),
+    modifier =
+      Modifier.fillMaxWidth()
+        .clickable { expanded = !expanded }
+        .heightIn(min = 54.dp)
+        .padding(horizontal = 14.dp, vertical = 6.dp),
+  ) {
+    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+      Text(
+        text = title,
+        fontSize = 16.sp,
+        lineHeight = 20.sp,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSurface,
+      )
+      subtitle?.let {
+        Text(
+          text = it,
+          fontSize = 13.sp,
+          lineHeight = 17.sp,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+    }
+    Icon(
+      painter = painterResource(if (expanded) R.drawable.expand_less else R.drawable.navigate_next),
+      contentDescription = null,
+      tint = MaterialTheme.colorScheme.onSurfaceVariant,
+      modifier = Modifier.size(18.dp),
+    )
+  }
+  AnimatedVisibility(visible = expanded) { Column { content() } }
+}
+
+@Composable
+private fun AboutLinkRow(
+  icon: Painter,
+  title: String,
+  subtitle: String,
+  onClick: () -> Unit,
+) {
+  Row(
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(13.dp),
+    modifier =
+      Modifier.fillMaxWidth()
+        .clickable(onClick = onClick)
+        .heightIn(min = 54.dp)
+        .padding(horizontal = 14.dp, vertical = 6.dp),
+  ) {
+    Icon(
+      painter = icon,
+      contentDescription = null,
+      tint = MaterialTheme.colorScheme.onSurface,
+      modifier = Modifier.size(22.dp),
+    )
+    Column(modifier = Modifier.weight(1f)) {
+      Text(
+        text = title,
+        fontSize = 15.sp,
+        lineHeight = 19.sp,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSurface,
+      )
+      Text(
+        text = subtitle,
+        fontSize = 13.sp,
+        lineHeight = 17.sp,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
+  }
+}
+
 @Composable
 private fun AboutAppCard() {
   Column(
-    modifier = Modifier.fillMaxWidth().padding(vertical = 28.dp, horizontal = 20.dp),
+    modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 18.dp, end = 16.dp),
     horizontalAlignment = Alignment.CenterHorizontally,
-    verticalArrangement = Arrangement.spacedBy(8.dp),
   ) {
-    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
-
     var isEasterEggActive by remember { mutableStateOf(false) }
     val rotation by
       animateFloatAsState(
@@ -301,6 +364,7 @@ private fun AboutAppCard() {
             cameraDistance = 12f * density
           }
           .clip(CircleShape)
+          .background(Color.White)
           .clickable(
             interactionSource = interactionSource,
             indication = null,
@@ -312,8 +376,8 @@ private fun AboutAppCard() {
         Image(
           painter = painterResource(R.drawable.ic_launcher_nobg),
           contentDescription = null,
-          colorFilter = ColorFilter.tint(if (isDark) Color.White else Color(0xFFEA3829)),
-          modifier = Modifier.fillMaxSize()
+          colorFilter = ColorFilter.tint(Color(0xFF111111)),
+          modifier = Modifier.fillMaxSize(0.62f)
         )
       } else {
         coil3.compose.AsyncImage(
@@ -326,57 +390,26 @@ private fun AboutAppCard() {
       }
     }
 
-    Spacer(Modifier.height(4.dp))
+    Spacer(Modifier.height(16.dp))
 
     Text(
-      text = if (rotation <= 90f) "Echo Music" else "Developed by Aditya",
-      style = MaterialTheme.typography.titleLarge,
-      fontWeight = FontWeight.Bold,
+      text = if (rotation <= 90f) "Music" else "Developed by Aditya",
+      fontSize = 23.sp,
+      lineHeight = 29.sp,
+      fontWeight = FontWeight.ExtraBold,
       color = MaterialTheme.colorScheme.onSurface,
     )
-    Row(
-      horizontalArrangement = Arrangement.spacedBy(6.dp),
-      verticalAlignment = Alignment.CenterVertically,
-    ) {
-      Surface(
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
-      ) {
-        Text(
-          text = BuildConfig.VERSION_NAME,
-          style = MaterialTheme.typography.labelSmall,
-          color = MaterialTheme.colorScheme.primary,
-          fontWeight = FontWeight.Medium,
-          modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-        )
-      }
-      if (BuildConfig.DEBUG) {
-        Surface(
-          shape = RoundedCornerShape(8.dp),
-          color = MaterialTheme.colorScheme.error.copy(alpha = 0.10f),
-        ) {
-          Text(
-            text = "DEBUG",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.error,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-          )
-        }
-      } else {
-        Surface(
-          shape = RoundedCornerShape(8.dp),
-          color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f),
-        ) {
-          Text(
-            text = BuildConfig.ARCHITECTURE.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.secondary,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-          )
-        }
-      }
-    }
+    Spacer(Modifier.height(6.dp))
+    Text(
+      text =
+        buildString {
+          append("Version ${BuildConfig.VERSION_NAME}")
+          if (BuildConfig.DEBUG) append(" · DEBUG")
+        },
+      fontSize = 15.sp,
+      lineHeight = 21.sp,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(Modifier.height(10.dp))
   }
 }

@@ -529,12 +529,11 @@ fun AiSettings(
     )
 
 
-    Material3SettingsGroup(
+        Material3SettingsGroup(
       scrollState = scrollState,
-      title = stringResource(R.string.ai_provider),
       items =
-        listOf(
-            Material3SettingsItem(
+        buildList {
+          add(Material3SettingsItem(
               isHighlighted = (highlightKey == stringResource(R.string.ai_provider)),
               icon = painterResource(R.drawable.explore_outlined),
               title = { Text(stringResource(R.string.ai_provider)) },
@@ -549,9 +548,9 @@ fun AiSettings(
                   )
                 }
               }
-            ),
-            if (aiProvider == "Custom") {
-              Material3SettingsItem(
+            ))
+          if (aiProvider == "Custom") {
+              add(Material3SettingsItem(
                 isHighlighted = (highlightKey == stringResource(R.string.ai_base_url)),
                 icon = painterResource(R.drawable.link),
                 title = { Text(stringResource(R.string.ai_base_url)) },
@@ -559,20 +558,8 @@ fun AiSettings(
                   Text(openRouterBaseUrl.ifBlank { stringResource(R.string.not_set) })
                 },
                 onClick = { showBaseUrlDialog = true }
-              )
-            } else {
-              null
+              ))
             }
-          )
-          .filterNotNull()
-    )
-
-
-    Material3SettingsGroup(
-      scrollState = scrollState,
-      title = stringResource(R.string.ai_setup_guide),
-      items =
-        buildList {
           if (aiProvider == "DeepL") {
             add(
               Material3SettingsItem(
@@ -677,6 +664,22 @@ fun AiSettings(
               )
             }
           }
+          add(
+            Material3SettingsItem(
+              isHighlighted = (highlightKey == stringResource(R.string.ai_target_language)),
+              icon = painterResource(R.drawable.language),
+              title = { Text(stringResource(R.string.ai_target_language)) },
+              value = { Text(LanguageCodeToName[translateLanguage] ?: translateLanguage) },
+              onClick = { showLanguageDialog = true }
+            )
+          )
+          add(
+            Material3SettingsItem(
+              title = { Text(stringResource(R.string.ai_translation_mode)) },
+              value = { Text(translateMode) },
+              onClick = { showTranslateModeDialog = true }
+            )
+          )
           add(
             Material3SettingsItem(
               icon = painterResource(R.drawable.network_node),
@@ -786,26 +789,9 @@ fun AiSettings(
     )
 
 
-    Material3SettingsGroup(
-      scrollState = scrollState,
-      title = stringResource(R.string.ai_translation_mode),
-      items =
-        buildList {
-          add(
-            Material3SettingsItem(
-              isHighlighted = (highlightKey == stringResource(R.string.ai_target_language)),
-              icon = painterResource(R.drawable.language),
-              title = { Text(stringResource(R.string.ai_target_language)) },
-              value = { Text(LanguageCodeToName[translateLanguage] ?: translateLanguage) },
-              onClick = { showLanguageDialog = true }
-            )
-          )
-        }
-    )
-
 
     Material3SettingsGroup(
-      title = stringResource(R.string.ai_recommendations),
+      title = stringResource(R.string.stage_recommendations),
       items =
         buildList {
           add(
@@ -815,7 +801,6 @@ fun AiSettings(
               tintIcon = false,
               iconShape = androidx.compose.foundation.shape.CircleShape,
               title = { Text(stringResource(R.string.ai_recommendations)) },
-              description = { Text(stringResource(R.string.ai_recommendations_desc)) },
               trailingContent = {
                 StageSwitch(checked = aiRecommendations, onCheckedChange = { aiRecommendations = it })
               },

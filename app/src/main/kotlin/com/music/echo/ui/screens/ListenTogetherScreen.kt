@@ -1,7 +1,17 @@
 package echo.music.iad1tya.ui.screens
 
-import echo.music.iad1tya.ui.component.StagePillButton
+import echo.music.iad1tya.ui.component.LocalMenuState
+import echo.music.iad1tya.ui.component.StageButton
+import echo.music.iad1tya.ui.component.StageRoomHero
+import echo.music.iad1tya.ui.component.StageRoomCopyButtons
+import echo.music.iad1tya.ui.component.StageRoomJoinForm
+import echo.music.iad1tya.ui.component.StageRoomManageRows
+import echo.music.iad1tya.ui.component.StageRoomRequestRow
+import echo.music.iad1tya.ui.component.StageRoomSuggestionRow
+import echo.music.iad1tya.ui.component.StageRoomUserRow
+import echo.music.iad1tya.ui.component.StageSheetTitle
 import echo.music.iad1tya.ui.component.StageSwitch
+import echo.music.iad1tya.ui.component.stageLabel
 import echo.music.iad1tya.ui.component.StageTopBar
 import android.content.Context
 import android.widget.Toast
@@ -35,6 +45,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
@@ -130,10 +141,7 @@ fun ListenTogetherScreen(navController: NavController, showTopBar: Boolean = fal
   var isJoiningRoom by rememberSaveable { mutableStateOf(false) }
   var joinErrorMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
-  var selectedUserForMenu by rememberSaveable { mutableStateOf<String?>(null) }
-  var selectedUsername by rememberSaveable { mutableStateOf<String?>(null) }
-
-  val waitingForApprovalText = stringResource(R.string.waiting_for_approval)
+  val menuState = LocalMenuState.current
   val invalidRoomCodeText = stringResource(R.string.invalid_room_code)
   val joinRequestDeniedText = stringResource(R.string.join_request_denied)
 
@@ -181,36 +189,6 @@ fun ListenTogetherScreen(navController: NavController, showTopBar: Boolean = fal
   val isInRoom = listenTogetherManager.isInRoom
   val isHost = roomState?.hostId == userId
 
-  if (selectedUserForMenu != null && selectedUsername != null) {
-    UserActionDialog(
-      username = selectedUsername ?: "",
-      onKick = {
-        selectedUserForMenu?.let { listenTogetherManager.kickUser(it, "Removed by host") }
-        selectedUserForMenu = null
-        selectedUsername = null
-      },
-      onPermanentKick = {
-        selectedUserForMenu?.let { userId ->
-          selectedUsername?.let { username ->
-            listenTogetherManager.blockUser(username)
-            listenTogetherManager.kickUser(userId, R.string.user_blocked_by_host.toString())
-          }
-        }
-        selectedUserForMenu = null
-        selectedUsername = null
-      },
-      onTransferOwnership = {
-        selectedUserForMenu?.let { listenTogetherManager.transferHost(it) }
-        selectedUserForMenu = null
-        selectedUsername = null
-      },
-      onDismiss = {
-        selectedUserForMenu = null
-        selectedUsername = null
-      }
-    )
-  }
-
   val lazyListState = rememberLazyListState()
   val coroutineScope = rememberCoroutineScope()
   val bringIntoViewRequester = remember { BringIntoViewRequester() }
@@ -231,12 +209,12 @@ fun ListenTogetherScreen(navController: NavController, showTopBar: Boolean = fal
     modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).imePadding(),
     contentPadding =
       PaddingValues(
-        start = 16.dp,
-        end = 16.dp,
-        top = windowInsets.asPaddingValues().calculateTopPadding() + 16.dp,
+        start = 18.dp,
+        end = 18.dp,
+        top = windowInsets.asPaddingValues().calculateTopPadding() + 4.dp,
         bottom = windowInsets.asPaddingValues().calculateBottomPadding() + 16.dp + AppBarHeight
       ),
-    verticalArrangement = Arrangement.spacedBy(16.dp)
+    verticalArrangement = Arrangement.spacedBy(12.dp)
   ) {
     if (connectionState == ConnectionState.CONNECTED && !isInRoom) {
       item {
@@ -254,69 +232,100 @@ fun ListenTogetherScreen(navController: NavController, showTopBar: Boolean = fal
 
       roomState?.let { room ->
         item {
-          RoomStatusCard(
-            roomCode = room.roomCode,
-            isHost = isHost,
-            allowParticipantControl = room.allowParticipantControl,
-            onAllowParticipantControlChange = { enabled ->
-              listenTogetherManager.updateRoomSettings(enabled)
-            },
-            context = context,
-            navController = navController
-          )
+          val status =
+            if (isHost) {
+              "${stringResource(R.string.stage_your_room)} · ${connectionState.stageLabel()}"
+            } else if (room.allowParticipantControl) {
+              stringResource(R.string.listen_together_participant_control_enabled)
+            } else {
+              stringResource(R.string.listen_together_you_are_guest)
+            }
+          StageRoomHero(roomCode = room.roomCode, label = status)
+        }
+
+        if (isHost) {
+          item { StageRoomCopyButtons(roomCode = room.roomCode) }
+          item {
+            ParticipantControlCard(
+              allowParticipantControl = room.allowParticipantControl,
+              onAllowParticipantControlChange = { enabled ->
+                listenTogetherManager.updateRoomSettings(enabled)
+              }
+            )
+          }
         }
 
         val connectedUsers = room.users.filter { it.isConnected }
         val currentUserIdValue = userId ?: ""
-        item {
-          ConnectedUsersSection(
-            users = connectedUsers,
-            isHost = isHost,
-            currentUserId = currentUserIdValue,
-            onUserClick = { clickedUserId, username ->
-              if (isHost && clickedUserId != currentUserIdValue) {
-                selectedUserForMenu = clickedUserId
-                selectedUsername = username
+        item { StageRoomHeading(stringResource(R.string.stage_in_the_room)) }
+        items(connectedUsers, key = { it.userId }) { user ->
+          val canManage = isHost && user.userId != currentUserIdValue
+          StageRoomUserRow(
+            user = user,
+            isCurrentUser = user.userId == currentUserIdValue,
+            enabled = canManage,
+            onClick = {
+              menuState.show {
+                StageSheetTitle(title = user.username)
+                StageRoomManageRows(
+                  onKick = {
+                    listenTogetherManager.kickUser(user.userId, "Removed by host")
+                    menuState.dismiss()
+                  },
+                  onBlock = {
+                    listenTogetherManager.blockUser(user.username)
+                    listenTogetherManager.kickUser(
+                      user.userId,
+                      R.string.user_blocked_by_host.toString()
+                    )
+                    menuState.dismiss()
+                  },
+                  onTransfer = {
+                    listenTogetherManager.transferHost(user.userId)
+                    menuState.dismiss()
+                  },
+                  modifier = Modifier.padding(start = 18.dp, top = 4.dp, end = 18.dp, bottom = 18.dp),
+                )
               }
-            }
+            },
+            modifier = Modifier.padding(horizontal = 4.dp),
           )
         }
 
         if (isHost && pendingJoinRequests.isNotEmpty()) {
-          item {
-            PendingJoinRequestsSection(
-              requests = pendingJoinRequests,
-              onApprove = { listenTogetherManager.approveJoin(it) },
-              onReject = { listenTogetherManager.rejectJoin(it, "Rejected by host") }
+          item { StageRoomHeading(stringResource(R.string.listen_together_join_requests)) }
+          items(pendingJoinRequests, key = { it.userId }) { request ->
+            StageRoomRequestRow(
+              username = request.username,
+              onApprove = { listenTogetherManager.approveJoin(request.userId) },
+              onReject = { listenTogetherManager.rejectJoin(request.userId, "Rejected by host") },
+              modifier = Modifier.padding(horizontal = 4.dp),
             )
           }
         }
 
         if (isHost && pendingSuggestions.isNotEmpty()) {
-          item {
-            PendingSuggestionsSection(
-              suggestions = pendingSuggestions,
-              onApprove = { listenTogetherManager.approveSuggestion(it) },
-              onReject = { listenTogetherManager.rejectSuggestion(it, "Rejected by host") }
+          item { StageRoomHeading(stringResource(R.string.pending_suggestions)) }
+          items(pendingSuggestions, key = { it.suggestionId }) { suggestion ->
+            StageRoomSuggestionRow(
+              title = suggestion.trackInfo.title,
+              fromUsername = suggestion.fromUsername,
+              onApprove = { listenTogetherManager.approveSuggestion(suggestion.suggestionId) },
+              onReject = {
+                listenTogetherManager.rejectSuggestion(suggestion.suggestionId, "Rejected by host")
+              },
+              modifier = Modifier.padding(horizontal = 4.dp),
             )
           }
         }
 
         item {
-          Button(
+          StageButton(
+            text = stringResource(R.string.leave_room),
+            primary = false,
             onClick = { listenTogetherManager.leaveRoom() },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-            shape = RoundedCornerShape(25.dp)
-          ) {
-            Icon(
-              painter = painterResource(R.drawable.logout),
-              contentDescription = null,
-              modifier = Modifier.size(20.dp)
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(stringResource(R.string.leave_room), fontWeight = FontWeight.SemiBold)
-          }
+            modifier = Modifier.padding(vertical = 8.dp),
+          )
         }
       }
     } else {
@@ -331,7 +340,6 @@ fun ListenTogetherScreen(navController: NavController, showTopBar: Boolean = fal
           isJoiningRoom = isJoiningRoom,
           isCreatingRoom = isCreatingRoom,
           joinErrorMessage = joinErrorMessage,
-          waitingForApprovalText = waitingForApprovalText,
           bringIntoViewRequester = bringIntoViewRequester,
           onCreateRoom = {
             val username = usernameInput.takeIf { it.isNotBlank() } ?: savedUsername
@@ -395,21 +403,12 @@ fun ListenTogetherScreen(navController: NavController, showTopBar: Boolean = fal
       }
     }
 
-    if (isInRoom && isHost) {
+    if (!shouldShowTopBar) {
       item {
-        ParticipantControlCard(
-          allowParticipantControl = roomState?.allowParticipantControl == true,
-          onAllowParticipantControlChange = { enabled ->
-            listenTogetherManager.updateRoomSettings(enabled)
-          }
+        SettingsLinkCard(
+          onClick = { navController.navigate("settings/integrations/listen_together") }
         )
       }
-    }
-
-    item {
-      SettingsLinkCard(
-        onClick = { navController.navigate("settings/integrations/listen_together") }
-      )
     }
 
     if (!isInRoom) {
@@ -461,6 +460,15 @@ fun ListenTogetherScreen(navController: NavController, showTopBar: Boolean = fal
         }
       },
       actions = {
+        IconButton(
+          onClick = { navController.navigate("settings/integrations/listen_together") },
+          onLongClick = {},
+        ) {
+          Icon(
+            painterResource(R.drawable.settings),
+            contentDescription = stringResource(R.string.settings)
+          )
+        }
         if (
           connectionState == ConnectionState.DISCONNECTED ||
             connectionState == ConnectionState.ERROR
@@ -530,488 +538,17 @@ private fun NotConfiguredContent() {
   }
 }
 
+/** A section title in the room, 19sp ExtraBold on the page's 22dp edge. */
 @Composable
-private fun ConnectionStatusCard(
-  connectionState: ConnectionState,
-  onConnect: () -> Unit,
-  onDisconnect: () -> Unit,
-  onReconnect: () -> Unit
-) {
-  Card(
-    modifier =
-      Modifier.fillMaxWidth()
-        .animateContentSize(
-          animationSpec =
-            spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
-        ),
-    shape = RoundedCornerShape(18.dp),
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-  ) {
-    Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-        modifier = Modifier.fillMaxWidth()
-      ) {
-        Box(
-          modifier =
-            Modifier.size(10.dp)
-              .clip(CircleShape)
-              .background(
-                color =
-                  when (connectionState) {
-                    ConnectionState.CONNECTED -> MaterialTheme.colorScheme.onSurface
-                    ConnectionState.CONNECTING,
-                    ConnectionState.RECONNECTING -> MaterialTheme.colorScheme.tertiary
-                    ConnectionState.ERROR -> MaterialTheme.colorScheme.error
-                    ConnectionState.DISCONNECTED -> MaterialTheme.colorScheme.outline
-                  }
-              )
-        )
-        Spacer(modifier = Modifier.width(10.dp))
-        Text(
-          text =
-            when (connectionState) {
-              ConnectionState.CONNECTED -> stringResource(R.string.listen_together_connected)
-              ConnectionState.CONNECTING -> stringResource(R.string.listen_together_connecting)
-              ConnectionState.RECONNECTING -> stringResource(R.string.listen_together_reconnecting)
-              ConnectionState.ERROR -> stringResource(R.string.listen_together_error)
-              ConnectionState.DISCONNECTED -> stringResource(R.string.listen_together_disconnected)
-            },
-          style = MaterialTheme.typography.titleMedium,
-          fontWeight = FontWeight.ExtraBold,
-          color =
-            when (connectionState) {
-              ConnectionState.CONNECTED -> MaterialTheme.colorScheme.onSurface
-              ConnectionState.CONNECTING,
-              ConnectionState.RECONNECTING -> MaterialTheme.colorScheme.tertiary
-              ConnectionState.ERROR -> MaterialTheme.colorScheme.error
-              ConnectionState.DISCONNECTED -> MaterialTheme.colorScheme.onSurfaceVariant
-            }
-        )
-      }
-
-      if (
-        connectionState == ConnectionState.CONNECTING ||
-          connectionState == ConnectionState.RECONNECTING
-      ) {
-        Spacer(modifier = Modifier.height(12.dp))
-        LinearProgressIndicator(
-          modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)),
-          color = MaterialTheme.colorScheme.onSurface
-        )
-      }
-
-      Spacer(modifier = Modifier.height(12.dp))
-
-      Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-        if (
-          connectionState == ConnectionState.DISCONNECTED ||
-            connectionState == ConnectionState.ERROR
-        ) {
-          Button(
-            onClick = onConnect,
-            modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(25.dp),
-            colors =
-              ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onSurface)
-          ) {
-            Icon(
-              painter = painterResource(R.drawable.link),
-              contentDescription = null,
-              modifier = Modifier.size(18.dp)
-            )
-            Spacer(Modifier.width(6.dp))
-            Text(stringResource(R.string.connect), fontWeight = FontWeight.SemiBold)
-          }
-        } else {
-          Button(
-            onClick = onDisconnect,
-            modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(25.dp),
-            colors =
-              ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onSurface)
-          ) {
-            Text(stringResource(R.string.disconnect), fontWeight = FontWeight.SemiBold)
-          }
-          FilledTonalButton(
-            onClick = onReconnect,
-            modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(25.dp)
-          ) {
-            Text("Reconnect", fontWeight = FontWeight.SemiBold)
-          }
-        }
-      }
-    }
-  }
-}
-
-@Composable
-private fun RoomStatusCard(
-  roomCode: String,
-  isHost: Boolean,
-  allowParticipantControl: Boolean,
-  onAllowParticipantControlChange: (Boolean) -> Unit,
-  context: Context,
-  navController: NavController
-) {
-  Card(
-    modifier = Modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(18.dp),
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-  ) {
-    Column(
-      modifier = Modifier.fillMaxWidth().padding(24.dp),
-      horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-      Text(
-        text = stringResource(R.string.room_code),
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = TextAlign.Center
-      )
-      Spacer(modifier = Modifier.height(8.dp))
-      Text(
-        text = roomCode,
-        style = MaterialTheme.typography.displaySmall,
-        color = MaterialTheme.colorScheme.onSurface,
-        fontWeight = FontWeight.Bold,
-        letterSpacing = 6.sp,
-        textAlign = TextAlign.Center
-      )
-      Spacer(modifier = Modifier.height(4.dp))
-      Text(
-        text =
-          if (isHost) stringResource(R.string.listen_together_you_are_host)
-          else if (allowParticipantControl)
-            stringResource(R.string.listen_together_participant_control_enabled)
-          else stringResource(R.string.listen_together_you_are_guest),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = TextAlign.Center
-      )
-
-      if (isHost) {
-        Spacer(modifier = Modifier.height(16.dp))
-        val inviteLink =
-          remember(roomCode) { "https://metroserverx.meowery.eu/listen?code=$roomCode" }
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-          modifier = Modifier.fillMaxWidth()
-        ) {
-          FilledTonalButton(
-            onClick = {
-              val clipboard =
-                context.getSystemService(Context.CLIPBOARD_SERVICE)
-                  as android.content.ClipboardManager
-              val clip = android.content.ClipData.newPlainText("Listen Together Link", inviteLink)
-              clipboard.setPrimaryClip(clip)
-              Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
-            },
-            shape = RoundedCornerShape(12.dp)
-          ) {
-            Icon(
-              painter = painterResource(R.drawable.link),
-              contentDescription = stringResource(R.string.copy_link),
-              modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.copy_link))
-          }
-
-          FilledTonalButton(
-            onClick = {
-              val clipboard =
-                context.getSystemService(Context.CLIPBOARD_SERVICE)
-                  as android.content.ClipboardManager
-              val clip = android.content.ClipData.newPlainText("Room Code", roomCode)
-              clipboard.setPrimaryClip(clip)
-              Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
-            },
-            shape = RoundedCornerShape(12.dp)
-          ) {
-            Icon(
-              painter = painterResource(R.drawable.content_copy),
-              contentDescription = stringResource(R.string.copy_code),
-              modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.copy_code))
-          }
-        }
-      }
-    }
-  }
-}
-
-@Composable
-private fun ConnectedUsersSection(
-  users: List<UserInfo>,
-  isHost: Boolean,
-  currentUserId: String,
-  onUserClick: (String, String) -> Unit
-) {
-  Card(
-    modifier = Modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(18.dp),
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-  ) {
-    Column(modifier = Modifier.padding(16.dp)) {
-      Text(
-        text = "${stringResource(R.string.connected_users)} (${users.size})",
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.ExtraBold,
-        color = MaterialTheme.colorScheme.onSurface
-      )
-      Spacer(modifier = Modifier.height(12.dp))
-
-      Row(
-        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
-      ) {
-        users.forEach { user ->
-          UserAvatar(
-            user = user,
-            isCurrentUser = user.userId == currentUserId,
-            isClickable = isHost && user.userId != currentUserId,
-            onClick = { onUserClick(user.userId, user.username) }
-          )
-        }
-      }
-    }
-  }
-}
-
-@Composable
-private fun UserAvatar(
-  user: UserInfo,
-  isCurrentUser: Boolean,
-  isClickable: Boolean,
-  onClick: () -> Unit
-) {
-  Column(
-    horizontalAlignment = Alignment.CenterHorizontally,
-    modifier = Modifier.width(72.dp).clickable(enabled = isClickable, onClick = onClick)
-  ) {
-    Box(contentAlignment = Alignment.Center) {
-      Surface(
-        modifier = Modifier.size(56.dp),
-        shape = CircleShape,
-        color =
-          when {
-            user.isHost -> MaterialTheme.colorScheme.onSurface
-            isCurrentUser -> MaterialTheme.colorScheme.surfaceContainerHigh
-            else -> MaterialTheme.colorScheme.surfaceVariant
-          }
-      ) {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-          Text(
-            text = user.username.take(1).uppercase(),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.ExtraBold,
-            color =
-              when {
-                user.isHost -> MaterialTheme.colorScheme.surface
-                isCurrentUser -> MaterialTheme.colorScheme.onSurface
-                else -> MaterialTheme.colorScheme.onSurfaceVariant
-              }
-          )
-        }
-      }
-
-      if (user.isHost || isCurrentUser) {
-        Surface(
-          modifier = Modifier.align(Alignment.BottomEnd).offset(x = 4.dp, y = 4.dp).size(20.dp),
-          shape = CircleShape,
-          color =
-            if (user.isHost) MaterialTheme.colorScheme.onSurface
-            else MaterialTheme.colorScheme.onSurfaceVariant
-        ) {
-          Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-            Icon(
-              painter = painterResource(if (user.isHost) R.drawable.crown else R.drawable.person),
-              contentDescription = null,
-              tint = MaterialTheme.colorScheme.surface,
-              modifier = Modifier.size(12.dp)
-            )
-          }
-        }
-      }
-    }
-
-    Spacer(modifier = Modifier.height(8.dp))
-
-    Text(
-      text = user.username,
-      style = MaterialTheme.typography.labelMedium,
-      fontWeight = if (isCurrentUser) FontWeight.Bold else FontWeight.Medium,
-      color =
-        if (user.isHost) MaterialTheme.colorScheme.onSurface
-        else MaterialTheme.colorScheme.onSurface,
-      maxLines = 1,
-      overflow = TextOverflow.Ellipsis,
-      textAlign = TextAlign.Center
-    )
-
-    if (user.isHost) {
-      Text(
-        text = stringResource(R.string.host_label),
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-      )
-    } else if (isCurrentUser) {
-      Text(
-        text = stringResource(R.string.you_label),
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-      )
-    }
-  }
-}
-
-@Composable
-private fun PendingJoinRequestsSection(
-  requests: List<JoinRequestPayload>,
-  onApprove: (String) -> Unit,
-  onReject: (String) -> Unit
-) {
-  Card(
-    modifier = Modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(18.dp),
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-  ) {
-    Column(modifier = Modifier.padding(16.dp)) {
-      Text(
-        text = stringResource(R.string.listen_together_join_requests),
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.ExtraBold,
-        color = MaterialTheme.colorScheme.onSurface
-      )
-      Spacer(modifier = Modifier.height(12.dp))
-
-      requests.forEach { request ->
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-        ) {
-          Surface(
-            modifier = Modifier.size(40.dp),
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh
-          ) {
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-              Text(
-                text = request.username.take(1).uppercase(),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.onSurface
-              )
-            }
-          }
-          Spacer(Modifier.width(12.dp))
-          Text(
-            text = request.username,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.weight(1f)
-          )
-          MaterialIconButton(onClick = { onApprove(request.userId) }) {
-            Icon(
-              painter = painterResource(R.drawable.check),
-              contentDescription = stringResource(R.string.approve),
-              tint = MaterialTheme.colorScheme.onSurface,
-              modifier = Modifier.size(24.dp)
-            )
-          }
-          MaterialIconButton(onClick = { onReject(request.userId) }) {
-            Icon(
-              painter = painterResource(R.drawable.close),
-              contentDescription = stringResource(R.string.reject),
-              tint = MaterialTheme.colorScheme.error,
-              modifier = Modifier.size(24.dp)
-            )
-          }
-        }
-      }
-    }
-  }
-}
-
-@Composable
-private fun PendingSuggestionsSection(
-  suggestions: List<SuggestionReceivedPayload>,
-  onApprove: (String) -> Unit,
-  onReject: (String) -> Unit
-) {
-  Card(
-    modifier = Modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(18.dp),
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-  ) {
-    Column(modifier = Modifier.padding(16.dp)) {
-      Text(
-        text = stringResource(R.string.pending_suggestions),
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.ExtraBold,
-        color = MaterialTheme.colorScheme.onSurface
-      )
-      Spacer(modifier = Modifier.height(12.dp))
-
-      suggestions.forEach { suggestion ->
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-        ) {
-          Icon(
-            painter = painterResource(R.drawable.queue_music),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.size(24.dp)
-          )
-          Spacer(Modifier.width(12.dp))
-          Column(modifier = Modifier.weight(1f)) {
-            Text(
-              text = suggestion.trackInfo.title,
-              style = MaterialTheme.typography.bodyMedium,
-              fontWeight = FontWeight.Medium,
-              maxLines = 1,
-              overflow = TextOverflow.Ellipsis
-            )
-            Text(
-              text = suggestion.fromUsername,
-              style = MaterialTheme.typography.bodySmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-              maxLines = 1,
-              overflow = TextOverflow.Ellipsis
-            )
-          }
-          MaterialIconButton(onClick = { onApprove(suggestion.suggestionId) }) {
-            Icon(
-              painter = painterResource(R.drawable.check),
-              contentDescription = stringResource(R.string.approve),
-              tint = MaterialTheme.colorScheme.onSurface,
-              modifier = Modifier.size(24.dp)
-            )
-          }
-          MaterialIconButton(onClick = { onReject(suggestion.suggestionId) }) {
-            Icon(
-              painter = painterResource(R.drawable.close),
-              contentDescription = stringResource(R.string.reject),
-              tint = MaterialTheme.colorScheme.error,
-              modifier = Modifier.size(24.dp)
-            )
-          }
-        }
-      }
-    }
-  }
+private fun StageRoomHeading(text: String) {
+  Text(
+    text = text,
+    fontSize = 19.sp,
+    lineHeight = 24.sp,
+    fontWeight = FontWeight.ExtraBold,
+    color = MaterialTheme.colorScheme.onSurface,
+    modifier = Modifier.padding(start = 4.dp, top = 6.dp),
+  )
 }
 
 @Composable
@@ -1024,13 +561,13 @@ private fun JoinCreateRoomSection(
   isJoiningRoom: Boolean,
   isCreatingRoom: Boolean,
   joinErrorMessage: String?,
-  waitingForApprovalText: String,
   bringIntoViewRequester: BringIntoViewRequester,
   onCreateRoom: () -> Unit,
   onJoinRoom: () -> Unit,
   onFieldFocused: () -> Unit = {}
 ) {
-  var selectedTab by rememberSaveable { mutableStateOf(0) }
+  val hasUsername = usernameInput.trim().isNotBlank() || savedUsername.isNotBlank()
+  val hasRoomCode = roomCodeInput.length == 8
 
   Card(
     modifier = Modifier.fillMaxWidth(),
@@ -1038,233 +575,23 @@ private fun JoinCreateRoomSection(
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
   ) {
-    Column(
-      modifier = Modifier.fillMaxWidth().padding(20.dp),
-      verticalArrangement = Arrangement.spacedBy(16.dp),
-      horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-      Row(
-        modifier =
-          Modifier.fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerLow),
-        horizontalArrangement = Arrangement.spacedBy(0.dp)
-      ) {
-        Button(
-          onClick = { selectedTab = 0 },
-          modifier = Modifier.weight(1f),
-          shape = RoundedCornerShape(25.dp),
-          colors =
-            ButtonDefaults.buttonColors(
-              containerColor =
-                if (selectedTab == 0) MaterialTheme.colorScheme.onSurface else Color.Transparent,
-              contentColor =
-                if (selectedTab == 0) MaterialTheme.colorScheme.surface
-                else MaterialTheme.colorScheme.onSurfaceVariant
-            ),
-          elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
-        ) {
-          Icon(
-            painter = painterResource(R.drawable.add),
-            contentDescription = null,
-            modifier = Modifier.size(18.dp)
-          )
-          Spacer(Modifier.width(6.dp))
-          Text(stringResource(R.string.create_room), fontWeight = FontWeight.SemiBold)
-        }
-        Button(
-          onClick = { selectedTab = 1 },
-          modifier = Modifier.weight(1f),
-          shape = RoundedCornerShape(25.dp),
-          colors =
-            ButtonDefaults.buttonColors(
-              containerColor =
-                if (selectedTab == 1) MaterialTheme.colorScheme.onSurface else Color.Transparent,
-              contentColor =
-                if (selectedTab == 1) MaterialTheme.colorScheme.surface
-                else MaterialTheme.colorScheme.onSurfaceVariant
-            ),
-          elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
-        ) {
-          Icon(
-            painter = painterResource(R.drawable.login),
-            contentDescription = null,
-            modifier = Modifier.size(18.dp)
-          )
-          Spacer(Modifier.width(6.dp))
-          Text(stringResource(R.string.join_room), fontWeight = FontWeight.SemiBold)
-        }
-      }
-
-      OutlinedTextField(
-        value = usernameInput,
-        onValueChange = onUsernameChange,
-        label = { Text(stringResource(R.string.username)) },
-        placeholder = { Text(stringResource(R.string.enter_username)) },
-        leadingIcon = {
-          Icon(painterResource(R.drawable.person), null, tint = MaterialTheme.colorScheme.onSurface)
+    StageRoomJoinForm(
+      roomCode = roomCodeInput,
+      onRoomCodeChange = { if (it.length <= 8) onRoomCodeChange(it.uppercase()) },
+      username = usernameInput,
+      onUsernameChange = onUsernameChange,
+      joinEnabled = hasUsername && hasRoomCode && !isCreatingRoom && !isJoiningRoom,
+      createEnabled = hasUsername && !isCreatingRoom && !isJoiningRoom,
+      isJoining = isJoiningRoom,
+      errorMessage = joinErrorMessage,
+      onJoin = onJoinRoom,
+      onCreate = onCreateRoom,
+      modifier = Modifier.padding(14.dp),
+      fieldModifier =
+        Modifier.bringIntoViewRequester(bringIntoViewRequester).onFocusChanged {
+          if (it.isFocused) onFieldFocused()
         },
-        trailingIcon = {
-          if (usernameInput.isNotBlank()) {
-            MaterialIconButton(onClick = { onUsernameChange("") }) {
-              Icon(painterResource(R.drawable.close), null)
-            }
-          }
-        },
-        singleLine = true,
-        shape = RoundedCornerShape(16.dp),
-        colors =
-          OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.onSurface,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
-          ),
-        modifier = Modifier.fillMaxWidth().onFocusChanged { if (it.isFocused) onFieldFocused() }
-      )
-
-      AnimatedVisibility(
-        visible = selectedTab == 1,
-        enter = fadeIn() + expandVertically(),
-        exit = fadeOut() + shrinkVertically()
-      ) {
-        OutlinedTextField(
-          value = roomCodeInput,
-          onValueChange = { if (it.length <= 8) onRoomCodeChange(it.uppercase()) },
-          label = { Text(stringResource(R.string.room_code)) },
-          placeholder = { Text(stringResource(R.string.enter_room_code)) },
-          leadingIcon = {
-            Icon(
-              painterResource(R.drawable.group),
-              null,
-              tint = MaterialTheme.colorScheme.onSurface
-            )
-          },
-          trailingIcon = {
-            if (roomCodeInput.isNotBlank()) {
-              MaterialIconButton(onClick = { onRoomCodeChange("") }) {
-                Icon(painterResource(R.drawable.close), null)
-              }
-            }
-          },
-          singleLine = true,
-          shape = RoundedCornerShape(16.dp),
-          colors =
-            OutlinedTextFieldDefaults.colors(
-              focusedBorderColor = MaterialTheme.colorScheme.onSurface,
-              unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-              focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-              unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            ),
-          modifier =
-            Modifier.fillMaxWidth().bringIntoViewRequester(bringIntoViewRequester).onFocusChanged {
-              if (it.isFocused) onFieldFocused()
-            }
-        )
-      }
-
-      AnimatedVisibility(
-        visible = isJoiningRoom,
-        enter = fadeIn() + slideInVertically(),
-        exit = fadeOut() + slideOutVertically()
-      ) {
-        Surface(
-          modifier = Modifier.fillMaxWidth(),
-          shape = RoundedCornerShape(12.dp),
-          color = MaterialTheme.colorScheme.surfaceContainerHigh
-        ) {
-          Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxWidth().padding(16.dp)
-          ) {
-            CircularProgressIndicator(
-              modifier = Modifier.size(20.dp),
-              strokeWidth = 2.dp,
-              color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-              text = waitingForApprovalText,
-              style = MaterialTheme.typography.bodyMedium,
-              color = MaterialTheme.colorScheme.onSurface,
-              fontWeight = FontWeight.Medium,
-              textAlign = TextAlign.Center
-            )
-          }
-        }
-      }
-
-      AnimatedVisibility(
-        visible = joinErrorMessage != null,
-        enter = fadeIn() + slideInVertically(),
-        exit = fadeOut() + slideOutVertically()
-      ) {
-        Surface(
-          modifier = Modifier.fillMaxWidth(),
-          shape = RoundedCornerShape(12.dp),
-          color = MaterialTheme.colorScheme.errorContainer
-        ) {
-          Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxWidth().padding(16.dp)
-          ) {
-            Icon(
-              painterResource(R.drawable.error),
-              contentDescription = null,
-              modifier = Modifier.size(20.dp),
-              tint = MaterialTheme.colorScheme.onErrorContainer
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-              text = joinErrorMessage ?: "",
-              style = MaterialTheme.typography.bodyMedium,
-              color = MaterialTheme.colorScheme.onErrorContainer,
-              fontWeight = FontWeight.Medium,
-              textAlign = TextAlign.Center
-            )
-          }
-        }
-      }
-
-      val hasUsername = usernameInput.trim().isNotBlank() || savedUsername.isNotBlank()
-      val hasRoomCode = roomCodeInput.length == 8
-
-      if (selectedTab == 0) {
-        Button(
-          onClick = onCreateRoom,
-          modifier = Modifier.fillMaxWidth(),
-          enabled = hasUsername && !isCreatingRoom && !isJoiningRoom,
-          shape = RoundedCornerShape(25.dp),
-          colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onSurface)
-        ) {
-          Icon(
-            painter = painterResource(R.drawable.add),
-            contentDescription = null,
-            modifier = Modifier.size(20.dp)
-          )
-          Spacer(Modifier.width(8.dp))
-          Text(stringResource(R.string.create_room), fontWeight = FontWeight.SemiBold)
-        }
-      } else {
-        Button(
-          onClick = onJoinRoom,
-          modifier = Modifier.fillMaxWidth(),
-          enabled = hasUsername && hasRoomCode && !isCreatingRoom && !isJoiningRoom,
-          shape = RoundedCornerShape(25.dp),
-          colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
-        ) {
-          Icon(
-            painter = painterResource(R.drawable.login),
-            contentDescription = null,
-            modifier = Modifier.size(20.dp)
-          )
-          Spacer(Modifier.width(8.dp))
-          Text(stringResource(R.string.join_room), fontWeight = FontWeight.SemiBold)
-        }
-      }
-    }
+    )
   }
 }
 
@@ -1292,11 +619,7 @@ private fun ParticipantControlCard(
     items =
       listOf(
         Material3SettingsItem(
-          icon = painterResource(R.drawable.music_note),
           title = { Text(stringResource(R.string.listen_together_allow_participant_control)) },
-          description = {
-            Text(stringResource(R.string.listen_together_allow_participant_control_desc))
-          },
           trailingContent = {
             StageSwitch(checked = allowParticipantControl, onCheckedChange = onAllowParticipantControlChange)
           },
@@ -1304,125 +627,4 @@ private fun ParticipantControlCard(
         )
       )
   )
-}
-
-@Composable
-private fun UserActionDialog(
-  username: String,
-  onKick: () -> Unit,
-  onPermanentKick: () -> Unit,
-  onTransferOwnership: () -> Unit,
-  onDismiss: () -> Unit
-) {
-  DefaultDialog(
-    onDismiss = onDismiss,
-    icon = {
-      Icon(
-        painter = painterResource(R.drawable.group),
-        contentDescription = null,
-        modifier = Modifier.size(28.dp)
-      )
-    },
-    title = {
-      Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = stringResource(R.string.manage_user), fontWeight = FontWeight.Bold)
-        Text(
-          text = username,
-          style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-      }
-    },
-    buttons = {
-        StagePillButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
-      }
-  ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-      Surface(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onKick),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.errorContainer
-      ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(16.dp)) {
-          Icon(
-            painter = painterResource(R.drawable.close),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.error,
-            modifier = Modifier.size(24.dp)
-          )
-          Spacer(modifier = Modifier.width(16.dp))
-          Column(modifier = Modifier.weight(1f)) {
-            Text(
-              text = stringResource(R.string.kick_user),
-              style = MaterialTheme.typography.titleMedium,
-              fontWeight = FontWeight.ExtraBold,
-              color = MaterialTheme.colorScheme.error
-            )
-            Text(
-              text = stringResource(R.string.kick_user_desc),
-              style = MaterialTheme.typography.bodySmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-          }
-        }
-      }
-
-      Surface(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onPermanentKick),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant
-      ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(16.dp)) {
-          Icon(
-            painter = painterResource(R.drawable.close),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.error,
-            modifier = Modifier.size(24.dp)
-          )
-          Spacer(modifier = Modifier.width(16.dp))
-          Column(modifier = Modifier.weight(1f)) {
-            Text(
-              text = stringResource(R.string.permanently_kick_user),
-              style = MaterialTheme.typography.titleMedium,
-              fontWeight = FontWeight.ExtraBold
-            )
-            Text(
-              text = stringResource(R.string.permanently_kick_user_desc),
-              style = MaterialTheme.typography.bodySmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-          }
-        }
-      }
-
-      Surface(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onTransferOwnership),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh
-      ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(16.dp)) {
-          Icon(
-            painter = painterResource(R.drawable.crown),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.size(24.dp)
-          )
-          Spacer(modifier = Modifier.width(16.dp))
-          Column(modifier = Modifier.weight(1f)) {
-            Text(
-              text = stringResource(R.string.transfer_ownership),
-              style = MaterialTheme.typography.titleMedium,
-              fontWeight = FontWeight.ExtraBold,
-              color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-              text = stringResource(R.string.transfer_ownership_desc),
-              style = MaterialTheme.typography.bodySmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-          }
-        }
-      }
-    }
-  }
 }

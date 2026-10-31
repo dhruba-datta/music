@@ -9,12 +9,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -41,7 +41,18 @@ import echo.music.iad1tya.ui.component.CastButton
 
 internal val StagePlayerPadding = 24.dp
 
+/** Height the Up next and Lyrics dock takes at the bottom: the 52dp dock and 16dp under it. */
+internal val StageDockPeekHeight = 68.dp
+
+/** The size of the icons in the action row. */
+internal val StageActionIconSize = 23.dp
+
+/** The alpha that gives the board's soft white for secondary text on the player. */
+internal const val StageMutedAlpha = 0.9f
+
 private val StageHeaderButtonSize = 44.dp
+
+private val StageActionTargetSize = 29.dp
 
 /**
  * Lays out the artwork and the sections below it, top to bottom. The artwork stays square and takes
@@ -141,9 +152,10 @@ internal fun StageAction(
 ) {
   Column(
     horizontalAlignment = Alignment.CenterHorizontally,
-    verticalArrangement = Arrangement.spacedBy(2.dp),
+    verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
     modifier =
       modifier
+        .heightIn(min = 58.dp)
         .clip(RoundedCornerShape(16.dp))
         .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
         .alpha(if (enabled) 1f else 0.35f)
@@ -152,7 +164,7 @@ internal fun StageAction(
     Box(
       contentAlignment = Alignment.Center,
       modifier =
-        Modifier.size(40.dp)
+        Modifier.size(StageActionTargetSize)
           .then(if (active) Modifier.background(activeColor, CircleShape) else Modifier),
     ) {
       icon()
@@ -169,7 +181,7 @@ internal fun StageAction(
 internal fun StageCastAction(color: Color, modifier: Modifier = Modifier) {
   Layout(
     content = {
-      CastButton(modifier = Modifier.size(40.dp), tintColor = color)
+      CastButton(modifier = Modifier.size(StageActionTargetSize), tintColor = color)
       StageActionLabel(text = stringResource(R.string.widget_cast), color = color)
     },
     modifier = modifier,
@@ -311,7 +323,7 @@ private fun StageDockTab(
     Text(
       text = text,
       color = if (active) activeContentColor else color,
-      style = MaterialTheme.typography.labelLarge,
+      fontSize = 14.sp,
       fontWeight = FontWeight.Bold,
       maxLines = 1,
       overflow = TextOverflow.Ellipsis,

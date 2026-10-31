@@ -502,18 +502,14 @@ private fun SavePresetDialog(onDismiss: () -> Unit, onSave: (String) -> Unit) {
             )
 
             OutlinedTextField(
+        colors = echo.music.iad1tya.ui.component.stageFieldColors(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
               value = name,
               onValueChange = { name = it },
               placeholder = { Text(stringResource(R.string.eq_save_name_hint)) },
               singleLine = true,
               modifier = Modifier.fillMaxWidth(),
-              shape = MaterialTheme.shapes.medium,
               textStyle = MaterialTheme.typography.bodyMedium,
-              colors =
-                OutlinedTextFieldDefaults.colors(
-                  focusedBorderColor = MaterialTheme.colorScheme.primary,
-                  unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
-                )
             )
           }
         }
@@ -726,24 +722,21 @@ private fun ManagePresetsDialog(
           color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
         )
 
-        Row(
+        Column(
           modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+          verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-          TextButton(onClick = onDismiss, shape = actionShape) {
-            Text(text = stringResource(R.string.cancel))
-          }
-
           if (selectedIds.isNotEmpty()) {
-            OutlinedButton(
+            echo.music.iad1tya.ui.component.StageButton(
+              text = stringResource(R.string.eq_delete_selected),
               onClick = { onDeleteSelected(selectedIds.toList()) },
-              shape = actionShape,
-              colors =
-                ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
-            ) {
-              Text(text = stringResource(R.string.eq_delete_selected))
-            }
+            )
           }
+          echo.music.iad1tya.ui.component.StageButton(
+            text = stringResource(R.string.cancel),
+            onClick = onDismiss,
+            primary = false,
+          )
         }
       }
     }

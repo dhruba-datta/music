@@ -183,6 +183,8 @@ fun ListenTogetherSettings(
       }
     ) {
       OutlinedTextField(
+        colors = echo.music.iad1tya.ui.component.stageFieldColors(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
         value = tempUsername,
         onValueChange = { tempUsername = it },
         label = { Text(stringResource(R.string.listen_together_username)) },
@@ -232,6 +234,8 @@ fun ListenTogetherSettings(
           color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         OutlinedTextField(
+        colors = echo.music.iad1tya.ui.component.stageFieldColors(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
           value = createUsername,
           onValueChange = { createUsername = it },
           label = { Text(stringResource(R.string.listen_together_username)) },
@@ -271,6 +275,8 @@ fun ListenTogetherSettings(
     ) {
       Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         OutlinedTextField(
+        colors = echo.music.iad1tya.ui.component.stageFieldColors(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
           value = joinUsername,
           onValueChange = { joinUsername = it },
           label = { Text(stringResource(R.string.listen_together_username)) },
@@ -279,6 +285,8 @@ fun ListenTogetherSettings(
           modifier = Modifier.fillMaxWidth()
         )
         OutlinedTextField(
+        colors = echo.music.iad1tya.ui.component.stageFieldColors(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
           value = roomCodeInput,
           onValueChange = {
             roomCodeInput = it.uppercase().filter { c -> c.isLetterOrDigit() }.take(8)
@@ -323,7 +331,6 @@ fun ListenTogetherSettings(
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
       Material3SettingsGroup(
         scrollState = scrollState,
-        title = stringResource(R.string.settings),
         items =
           listOf(
             Material3SettingsItem(
@@ -541,6 +548,8 @@ private fun ServerChooserDialog(
         fontWeight = FontWeight.SemiBold
       )
       OutlinedTextField(
+        colors = echo.music.iad1tya.ui.component.stageFieldColors(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
         value = customUrl,
         onValueChange = { customUrl = it },
         label = { Text(stringResource(R.string.listen_together_server_url)) },
@@ -666,7 +675,7 @@ fun BlockedUsersDialog(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(text = username, style = MaterialTheme.typography.bodyMedium)
               }
-              TextButton(onClick = { onUnblock(username) }) {
+              echo.music.iad1tya.ui.component.StageChip(onClick = { onUnblock(username) }) {
                 Text(stringResource(R.string.unblock))
               }
             }

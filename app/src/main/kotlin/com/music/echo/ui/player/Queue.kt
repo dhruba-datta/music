@@ -38,7 +38,9 @@ import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -111,6 +113,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.Player
@@ -138,7 +141,11 @@ import echo.music.iad1tya.ui.component.BottomSheetState
 import echo.music.iad1tya.ui.component.DefaultDialog
 import echo.music.iad1tya.ui.component.LocalBottomSheetPageState
 import echo.music.iad1tya.ui.component.LocalMenuState
+import echo.music.iad1tya.ui.component.Icon as MIcon
+import echo.music.iad1tya.ui.component.ItemThumbnail
 import echo.music.iad1tya.ui.component.MediaMetadataListItem
+import echo.music.iad1tya.ui.component.StageSheetHandle
+import echo.music.iad1tya.ui.component.StageSheetShape
 import echo.music.iad1tya.ui.menu.PlayerMenu
 import echo.music.iad1tya.ui.menu.QueueMenu
 import echo.music.iad1tya.ui.menu.SelectionMediaMetadataMenu
@@ -178,6 +185,7 @@ fun Queue(
   onToggleLyrics: () -> Unit = {},
   playerMenuRequested: Boolean = false,
   onPlayerMenuRequestHandled: () -> Unit = {},
+  stageSheetColor: Color = background,
 ) {
   val context = LocalContext.current
   val haptic = LocalHapticFeedback.current
@@ -358,7 +366,7 @@ fun Queue(
           activeContentColor = iconButtonColor,
           modifier =
             Modifier.padding(horizontal = StagePlayerPadding)
-              .padding(top = 4.dp, bottom = 8.dp)
+              .padding(bottom = 16.dp)
               .windowInsetsPadding(
                 WindowInsets.systemBars.only(
                   WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal
@@ -566,8 +574,29 @@ fun Queue(
       }
     }
 
+    if (useNewPlayerDesign) {
+      // The sheet stops short of the top, so the player stays dimmed behind it.
+      Box(
+        Modifier.fillMaxSize()
+          .background(Color.Black.copy(alpha = 0.55f))
+          .clickable(
+            indication = null,
+            interactionSource = remember { MutableInteractionSource() }
+          ) {
+            state.collapseSoft()
+          }
+      )
+    }
     Column(
-      modifier = Modifier.fillMaxSize().background(background),
+      modifier =
+        if (useNewPlayerDesign) {
+          Modifier.fillMaxSize()
+            .padding(top = StageQueueSheetTop)
+            .clip(StageSheetShape)
+            .background(stageSheetColor)
+        } else {
+          Modifier.fillMaxSize().background(background)
+        },
     ) {
       Column(
         modifier =
@@ -575,10 +604,140 @@ fun Queue(
               indication = null,
               interactionSource = remember { MutableInteractionSource() }
             ) {}
-            .windowInsetsPadding(
-              WindowInsets.systemBars.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
+            .then(
+              if (useNewPlayerDesign) {
+                Modifier
+              } else {
+                Modifier.windowInsetsPadding(
+                  WindowInsets.systemBars.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
+                )
+              }
             ),
       ) {
+        if (useNewPlayerDesign) {
+          StageSheetHandle()
+          Column(modifier = Modifier.fillMaxWidth().padding(start = 22.dp, top = 8.dp, end = 22.dp)) {
+            Text(
+              text = stringResource(R.string.next_in_queue),
+              fontSize = 24.sp,
+              lineHeight = 30.sp,
+              fontWeight = FontWeight.ExtraBold,
+              color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+              text =
+                pluralStringResource(R.plurals.n_song, queueWindows.size, queueWindows.size) +
+                  " · " + makeTimeString(queueLength * 1000L),
+              fontSize = 13.sp,
+              color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+          }
+          val iconColor = MaterialTheme.colorScheme.onSurface
+          val activeIconColor = MaterialTheme.colorScheme.primary
+          val activeIconContent = MaterialTheme.colorScheme.onPrimary
+          Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().padding(start = 12.dp, top = 4.dp, end = 12.dp),
+          ) {
+            StageToggleIcon(
+              icon = if (locked) R.drawable.lock else R.drawable.lock_open,
+              contentDescription =
+                stringResource(if (locked) R.string.unlock_queue else R.string.lock_queue),
+              active = false,
+              enabled = true,
+              color = iconColor,
+              activeColor = activeIconColor,
+              activeContentColor = activeIconContent,
+              onClick = { locked = !locked },
+            )
+            StageToggleIcon(
+              icon = R.drawable.radio,
+              contentDescription = stringResource(R.string.start_an_radio),
+              active = false,
+              enabled = !isListenTogetherGuest,
+              color = iconColor,
+              activeColor = activeIconColor,
+              activeContentColor = activeIconContent,
+              onClick = {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.starting_radio),
+                    Toast.LENGTH_SHORT
+                  )
+                  .show()
+                playerConnection.startRadioSeamlessly()
+              },
+            )
+            StageToggleIcon(
+              icon = R.drawable.shuffle,
+              contentDescription = stringResource(R.string.shuffle),
+              active = shuffleModeEnabled,
+              enabled = !isListenTogetherGuest,
+              color = iconColor,
+              activeColor = activeIconColor,
+              activeContentColor = activeIconContent,
+              onClick = { playerConnection.player.shuffleModeEnabled = !shuffleModeEnabled },
+            )
+            StageToggleIcon(
+              icon =
+                if (repeatMode == Player.REPEAT_MODE_ONE) R.drawable.repeat_one
+                else R.drawable.repeat,
+              contentDescription = stringResource(R.string.repeat),
+              active = repeatMode != Player.REPEAT_MODE_OFF,
+              enabled = !isListenTogetherGuest,
+              color = iconColor,
+              activeColor = activeIconColor,
+              activeContentColor = activeIconContent,
+              onClick = { playerConnection.player.toggleRepeatMode() },
+            )
+            val isLiked = currentSong?.song?.liked == true
+            StageToggleIcon(
+              icon = if (isLiked) R.drawable.favorite else R.drawable.favorite_border,
+              contentDescription =
+                stringResource(if (isLiked) R.string.action_remove_like else R.string.action_like),
+              active = false,
+              enabled = true,
+              color = if (isLiked) MaterialTheme.colorScheme.error else iconColor,
+              activeColor = activeIconColor,
+              activeContentColor = activeIconContent,
+              onClick = playerConnection::toggleLike,
+            )
+            StageHeaderButton(
+              icon = R.drawable.more_vert,
+              contentDescription = stringResource(R.string.more_options),
+              color = iconColor,
+              onClick = {
+                menuState.show {
+                  PlayerMenu(
+                    mediaMetadata = mediaMetadata,
+                    navController = navController,
+                    playerBottomSheetState = playerBottomSheetState,
+                    isQueueLocked = locked,
+                    inSelectMode = inSelectMode,
+                    onShowDetailsDialog = {
+                      mediaMetadata?.id?.let { bottomSheetPageState.show { ShowMediaInfo(it) } }
+                    },
+                    onClearQueue = { showClearQueueDialog = true },
+                    onDismiss = menuState::dismiss
+                  )
+                }
+              },
+            )
+            val hasUpcomingSongs =
+              currentWindowIndex != -1 && currentWindowIndex < queueWindows.lastIndex
+            StageToggleIcon(
+              icon = R.drawable.delete,
+              contentDescription = stringResource(R.string.clear_queue),
+              active = false,
+              enabled = !locked && !isListenTogetherGuest && !inSelectMode && hasUpcomingSongs,
+              color = iconColor,
+              activeColor = activeIconColor,
+              activeContentColor = activeIconContent,
+              onClick = { showClearQueueDialog = true },
+            )
+          }
+        } else {
         Row(
           verticalAlignment = Alignment.CenterVertically,
           modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)
@@ -845,6 +1004,7 @@ fun Queue(
             }
           }
         }
+        }
 
         AnimatedVisibility(
           visible = inSelectMode,
@@ -994,7 +1154,95 @@ fun Queue(
                 }
               }
 
+              val onRowClick: () -> Unit = {
+                if (inSelectMode) {
+                  onCheckedChange(window.mediaItem.mediaId !in selection)
+                } else if (!isListenTogetherGuest) {
+                  if (index == currentWindowIndex) {
+                    if (isCasting) {
+                      if (castIsPlaying) {
+                        castHandler?.pause()
+                      } else {
+                        castHandler?.play()
+                      }
+                    } else {
+                      playerConnection.togglePlayPause()
+                    }
+                  } else {
+                    if (isCasting) {
+                      val mediaId = window.mediaItem.mediaId
+                      val navigated = castHandler?.navigateToMediaIfInQueue(mediaId) ?: false
+                      if (!navigated) {
+                        playerConnection.player.seekToDefaultPosition(window.firstPeriodIndex)
+                      }
+                    } else {
+                      playerConnection.player.seekToDefaultPosition(window.firstPeriodIndex)
+                      playerConnection.player.playWhenReady = true
+                    }
+                  }
+                }
+              }
+              val onRowLongClick: () -> Unit = {
+                if (!inSelectMode) {
+                  haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                  inSelectMode = true
+                  onCheckedChange(true)
+                }
+              }
+              val onRowMenu: () -> Unit = {
+                menuState.show {
+                  QueueMenu(
+                    mediaMetadata = window.mediaItem.metadata!!,
+                    navController = navController,
+                    playerBottomSheetState = playerBottomSheetState,
+                    onShowDetailsDialog = {
+                      window.mediaItem.mediaId.let {
+                        bottomSheetPageState.show { ShowMediaInfo(it) }
+                      }
+                    },
+                    onDismiss = menuState::dismiss,
+                  )
+                }
+              }
+
               val content: @Composable () -> Unit = {
+                if (useNewPlayerDesign) {
+                  StageQueueRow(
+                    mediaMetadata = window.mediaItem.metadata!!,
+                    isActive = isActive,
+                    isPlaying = isPlaying && isActive,
+                    minHeight = 58.dp,
+                    backgroundColor = stageSheetColor,
+                    leading = {
+                      if (!inSelectMode && !locked && !isListenTogetherGuest) {
+                        Icon(
+                          painter = painterResource(R.drawable.drag_handle),
+                          contentDescription = null,
+                          tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                          modifier = Modifier.draggableHandle().size(20.dp),
+                        )
+                      }
+                    },
+                    trailing = {
+                      if (inSelectMode) {
+                        Checkbox(
+                          checked = window.mediaItem.mediaId in selection,
+                          onCheckedChange = onCheckedChange
+                        )
+                      } else if (!isListenTogetherGuest) {
+                        StageHeaderButton(
+                          icon = R.drawable.more_vert,
+                          contentDescription = stringResource(R.string.more_options),
+                          color = MaterialTheme.colorScheme.onSurface,
+                          onClick = onRowMenu,
+                        )
+                      }
+                    },
+                    modifier =
+                      Modifier.animateItem()
+                        .combinedClickable(onClick = onRowClick, onLongClick = onRowLongClick),
+                  )
+                } else {
                 Row(
                   horizontalArrangement = Arrangement.Center,
                   modifier = Modifier.animateItem(),
@@ -1015,23 +1263,7 @@ fun Queue(
                         )
                       } else {
                         if (!isListenTogetherGuest) {
-                          IconButton(
-                            onClick = {
-                              menuState.show {
-                                QueueMenu(
-                                  mediaMetadata = window.mediaItem.metadata!!,
-                                  navController = navController,
-                                  playerBottomSheetState = playerBottomSheetState,
-                                  onShowDetailsDialog = {
-                                    window.mediaItem.mediaId.let {
-                                      bottomSheetPageState.show { ShowMediaInfo(it) }
-                                    }
-                                  },
-                                  onDismiss = menuState::dismiss,
-                                )
-                              }
-                            }
-                          ) {
+                          IconButton(onClick = onRowMenu) {
                             Icon(
                               painter = painterResource(R.drawable.more_vert),
                               contentDescription = null,
@@ -1049,49 +1281,9 @@ fun Queue(
                     },
                     modifier =
                       Modifier.fillMaxWidth()
-                        .combinedClickable(
-                          onClick = {
-                            if (inSelectMode) {
-                              onCheckedChange(window.mediaItem.mediaId !in selection)
-                            } else if (!isListenTogetherGuest) {
-                              if (index == currentWindowIndex) {
-                                if (isCasting) {
-                                  if (castIsPlaying) {
-                                    castHandler?.pause()
-                                  } else {
-                                    castHandler?.play()
-                                  }
-                                } else {
-                                  playerConnection.togglePlayPause()
-                                }
-                              } else {
-                                if (isCasting) {
-                                  val mediaId = window.mediaItem.mediaId
-                                  val navigated =
-                                    castHandler?.navigateToMediaIfInQueue(mediaId) ?: false
-                                  if (!navigated) {
-                                    playerConnection.player.seekToDefaultPosition(
-                                      window.firstPeriodIndex
-                                    )
-                                  }
-                                } else {
-                                  playerConnection.player.seekToDefaultPosition(
-                                    window.firstPeriodIndex,
-                                  )
-                                  playerConnection.player.playWhenReady = true
-                                }
-                              }
-                            }
-                          },
-                          onLongClick = {
-                            if (!inSelectMode) {
-                              haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                              inSelectMode = true
-                              onCheckedChange(true)
-                            }
-                          },
-                        ),
+                        .combinedClickable(onClick = onRowClick, onLongClick = onRowLongClick),
                   )
+                }
                 }
               }
 
@@ -1110,16 +1302,68 @@ fun Queue(
 
           if (automix.isNotEmpty()) {
             item(key = "automix_divider") {
-              Text(
-                text = stringResource(R.string.similar_content),
-                modifier = Modifier.padding(start = 16.dp),
-              )
+              if (useNewPlayerDesign) {
+                Text(
+                  text = stringResource(R.string.similar_content),
+                  fontSize = 19.sp,
+                  fontWeight = FontWeight.ExtraBold,
+                  color = MaterialTheme.colorScheme.onSurface,
+                  modifier = Modifier.padding(start = 22.dp, top = 10.dp, end = 22.dp, bottom = 8.dp),
+                )
+              } else {
+                Text(
+                  text = stringResource(R.string.similar_content),
+                  modifier = Modifier.padding(start = 16.dp),
+                )
+              }
             }
 
             itemsIndexed(
               items = automix,
               key = { _, it -> it.mediaId },
             ) { index, item ->
+              val onAutomixMenu: () -> Unit = {
+                menuState.show {
+                  QueueMenu(
+                    mediaMetadata = item.metadata!!,
+                    navController = navController,
+                    playerBottomSheetState = playerBottomSheetState,
+                    onShowDetailsDialog = {
+                      item.mediaId.let { bottomSheetPageState.show { ShowMediaInfo(it) } }
+                    },
+                    onDismiss = menuState::dismiss,
+                  )
+                }
+              }
+              if (useNewPlayerDesign) {
+                StageQueueRow(
+                  mediaMetadata = item.metadata!!,
+                  isActive = false,
+                  isPlaying = false,
+                  minHeight = 56.dp,
+                  backgroundColor = Color.Transparent,
+                  leading = {},
+                  trailing = {
+                    if (!isListenTogetherGuest) {
+                      StageHeaderButton(
+                        icon = R.drawable.play,
+                        contentDescription = stringResource(R.string.play_next),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        onClick = { playerConnection.service.playNextAutomix(item, index) },
+                      )
+                      StageHeaderButton(
+                        icon = R.drawable.queue_music,
+                        contentDescription = stringResource(R.string.add_to_queue),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        onClick = { playerConnection.service.addToQueueAutomix(item, index) },
+                      )
+                    }
+                  },
+                  modifier =
+                    Modifier.animateItem()
+                      .combinedClickable(onClick = {}, onLongClick = onAutomixMenu),
+                )
+              } else {
               Row(
                 horizontalArrangement = Arrangement.Center,
               ) {
@@ -1162,22 +1406,11 @@ fun Queue(
                     Modifier.fillMaxWidth()
                       .combinedClickable(
                         onClick = {},
-                        onLongClick = {
-                          menuState.show {
-                            QueueMenu(
-                              mediaMetadata = item.metadata!!,
-                              navController = navController,
-                              playerBottomSheetState = playerBottomSheetState,
-                              onShowDetailsDialog = {
-                                item.mediaId.let { bottomSheetPageState.show { ShowMediaInfo(it) } }
-                              },
-                              onDismiss = menuState::dismiss,
-                            )
-                          }
-                        },
+                        onLongClick = onAutomixMenu,
                       )
                       .animateItem(),
                 )
+              }
               }
             }
           }
@@ -1240,6 +1473,66 @@ fun Queue(
         style = MaterialTheme.typography.bodyMedium
       )
     }
+  }
+}
+
+private val StageQueueSheetTop = 84.dp
+
+/** A song in the Stage queue: 44dp art, title and artist, with no card behind it. */
+@Composable
+private fun StageQueueRow(
+  mediaMetadata: MediaMetadata,
+  isActive: Boolean,
+  isPlaying: Boolean,
+  minHeight: Dp,
+  backgroundColor: Color,
+  leading: @Composable () -> Unit,
+  trailing: @Composable RowScope.() -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  Row(
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(13.dp),
+    modifier =
+      modifier
+        .fillMaxWidth()
+        .background(backgroundColor)
+        .heightIn(min = minHeight)
+        .padding(horizontal = 22.dp),
+  ) {
+    leading()
+    ItemThumbnail(
+      thumbnailUrl = mediaMetadata.thumbnailUrl,
+      albumIndex = null,
+      isSelected = false,
+      isActive = isActive,
+      isPlaying = isPlaying,
+      shape = RoundedCornerShape(12.dp),
+      modifier = Modifier.size(44.dp),
+    )
+    Column(modifier = Modifier.weight(1f)) {
+      Text(
+        text = mediaMetadata.title,
+        fontSize = 16.sp,
+        lineHeight = 20.sp,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSurface,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+      )
+      Row(verticalAlignment = Alignment.CenterVertically) {
+        if (mediaMetadata.explicit) MIcon.Explicit()
+        Text(
+          text = mediaMetadata.artists.joinToString { it.name },
+          fontSize = 13.sp,
+          lineHeight = 17.sp,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis,
+        )
+      }
+    }
+    Row(verticalAlignment = Alignment.CenterVertically, content = trailing)
   }
 }
 
