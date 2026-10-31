@@ -46,168 +46,6 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
       "settings/account"
     ),
     SearchableSetting(
-      stringResource(R.string.ai_api_key),
-      stringResource(R.string.ai_api_key_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_base_url),
-      stringResource(R.string.ai_base_url_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_deepl_formality),
-      stringResource(R.string.ai_deepl_formality_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_deepl_formality_default),
-      stringResource(R.string.ai_deepl_formality_default_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_deepl_formality_less),
-      stringResource(R.string.ai_deepl_formality_less_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_deepl_formality_more),
-      stringResource(R.string.ai_deepl_formality_more_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_lyrics_translation),
-      stringResource(R.string.ai_lyrics_translation_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_model),
-      stringResource(R.string.ai_model_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_provider),
-      stringResource(R.string.ai_provider_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_provider_claude_help),
-      stringResource(R.string.ai_provider_claude_help_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_provider_deepl_help),
-      stringResource(R.string.ai_provider_deepl_help_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_provider_gemini_help),
-      stringResource(R.string.ai_provider_gemini_help_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_provider_help),
-      stringResource(R.string.ai_provider_help_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_provider_mistral_help),
-      stringResource(R.string.ai_provider_mistral_help_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_provider_nvidia_help),
-      stringResource(R.string.ai_provider_nvidia_help_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_provider_openai_help),
-      stringResource(R.string.ai_provider_openai_help_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_provider_openrouter_help),
-      stringResource(R.string.ai_provider_openrouter_help_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_provider_opper_help),
-      stringResource(R.string.ai_provider_opper_help_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_provider_perplexity_help),
-      stringResource(R.string.ai_provider_perplexity_help_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_provider_requesty_help),
-      stringResource(R.string.ai_provider_requesty_help_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_provider_api_route_help),
-      stringResource(R.string.ai_provider_api_route_help_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_provider_xai_help),
-      stringResource(R.string.ai_provider_xai_help_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_setup_guide),
-      stringResource(R.string.ai_setup_guide_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_target_language),
-      stringResource(R.string.ai_target_language_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_translation_literal),
-      stringResource(R.string.ai_translation_literal_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_translation_mode),
-      stringResource(R.string.ai_translation_mode_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_translation_transcribed),
-      stringResource(R.string.ai_translation_transcribed_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
       stringResource(R.string.album_text),
       stringResource(R.string.album_text_desc),
       "Content",
@@ -1853,30 +1691,6 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
       "settings/lastfm"
     ),
     SearchableSetting("Import", null, "Backup & Restore", "settings/backup_restore"),
-    SearchableSetting(
-      "DeepL ${stringResource(R.string.ai_api_key)}",
-      stringResource(R.string.ai_api_key_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_auto_translate),
-      stringResource(R.string.ai_auto_translate_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_recommendations),
-      stringResource(R.string.ai_recommendations_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
-    SearchableSetting(
-      stringResource(R.string.ai_recommendations_refresh),
-      stringResource(R.string.ai_recommendations_refresh_desc),
-      "AI Lyrics Translation",
-      "settings/ai"
-    ),
     SearchableSetting("Supported Links", null, "Settings", "settings"),
     SearchableSetting(
       stringResource(R.string.refresh),
@@ -2395,12 +2209,6 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
       "settings/backup_restore"
     ),
     SearchableSetting(
-      "Test Connection",
-      "Test the connection to the AI provider",
-      "AI Settings",
-      "settings/ai"
-    ),
-    SearchableSetting(
       "Blocked Artists",
       "Manage blocked artists",
       "Content",
@@ -2521,24 +2329,6 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
       "settings/ambient"
     ),
     SearchableSetting(
-      "Add Custom Server",
-      "Add a custom extension server",
-      "Extensions",
-      "settings/extensions"
-    ),
-    SearchableSetting(
-      "Add Extension",
-      "Add a new extension",
-      "Extensions",
-      "settings/extensions"
-    ),
-    SearchableSetting(
-      "Extension Sources",
-      "Manage extension sources",
-      "Extensions",
-      "settings/extensions"
-    ),
-    SearchableSetting(
       "Blocked Artists",
       "Manage blocked artists",
       "Content",
@@ -2600,9 +2390,7 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
     ),
   ).filterNot {
     it.route == "settings/ambient" ||
-      it.route == "settings/integrations" ||
-      it.route == "settings/ai" ||
-      it.route == "settings/extensions"
+      it.route == "settings/integrations"
   }
     .distinctBy { it.title to it.route }
 }

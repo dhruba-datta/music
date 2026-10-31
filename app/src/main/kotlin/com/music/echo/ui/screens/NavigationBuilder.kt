@@ -48,7 +48,6 @@ import echo.music.iad1tya.ui.screens.search.OnlineSearchResult
 import echo.music.iad1tya.ui.screens.search.SearchScreen
 import echo.music.iad1tya.ui.screens.settings.AboutScreen
 import echo.music.iad1tya.ui.screens.settings.AccountSettingsScreen
-import echo.music.iad1tya.ui.screens.settings.AiSettings
 import echo.music.iad1tya.ui.screens.settings.AppearanceSettings
 import echo.music.iad1tya.ui.screens.settings.BackupAndRestore
 import echo.music.iad1tya.ui.screens.settings.BlockedArtistsScreen
@@ -432,23 +431,6 @@ fun NavGraphBuilder.navigationBuilder(
   composable("uptime") { UptimeScreen(navController, scrollBehavior) }
 
   composable(
-    route = "settings/ai?highlightKey={highlightKey}",
-    arguments =
-      listOf(
-        navArgument("highlightKey") {
-          type = NavType.StringType
-          nullable = true
-        }
-      )
-  ) { backStackEntry ->
-    AiSettings(
-      navController,
-      scrollBehavior,
-      highlightKey = backStackEntry.arguments?.getString("highlightKey")
-    )
-  }
-
-  composable(
     route = "settings/player?highlightKey={highlightKey}",
     arguments =
       listOf(
@@ -525,12 +507,6 @@ fun NavGraphBuilder.navigationBuilder(
     )
   }
 
-  composable("settings/extensions") {
-    com.music.echo.ui.screens.settings.ExtensionSettingsScreen(
-        navController = navController,
-        scrollBehavior = scrollBehavior
-    )
-  }
   composable("settings/discord") {
     echo.music.iad1tya.ui.screens.settings.DiscordSettings(navController, scrollBehavior)
   }

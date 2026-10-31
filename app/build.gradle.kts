@@ -31,7 +31,7 @@ android {
 
   defaultConfig {
     applicationId = "echo.music.iad1tya.mod"
-    minSdk = 26
+    minSdk = 33
     targetSdk = 36
     versionCode = 165
     versionName = "1.4.4"
@@ -84,42 +84,17 @@ android {
 
   flavorDimensions += listOf("abi", "variant")
   productFlavors {
-    // FOSS variant (default) - F-Droid compatible, no Google Play Services
-    create("foss") {
-      dimension = "variant"
-      isDefault = true
-      buildConfigField("Boolean", "CAST_AVAILABLE", "false")
-    }
-
     // GMS variant - with Google Cast support (requires Google Play Services)
     create("gms") {
       dimension = "variant"
+      isDefault = true
       buildConfigField("Boolean", "CAST_AVAILABLE", "true")
     }
 
-    create("universal") {
-      dimension = "abi"
-      buildConfigField("String", "ARCHITECTURE", "\"universal\"")
-    }
     create("arm64") {
       dimension = "abi"
       buildConfigField("String", "ARCHITECTURE", "\"arm64\"")
       ndk { abiFilters.add("arm64-v8a") }
-    }
-    create("armeabi") {
-      dimension = "abi"
-      buildConfigField("String", "ARCHITECTURE", "\"armeabi\"")
-      ndk { abiFilters.add("armeabi-v7a") }
-    }
-    create("x86") {
-      dimension = "abi"
-      buildConfigField("String", "ARCHITECTURE", "\"x86\"")
-      ndk { abiFilters.add("x86") }
-    }
-    create("x86_64") {
-      dimension = "abi"
-      buildConfigField("String", "ARCHITECTURE", "\"x86_64\"")
-      ndk { abiFilters.add("x86_64") }
     }
   }
 
@@ -197,6 +172,7 @@ android {
     warningsAsErrors = false
     abortOnError = false
     checkDependencies = false
+    checkReleaseBuilds = false
   }
 
   androidResources {
@@ -270,7 +246,6 @@ dependencies {
   implementation(libs.compose.foundation)
   implementation(libs.compose.ui)
   implementation(libs.compose.ui.util)
-  implementation(libs.compose.ui.tooling)
   implementation(libs.compose.animation)
   implementation(libs.compose.reorderable)
 
