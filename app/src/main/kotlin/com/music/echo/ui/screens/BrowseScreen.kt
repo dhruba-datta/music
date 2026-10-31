@@ -2,13 +2,11 @@ package echo.music.iad1tya.ui.screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
@@ -23,7 +21,6 @@ import androidx.navigation.NavController
 import com.music.innertube.models.AlbumItem
 import com.music.innertube.models.ArtistItem
 import com.music.innertube.models.PlaylistItem
-import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.LocalPlayerConnection
 import echo.music.iad1tya.R
 import echo.music.iad1tya.constants.GridItemSize
@@ -31,9 +28,11 @@ import echo.music.iad1tya.constants.GridItemsSizeKey
 import echo.music.iad1tya.constants.GridThumbnailHeight
 import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.LocalMenuState
+import echo.music.iad1tya.ui.component.StageBarTitle
 import echo.music.iad1tya.ui.component.YouTubeGridItem
 import echo.music.iad1tya.ui.component.shimmer.GridItemPlaceHolder
 import echo.music.iad1tya.ui.component.shimmer.ShimmerHost
+import echo.music.iad1tya.ui.component.stageGridPadding
 import echo.music.iad1tya.ui.menu.YouTubeAlbumMenu
 import echo.music.iad1tya.ui.menu.YouTubeArtistMenu
 import echo.music.iad1tya.ui.menu.YouTubePlaylistMenu
@@ -65,7 +64,7 @@ fun BrowseScreen(
       GridCells.Adaptive(
         minSize = GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp
       ),
-    contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
+    contentPadding = stageGridPadding()
   ) {
     items?.let { items ->
       items(items = items.distinctBy { it.id }, key = { it.id }) { item ->
@@ -118,7 +117,7 @@ fun BrowseScreen(
   }
 
   TopAppBar(
-    title = { Text(title ?: "") },
+    title = { StageBarTitle(title ?: "") },
     navigationIcon = {
       IconButton(onClick = navController::navigateUp, onLongClick = navController::backToMain) {
         Icon(painterResource(R.drawable.arrow_back), contentDescription = null)

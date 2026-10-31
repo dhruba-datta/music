@@ -1,16 +1,13 @@
 package echo.music.iad1tya.ui.screens.library
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -21,8 +18,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -32,13 +27,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -65,11 +57,16 @@ import echo.music.iad1tya.constants.ShowTopPlaylistKey
 import echo.music.iad1tya.constants.YtmSyncKey
 import echo.music.iad1tya.db.entities.Playlist
 import echo.music.iad1tya.db.entities.PlaylistEntity
-import echo.music.iad1tya.ui.component.AutoPlaylistButton
+import echo.music.iad1tya.ui.component.AutoPlaylistGrid
+import echo.music.iad1tya.ui.component.AutoPlaylistTile
 import echo.music.iad1tya.ui.component.LibraryPlaylistGridItem
 import echo.music.iad1tya.ui.component.LibraryPlaylistListItem
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.SortHeader
+import echo.music.iad1tya.ui.component.StageSectionHeader
+import echo.music.iad1tya.ui.component.StageSectionTitle
+import echo.music.iad1tya.ui.component.stageGridFullWidth
+import echo.music.iad1tya.ui.component.stageGridPadding
 import echo.music.iad1tya.utils.rememberEnumPreference
 import echo.music.iad1tya.utils.rememberPreference
 import echo.music.iad1tya.viewmodels.LibraryPlaylistsViewModel
@@ -188,18 +185,25 @@ fun LibraryPlaylistsScreen(
       backStackEntry?.savedStateHandle?.set("scrollToTop", false)
     }
   }
+  val autoPlaylistTiles =
+    buildList {
+      if (showLiked) add(AutoPlaylistTile(stringResource(R.string.liked), R.drawable.favorite, onClick = { navController.navigate("auto_playlist/liked") }))
+      if (showDownloaded) add(AutoPlaylistTile(stringResource(R.string.offline), R.drawable.offline, onClick = { navController.navigate("auto_playlist/downloaded") }))
+      if (showExported) add(AutoPlaylistTile(stringResource(R.string.action_exported), R.drawable.download, onClick = { navController.navigate("auto_playlist/exported") }))
+      if (showCached) add(AutoPlaylistTile(stringResource(R.string.cached_playlist), R.drawable.cached, onClick = { navController.navigate("cache_playlist/cached") }))
+      if (showTop) add(AutoPlaylistTile(stringResource(R.string.my_top) + " $topSize", R.drawable.trending_up, onClick = { navController.navigate("top_playlist/$topSize") }))
+      if (showBottom) add(AutoPlaylistTile(stringResource(R.string.my_bottom) + " 50", R.drawable.trending_down, onClick = { navController.navigate("bottom_playlist/50") }))
+      add(AutoPlaylistTile("Taste Mix", R.drawable.playlist_play, onClick = { navController.navigate("generate") }))
+    }
+
   val headerContent =
     @Composable {
       Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(start = 18.dp),
+        modifier =
+          Modifier.fillMaxWidth().padding(start = 22.dp, end = 22.dp, top = 18.dp, bottom = 8.dp),
       ) {
-        Text(
-          text = pluralStringResource(R.plurals.n_playlist, playlists.size, playlists.size),
-          style = MaterialTheme.typography.titleMedium,
-          fontWeight = FontWeight.ExtraBold,
-          color = MaterialTheme.colorScheme.onSurface,
-        )
+        StageSectionTitle(text = pluralStringResource(R.plurals.n_playlist, playlists.size, playlists.size))
 
         Spacer(Modifier.weight(1f))
 
@@ -217,8 +221,6 @@ fun LibraryPlaylistsScreen(
             }
           },
         )
-
-        Spacer(modifier = Modifier.width(16.dp))
       }
     }
 
@@ -249,90 +251,14 @@ fun LibraryPlaylistsScreen(
             key = "auto_playlists_grid",
             contentType = CONTENT_TYPE_HEADER,
           ) {
-            FlowRow(
-              maxItemsInEachRow = 3,
-              horizontalArrangement = Arrangement.spacedBy(8.dp),
-              verticalArrangement = Arrangement.spacedBy(8.dp),
-              modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 8.dp)
-            ) {
-              val itemModifier = Modifier.weight(1f)
-              if (showLiked) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.liked),
-                  icon = R.drawable.favorite,
-                  iconTint = Color(0xFFE57373),
-                  onClick = { navController.navigate("auto_playlist/liked") },
-                  modifier = itemModifier
-                )
-              }
-              if (showDownloaded) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.offline),
-                  icon = R.drawable.offline,
-                  iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                  onClick = { navController.navigate("auto_playlist/downloaded") },
-                  modifier = itemModifier
-                )
-              }
-              if (showExported) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.action_exported),
-                  icon = R.drawable.download,
-                  iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                  onClick = { navController.navigate("auto_playlist/exported") },
-                  modifier = itemModifier
-                )
-              }
-              if (showCached) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.cached_playlist),
-                  icon = R.drawable.cached,
-                  iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                  onClick = { navController.navigate("cache_playlist/cached") },
-                  modifier = itemModifier
-                )
-              }
-
-              if (showTop) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.my_top) + " $topSize",
-                  icon = R.drawable.trending_up,
-                  iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                  onClick = { navController.navigate("top_playlist/$topSize") },
-                  modifier = itemModifier
-                )
-              }
-
-              if (showBottom) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.my_bottom) + " 50",
-                  icon = R.drawable.trending_down,
-                  iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                  onClick = { navController.navigate("bottom_playlist/50") },
-                  modifier = itemModifier
-                )
-              }
-
-              AutoPlaylistButton(
-                title = "Taste Mix",
-                icon = R.drawable.playlist_play,
-                iconTint = androidx.compose.material3.MaterialTheme.colorScheme.primary,
-                onClick = { navController.navigate("generate") },
-                modifier = itemModifier
-              )
-            }
+            AutoPlaylistGrid(autoPlaylistTiles, columns = 4, artHeight = 62.dp)
           }
 
           item(
             key = "playlists_header",
             contentType = CONTENT_TYPE_HEADER,
           ) {
-            androidx.compose.material3.Text(
-              text = "Playlists",
-              fontSize = 19.sp,
-              fontWeight = FontWeight.ExtraBold,
-              modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
-            )
+            StageSectionHeader(title = "Playlists")
           }
 
           playlists.let { playlists ->
@@ -364,14 +290,14 @@ fun LibraryPlaylistsScreen(
               minSize =
                 GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp,
             ),
-          contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
+          contentPadding = stageGridPadding(),
         ) {
           item(
             key = "filter",
             span = { GridItemSpan(maxLineSpan) },
             contentType = CONTENT_TYPE_HEADER,
           ) {
-            filterContent()
+            Box(Modifier.stageGridFullWidth()) { filterContent() }
           }
 
           item(
@@ -379,7 +305,7 @@ fun LibraryPlaylistsScreen(
             span = { GridItemSpan(maxLineSpan) },
             contentType = CONTENT_TYPE_HEADER,
           ) {
-            headerContent()
+            Box(Modifier.stageGridFullWidth()) { headerContent() }
           }
 
           item(
@@ -387,78 +313,7 @@ fun LibraryPlaylistsScreen(
             span = { GridItemSpan(maxLineSpan) },
             contentType = CONTENT_TYPE_HEADER,
           ) {
-            FlowRow(
-              maxItemsInEachRow = 3,
-              horizontalArrangement = Arrangement.spacedBy(8.dp),
-              verticalArrangement = Arrangement.spacedBy(8.dp),
-              modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 8.dp)
-            ) {
-              val itemModifier = Modifier.weight(1f)
-              if (showLiked) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.liked),
-                  icon = R.drawable.favorite,
-                  iconTint = Color(0xFFE57373),
-                  onClick = { navController.navigate("auto_playlist/liked") },
-                  modifier = itemModifier
-                )
-              }
-              if (showDownloaded) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.offline),
-                  icon = R.drawable.offline,
-                  iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                  onClick = { navController.navigate("auto_playlist/downloaded") },
-                  modifier = itemModifier
-                )
-              }
-              if (showExported) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.action_exported),
-                  icon = R.drawable.download,
-                  iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                  onClick = { navController.navigate("auto_playlist/exported") },
-                  modifier = itemModifier
-                )
-              }
-              if (showCached) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.cached_playlist),
-                  icon = R.drawable.cached,
-                  iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                  onClick = { navController.navigate("cache_playlist/cached") },
-                  modifier = itemModifier
-                )
-              }
-
-              if (showTop) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.my_top) + " $topSize",
-                  icon = R.drawable.trending_up,
-                  iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                  onClick = { navController.navigate("top_playlist/$topSize") },
-                  modifier = itemModifier
-                )
-              }
-
-              if (showBottom) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.my_bottom) + " 50",
-                  icon = R.drawable.trending_down,
-                  iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                  onClick = { navController.navigate("bottom_playlist/50") },
-                  modifier = itemModifier
-                )
-              }
-
-              AutoPlaylistButton(
-                title = "Taste Mix",
-                icon = R.drawable.playlist_play,
-                iconTint = androidx.compose.material3.MaterialTheme.colorScheme.primary,
-                onClick = { navController.navigate("generate") },
-                modifier = itemModifier
-              )
-            }
+            AutoPlaylistGrid(autoPlaylistTiles, columns = 4, artHeight = 62.dp, modifier = Modifier.stageGridFullWidth())
           }
 
           item(
@@ -466,12 +321,7 @@ fun LibraryPlaylistsScreen(
             span = { GridItemSpan(maxLineSpan) },
             contentType = CONTENT_TYPE_HEADER,
           ) {
-            androidx.compose.material3.Text(
-              text = "Playlists",
-              fontSize = 19.sp,
-              fontWeight = FontWeight.ExtraBold,
-              modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
-            )
+            StageSectionHeader(title = "Playlists", modifier = Modifier.stageGridFullWidth())
           }
 
           playlists.let { playlists ->

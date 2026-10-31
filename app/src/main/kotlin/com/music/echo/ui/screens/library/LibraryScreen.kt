@@ -1,20 +1,22 @@
 package echo.music.iad1tya.ui.screens.library
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -24,20 +26,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.layout.size
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.R
@@ -45,8 +46,9 @@ import echo.music.iad1tya.constants.ChipSortTypeKey
 import echo.music.iad1tya.constants.LibraryFilter
 import echo.music.iad1tya.ui.component.ChipsRow
 import echo.music.iad1tya.ui.component.DefaultDialog
-import echo.music.iad1tya.ui.component.Material3SettingsGroup
-import echo.music.iad1tya.ui.component.Material3SettingsItem
+import echo.music.iad1tya.ui.component.StageSheetGroup
+import echo.music.iad1tya.ui.component.StageSheetRow
+import echo.music.iad1tya.ui.component.StageSheetTitle
 import echo.music.iad1tya.ui.component.TextFieldDialog
 import echo.music.iad1tya.utils.onlinePlaylistIdFromUrl
 import echo.music.iad1tya.utils.onlinePlaylistRoute
@@ -138,13 +140,20 @@ fun LibraryScreen(navController: NavController) {
       }
 
       val bottomPadding = with(density) { currentInsets.getBottom(density).toDp() }
-      Box(modifier = Modifier.fillMaxSize().padding(end = 16.dp, bottom = bottomPadding + 20.dp)) {
+      Box(modifier = Modifier.fillMaxSize().padding(end = 18.dp, bottom = bottomPadding + 14.dp)) {
         Box(modifier = Modifier.align(Alignment.BottomEnd)) {
           androidx.compose.material3.FloatingActionButton(
             onClick = { showFabMenu = true },
             shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
             containerColor = MaterialTheme.colorScheme.onSurface,
-            contentColor = MaterialTheme.colorScheme.surface
+            contentColor = MaterialTheme.colorScheme.surface,
+            elevation =
+              androidx.compose.material3.FloatingActionButtonDefaults.elevation(
+                defaultElevation = 0.dp,
+                pressedElevation = 0.dp,
+                focusedElevation = 0.dp,
+                hoveredElevation = 0.dp
+              )
           ) {
             Icon(painter = painterResource(R.drawable.add), contentDescription = "Add")
           }
@@ -161,38 +170,49 @@ fun LibraryScreen(navController: NavController) {
         @kotlin.OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
         androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ) {
-      Column(modifier = Modifier.padding(bottom = 24.dp, start = 16.dp, end = 16.dp)) {
-        Material3SettingsGroup(
-          compact = true,
-          items =
-            listOf(
-              Material3SettingsItem(
-                title = { Text(stringResource(R.string.create_playlist)) },
-                icon = painterResource(R.drawable.add),
-                onClick = {
-                  showFabMenu = false
-                  showCreatePlaylistOptionsDialog = true
-                }
-              ),
-              Material3SettingsItem(
-                title = { Text("Create from Taste") },
-                icon = painterResource(R.drawable.tast),
-                tintIcon = false,
-                iconShape = androidx.compose.foundation.shape.CircleShape,
-                onClick = {
-                  showFabMenu = false
-                  showTasteGenerationDialog = true
-                }
-              ),
-              Material3SettingsItem(
-                title = { Text(stringResource(R.string.import_playlist)) },
-                icon = painterResource(R.drawable.download),
-                onClick = {
-                  showFabMenu = false
-                  showImportMenu = true
-                }
-              )
+      StageSheetTitle(stringResource(R.string.create))
+      StageSheetGroup {
+        StageSheetRow(
+          title = stringResource(R.string.create_playlist),
+          onClick = {
+            showFabMenu = false
+            showCreatePlaylistOptionsDialog = true
+          },
+          leading = {
+            Icon(
+              painter = painterResource(R.drawable.playlist_add),
+              contentDescription = null,
+              modifier = Modifier.size(22.dp)
             )
+          }
+        )
+        StageSheetRow(
+          title = "Create from Taste",
+          onClick = {
+            showFabMenu = false
+            showTasteGenerationDialog = true
+          },
+          leading = {
+            androidx.compose.foundation.Image(
+              painter = painterResource(R.drawable.tast),
+              contentDescription = null,
+              modifier = Modifier.size(22.dp).clip(androidx.compose.foundation.shape.CircleShape)
+            )
+          }
+        )
+        StageSheetRow(
+          title = stringResource(R.string.import_playlist),
+          onClick = {
+            showFabMenu = false
+            showImportMenu = true
+          },
+          leading = {
+            Icon(
+              painter = painterResource(R.drawable.download),
+              contentDescription = null,
+              modifier = Modifier.size(22.dp)
+            )
+          }
         )
       }
     }
@@ -206,22 +226,21 @@ fun LibraryScreen(navController: NavController) {
         @kotlin.OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
         androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ) {
-      Column(modifier = Modifier.padding(bottom = 24.dp)) {
-        androidx.compose.material3.ListItem(
-          headlineContent = { Text(stringResource(R.string.import_from_spotify)) },
-          modifier =
-            Modifier.clickable {
-              showImportMenu = false
-              navController.navigate("settings/spotify_import")
-            }
+      StageSheetTitle(stringResource(R.string.import_playlist))
+      StageSheetGroup {
+        StageSheetRow(
+          title = stringResource(R.string.import_from_spotify),
+          onClick = {
+            showImportMenu = false
+            navController.navigate("settings/spotify_import")
+          }
         )
-        androidx.compose.material3.ListItem(
-          headlineContent = { Text(stringResource(R.string.import_from_youtube_music)) },
-          modifier =
-            Modifier.clickable {
-              showImportMenu = false
-              showYoutubeImportDialog = true
-            }
+        StageSheetRow(
+          title = stringResource(R.string.import_from_youtube_music),
+          onClick = {
+            showImportMenu = false
+            showYoutubeImportDialog = true
+          }
         )
       }
     }
@@ -279,44 +298,35 @@ fun LibraryScreen(navController: NavController) {
     DefaultDialog(
       onDismiss = { showCreatePlaylistOptionsDialog = false },
       title = { Text(stringResource(R.string.create_playlist)) },
+      buttons = {
+        androidx.compose.material3.Button(
+          onClick = { showCreatePlaylistOptionsDialog = false },
+          modifier = Modifier.fillMaxWidth().height(50.dp)
+        ) {
+          Text(stringResource(R.string.cancel), fontWeight = FontWeight.ExtraBold)
+        }
+      },
     ) {
       Column(
-        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        modifier =
+          Modifier.fillMaxWidth()
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
       ) {
-        androidx.compose.material3.Surface(
-          shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-          color = MaterialTheme.colorScheme.surfaceContainerHighest,
-          modifier = Modifier.fillMaxWidth()
-        ) {
-          echo.music.iad1tya.ui.component.PreferenceEntry(
-            icon = { Icon(painter = painterResource(R.drawable.add), contentDescription = null) },
-            title = { Text(stringResource(R.string.create_playlist_normally)) },
-            description = "Standard playlist creation",
-            onClick = {
-              showCreatePlaylistOptionsDialog = false
-              showCreatePlaylistDialog = true
-            }
-          )
-        }
-
-        androidx.compose.material3.Surface(
-          shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-          color = MaterialTheme.colorScheme.surfaceContainerHighest,
-          modifier = Modifier.fillMaxWidth()
-        ) {
-          echo.music.iad1tya.ui.component.PreferenceEntry(
-            icon = {
-              androidx.compose.foundation.Image(painter = painterResource(R.drawable.ai_pfp), contentDescription = null, modifier = Modifier.size(24.dp).clip(androidx.compose.foundation.shape.CircleShape))
-            },
-            title = { Text(stringResource(R.string.create_playlist_with_ai)) },
-            description = "AI-powered playlist generation",
-            onClick = {
-              showCreatePlaylistOptionsDialog = false
-              showAiPlaylistDialog = true
-            }
-          )
-        }
+        CreatePlaylistOption(
+          title = stringResource(R.string.create_playlist_normally),
+          onClick = {
+            showCreatePlaylistOptionsDialog = false
+            showCreatePlaylistDialog = true
+          }
+        )
+        CreatePlaylistOption(
+          title = stringResource(R.string.create_playlist_with_ai),
+          onClick = {
+            showCreatePlaylistOptionsDialog = false
+            showAiPlaylistDialog = true
+          }
+        )
       }
     }
   }
@@ -338,6 +348,31 @@ fun LibraryScreen(navController: NavController) {
         showTasteGenerationDialog = false
         navController.navigate("local_playlist/$playlistId")
       }
+    )
+  }
+}
+
+@Composable
+private fun CreatePlaylistOption(title: String, onClick: () -> Unit) {
+  Row(
+    verticalAlignment = Alignment.CenterVertically,
+    modifier =
+      Modifier.fillMaxWidth()
+        .heightIn(min = 54.dp)
+        .clickable(onClick = onClick)
+        .padding(horizontal = 14.dp, vertical = 6.dp)
+  ) {
+    Text(
+      text = title,
+      fontSize = 16.sp,
+      fontWeight = FontWeight.Bold,
+      modifier = Modifier.weight(1f)
+    )
+    Icon(
+      painter = painterResource(R.drawable.navigate_next),
+      contentDescription = null,
+      tint = MaterialTheme.colorScheme.onSurfaceVariant,
+      modifier = Modifier.size(18.dp)
     )
   }
 }

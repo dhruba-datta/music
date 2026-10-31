@@ -2,14 +2,12 @@ package echo.music.iad1tya.ui.screens.library
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -37,9 +35,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -72,11 +68,16 @@ import echo.music.iad1tya.ui.component.AlbumGridItem
 import echo.music.iad1tya.ui.component.AlbumListItem
 import echo.music.iad1tya.ui.component.ArtistGridItem
 import echo.music.iad1tya.ui.component.ArtistListItem
-import echo.music.iad1tya.ui.component.AutoPlaylistButton
+import echo.music.iad1tya.ui.component.AutoPlaylistGrid
+import echo.music.iad1tya.ui.component.AutoPlaylistTile
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.PlaylistGridItem
 import echo.music.iad1tya.ui.component.PlaylistListItem
 import echo.music.iad1tya.ui.component.SortHeader
+import echo.music.iad1tya.ui.component.StageSectionHeader
+import echo.music.iad1tya.ui.component.StageSectionTitle
+import echo.music.iad1tya.ui.component.stageGridFullWidth
+import echo.music.iad1tya.ui.component.stageGridPadding
 import echo.music.iad1tya.ui.menu.AlbumMenu
 import echo.music.iad1tya.ui.menu.ArtistMenu
 import echo.music.iad1tya.ui.menu.PlaylistMenu
@@ -242,17 +243,25 @@ fun LibraryMixScreen(
     }
   }
 
+  val autoPlaylistTiles =
+    buildList {
+      if (showLiked) add(AutoPlaylistTile(stringResource(R.string.liked), R.drawable.favorite, onClick = { navController.navigate("auto_playlist/liked") }))
+      if (showDownloaded) add(AutoPlaylistTile(stringResource(R.string.offline), R.drawable.offline, onClick = { navController.navigate("auto_playlist/downloaded") }))
+      if (showExported) add(AutoPlaylistTile(stringResource(R.string.action_exported), R.drawable.download, onClick = { navController.navigate("auto_playlist/exported") }))
+      if (showCached) add(AutoPlaylistTile(stringResource(R.string.cached_playlist), R.drawable.cached, onClick = { navController.navigate("cache_playlist/cached") }))
+      if (showTop) add(AutoPlaylistTile(stringResource(R.string.my_top) + " $topSize", R.drawable.trending_up, onClick = { navController.navigate("top_playlist/$topSize") }))
+      if (showBottom) add(AutoPlaylistTile(stringResource(R.string.my_bottom) + " 50", R.drawable.trending_down, onClick = { navController.navigate("bottom_playlist/50") }))
+      add(AutoPlaylistTile(stringResource(R.string.filter_local), R.drawable.snippet_folder, onClick = { navController.navigate("local_songs") }))
+    }
+
   val headerContent =
     @Composable {
       Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(start = 18.dp),
+        modifier =
+          Modifier.fillMaxWidth().padding(start = 22.dp, end = 22.dp, top = 18.dp, bottom = 8.dp),
       ) {
-        androidx.compose.material3.Text(
-          text = stringResource(R.string.from_your_library),
-          style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
-          fontWeight = FontWeight.ExtraBold,
-        )
+        StageSectionTitle(text = stringResource(R.string.from_your_library))
 
         Spacer(Modifier.weight(1f))
 
@@ -269,8 +278,6 @@ fun LibraryMixScreen(
             }
           },
         )
-
-        Spacer(modifier = Modifier.width(16.dp))
       }
     }
 
@@ -313,88 +320,14 @@ fun LibraryMixScreen(
             key = "auto_playlists_grid",
             contentType = CONTENT_TYPE_HEADER,
           ) {
-            FlowRow(
-              maxItemsInEachRow = 3,
-              horizontalArrangement = Arrangement.spacedBy(8.dp),
-              verticalArrangement = Arrangement.spacedBy(8.dp),
-              modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 8.dp)
-            ) {
-              val itemModifier = Modifier.weight(1f)
-              if (showLiked) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.liked),
-                  icon = R.drawable.favorite,
-                  iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                  onClick = { navController.navigate("auto_playlist/liked") },
-                  modifier = itemModifier
-                )
-              }
-              if (showDownloaded) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.offline),
-                  icon = R.drawable.offline,
-                  iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                  onClick = { navController.navigate("auto_playlist/downloaded") },
-                  modifier = itemModifier
-                )
-              }
-              if (showExported) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.action_exported),
-                  icon = R.drawable.download,
-                  iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                  onClick = { navController.navigate("auto_playlist/exported") },
-                  modifier = itemModifier
-                )
-              }
-              if (showCached) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.cached_playlist),
-                  icon = R.drawable.cached,
-                  iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                  onClick = { navController.navigate("cache_playlist/cached") },
-                  modifier = itemModifier
-                )
-              }
-
-              if (showTop) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.my_top) + " $topSize",
-                  icon = R.drawable.trending_up,
-                  iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                  onClick = { navController.navigate("top_playlist/$topSize") },
-                  modifier = itemModifier
-                )
-              }
-              if (showBottom) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.my_bottom) + " 50",
-                  icon = R.drawable.trending_down,
-                  iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                  onClick = { navController.navigate("bottom_playlist/50") },
-                  modifier = itemModifier
-                )
-              }
-              AutoPlaylistButton(
-                title = stringResource(R.string.filter_local),
-                icon = R.drawable.snippet_folder,
-                iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                onClick = { navController.navigate("local_songs") },
-                modifier = Modifier.fillMaxWidth(0.32f)
-              )
-            }
+            AutoPlaylistGrid(autoPlaylistTiles, columns = 2, artHeight = 100.dp)
           }
 
           item(
             key = "playlists_header",
             contentType = CONTENT_TYPE_HEADER,
           ) {
-            androidx.compose.material3.Text(
-              text = stringResource(R.string.filter_playlists),
-              fontSize = 19.sp,
-              fontWeight = FontWeight.ExtraBold,
-              modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
-            )
+            StageSectionHeader(title = stringResource(R.string.filter_playlists))
           }
 
           val allPlaylists = pinnedPlaylists + otherPlaylists
@@ -447,12 +380,7 @@ fun LibraryMixScreen(
               key = "artists_header",
               contentType = CONTENT_TYPE_HEADER,
             ) {
-              androidx.compose.material3.Text(
-                text = stringResource(R.string.filter_artists),
-                style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
-              )
+              StageSectionHeader(title = stringResource(R.string.filter_artists))
             }
 
             items(
@@ -505,12 +433,7 @@ fun LibraryMixScreen(
               key = "albums_header",
               contentType = CONTENT_TYPE_HEADER,
             ) {
-              androidx.compose.material3.Text(
-                text = stringResource(R.string.filter_albums),
-                style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
-              )
+              StageSectionHeader(title = stringResource(R.string.filter_albums))
             }
 
             items(
@@ -568,14 +491,14 @@ fun LibraryMixScreen(
               minSize =
                 GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp,
             ),
-          contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
+          contentPadding = stageGridPadding(),
         ) {
           item(
             key = "filter",
             span = { GridItemSpan(maxLineSpan) },
             contentType = CONTENT_TYPE_HEADER,
           ) {
-            filterContent()
+            Box(Modifier.stageGridFullWidth()) { filterContent() }
           }
 
           item(
@@ -583,7 +506,7 @@ fun LibraryMixScreen(
             span = { GridItemSpan(maxLineSpan) },
             contentType = CONTENT_TYPE_HEADER,
           ) {
-            headerContent()
+            Box(Modifier.stageGridFullWidth()) { headerContent() }
           }
 
           item(
@@ -591,76 +514,7 @@ fun LibraryMixScreen(
             span = { GridItemSpan(maxLineSpan) },
             contentType = CONTENT_TYPE_HEADER,
           ) {
-            FlowRow(
-              maxItemsInEachRow = 3,
-              horizontalArrangement = Arrangement.spacedBy(8.dp),
-              verticalArrangement = Arrangement.spacedBy(8.dp),
-              modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 8.dp)
-            ) {
-              val itemModifier = Modifier.weight(1f)
-              if (showLiked) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.liked),
-                  icon = R.drawable.favorite,
-                  iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                  onClick = { navController.navigate("auto_playlist/liked") },
-                  modifier = itemModifier
-                )
-              }
-              if (showDownloaded) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.offline),
-                  icon = R.drawable.offline,
-                  iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                  onClick = { navController.navigate("auto_playlist/downloaded") },
-                  modifier = itemModifier
-                )
-              }
-              if (showExported) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.action_exported),
-                  icon = R.drawable.download,
-                  iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                  onClick = { navController.navigate("auto_playlist/exported") },
-                  modifier = itemModifier
-                )
-              }
-              if (showCached) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.cached_playlist),
-                  icon = R.drawable.cached,
-                  iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                  onClick = { navController.navigate("cache_playlist/cached") },
-                  modifier = itemModifier
-                )
-              }
-
-              if (showTop) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.my_top) + " $topSize",
-                  icon = R.drawable.trending_up,
-                  iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                  onClick = { navController.navigate("top_playlist/$topSize") },
-                  modifier = itemModifier
-                )
-              }
-              if (showBottom) {
-                AutoPlaylistButton(
-                  title = stringResource(R.string.my_bottom) + " 50",
-                  icon = R.drawable.trending_down,
-                  iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                  onClick = { navController.navigate("bottom_playlist/50") },
-                  modifier = itemModifier
-                )
-              }
-              AutoPlaylistButton(
-                title = stringResource(R.string.filter_local),
-                icon = R.drawable.snippet_folder,
-                iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                onClick = { navController.navigate("local_songs") },
-                modifier = Modifier.fillMaxWidth(0.32f)
-              )
-            }
+            AutoPlaylistGrid(autoPlaylistTiles, columns = 2, artHeight = 100.dp, modifier = Modifier.stageGridFullWidth())
           }
 
           item(
@@ -668,11 +522,9 @@ fun LibraryMixScreen(
             span = { GridItemSpan(maxLineSpan) },
             contentType = CONTENT_TYPE_HEADER,
           ) {
-            androidx.compose.material3.Text(
-              text = stringResource(R.string.filter_playlists),
-              fontSize = 19.sp,
-              fontWeight = FontWeight.ExtraBold,
-              modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
+            StageSectionHeader(
+              title = stringResource(R.string.filter_playlists),
+              modifier = Modifier.stageGridFullWidth()
             )
           }
 
@@ -710,12 +562,10 @@ fun LibraryMixScreen(
               span = { GridItemSpan(maxLineSpan) },
               contentType = CONTENT_TYPE_HEADER,
             ) {
-              androidx.compose.material3.Text(
-                text = stringResource(R.string.filter_artists),
-                style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
-              )
+              StageSectionHeader(
+              title = stringResource(R.string.filter_artists),
+              modifier = Modifier.stageGridFullWidth()
+            )
             }
 
             items(
@@ -752,12 +602,10 @@ fun LibraryMixScreen(
               span = { GridItemSpan(maxLineSpan) },
               contentType = CONTENT_TYPE_HEADER,
             ) {
-              androidx.compose.material3.Text(
-                text = stringResource(R.string.filter_albums),
-                style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
-              )
+              StageSectionHeader(
+              title = stringResource(R.string.filter_albums),
+              modifier = Modifier.stageGridFullWidth()
+            )
             }
 
             items(

@@ -19,9 +19,13 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.add
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -57,6 +61,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -89,11 +94,13 @@ import com.music.innertube.models.SongItem
 import com.music.innertube.models.YTItem
 import echo.music.iad1tya.LocalDatabase
 import echo.music.iad1tya.LocalDownloadUtil
+import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.LocalPlayerConnection
 import echo.music.iad1tya.R
 import echo.music.iad1tya.constants.CropAlbumArtKey
 import echo.music.iad1tya.constants.GridItemSize
 import echo.music.iad1tya.constants.GridItemsSizeKey
+import echo.music.iad1tya.constants.GridThumbnailCornerRadius
 import echo.music.iad1tya.constants.GridThumbnailHeight
 import echo.music.iad1tya.constants.ListItemHeight
 import echo.music.iad1tya.constants.ListThumbnailSize
@@ -122,6 +129,28 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 const val ActiveBoxAlpha = 0.6f
+
+private val ArtistRowThumbnailSize = 56.dp
+private val GridCellPadding = 6.dp
+private val GridSidePadding = 12.dp
+
+/**
+ * Padding for a vertical grid of `fillMaxWidth` items: with each cell's own padding this gives the
+ * Stage 18dp page gutter and 12dp gaps.
+ */
+@Composable
+fun stageGridPadding(): PaddingValues =
+  LocalPlayerAwareWindowInsets.current
+    .add(WindowInsets(left = GridSidePadding, right = GridSidePadding))
+    .asPaddingValues()
+
+/** Lets a full-span grid header, such as the chips, ignore the side padding of [stageGridPadding]. */
+fun Modifier.stageGridFullWidth(): Modifier = layout { measurable, constraints ->
+  val extra = (GridSidePadding * 2).roundToPx()
+  val width = constraints.maxWidth + extra
+  val placeable = measurable.measure(constraints.copy(minWidth = width, maxWidth = width))
+  layout(constraints.maxWidth, placeable.height) { placeable.place(-extra / 2, 0) }
+}
 
 @Composable
 fun currentGridThumbnailHeight(): Dp {
@@ -306,7 +335,7 @@ fun GridItem(
   Column(
     modifier =
       if (fillMaxWidth) {
-        modifier.padding(12.dp).fillMaxWidth()
+        modifier.padding(GridCellPadding).fillMaxWidth()
       } else {
         modifier.padding(12.dp).width(gridHeight * thumbnailRatio)
       }
@@ -324,7 +353,7 @@ fun GridItem(
       thumbnailContent()
     }
 
-    Spacer(modifier = Modifier.height(6.dp))
+    Spacer(modifier = Modifier.height(8.dp))
 
     title()
 
@@ -352,7 +381,8 @@ fun GridItem(
     title = {
       Text(
         text = title,
-        style = MaterialTheme.typography.bodyLarge,
+        fontSize = 15.sp,
+        lineHeight = 19.sp,
         fontWeight = FontWeight.Bold,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
@@ -363,8 +393,9 @@ fun GridItem(
     subtitle = {
       Text(
         text = subtitle,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.secondary,
+        fontSize = 13.sp,
+        lineHeight = 17.sp,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
       )
@@ -483,7 +514,8 @@ fun SongGridItem(
     title = {
       Text(
         text = song.song.title,
-        style = MaterialTheme.typography.bodyLarge,
+        fontSize = 15.sp,
+        lineHeight = 19.sp,
         fontWeight = FontWeight.Bold,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
@@ -497,8 +529,9 @@ fun SongGridItem(
             song.artists.joinToString { it.name },
             makeTimeString(song.song.duration * 1000L)
           ),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.secondary,
+        fontSize = 13.sp,
+        lineHeight = 17.sp,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         maxLines = 2,
         overflow = TextOverflow.Ellipsis,
       )
@@ -510,7 +543,7 @@ fun SongGridItem(
         thumbnailUrl = song.thumbnailUrl,
         isActive = isActive,
         isPlaying = isPlaying,
-        shape = RoundedCornerShape(ThumbnailCornerRadius),
+        shape = RoundedCornerShape(GridThumbnailCornerRadius),
         modifier = Modifier.size(gridHeight)
       )
       if (!isActive) {
@@ -553,7 +586,7 @@ fun ArtistListItem(
             .networkCachePolicy(coil3.request.CachePolicy.ENABLED)
             .build(),
         contentDescription = null,
-        modifier = Modifier.size(ListThumbnailSize).clip(RoundedCornerShape(ThumbnailCornerRadius)),
+        modifier = Modifier.size(ArtistRowThumbnailSize).clip(CircleShape),
       )
     },
     trailingContent = trailingContent,
@@ -589,7 +622,7 @@ fun ArtistGridItem(
             .build(),
         contentDescription = null,
         contentScale = ContentScale.Crop,
-        modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(ThumbnailCornerRadius))
+        modifier = Modifier.fillMaxSize().clip(CircleShape)
       )
     },
     fillMaxWidth = fillMaxWidth,
@@ -715,7 +748,8 @@ fun AlbumGridItem(
     title = {
       Text(
         text = album.album.title,
-        style = MaterialTheme.typography.bodyLarge,
+        fontSize = 15.sp,
+        lineHeight = 19.sp,
         fontWeight = FontWeight.Bold,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
@@ -725,8 +759,9 @@ fun AlbumGridItem(
     subtitle = {
       Text(
         text = album.artists.joinToString { it.name },
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.secondary,
+        fontSize = 13.sp,
+        lineHeight = 17.sp,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         maxLines = 2,
         overflow = TextOverflow.Ellipsis
       )
@@ -741,7 +776,7 @@ fun AlbumGridItem(
         thumbnailUrl = album.album.thumbnailUrl,
         isActive = isActive,
         isPlaying = isPlaying,
-        shape = RoundedCornerShape(ThumbnailCornerRadius),
+        shape = RoundedCornerShape(GridThumbnailCornerRadius),
       )
 
       AlbumPlayButton(
@@ -901,7 +936,8 @@ fun PlaylistGridItem(
     title = {
       Text(
         text = playlist.playlist.name,
-        style = MaterialTheme.typography.bodyLarge,
+        fontSize = 15.sp,
+        lineHeight = 19.sp,
         fontWeight = FontWeight.Bold,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
@@ -922,8 +958,9 @@ fun PlaylistGridItem(
         }
       Text(
         text = subtitle,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.secondary,
+        fontSize = 13.sp,
+        lineHeight = 17.sp,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         maxLines = 2,
         overflow = TextOverflow.Ellipsis
       )
@@ -952,7 +989,7 @@ fun PlaylistGridItem(
             )
           }
         },
-        shape = RoundedCornerShape(ThumbnailCornerRadius)
+        shape = RoundedCornerShape(GridThumbnailCornerRadius)
       )
     },
     fillMaxWidth = fillMaxWidth,
@@ -1018,6 +1055,7 @@ fun YouTubeListItem(
   modifier: Modifier = Modifier,
   color: Color = Color.Transparent,
   albumIndex: Int? = null,
+  rank: Int? = null,
   isSelected: Boolean = false,
   isActive: Boolean = false,
   isPlaying: Boolean = false,
@@ -1069,15 +1107,30 @@ fun YouTubeListItem(
         },
       badges = badges,
       thumbnailContent = {
-        ItemThumbnail(
-          thumbnailUrl = item.thumbnail,
-          albumIndex = albumIndex,
-          isSelected = isSelected,
-          isActive = isActive,
-          isPlaying = isPlaying,
-          shape = RoundedCornerShape(ThumbnailCornerRadius),
-          modifier = Modifier.size(ListThumbnailSize)
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+          if (rank != null) {
+            Text(
+              text = rank.toString(),
+              fontSize = 18.sp,
+              fontWeight = FontWeight.ExtraBold,
+              textAlign = TextAlign.Center,
+              modifier = Modifier.width(26.dp),
+            )
+            Spacer(Modifier.width(13.dp))
+          }
+          ItemThumbnail(
+            thumbnailUrl = item.thumbnail,
+            albumIndex = albumIndex,
+            isSelected = isSelected,
+            isActive = isActive,
+            isPlaying = isPlaying,
+            shape =
+              if (item is ArtistItem) CircleShape
+              else RoundedCornerShape(ThumbnailCornerRadius),
+            modifier =
+              Modifier.size(if (item is ArtistItem) ArtistRowThumbnailSize else ListThumbnailSize)
+          )
+        }
       },
       trailingContent = trailingContent,
       modifier = modifier,
@@ -1139,7 +1192,8 @@ fun YouTubeGridItem(
     title = {
       Text(
         text = item.title,
-        style = MaterialTheme.typography.bodyLarge,
+        fontSize = 15.sp,
+        lineHeight = 19.sp,
         fontWeight = FontWeight.Bold,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
@@ -1163,8 +1217,9 @@ fun YouTubeGridItem(
       if (subtitle != null) {
         Text(
           text = subtitle,
-          style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.secondary,
+          fontSize = 13.sp,
+          lineHeight = 17.sp,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
           maxLines = 2,
           overflow = TextOverflow.Ellipsis,
         )
@@ -1180,7 +1235,7 @@ fun YouTubeGridItem(
         thumbnailUrl = item.thumbnail,
         isActive = isActive,
         isPlaying = isPlaying,
-        shape = RoundedCornerShape(ThumbnailCornerRadius),
+        shape = if (item is ArtistItem) CircleShape else RoundedCornerShape(GridThumbnailCornerRadius),
         forceCrop = forceCrop
       )
 
@@ -1234,7 +1289,7 @@ fun LocalSongsGrid(
         thumbnailUrl = thumbnailUrl,
         isActive = isActive,
         isPlaying = isPlaying,
-        shape = RoundedCornerShape(ThumbnailCornerRadius),
+        shape = RoundedCornerShape(GridThumbnailCornerRadius),
         modifier = if (fillMaxWidth) Modifier.fillMaxWidth() else Modifier,
         showCenterPlay = true,
         playButtonVisible = false,
@@ -1266,7 +1321,7 @@ fun LocalArtistsGrid(
         thumbnailUrl = thumbnailUrl,
         isActive = false,
         isPlaying = false,
-        shape = RoundedCornerShape(ThumbnailCornerRadius),
+        shape = CircleShape,
         modifier = if (fillMaxWidth) Modifier.fillMaxWidth() else Modifier,
         showCenterPlay = false,
         playButtonVisible = false,
@@ -1298,7 +1353,7 @@ fun LocalAlbumsGrid(
         thumbnailUrl = thumbnailUrl,
         isActive = isActive,
         isPlaying = isPlaying,
-        shape = RoundedCornerShape(ThumbnailCornerRadius),
+        shape = RoundedCornerShape(GridThumbnailCornerRadius),
         modifier = if (fillMaxWidth) Modifier.fillMaxWidth() else Modifier,
         showCenterPlay = false,
         playButtonVisible = true,

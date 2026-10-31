@@ -120,6 +120,7 @@ import echo.music.iad1tya.playback.queues.ListQueue
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.SongListItem
 import echo.music.iad1tya.ui.component.SortHeader
+import echo.music.iad1tya.ui.component.StageSectionTitle
 import echo.music.iad1tya.ui.menu.SelectionSongMenu
 import echo.music.iad1tya.ui.menu.SongMenu
 import echo.music.iad1tya.utils.launchSafely
@@ -801,13 +802,11 @@ private fun LocalSongControlsCard(
 ) {
   Row(
     verticalAlignment = Alignment.CenterVertically,
-    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
+    modifier =
+      Modifier.fillMaxWidth().padding(start = 22.dp, end = 22.dp, top = 18.dp, bottom = 8.dp),
   ) {
-    Text(
-      text = pluralStringResource(R.plurals.n_song, visibleSongCount, visibleSongCount),
-      style = MaterialTheme.typography.titleMedium,
-      fontWeight = FontWeight.ExtraBold,
-      color = MaterialTheme.colorScheme.onSurface,
+    StageSectionTitle(
+      text = pluralStringResource(R.plurals.n_song, visibleSongCount, visibleSongCount)
     )
 
     Spacer(Modifier.weight(1f))

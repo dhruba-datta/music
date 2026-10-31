@@ -51,6 +51,7 @@ import echo.music.iad1tya.ui.component.YouTubeListItem
 import echo.music.iad1tya.ui.component.shimmer.GridItemPlaceHolder
 import echo.music.iad1tya.ui.component.shimmer.ListItemPlaceHolder
 import echo.music.iad1tya.ui.component.shimmer.ShimmerHost
+import echo.music.iad1tya.ui.component.stageGridPadding
 import echo.music.iad1tya.ui.menu.YouTubeAlbumMenu
 import echo.music.iad1tya.ui.menu.YouTubeArtistMenu
 import echo.music.iad1tya.ui.menu.YouTubePlaylistMenu
@@ -196,7 +197,7 @@ fun ArtistItemsScreen(
         GridCells.Adaptive(
           minSize = GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp
         ),
-      contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
+      contentPadding = stageGridPadding()
     ) {
       items(items = itemsPage?.items.orEmpty().distinctBy { it.id }, key = { it.id }) { item ->
         YouTubeGridItem(

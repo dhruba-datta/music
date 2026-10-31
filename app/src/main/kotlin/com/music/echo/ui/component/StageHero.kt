@@ -40,7 +40,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -55,9 +54,13 @@ import coil3.compose.AsyncImage
 import echo.music.iad1tya.R
 import echo.music.iad1tya.constants.AppBarHeight
 
-private val HeroGutter = 18.dp
-private val HeroActionSize = 48.dp
+private val HeroGutter = 22.dp
+private val HeroActionSize = 44.dp
 private val HeroPlaySize = 52.dp
+// The boards' 300dp hero, measured from below the 64dp top bar: title mid-way, actions at the foot.
+private val HeroTitleOffset = 52.dp
+private val HeroActionsOffset = 58.dp
+private val HeroBottomPadding = 14.dp
 
 /**
  * Stage collection header: full-width artwork that runs under the status bar and top bar, a fade
@@ -80,8 +83,6 @@ fun StageHero(
   val density = LocalDensity.current
   val bleed = WindowInsets.systemBars.asPaddingValues().calculateTopPadding() + AppBarHeight
   val background = MaterialTheme.colorScheme.background
-  val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-  val artSpace = (screenWidth * 0.55f).coerceAtMost(260.dp)
 
   Box(modifier = modifier.fillMaxWidth()) {
     Box(
@@ -101,8 +102,8 @@ fun StageHero(
             .background(
               Brush.verticalGradient(
                 0f to Color.Transparent,
-                0.4f to Color.Transparent,
-                0.72f to background.copy(alpha = 0.72f),
+                0.3f to Color.Transparent,
+                0.62f to background.copy(alpha = 0.72f),
                 1f to background,
               )
             )
@@ -110,7 +111,7 @@ fun StageHero(
     }
 
     Column(modifier = Modifier.fillMaxWidth()) {
-      Spacer(Modifier.height(artSpace))
+      Spacer(Modifier.height(HeroTitleOffset))
 
       Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -121,7 +122,7 @@ fun StageHero(
         Text(
           text = title,
           fontSize = 32.sp,
-          lineHeight = 36.sp,
+          lineHeight = 35.sp,
           fontWeight = FontWeight.ExtraBold,
           textAlign = TextAlign.Start,
           color = MaterialTheme.colorScheme.onBackground,
@@ -133,12 +134,13 @@ fun StageHero(
 
       Column(
         verticalArrangement = Arrangement.spacedBy(4.dp),
-        modifier = Modifier.fillMaxWidth().padding(horizontal = HeroGutter).padding(top = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = HeroGutter).padding(top = 6.dp),
       ) {
         if (subtitle != null) {
           Text(
             text = subtitle,
-            style = MaterialTheme.typography.bodyMedium,
+            fontSize = 14.sp,
+            lineHeight = 19.sp,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 2,
@@ -150,12 +152,15 @@ fun StageHero(
 
       Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxWidth().padding(horizontal = HeroGutter, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        modifier =
+          Modifier.fillMaxWidth()
+            .padding(horizontal = HeroGutter)
+            .padding(top = HeroActionsOffset, bottom = HeroBottomPadding),
       ) {
         Row(
           verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(8.dp),
+          horizontalArrangement = Arrangement.spacedBy(6.dp),
           modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState()),
           content = leadingActions,
         )
@@ -387,7 +392,7 @@ fun StageSectionHeader(title: String, modifier: Modifier = Modifier, onMore: (()
 /** Keeps a top bar icon legible over the hero artwork. */
 @Composable
 fun Modifier.stageBarButton(): Modifier =
-  background(MaterialTheme.colorScheme.surface.copy(alpha = 0.6f), CircleShape)
+  background(Color.Black.copy(alpha = 0.3f), CircleShape)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.asPaddingValues
@@ -45,6 +44,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -124,32 +124,8 @@ fun LibrarySpotifyScreen(
             accountName = uiState.accountName ?: "Spotify User",
             avatarUrl = uiState.avatarUrl,
             onRefresh = { viewModel.refresh() },
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+            modifier = Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 4.dp),
           )
-        }
-
-        // Header: Your Playlists
-        item(key = "playlists_header") {
-          val totalPlaylists = uiState.playlists.size + 1
-          Row(
-            modifier = Modifier
-              .fillMaxWidth()
-              .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-          ) {
-            Text(
-              text = stringResource(R.string.spotify_playlists_title),
-              style = MaterialTheme.typography.titleLarge,
-              fontWeight = FontWeight.Bold,
-              color = MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-              text = pluralStringResource(R.plurals.n_playlist, totalPlaylists, totalPlaylists),
-              style = MaterialTheme.typography.titleSmall,
-              color = MaterialTheme.colorScheme.secondary,
-            )
-          }
         }
 
         // Liked Songs Pinned Item (uses native ListItem and matches Spotify aesthetic)
@@ -166,7 +142,7 @@ fun LibrarySpotifyScreen(
               )
               Text(
                 text = sub,
-                style = MaterialTheme.typography.bodySmall,
+                fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -240,7 +216,7 @@ fun LibrarySpotifyScreen(
                 if (sub.isNotBlank()) {
                   Text(
                     text = sub,
-                    style = MaterialTheme.typography.bodySmall,
+                    fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -288,84 +264,78 @@ private fun SpotifyConnectBanner(
   onRefresh: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  Surface(
-    modifier = modifier
-      .fillMaxWidth()
-      .padding(16.dp),
-    shape = RoundedCornerShape(24.dp),
-    color = MaterialTheme.colorScheme.surfaceContainer,
+  Column(
+    modifier = modifier.fillMaxWidth().padding(start = 30.dp, end = 30.dp, top = 26.dp),
+    horizontalAlignment = Alignment.CenterHorizontally,
   ) {
-    Column(
-      modifier = Modifier.padding(24.dp),
-      horizontalAlignment = Alignment.CenterHorizontally,
+    Box(
+      modifier = Modifier
+        .size(84.dp)
+        .clip(CircleShape)
+        .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+      contentAlignment = Alignment.Center,
     ) {
-      Box(
-        modifier = Modifier
-          .size(64.dp)
-          .clip(CircleShape)
-          .background(Color(0xFF1DB954).copy(alpha = 0.15f)),
-        contentAlignment = Alignment.Center,
-      ) {
-        Icon(
-          painter = painterResource(R.drawable.ic_spotify),
-          contentDescription = null,
-          tint = Color(0xFF1DB954),
-          modifier = Modifier.size(36.dp),
-        )
-      }
-
-      Spacer(modifier = Modifier.height(16.dp))
-
-      Text(
-        text = stringResource(R.string.spotify_live_library),
-        style = MaterialTheme.typography.headlineSmall,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onSurface,
+      Icon(
+        painter = painterResource(R.drawable.ic_spotify),
+        contentDescription = null,
+        tint = Color(0xFF1DB954),
+        modifier = Modifier.size(38.dp),
       )
+    }
 
-      Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(16.dp))
 
+    Text(
+      text = stringResource(R.string.spotify_live_library),
+      fontSize = 23.sp,
+      fontWeight = FontWeight.ExtraBold,
+      color = MaterialTheme.colorScheme.onSurface,
+      textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+    )
+
+    Spacer(modifier = Modifier.height(6.dp))
+
+    Text(
+      text = stringResource(R.string.spotify_live_desc),
+      fontSize = 15.sp,
+      lineHeight = 21.sp,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    Button(
+      onClick = onConnect,
+      colors = ButtonDefaults.buttonColors(
+        containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+      ),
+      modifier = Modifier.fillMaxWidth().height(50.dp),
+    ) {
       Text(
-        text = stringResource(R.string.spotify_live_desc),
-        style = MaterialTheme.typography.bodyMedium,
+        text = stringResource(R.string.spotify_connect_account),
+        fontSize = 15.sp,
+        fontWeight = FontWeight.ExtraBold,
+      )
+    }
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    TextButton(
+      onClick = onRefresh,
+    ) {
+      Icon(
+        painter = painterResource(R.drawable.cached),
+        contentDescription = null,
+        modifier = Modifier.size(16.dp),
+      )
+      Spacer(modifier = Modifier.width(6.dp))
+      Text(
+        text = "Already connected? Tap to refresh",
+        style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
       )
-
-      Spacer(modifier = Modifier.height(20.dp))
-
-      Button(
-        onClick = onConnect,
-        shape = RoundedCornerShape(16.dp),
-        colors = ButtonDefaults.buttonColors(
-          containerColor = MaterialTheme.colorScheme.primary,
-          contentColor = MaterialTheme.colorScheme.onPrimary,
-        ),
-        modifier = Modifier.fillMaxWidth(0.85f),
-      ) {
-        Text(
-          text = stringResource(R.string.spotify_connect_account),
-          fontWeight = FontWeight.SemiBold,
-        )
-      }
-
-      Spacer(modifier = Modifier.height(8.dp))
-
-      TextButton(
-        onClick = onRefresh,
-      ) {
-        Icon(
-          painter = painterResource(R.drawable.cached),
-          contentDescription = null,
-          modifier = Modifier.size(16.dp),
-        )
-        Spacer(modifier = Modifier.width(6.dp))
-        Text(
-          text = "Already connected? Tap to refresh",
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.primary,
-        )
-      }
     }
   }
 }
@@ -378,14 +348,14 @@ private fun SpotifyProfileHeader(
   modifier: Modifier = Modifier,
 ) {
   Surface(
-    shape = RoundedCornerShape(16.dp),
-    color = MaterialTheme.colorScheme.surfaceContainer,
+    shape = RoundedCornerShape(18.dp),
+    color = Color(0xFF16321F),
     modifier = modifier.fillMaxWidth(),
   ) {
     Row(
       modifier = Modifier
         .fillMaxWidth()
-        .padding(horizontal = 16.dp, vertical = 12.dp),
+        .padding(14.dp),
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -419,32 +389,24 @@ private fun SpotifyProfileHeader(
           }
         }
 
-        Spacer(modifier = Modifier.width(14.dp))
+        Spacer(modifier = Modifier.width(12.dp))
 
         Column {
           Text(
-            text = accountName,
-            style = MaterialTheme.typography.titleMedium,
+            text = "Spotify Connected",
+            fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
           )
-          Spacer(modifier = Modifier.height(2.dp))
-          Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-              modifier = Modifier
-                .size(7.dp)
-                .clip(CircleShape)
-                .background(Color(0xFF1DB954))
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-              text = "Spotify Connected",
-              style = MaterialTheme.typography.bodySmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-          }
+          Text(
+            text = accountName,
+            fontSize = 13.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+          )
         }
       }
 

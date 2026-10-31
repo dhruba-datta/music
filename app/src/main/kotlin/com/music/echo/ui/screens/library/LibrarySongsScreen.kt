@@ -44,7 +44,6 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -68,6 +67,7 @@ import echo.music.iad1tya.ui.component.HideOnScrollFAB
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.SongListItem
 import echo.music.iad1tya.ui.component.SortHeader
+import echo.music.iad1tya.ui.component.StageSectionTitle
 import echo.music.iad1tya.ui.menu.SelectionSongMenu
 import echo.music.iad1tya.ui.menu.SongMenu
 import echo.music.iad1tya.utils.listItemShape
@@ -190,13 +190,12 @@ fun LibrarySongsScreen(
         ) {
           Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier =
+              Modifier.fillMaxWidth()
+                .padding(start = 22.dp, end = 22.dp, top = 18.dp, bottom = 8.dp),
           ) {
-            Text(
-              text = pluralStringResource(R.plurals.n_song, filteredSongs.size, filteredSongs.size),
-              style = MaterialTheme.typography.titleMedium,
-              fontWeight = FontWeight.ExtraBold,
-              color = MaterialTheme.colorScheme.onSurface,
+            StageSectionTitle(
+              text = pluralStringResource(R.plurals.n_song, filteredSongs.size, filteredSongs.size)
             )
 
             Spacer(Modifier.weight(1f))

@@ -3,7 +3,6 @@ package echo.music.iad1tya.ui.screens
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -21,15 +19,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,7 +38,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,10 +67,12 @@ import echo.music.iad1tya.ui.component.shimmer.GridItemPlaceHolder
 import echo.music.iad1tya.ui.component.shimmer.ShimmerHost
 import echo.music.iad1tya.ui.component.shimmer.TextPlaceholder
 import echo.music.iad1tya.ui.menu.YouTubeSongMenu
-import echo.music.iad1tya.ui.utils.SnapLayoutInfoProvider
 import echo.music.iad1tya.ui.utils.backToMain
 import echo.music.iad1tya.utils.listItemShape
 import echo.music.iad1tya.viewmodels.ChartsViewModel
+
+// The boards' 171 by 70dp video card.
+private const val TopVideoThumbnailRatio = 171f / 70f
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -204,89 +201,63 @@ fun ChartsScreen(
                   modifier = Modifier.animateItem(),
                 )
               }
-              item(key = "section_content_${section.title}") {
-                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                  val horizontalLazyGridItemWidthFactor =
-                    if (maxWidth * 0.475f >= 320.dp) 0.475f else 0.9f
-                  val horizontalLazyGridItemWidth = maxWidth * horizontalLazyGridItemWidthFactor
-
-                  val lazyGridState = rememberLazyGridState()
-                  val snapLayoutInfoProvider =
-                    remember(lazyGridState) {
-                      SnapLayoutInfoProvider(
-                        lazyGridState = lazyGridState,
-                        positionInLayout = { layoutSize, itemSize ->
-                          (layoutSize * horizontalLazyGridItemWidthFactor / 2f - itemSize / 2f)
-                        },
-                      )
-                    }
-
-                  LazyHorizontalGrid(
-                    state = lazyGridState,
-                    rows = GridCells.Fixed(4),
-                    flingBehavior = rememberSnapFlingBehavior(snapLayoutInfoProvider),
-                    contentPadding =
-                      WindowInsets.systemBars.only(WindowInsetsSides.Horizontal).asPaddingValues(),
-                    modifier = Modifier.fillMaxWidth().height(ListItemHeight * 4).animateItem(),
+              val songs = section.items.filterIsInstance<SongItem>().distinctBy { it.id }
+              itemsIndexed(
+                items = songs,
+                key = { _, it -> "section_${section.title}_${it.id}" },
+              ) { index, song ->
+              YouTubeListItem(
+                item = song,
+                isActive = song.id == mediaMetadata?.id,
+                isPlaying = isPlaying,
+                isSwipeable = false,
+                rank = index + 1,
+                shape = listItemShape(index, songs.size),
+                trailingContent = {
+                  IconButton(
+                    onClick = {
+                      menuState.show {
+                        YouTubeSongMenu(
+                          song = song,
+                          navController = navController,
+                          onDismiss = menuState::dismiss,
+                        )
+                      }
+                    },
                   ) {
-                    itemsIndexed(
-                      items = section.items.filterIsInstance<SongItem>().distinctBy { it.id },
-                      key = { _, it -> it.id },
-                    ) { index, song ->
-                      YouTubeListItem(
-                        item = song,
-                        isActive = song.id == mediaMetadata?.id,
-                        isPlaying = isPlaying,
-                        isSwipeable = false,
-                        shape = listItemShape(index % 4, 4),
-                        trailingContent = {
-                          IconButton(
-                            onClick = {
-                              menuState.show {
-                                YouTubeSongMenu(
-                                  song = song,
-                                  navController = navController,
-                                  onDismiss = menuState::dismiss,
-                                )
-                              }
-                            },
-                          ) {
-                            Icon(
-                              painter = painterResource(R.drawable.more_vert),
-                              contentDescription = null,
-                            )
-                          }
-                        },
-                        modifier =
-                          Modifier.width(horizontalLazyGridItemWidth)
-                            .combinedClickable(
-                              onClick = {
-                                if (song.id == mediaMetadata?.id) {
-                                  playerConnection.togglePlayPause()
-                                } else {
-                                  playerConnection.playQueue(
-                                    YouTubeQueue(
-                                      endpoint = WatchEndpoint(videoId = song.id),
-                                      preloadItem = song.toMediaMetadata(),
-                                    ),
-                                  )
-                                }
-                              },
-                              onLongClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                menuState.show {
-                                  YouTubeSongMenu(
-                                    song = song,
-                                    navController = navController,
-                                    onDismiss = menuState::dismiss,
-                                  )
-                                }
-                              },
-                            ),
-                      )
-                    }
+                    Icon(
+                      painter = painterResource(R.drawable.more_vert),
+                      contentDescription = null,
+                    )
                   }
-                }
+                },
+                modifier =
+                  Modifier.fillMaxWidth()
+                    .combinedClickable(
+                      onClick = {
+                        if (song.id == mediaMetadata?.id) {
+                          playerConnection.togglePlayPause()
+                        } else {
+                          playerConnection.playQueue(
+                            YouTubeQueue(
+                              endpoint = WatchEndpoint(videoId = song.id),
+                              preloadItem = song.toMediaMetadata(),
+                            ),
+                          )
+                        }
+                      },
+                      onLongClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        menuState.show {
+                          YouTubeSongMenu(
+                            song = song,
+                            navController = navController,
+                            onDismiss = menuState::dismiss,
+                          )
+                        }
+                      },
+                    ),
+              )
               }
             }
 
@@ -301,23 +272,23 @@ fun ChartsScreen(
                 )
               }
               item(key = "top_videos_content") {
-                LazyRow(
-                  contentPadding =
-                    WindowInsets.systemBars.only(WindowInsetsSides.Horizontal).asPaddingValues(),
-                  modifier = Modifier.animateItem(),
-                ) {
-                  items(
-                    items =
-                      topVideosSection.items.filterIsInstance<SongItem>().distinctBy { it.id },
-                    key = { it.id },
-                  ) { video ->
+                val videos =
+                  topVideosSection.items.filterIsInstance<SongItem>().distinctBy { it.id }
+                Column(modifier = Modifier.padding(horizontal = 12.dp).animateItem()) {
+                  videos.chunked(2).forEach { row ->
+                    Row {
+                      row.forEach { video ->
                     YouTubeGridItem(
                       item = video,
                       isActive = video.id == mediaMetadata?.id,
                       isPlaying = isPlaying,
                       coroutineScope = coroutineScope,
+                      thumbnailRatio = TopVideoThumbnailRatio,
+                      fillMaxWidth = true,
+                      forceCrop = true,
                       modifier =
-                        Modifier.combinedClickable(
+                        Modifier.weight(1f)
+                          .combinedClickable(
                             onClick = {
                               if (video.id == mediaMetadata?.id) {
                                 playerConnection.togglePlayPause()
@@ -341,8 +312,10 @@ fun ChartsScreen(
                               }
                             },
                           )
-                          .animateItem(),
                     )
+                      }
+                      repeat(2 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
+                    }
                   }
                 }
               }

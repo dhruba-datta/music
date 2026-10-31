@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -43,7 +44,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -69,6 +69,9 @@ import echo.music.iad1tya.ui.component.LibraryArtistGridItem
 import echo.music.iad1tya.ui.component.LibraryArtistListItem
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.SortHeader
+import echo.music.iad1tya.ui.component.StageSectionTitle
+import echo.music.iad1tya.ui.component.stageGridFullWidth
+import echo.music.iad1tya.ui.component.stageGridPadding
 import echo.music.iad1tya.utils.rememberEnumPreference
 import echo.music.iad1tya.utils.rememberPreference
 import echo.music.iad1tya.viewmodels.LibraryArtistsViewModel
@@ -89,7 +92,7 @@ fun LibraryArtistsScreen(
   val menuState = LocalMenuState.current
   val haptic = LocalHapticFeedback.current
   val coroutineScope = rememberCoroutineScope()
-  var viewType by rememberEnumPreference(ArtistViewTypeKey, LibraryViewType.GRID)
+  var viewType by rememberEnumPreference(ArtistViewTypeKey, LibraryViewType.LIST)
 
   var filter by rememberEnumPreference(ArtistFilterKey, ArtistFilter.LIKED)
   val (sortType, onSortTypeChange) =
@@ -155,14 +158,10 @@ fun LibraryArtistsScreen(
     @Composable {
       Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(start = 18.dp),
+        modifier =
+          Modifier.fillMaxWidth().padding(start = 22.dp, end = 22.dp, top = 18.dp, bottom = 8.dp),
       ) {
-        Text(
-          text = pluralStringResource(R.plurals.n_artist, artists.size, artists.size),
-          style = MaterialTheme.typography.titleMedium,
-          fontWeight = FontWeight.ExtraBold,
-          color = MaterialTheme.colorScheme.onSurface,
-        )
+        StageSectionTitle(text = pluralStringResource(R.plurals.n_artist, artists.size, artists.size))
 
         Spacer(Modifier.weight(1f))
 
@@ -182,7 +181,7 @@ fun LibraryArtistsScreen(
         )
 
         FlowRow(
-          modifier = Modifier.padding(start = 12.dp, end = 12.dp),
+          modifier = Modifier.padding(start = 12.dp),
           horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
           verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
@@ -272,14 +271,14 @@ fun LibraryArtistsScreen(
               minSize =
                 GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp,
             ),
-          contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
+          contentPadding = stageGridPadding(),
         ) {
           item(
             key = "filter",
             span = { GridItemSpan(maxLineSpan) },
             contentType = CONTENT_TYPE_HEADER,
           ) {
-            filterContent()
+            Box(Modifier.stageGridFullWidth()) { filterContent() }
           }
 
           item(
@@ -287,7 +286,7 @@ fun LibraryArtistsScreen(
             span = { GridItemSpan(maxLineSpan) },
             contentType = CONTENT_TYPE_HEADER,
           ) {
-            headerContent()
+            Box(Modifier.stageGridFullWidth()) { headerContent() }
           }
 
           artists.let { artists ->

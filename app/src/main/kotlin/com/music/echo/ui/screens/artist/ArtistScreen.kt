@@ -465,7 +465,7 @@ fun ArtistScreen(
               if (showSourceChips) {
                 Row(
                   horizontalArrangement = Arrangement.spacedBy(8.dp),
-                  modifier = Modifier.padding(horizontal = 18.dp).padding(bottom = 8.dp)
+                  modifier = Modifier.padding(horizontal = 22.dp).padding(bottom = 8.dp)
                 ) {
                   StageHeroChip(
                     text = stringResource(R.string.status_online),
@@ -491,7 +491,7 @@ fun ArtistScreen(
 
                 if (!description.isNullOrEmpty() || !descriptionRuns.isNullOrEmpty()) {
                   Column(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 8.dp)
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp, vertical = 8.dp)
                   ) {
                     Text(
                       text = stringResource(R.string.about_artist),
@@ -607,35 +607,35 @@ fun ArtistScreen(
                 } else {
                   libraryAlbums
                 }
-              LazyRow(
-                contentPadding =
-                  WindowInsets.systemBars.only(WindowInsetsSides.Horizontal).asPaddingValues(),
-              ) {
-                itemsIndexed(
-                  items = filteredLibraryAlbums,
-                  key = { index, it -> "local_album_${it.id}_${index}" }
-                ) { _, album ->
-                  AlbumGridItem(
-                    album = album,
-                    isActive = mediaMetadata?.album?.id == album.id,
-                    isPlaying = isPlaying,
-                    coroutineScope = coroutineScope,
-                    modifier =
-                      Modifier.combinedClickable(
-                          onClick = { navController.navigate("album/${album.id}") },
-                          onLongClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            menuState.show {
-                              AlbumMenu(
-                                originalAlbum = album,
-                                navController = navController,
-                                onDismiss = menuState::dismiss
-                              )
-                            }
-                          }
-                        )
-                        .animateItem()
-                  )
+              Column(modifier = Modifier.padding(horizontal = 12.dp)) {
+                filteredLibraryAlbums.chunked(2).forEach { row ->
+                  Row {
+                    row.forEach { album ->
+                      AlbumGridItem(
+                        album = album,
+                        isActive = mediaMetadata?.album?.id == album.id,
+                        isPlaying = isPlaying,
+                        coroutineScope = coroutineScope,
+                        fillMaxWidth = true,
+                        modifier =
+                          Modifier.weight(1f)
+                            .combinedClickable(
+                              onClick = { navController.navigate("album/${album.id}") },
+                              onLongClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                menuState.show {
+                                  AlbumMenu(
+                                    originalAlbum = album,
+                                    navController = navController,
+                                    onDismiss = menuState::dismiss
+                                  )
+                                }
+                              }
+                            )
+                      )
+                    }
+                    repeat(2 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
+                  }
                 }
               }
             }
