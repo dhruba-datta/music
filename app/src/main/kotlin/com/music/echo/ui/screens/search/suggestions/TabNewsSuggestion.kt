@@ -43,6 +43,7 @@ import echo.music.iad1tya.constants.GridThumbnailCornerRadius
 import echo.music.iad1tya.constants.SuggestionRegionKey
 import echo.music.iad1tya.constants.ThumbnailCornerRadius
 import echo.music.iad1tya.ui.component.StageSectionHeader
+import androidx.compose.ui.res.stringResource
 import echo.music.iad1tya.utils.rememberPreference
 import kotlinx.coroutines.launch
 
@@ -83,6 +84,13 @@ fun SuggestionsTabContent(
     modifier = Modifier.fillMaxSize()
   ) {
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
+      item(key = "moods_and_genres") {
+        StageSectionHeader(
+          title = stringResource(R.string.mood_and_genres),
+          onMore = { navController.navigate("mood_and_genres") },
+        )
+      }
+
       if (
         isLoading &&
           !isManualLoading &&

@@ -747,16 +747,6 @@ fun HomeScreen(
     }
   }
 
-  LaunchedEffect(Unit) {
-    snapshotFlow { lazylistState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-      .collect { lastVisibleIndex ->
-        val len = lazylistState.layoutInfo.totalItemsCount
-        if (lastVisibleIndex != null && lastVisibleIndex >= len - 3) {
-          viewModel.loadMoreYouTubeItems(homePage?.continuation)
-        }
-      }
-  }
-
   NetworkReload(onReload = viewModel::refresh)
 
   if (selectedChip != null) {
@@ -1000,17 +990,10 @@ fun HomeScreen(
       list.add(HomeSection.Spotify)
       if (communityPlaylists?.isNotEmpty() == true) list.add(HomeSection.FromTheCommunity)
       if (dailyDiscover?.isNotEmpty() == true) list.add(HomeSection.DailyDiscover)
-      if (keepListening?.isNotEmpty() == true) list.add(HomeSection.KeepListening)
-      if (accountPlaylists?.isNotEmpty() == true) list.add(HomeSection.AccountPlaylists)
-      if (forgottenFavorites?.isNotEmpty() == true) list.add(HomeSection.ForgottenFavorites)
 
-      similarRecommendations?.indices?.forEach { i ->
-        list.add(HomeSection.SimilarRecommendation(i))
+      if (similarRecommendations?.isNotEmpty() == true) {
+        list.add(HomeSection.SimilarRecommendation(0))
       }
-
-      homePage?.sections?.indices?.forEach { i -> list.add(HomeSection.HomePageSection(i)) }
-
-      if (explorePage?.moodAndGenres != null) list.add(HomeSection.MoodAndGenres)
 
       if (randomizeHomeOrder) {
         list.sortedByDescending { section ->
@@ -1897,9 +1880,7 @@ fun HomeScreen(
           }
         }
 
-        if (
-          isLoading || homePage?.continuation != null && homePage?.sections?.isNotEmpty() == true
-        ) {
+        if (isLoading) {
           item(key = "loading_shimmer") {
             ShimmerHost(modifier = Modifier.animateItem()) {
               // 1. Quick Picks Skeleton
