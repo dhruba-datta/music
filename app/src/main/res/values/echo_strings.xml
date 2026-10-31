@@ -1087,4 +1087,7 @@
     <string name="legacy_icon">Legacy Icon</string>
     <string name="legacy_icon_desc">Revert the app icon back to the original legacy design</string>
     <string name="clear_queue_confirm">Are you sure you want to clear upcoming songs from the queue?</string>
+    <string name="recognize_ready_hint">Find the song playing around you.</string>
+    <string name="recognize_listening_hint">Hold your phone near the music.</string>
+    <string name="recognize_processing_hint">Finding the song.</string>
 </resources>
