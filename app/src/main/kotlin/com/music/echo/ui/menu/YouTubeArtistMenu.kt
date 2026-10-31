@@ -7,15 +7,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -34,10 +31,9 @@ import echo.music.iad1tya.R
 import echo.music.iad1tya.db.entities.ArtistEntity
 import echo.music.iad1tya.db.entities.SpeedDialItem
 import echo.music.iad1tya.playback.queues.YouTubeQueue
-import echo.music.iad1tya.ui.component.Material3MenuGroup
 import echo.music.iad1tya.ui.component.Material3MenuItemData
-import echo.music.iad1tya.ui.component.NewAction
-import echo.music.iad1tya.ui.component.NewActionGrid
+import echo.music.iad1tya.ui.component.MenuActionGrid
+import echo.music.iad1tya.ui.component.MenuTileLabel
 import echo.music.iad1tya.ui.component.YouTubeListItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -64,8 +60,6 @@ fun YouTubeArtistMenu(
     trailingContent = {},
   )
 
-  HorizontalDivider()
-
   Spacer(modifier = Modifier.height(12.dp))
 
   val configuration = LocalConfiguration.current
@@ -81,22 +75,21 @@ fun YouTubeArtistMenu(
       ),
   ) {
     item {
-      NewActionGrid(
-        actions =
+      MenuActionGrid(
+        items =
           buildList {
             if (!isGuest) {
               artist.radioEndpoint?.let { watchEndpoint ->
                 add(
-                  NewAction(
+                  Material3MenuItemData(
                     icon = {
                       Icon(
                         painter = painterResource(R.drawable.radio),
                         contentDescription = null,
-                        modifier = Modifier.size(28.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        modifier = Modifier.size(24.dp),
                       )
                     },
-                    text = stringResource(R.string.start_an_radio),
+                    title = { MenuTileLabel(text = stringResource(R.string.start_an_radio)) },
                     onClick = {
                       playerConnection.playQueue(YouTubeQueue(watchEndpoint))
                       onDismiss()
@@ -107,16 +100,15 @@ fun YouTubeArtistMenu(
             }
 
             add(
-              NewAction(
+              Material3MenuItemData(
                 icon = {
                   Icon(
                     painter = painterResource(if (isPinned) R.drawable.remove else R.drawable.add),
                     contentDescription = null,
-                    modifier = Modifier.size(28.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    modifier = Modifier.size(24.dp),
                   )
                 },
-                text = if (isPinned) "Unpin" else "Pin",
+                title = { MenuTileLabel(text = if (isPinned) "Unpin" else "Pin") },
                 onClick = {
                   coroutineScope.launch(Dispatchers.IO) {
                     if (isPinned) {
@@ -131,16 +123,15 @@ fun YouTubeArtistMenu(
             )
 
             add(
-              NewAction(
+              Material3MenuItemData(
                 icon = {
                   Icon(
                     painter = painterResource(R.drawable.share),
                     contentDescription = null,
-                    modifier = Modifier.size(28.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    modifier = Modifier.size(24.dp),
                   )
                 },
-                text = stringResource(R.string.share),
+                title = { MenuTileLabel(text = stringResource(R.string.share)) },
                 onClick = {
                   val intent =
                     Intent().apply {
@@ -153,58 +144,52 @@ fun YouTubeArtistMenu(
                 }
               )
             )
-          },
-        modifier = Modifier.padding(horizontal = 4.dp, vertical = 16.dp),
-        columns = if (isGuest) 1 else 3
-      )
-    }
-
-    item {
-      Material3MenuGroup(
-        items =
-          listOf(
-            Material3MenuItemData(
-              title = {
-                Text(
-                  text =
-                    if (libraryArtist?.artist?.bookmarkedAt != null)
-                      stringResource(R.string.subscribed)
-                    else stringResource(R.string.subscribe)
-                )
-              },
-              icon = {
-                Icon(
-                  painter =
-                    painterResource(
-                      if (libraryArtist?.artist?.bookmarkedAt != null) {
-                        R.drawable.subscribed
-                      } else {
-                        R.drawable.subscribe
-                      }
-                    ),
-                  contentDescription = null,
-                )
-              },
-              onClick = {
-                database.query {
-                  val libraryArtist = libraryArtist
-                  if (libraryArtist != null) {
-                    update(libraryArtist.artist.toggleLike())
-                  } else {
-                    insert(
-                      ArtistEntity(
-                          id = artist.id,
-                          name = artist.title,
-                          channelId = artist.channelId,
-                          thumbnailUrl = artist.thumbnail,
-                        )
-                        .toggleLike()
+            addAll(
+              listOf(
+                Material3MenuItemData(
+                  title = {
+                    MenuTileLabel(
+                      text =
+                        if (libraryArtist?.artist?.bookmarkedAt != null)
+                          stringResource(R.string.subscribed)
+                        else stringResource(R.string.subscribe)
                     )
+                  },
+                  icon = {
+                    Icon(
+                      painter =
+                        painterResource(
+                          if (libraryArtist?.artist?.bookmarkedAt != null) {
+                            R.drawable.subscribed
+                          } else {
+                            R.drawable.subscribe
+                          }
+                        ),
+                      contentDescription = null,
+                    )
+                  },
+                  onClick = {
+                    database.query {
+                      val libraryArtist = libraryArtist
+                      if (libraryArtist != null) {
+                        update(libraryArtist.artist.toggleLike())
+                      } else {
+                        insert(
+                          ArtistEntity(
+                              id = artist.id,
+                              name = artist.title,
+                              channelId = artist.channelId,
+                              thumbnailUrl = artist.thumbnail,
+                            )
+                            .toggleLike()
+                        )
+                      }
+                    }
                   }
-                }
-              }
+                )
+              )
             )
-          )
+          }
       )
     }
   }

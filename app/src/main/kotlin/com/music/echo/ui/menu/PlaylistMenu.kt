@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -66,10 +65,9 @@ import echo.music.iad1tya.playback.ExoDownloadService
 import echo.music.iad1tya.playback.queues.ListQueue
 import echo.music.iad1tya.playback.queues.YouTubeQueue
 import echo.music.iad1tya.ui.component.DefaultDialog
-import echo.music.iad1tya.ui.component.Material3MenuGroup
 import echo.music.iad1tya.ui.component.Material3MenuItemData
-import echo.music.iad1tya.ui.component.NewAction
-import echo.music.iad1tya.ui.component.NewActionGrid
+import echo.music.iad1tya.ui.component.MenuActionGrid
+import echo.music.iad1tya.ui.component.MenuTileLabel
 import echo.music.iad1tya.ui.component.PlaylistListItem
 import echo.music.iad1tya.ui.component.TextFieldDialog
 import echo.music.iad1tya.utils.rememberPreference
@@ -323,8 +321,6 @@ fun PlaylistMenu(
     },
   )
 
-  HorizontalDivider()
-
   Spacer(modifier = Modifier.height(12.dp))
 
   val configuration = LocalConfiguration.current
@@ -340,95 +336,85 @@ fun PlaylistMenu(
       ),
   ) {
     item {
-      NewActionGrid(
-        actions =
-          listOfNotNull(
-            if (!isGuest) {
-              NewAction(
-                icon = {
-                  Icon(
-                    painter = painterResource(R.drawable.play),
-                    contentDescription = null,
-                    modifier = Modifier.size(28.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                  )
-                },
-                text = stringResource(R.string.play),
-                onClick = {
-                  onDismiss()
-                  if (songs.isNotEmpty()) {
-                    playerConnection.playQueue(
-                      ListQueue(
-                        title = playlist.playlist.name,
-                        items = songs.map(Song::toMediaItem)
-                      )
-                    )
-                  }
-                }
-              )
-              NewAction(
-                icon = {
-                  Icon(
-                    painter = painterResource(R.drawable.shuffle),
-                    contentDescription = null,
-                    modifier = Modifier.size(28.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                  )
-                },
-                text = stringResource(R.string.shuffle),
-                onClick = {
-                  onDismiss()
-                  if (songs.isNotEmpty()) {
-                    playerConnection.playQueue(
-                      ListQueue(
-                        title = playlist.playlist.name,
-                        items = songs.shuffled().map(Song::toMediaItem)
-                      )
-                    )
-                  }
-                }
-              )
-            } else null,
-            NewAction(
-              icon = {
-                Icon(
-                  painter = painterResource(R.drawable.share),
-                  contentDescription = null,
-                  modifier = Modifier.size(28.dp),
-                  tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-              },
-              text = stringResource(R.string.share),
-              onClick = {
-                onDismiss()
-                val intent =
-                  Intent().apply {
-                    action = Intent.ACTION_SEND
-                    type = "text/plain"
-                    putExtra(
-                      Intent.EXTRA_TEXT,
-                      "https://share.echomusic.fun/playlist?list=${dbPlaylist?.playlist?.browseId}"
-                    )
-                  }
-                context.startActivity(Intent.createChooser(intent, null))
-              }
-            )
-          ),
-        modifier = Modifier.padding(horizontal = 4.dp, vertical = 16.dp),
-        columns = if (isGuest) 1 else 3
-      )
-    }
-
-    item {
-      Material3MenuGroup(
+      MenuActionGrid(
         items =
           buildList {
+            addAll(
+              listOfNotNull(
+                if (!isGuest) {
+                  Material3MenuItemData(
+                    icon = {
+                      Icon(
+                        painter = painterResource(R.drawable.play),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                      )
+                    },
+                    title = { MenuTileLabel(text = stringResource(R.string.play)) },
+                    onClick = {
+                      onDismiss()
+                      if (songs.isNotEmpty()) {
+                        playerConnection.playQueue(
+                          ListQueue(
+                            title = playlist.playlist.name,
+                            items = songs.map(Song::toMediaItem)
+                          )
+                        )
+                      }
+                    }
+                  )
+                  Material3MenuItemData(
+                    icon = {
+                      Icon(
+                        painter = painterResource(R.drawable.shuffle),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                      )
+                    },
+                    title = { MenuTileLabel(text = stringResource(R.string.shuffle)) },
+                    onClick = {
+                      onDismiss()
+                      if (songs.isNotEmpty()) {
+                        playerConnection.playQueue(
+                          ListQueue(
+                            title = playlist.playlist.name,
+                            items = songs.shuffled().map(Song::toMediaItem)
+                          )
+                        )
+                      }
+                    }
+                  )
+                } else null,
+                Material3MenuItemData(
+                  icon = {
+                    Icon(
+                      painter = painterResource(R.drawable.share),
+                      contentDescription = null,
+                      modifier = Modifier.size(24.dp),
+                    )
+                  },
+                  title = { MenuTileLabel(text = stringResource(R.string.share)) },
+                  onClick = {
+                    onDismiss()
+                    val intent =
+                      Intent().apply {
+                        action = Intent.ACTION_SEND
+                        type = "text/plain"
+                        putExtra(
+                          Intent.EXTRA_TEXT,
+                          "https://share.echomusic.fun/playlist?list=${dbPlaylist?.playlist?.browseId}"
+                        )
+                      }
+                    context.startActivity(Intent.createChooser(intent, null))
+                  }
+                )
+              )
+            )
             if (!isGuest) {
               playlist.playlist.browseId?.let { browseId ->
                 add(
                   Material3MenuItemData(
-                    title = { Text(text = stringResource(R.string.start_radio)) },
-                    description = { Text(text = stringResource(R.string.start_radio_desc)) },
+                    title = { MenuTileLabel(text = stringResource(R.string.start_radio)) },
                     icon = {
                       Icon(
                         painter = painterResource(R.drawable.radio),
@@ -454,8 +440,7 @@ fun PlaylistMenu(
             if (!isGuest) {
               add(
                 Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.play_next)) },
-                  description = { Text(text = stringResource(R.string.play_next_desc)) },
+                  title = { MenuTileLabel(text = stringResource(R.string.play_next)) },
                   icon = {
                     Icon(
                       painter = painterResource(R.drawable.playlist_play),
@@ -474,8 +459,7 @@ fun PlaylistMenu(
             if (!isGuest) {
               add(
                 Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.add_to_queue)) },
-                  description = { Text(text = stringResource(R.string.add_to_queue_desc)) },
+                  title = { MenuTileLabel(text = stringResource(R.string.add_to_queue)) },
                   icon = {
                     Icon(
                       painter = painterResource(R.drawable.queue_music),
@@ -489,21 +473,10 @@ fun PlaylistMenu(
                 )
               )
             }
-          }
-      )
-    }
-
-    item { Spacer(modifier = Modifier.height(12.dp)) }
-
-    item {
-      Material3MenuGroup(
-        items =
-          buildList {
             if (editable && autoPlaylist != true && !isGuest) {
               add(
                 Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.edit)) },
-                  description = { Text(text = stringResource(R.string.edit_desc)) },
+                  title = { MenuTileLabel(text = stringResource(R.string.edit)) },
                   icon = {
                     Icon(
                       painter = painterResource(R.drawable.edit),
@@ -517,7 +490,7 @@ fun PlaylistMenu(
             add(
               Material3MenuItemData(
                 title = {
-                  Text(
+                  MenuTileLabel(
                     text =
                       if (playlist.playlist.isPinned) stringResource(R.string.unpin_playlist)
                       else stringResource(R.string.pin_playlist)
@@ -544,7 +517,7 @@ fun PlaylistMenu(
             add(
               Material3MenuItemData(
                 title = {
-                  Text(text = if (isPinned) "Unpin from Speed dial" else "Pin to Speed dial")
+                  MenuTileLabel(text = if (isPinned) "Unpin from Speed dial" else "Pin to Speed dial")
                 },
                 icon = {
                   Icon(
@@ -577,7 +550,7 @@ fun PlaylistMenu(
                 when (downloadState) {
                   Download.STATE_COMPLETED -> {
                     Material3MenuItemData(
-                      title = { Text(text = stringResource(R.string.remove_download)) },
+                      title = { MenuTileLabel(text = stringResource(R.string.remove_download)) },
                       icon = {
                         Icon(
                           painter = painterResource(R.drawable.offline),
@@ -590,7 +563,7 @@ fun PlaylistMenu(
                   Download.STATE_QUEUED,
                   Download.STATE_DOWNLOADING -> {
                     Material3MenuItemData(
-                      title = { Text(text = stringResource(R.string.downloading)) },
+                      title = { MenuTileLabel(text = stringResource(R.string.downloading)) },
                       icon = {
                         CircularProgressIndicator(
                           modifier = Modifier.size(24.dp),
@@ -602,8 +575,7 @@ fun PlaylistMenu(
                   }
                   else -> {
                     Material3MenuItemData(
-                      title = { Text(text = stringResource(R.string.action_download)) },
-                      description = { Text(text = stringResource(R.string.download_desc)) },
+                      title = { MenuTileLabel(text = stringResource(R.string.action_download)) },
                       icon = {
                         Icon(
                           painter = painterResource(R.drawable.download),
@@ -635,7 +607,7 @@ fun PlaylistMenu(
                 when {
                   isExporting -> {
                     Material3MenuItemData(
-                      title = { Text(text = stringResource(R.string.exporting)) },
+                      title = { MenuTileLabel(text = stringResource(R.string.exporting)) },
                       icon = {
                         CircularProgressIndicator(
                           modifier = Modifier.size(24.dp),
@@ -647,7 +619,7 @@ fun PlaylistMenu(
                   }
                   isExported -> {
                     Material3MenuItemData(
-                      title = { Text(text = stringResource(R.string.action_exported)) },
+                      title = { MenuTileLabel(text = stringResource(R.string.action_exported)) },
                       icon = {
                         Icon(
                           painter = painterResource(R.drawable.folder_managed),
@@ -659,8 +631,7 @@ fun PlaylistMenu(
                   }
                   else -> {
                     Material3MenuItemData(
-                      title = { Text(text = stringResource(R.string.action_export)) },
-                      description = { Text(text = stringResource(R.string.export_desc)) },
+                      title = { MenuTileLabel(text = stringResource(R.string.action_export)) },
                       icon = {
                         Icon(
                           painter = painterResource(R.drawable.file_export),
@@ -697,8 +668,7 @@ fun PlaylistMenu(
             if (autoPlaylist != true && !isGuest) {
               add(
                 Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.delete)) },
-                  description = { Text(text = stringResource(R.string.delete_desc)) },
+                  title = { MenuTileLabel(text = stringResource(R.string.delete)) },
                   icon = {
                     Icon(
                       painter = painterResource(R.drawable.delete),
@@ -713,8 +683,7 @@ fun PlaylistMenu(
             if (currentBrowseId == null && isSignedIn && !isGuest) {
               add(
                 Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.sync_playlist)) },
-                  description = { Text(text = stringResource(R.string.sync_playlist_desc)) },
+                  title = { MenuTileLabel(text = stringResource(R.string.sync_playlist)) },
                   icon = {
                     Icon(
                       painter = painterResource(R.drawable.sync),
@@ -791,8 +760,7 @@ fun PlaylistMenu(
             playlist.playlist.shareLink?.let { shareLink ->
               add(
                 Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.share)) },
-                  description = { Text(text = stringResource(R.string.share_desc)) },
+                  title = { MenuTileLabel(text = stringResource(R.string.share)) },
                   icon = {
                     Icon(
                       painter = painterResource(R.drawable.share),

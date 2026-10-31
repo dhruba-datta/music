@@ -43,8 +43,9 @@ import echo.music.iad1tya.models.toMediaMetadata
 import echo.music.iad1tya.playback.ExoDownloadService
 import echo.music.iad1tya.playback.queues.ListQueue
 import echo.music.iad1tya.ui.component.DefaultDialog
-import echo.music.iad1tya.ui.component.Material3MenuGroup
 import echo.music.iad1tya.ui.component.Material3MenuItemData
+import echo.music.iad1tya.ui.component.MenuActionGrid
+import echo.music.iad1tya.ui.component.MenuTileLabel
 import java.time.LocalDateTime
 import kotlinx.coroutines.launch
 
@@ -199,210 +200,215 @@ fun YouTubeSelectionSongMenu(
   LazyColumn(
     contentPadding =
       PaddingValues(
-        start = 8.dp,
+        start = 0.dp,
         top = 8.dp,
-        end = 8.dp,
+        end = 0.dp,
         bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(),
       ),
   ) {
     item {
-      Material3MenuGroup(
-        listOfNotNull(
-          if (!isGuest)
-            Material3MenuItemData(
-              icon = { Icon(painterResource(R.drawable.play), null) },
-              title = { Text(stringResource(R.string.play)) },
-              onClick = {
-                playerConnection.playQueue(
-                  ListQueue(
-                    title = context.getString(R.string.queue_all_songs),
-                    items = songSelection.map { it.toMediaItem() },
-                  ),
+      MenuActionGrid(
+        items =
+          buildList {
+            addAll(
+              listOfNotNull(
+              if (!isGuest)
+                Material3MenuItemData(
+                  icon = { Icon(painterResource(R.drawable.play), null) },
+                  title = { MenuTileLabel(stringResource(R.string.play)) },
+                  onClick = {
+                    playerConnection.playQueue(
+                      ListQueue(
+                        title = context.getString(R.string.queue_all_songs),
+                        items = songSelection.map { it.toMediaItem() },
+                      ),
+                    )
+                    clearAction()
+                    onDismiss()
+                  },
                 )
-                clearAction()
-                onDismiss()
-              },
-            )
-          else null,
-          if (!isGuest)
-            Material3MenuItemData(
-              icon = { Icon(painterResource(R.drawable.shuffle), null) },
-              title = { Text(stringResource(R.string.shuffle)) },
-              onClick = {
-                playerConnection.playQueue(
-                  ListQueue(
-                    title = context.getString(R.string.queue_all_songs),
-                    items = songSelection.shuffled().map { it.toMediaItem() },
-                  ),
+              else null,
+              if (!isGuest)
+                Material3MenuItemData(
+                  icon = { Icon(painterResource(R.drawable.shuffle), null) },
+                  title = { MenuTileLabel(stringResource(R.string.shuffle)) },
+                  onClick = {
+                    playerConnection.playQueue(
+                      ListQueue(
+                        title = context.getString(R.string.queue_all_songs),
+                        items = songSelection.shuffled().map { it.toMediaItem() },
+                      ),
+                    )
+                    clearAction()
+                    onDismiss()
+                  },
                 )
-                clearAction()
-                onDismiss()
-              },
-            )
-          else null,
-          if (!isGuest)
-            Material3MenuItemData(
-              icon = { Icon(painterResource(R.drawable.playlist_play), null) },
-              title = { Text(stringResource(R.string.play_next)) },
-              onClick = {
-                playerConnection.playNext(songSelection.map { it.toMediaItem() })
-                clearAction()
-                onDismiss()
-              },
-            )
-          else null,
-          if (!isGuest)
-            Material3MenuItemData(
-              icon = { Icon(painterResource(R.drawable.queue_music), null) },
-              title = { Text(stringResource(R.string.add_to_queue)) },
-              onClick = {
-                playerConnection.addToQueue(songSelection.map { it.toMediaItem() })
-                clearAction()
-                onDismiss()
-              },
-            )
-          else null,
-          Material3MenuItemData(
-            icon = { Icon(painterResource(R.drawable.playlist_add), null) },
-            title = { Text(stringResource(R.string.add_to_playlist)) },
-            onClick = { showChoosePlaylistDialog = true },
-          ),
-          Material3MenuItemData(
-            title = {
-              Text(
-                text =
-                  stringResource(
-                    if (allInLibrary) R.string.remove_from_library else R.string.add_to_library
+              else null,
+              if (!isGuest)
+                Material3MenuItemData(
+                  icon = { Icon(painterResource(R.drawable.playlist_play), null) },
+                  title = { MenuTileLabel(stringResource(R.string.play_next)) },
+                  onClick = {
+                    playerConnection.playNext(songSelection.map { it.toMediaItem() })
+                    clearAction()
+                    onDismiss()
+                  },
+                )
+              else null,
+              if (!isGuest)
+                Material3MenuItemData(
+                  icon = { Icon(painterResource(R.drawable.queue_music), null) },
+                  title = { MenuTileLabel(stringResource(R.string.add_to_queue)) },
+                  onClick = {
+                    playerConnection.addToQueue(songSelection.map { it.toMediaItem() })
+                    clearAction()
+                    onDismiss()
+                  },
+                )
+              else null,
+              Material3MenuItemData(
+                icon = { Icon(painterResource(R.drawable.playlist_add), null) },
+                title = { MenuTileLabel(stringResource(R.string.add_to_playlist)) },
+                onClick = { showChoosePlaylistDialog = true },
+              ),
+              Material3MenuItemData(
+                title = {
+                  MenuTileLabel(
+                    text =
+                      stringResource(
+                        if (allInLibrary) R.string.remove_from_library else R.string.add_to_library
+                      )
                   )
-              )
-            },
-            icon = {
-              Icon(
-                painter =
-                  painterResource(
-                    if (allInLibrary) R.drawable.library_add_check else R.drawable.library_add
-                  ),
-                contentDescription = null,
-              )
-            },
-            onClick = {
-              if (allInLibrary) {
-                database.query { songSelection.forEach { song -> inLibrary(song.id, null) } }
-                coroutineScope.launch {
-                  songSelection.forEach { song -> YouTube.toggleSongLibrary(song.id, false) }
-                }
-              } else {
-                database.transaction {
-                  songSelection.forEach { song ->
-                    insert(song.toMediaMetadata())
-                    inLibrary(song.id, LocalDateTime.now())
-                  }
-                }
-                coroutineScope.launch {
-                  songSelection
-                    .filter { song -> song.toMediaMetadata().inLibrary == null }
-                    .forEach { song -> YouTube.toggleSongLibrary(song.id, true) }
-                }
-              }
-              clearAction()
-              onDismiss()
-            }
-          ),
-          when (downloadState) {
-            Download.STATE_COMPLETED -> {
-              Material3MenuItemData(
-                title = { Text(text = stringResource(R.string.remove_download)) },
-                icon = {
-                  Icon(painter = painterResource(R.drawable.offline), contentDescription = null)
                 },
-                onClick = { showRemoveDownloadDialog = true }
-              )
-            }
-            Download.STATE_QUEUED,
-            Download.STATE_DOWNLOADING -> {
-              Material3MenuItemData(
-                title = { Text(text = stringResource(R.string.downloading)) },
-                icon = {
-                  CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                },
-                onClick = { showRemoveDownloadDialog = true }
-              )
-            }
-            else -> {
-              Material3MenuItemData(
-                title = { Text(text = stringResource(R.string.action_download)) },
                 icon = {
                   Icon(
-                    painter = painterResource(R.drawable.download),
+                    painter =
+                      painterResource(
+                        if (allInLibrary) R.drawable.library_add_check else R.drawable.library_add
+                      ),
                     contentDescription = null,
                   )
                 },
                 onClick = {
-                  songSelection.forEach { song ->
-                    val downloadRequest =
-                      DownloadRequest.Builder(song.id, song.id.toUri())
-                        .setCustomCacheKey(song.id)
-                        .setData(song.title.toByteArray())
-                        .build()
-                    DownloadService.sendAddDownload(
-                      context,
-                      ExoDownloadService::class.java,
-                      downloadRequest,
-                      false,
-                    )
+                  if (allInLibrary) {
+                    database.query { songSelection.forEach { song -> inLibrary(song.id, null) } }
+                    coroutineScope.launch {
+                      songSelection.forEach { song -> YouTube.toggleSongLibrary(song.id, false) }
+                    }
+                  } else {
+                    database.transaction {
+                      songSelection.forEach { song ->
+                        insert(song.toMediaMetadata())
+                        inLibrary(song.id, LocalDateTime.now())
+                      }
+                    }
+                    coroutineScope.launch {
+                      songSelection
+                        .filter { song -> song.toMediaMetadata().inLibrary == null }
+                        .forEach { song -> YouTube.toggleSongLibrary(song.id, true) }
+                    }
+                  }
+                  clearAction()
+                  onDismiss()
+                }
+              ),
+              when (downloadState) {
+                Download.STATE_COMPLETED -> {
+                  Material3MenuItemData(
+                    title = { MenuTileLabel(text = stringResource(R.string.remove_download)) },
+                    icon = {
+                      Icon(painter = painterResource(R.drawable.offline), contentDescription = null)
+                    },
+                    onClick = { showRemoveDownloadDialog = true }
+                  )
+                }
+                Download.STATE_QUEUED,
+                Download.STATE_DOWNLOADING -> {
+                  Material3MenuItemData(
+                    title = { MenuTileLabel(text = stringResource(R.string.downloading)) },
+                    icon = {
+                      CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                    },
+                    onClick = { showRemoveDownloadDialog = true }
+                  )
+                }
+                else -> {
+                  Material3MenuItemData(
+                    title = { MenuTileLabel(text = stringResource(R.string.action_download)) },
+                    icon = {
+                      Icon(
+                        painter = painterResource(R.drawable.download),
+                        contentDescription = null,
+                      )
+                    },
+                    onClick = {
+                      songSelection.forEach { song ->
+                        val downloadRequest =
+                          DownloadRequest.Builder(song.id, song.id.toUri())
+                            .setCustomCacheKey(song.id)
+                            .setData(song.title.toByteArray())
+                            .build()
+                        DownloadService.sendAddDownload(
+                          context,
+                          ExoDownloadService::class.java,
+                          downloadRequest,
+                          false,
+                        )
+                      }
+                      clearAction()
+                      onDismiss()
+                    }
+                  )
+                }
+              },
+              Material3MenuItemData(
+                title = {
+                  MenuTileLabel(text = stringResource(if (allLiked) R.string.dislike_all else R.string.like_all))
+                },
+                icon = {
+                  Icon(
+                    painter =
+                      painterResource(
+                        if (allLiked) R.drawable.favorite else R.drawable.favorite_border
+                      ),
+                    contentDescription = null,
+                  )
+                },
+                onClick = {
+                  database.transaction {
+                    songSelection.forEach { song ->
+                      val metadata = song.toMediaMetadata()
+                      if ((!allLiked && !metadata.liked) || allLiked) {
+
+                        insert(metadata)
+
+                        val songEntity =
+                          echo.music.iad1tya.db.entities.SongEntity(
+                            id = metadata.id,
+                            title = metadata.title,
+                            duration = metadata.duration,
+                            thumbnailUrl = metadata.thumbnailUrl,
+                            albumId = metadata.album?.id,
+                            albumName = metadata.album?.title,
+                            liked = !metadata.liked,
+                            totalPlayTime = 0,
+                            inLibrary = metadata.inLibrary,
+                            isLocal = false,
+                            libraryAddToken = metadata.libraryAddToken,
+                            libraryRemoveToken = metadata.libraryRemoveToken
+                          )
+                        update(songEntity)
+                        syncUtils.likeSong(songEntity)
+                      }
+                    }
                   }
                   clearAction()
                   onDismiss()
                 }
               )
-            }
-          },
-          Material3MenuItemData(
-            title = {
-              Text(text = stringResource(if (allLiked) R.string.dislike_all else R.string.like_all))
-            },
-            icon = {
-              Icon(
-                painter =
-                  painterResource(
-                    if (allLiked) R.drawable.favorite else R.drawable.favorite_border
-                  ),
-                contentDescription = null,
               )
-            },
-            onClick = {
-              database.transaction {
-                songSelection.forEach { song ->
-                  val metadata = song.toMediaMetadata()
-                  if ((!allLiked && !metadata.liked) || allLiked) {
-
-                    insert(metadata)
-
-                    val songEntity =
-                      echo.music.iad1tya.db.entities.SongEntity(
-                        id = metadata.id,
-                        title = metadata.title,
-                        duration = metadata.duration,
-                        thumbnailUrl = metadata.thumbnailUrl,
-                        albumId = metadata.album?.id,
-                        albumName = metadata.album?.title,
-                        liked = !metadata.liked,
-                        totalPlayTime = 0,
-                        inLibrary = metadata.inLibrary,
-                        isLocal = false,
-                        libraryAddToken = metadata.libraryAddToken,
-                        libraryRemoveToken = metadata.libraryRemoveToken
-                      )
-                    update(songEntity)
-                    syncUtils.likeSong(songEntity)
-                  }
-                }
-              }
-              clearAction()
-              onDismiss()
-            }
-          )
-        ),
+            )
+          }
       )
     }
   }

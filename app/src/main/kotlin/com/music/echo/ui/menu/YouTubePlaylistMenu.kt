@@ -7,11 +7,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
@@ -20,7 +18,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -77,10 +74,9 @@ import echo.music.iad1tya.playback.ExoDownloadService
 import echo.music.iad1tya.playback.queues.YouTubeQueue
 import echo.music.iad1tya.ui.component.DefaultDialog
 import echo.music.iad1tya.ui.component.ListDialog
-import echo.music.iad1tya.ui.component.Material3MenuGroup
 import echo.music.iad1tya.ui.component.Material3MenuItemData
-import echo.music.iad1tya.ui.component.NewAction
-import echo.music.iad1tya.ui.component.NewActionGrid
+import echo.music.iad1tya.ui.component.MenuActionGrid
+import echo.music.iad1tya.ui.component.MenuTileLabel
 import echo.music.iad1tya.ui.component.YouTubeListItem
 import echo.music.iad1tya.ui.utils.resize
 import echo.music.iad1tya.utils.joinByBullet
@@ -259,8 +255,6 @@ fun YouTubePlaylistMenu(
       }
     }
   )
-  HorizontalDivider()
-
   var downloadState by remember { mutableIntStateOf(Download.STATE_STOPPED) }
   LaunchedEffect(songs) {
     if (songs.isEmpty()) return@LaunchedEffect
@@ -391,22 +385,21 @@ fun YouTubePlaylistMenu(
       ),
   ) {
     item {
-      NewActionGrid(
-        actions =
+      MenuActionGrid(
+        items =
           buildList {
             if (!isGuest) {
               playlist.playEndpoint?.let { playEndpoint ->
                 add(
-                  NewAction(
+                  Material3MenuItemData(
                     icon = {
                       Icon(
                         painter = painterResource(R.drawable.play),
                         contentDescription = null,
-                        modifier = Modifier.size(28.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        modifier = Modifier.size(24.dp),
                       )
                     },
-                    text = stringResource(R.string.play),
+                    title = { MenuTileLabel(text = stringResource(R.string.play)) },
                     onClick = {
                       playerConnection.playQueue(YouTubeQueue(playEndpoint))
                       onDismiss()
@@ -416,16 +409,15 @@ fun YouTubePlaylistMenu(
               }
               playlist.shuffleEndpoint?.let { shuffleEndpoint ->
                 add(
-                  NewAction(
+                  Material3MenuItemData(
                     icon = {
                       Icon(
                         painter = painterResource(R.drawable.shuffle),
                         contentDescription = null,
-                        modifier = Modifier.size(28.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        modifier = Modifier.size(24.dp),
                       )
                     },
-                    text = stringResource(R.string.shuffle),
+                    title = { MenuTileLabel(text = stringResource(R.string.shuffle)) },
                     onClick = {
                       playerConnection.playQueue(YouTubeQueue(shuffleEndpoint))
                       onDismiss()
@@ -435,16 +427,15 @@ fun YouTubePlaylistMenu(
               }
               playlist.radioEndpoint?.let { radioEndpoint ->
                 add(
-                  NewAction(
+                  Material3MenuItemData(
                     icon = {
                       Icon(
                         painter = painterResource(R.drawable.radio),
                         contentDescription = null,
-                        modifier = Modifier.size(28.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        modifier = Modifier.size(24.dp),
                       )
                     },
-                    text = stringResource(R.string.start_radio),
+                    title = { MenuTileLabel(text = stringResource(R.string.start_radio)) },
                     onClick = {
                       playerConnection.playQueue(YouTubeQueue(radioEndpoint))
                       onDismiss()
@@ -453,117 +444,99 @@ fun YouTubePlaylistMenu(
                 )
               }
             }
-          },
-        modifier = Modifier.padding(horizontal = 4.dp, vertical = 16.dp)
-      )
-    }
-
-    item {
-      Material3MenuGroup(
-        items =
-          listOfNotNull(
-            if (!isGuest) {
-              Material3MenuItemData(
-                title = { Text(text = stringResource(R.string.play_next)) },
-                description = { Text(text = stringResource(R.string.play_next_desc)) },
-                icon = {
-                  Icon(
-                    painter = painterResource(R.drawable.playlist_play),
-                    contentDescription = null,
-                  )
-                },
-                onClick = {
-                  coroutineScope.launch {
-                    songs
-                      .ifEmpty {
-                        withContext(Dispatchers.IO) {
-                          YouTube.playlist(playlist.id).completed().getOrNull()?.songs.orEmpty()
-                        }
-                      }
-                      .let { songs ->
-                        playerConnection.playNext(
-                          songs.map {
-                            it.copy(thumbnail = it.thumbnail.resize(1200, 1200)).toMediaItem()
+            addAll(
+              listOfNotNull(
+                if (!isGuest) {
+                  Material3MenuItemData(
+                    title = { MenuTileLabel(text = stringResource(R.string.play_next)) },
+                    icon = {
+                      Icon(
+                        painter = painterResource(R.drawable.playlist_play),
+                        contentDescription = null,
+                      )
+                    },
+                    onClick = {
+                      coroutineScope.launch {
+                        songs
+                          .ifEmpty {
+                            withContext(Dispatchers.IO) {
+                              YouTube.playlist(playlist.id).completed().getOrNull()?.songs.orEmpty()
+                            }
                           }
-                        )
+                          .let { songs ->
+                            playerConnection.playNext(
+                              songs.map {
+                                it.copy(thumbnail = it.thumbnail.resize(1200, 1200)).toMediaItem()
+                              }
+                            )
+                          }
                       }
-                  }
-                  onDismiss()
-                }
-              )
-            } else null,
-            if (!isGuest) {
-              Material3MenuItemData(
-                title = { Text(text = stringResource(R.string.add_to_queue)) },
-                description = { Text(text = stringResource(R.string.add_to_queue_desc)) },
-                icon = {
-                  Icon(
-                    painter = painterResource(R.drawable.queue_music),
-                    contentDescription = null,
+                      onDismiss()
+                    }
                   )
-                },
-                onClick = {
-                  coroutineScope.launch {
-                    songs
-                      .ifEmpty {
-                        withContext(Dispatchers.IO) {
-                          YouTube.playlist(playlist.id).completed().getOrNull()?.songs.orEmpty()
-                        }
+                } else null,
+                if (!isGuest) {
+                  Material3MenuItemData(
+                    title = { MenuTileLabel(text = stringResource(R.string.add_to_queue)) },
+                    icon = {
+                      Icon(
+                        painter = painterResource(R.drawable.queue_music),
+                        contentDescription = null,
+                      )
+                    },
+                    onClick = {
+                      coroutineScope.launch {
+                        songs
+                          .ifEmpty {
+                            withContext(Dispatchers.IO) {
+                              YouTube.playlist(playlist.id).completed().getOrNull()?.songs.orEmpty()
+                            }
+                          }
+                          .let { songs -> playerConnection.addToQueue(songs.map { it.toMediaItem() }) }
                       }
-                      .let { songs -> playerConnection.addToQueue(songs.map { it.toMediaItem() }) }
+                      onDismiss()
+                    }
+                  )
+                } else null,
+                Material3MenuItemData(
+                  title = { MenuTileLabel(text = stringResource(R.string.add_to_playlist)) },
+                  icon = {
+                    Icon(
+                      painter = painterResource(R.drawable.playlist_add),
+                      contentDescription = null,
+                    )
+                  },
+                  onClick = { showChoosePlaylistDialog = true }
+                ),
+                Material3MenuItemData(
+                  title = {
+                    MenuTileLabel(text = if (isPinned) "Unpin from Speed dial" else "Pin to Speed dial")
+                  },
+                  icon = {
+                    Icon(
+                      painter = painterResource(if (isPinned) R.drawable.remove else R.drawable.add),
+                      contentDescription = null,
+                    )
+                  },
+                  onClick = {
+                    coroutineScope.launch(Dispatchers.IO) {
+                      if (isPinned) {
+                        database.speedDialDao.delete(playlist.id)
+                      } else {
+                        database.speedDialDao.insert(SpeedDialItem.fromYTItem(playlist))
+                      }
+                    }
+                    onDismiss()
                   }
-                  onDismiss()
-                }
+                )
               )
-            } else null,
-            Material3MenuItemData(
-              title = { Text(text = stringResource(R.string.add_to_playlist)) },
-              description = { Text(text = stringResource(R.string.add_to_playlist_desc)) },
-              icon = {
-                Icon(
-                  painter = painterResource(R.drawable.playlist_add),
-                  contentDescription = null,
-                )
-              },
-              onClick = { showChoosePlaylistDialog = true }
-            ),
-            Material3MenuItemData(
-              title = {
-                Text(text = if (isPinned) "Unpin from Speed dial" else "Pin to Speed dial")
-              },
-              icon = {
-                Icon(
-                  painter = painterResource(if (isPinned) R.drawable.remove else R.drawable.add),
-                  contentDescription = null,
-                )
-              },
-              onClick = {
-                coroutineScope.launch(Dispatchers.IO) {
-                  if (isPinned) {
-                    database.speedDialDao.delete(playlist.id)
-                  } else {
-                    database.speedDialDao.insert(SpeedDialItem.fromYTItem(playlist))
-                  }
-                }
-                onDismiss()
-              }
             )
-          )
-      )
-    }
-
-    item { Spacer(modifier = Modifier.height(12.dp)) }
-
-    item {
-      Material3MenuGroup(
-        items =
-          buildList {
             if (songs.isNotEmpty()) {
               add(
                 when (downloadState) {
                   Download.STATE_COMPLETED -> {
                     Material3MenuItemData(
-                      title = { Text(text = stringResource(R.string.remove_download)) },
+                      title = { MenuTileLabel(text = stringResource(R.string.remove_download)) },
                       icon = {
                         Icon(
                           painter = painterResource(R.drawable.offline),
@@ -576,7 +549,7 @@ fun YouTubePlaylistMenu(
                   Download.STATE_QUEUED,
                   Download.STATE_DOWNLOADING -> {
                     Material3MenuItemData(
-                      title = { Text(text = stringResource(R.string.downloading)) },
+                      title = { MenuTileLabel(text = stringResource(R.string.downloading)) },
                       icon = {
                         CircularProgressIndicator(
                           modifier = Modifier.size(24.dp),
@@ -588,8 +561,7 @@ fun YouTubePlaylistMenu(
                   }
                   else -> {
                     Material3MenuItemData(
-                      title = { Text(text = stringResource(R.string.action_download)) },
-                      description = { Text(text = stringResource(R.string.download_desc)) },
+                      title = { MenuTileLabel(text = stringResource(R.string.action_download)) },
                       icon = {
                         Icon(
                           painter = painterResource(R.drawable.download),
@@ -621,7 +593,7 @@ fun YouTubePlaylistMenu(
                 when {
                   isExporting -> {
                     Material3MenuItemData(
-                      title = { Text(text = stringResource(R.string.exporting)) },
+                      title = { MenuTileLabel(text = stringResource(R.string.exporting)) },
                       icon = {
                         CircularProgressIndicator(
                           modifier = Modifier.size(24.dp),
@@ -633,7 +605,7 @@ fun YouTubePlaylistMenu(
                   }
                   isExported -> {
                     Material3MenuItemData(
-                      title = { Text(text = stringResource(R.string.action_exported)) },
+                      title = { MenuTileLabel(text = stringResource(R.string.action_exported)) },
                       icon = {
                         Icon(
                           painter = painterResource(R.drawable.folder_managed),
@@ -645,8 +617,7 @@ fun YouTubePlaylistMenu(
                   }
                   else -> {
                     Material3MenuItemData(
-                      title = { Text(text = stringResource(R.string.action_export)) },
-                      description = { Text(text = stringResource(R.string.export_desc)) },
+                      title = { MenuTileLabel(text = stringResource(R.string.action_export)) },
                       icon = {
                         Icon(
                           painter = painterResource(R.drawable.file_export),
@@ -682,8 +653,7 @@ fun YouTubePlaylistMenu(
             }
             add(
               Material3MenuItemData(
-                title = { Text(text = stringResource(R.string.share)) },
-                description = { Text(text = stringResource(R.string.share_desc)) },
+                title = { MenuTileLabel(text = stringResource(R.string.share)) },
                 icon = {
                   Icon(
                     painter = painterResource(R.drawable.share),
@@ -705,7 +675,7 @@ fun YouTubePlaylistMenu(
             if (canSelect) {
               add(
                 Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.select)) },
+                  title = { MenuTileLabel(text = stringResource(R.string.select)) },
                   icon = {
                     Icon(
                       painter = painterResource(R.drawable.select_all),

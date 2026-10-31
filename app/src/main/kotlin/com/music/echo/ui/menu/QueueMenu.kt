@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -67,11 +66,10 @@ import echo.music.iad1tya.playback.ExoDownloadService
 import echo.music.iad1tya.playback.queues.YouTubeQueue
 import echo.music.iad1tya.ui.component.BottomSheetState
 import echo.music.iad1tya.ui.component.ListDialog
-import echo.music.iad1tya.ui.component.Material3MenuGroup
 import echo.music.iad1tya.ui.component.Material3MenuItemData
 import echo.music.iad1tya.ui.component.MediaMetadataListItem
-import echo.music.iad1tya.ui.component.NewAction
-import echo.music.iad1tya.ui.component.NewActionGrid
+import echo.music.iad1tya.ui.component.MenuActionGrid
+import echo.music.iad1tya.ui.component.MenuTileLabel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
@@ -218,8 +216,6 @@ fun QueueMenu(
     },
   )
 
-  HorizontalDivider()
-
   Spacer(modifier = Modifier.height(12.dp))
 
   val configuration = LocalConfiguration.current
@@ -235,196 +231,166 @@ fun QueueMenu(
       ),
   ) {
     item {
-      NewActionGrid(
-        actions =
-          listOf(
-            NewAction(
-              icon = {
-                Icon(
-                  painter = painterResource(R.drawable.radio),
-                  contentDescription = null,
-                  modifier = Modifier.size(28.dp),
-                  tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-              },
-              text = stringResource(R.string.start_an_radio),
-              onClick = {
-                onDismiss()
-                playerConnection.playQueue(YouTubeQueue.radio(mediaMetadata))
-              }
-            ),
-            NewAction(
-              icon = {
-                Icon(
-                  painter = painterResource(R.drawable.playlist_add),
-                  contentDescription = null,
-                  modifier = Modifier.size(28.dp),
-                  tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-              },
-              text = stringResource(R.string.add_to_an_playlist),
-              onClick = { showChoosePlaylistDialog = true }
-            ),
-            NewAction(
-              icon = {
-                Icon(
-                  painter = painterResource(R.drawable.share),
-                  contentDescription = null,
-                  modifier = Modifier.size(28.dp),
-                  tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-              },
-              text = stringResource(R.string.share),
-              onClick = {
-                onDismiss()
-                val intent =
-                  Intent().apply {
-                    action = Intent.ACTION_SEND
-                    type = "text/plain"
-                    putExtra(
-                      Intent.EXTRA_TEXT,
-                      "https://share.echomusic.fun/watch?v=${mediaMetadata.id}"
-                    )
-                  }
-                context.startActivity(Intent.createChooser(intent, null))
-              }
-            )
-          ),
-        modifier = Modifier.padding(horizontal = 4.dp, vertical = 16.dp)
-      )
-    }
-
-    item {
-      Material3MenuGroup(
-        items =
-          listOf(
-            Material3MenuItemData(
-              title = { Text(text = stringResource(R.string.play_next)) },
-              description = { Text(text = stringResource(R.string.play_next_desc)) },
-              icon = {
-                Icon(
-                  painter = painterResource(R.drawable.playlist_play),
-                  contentDescription = null,
-                )
-              },
-              onClick = {
-                onDismiss()
-                librarySong?.let { playerConnection.playNext(it.toMediaItem()) }
-                  ?: run { playerConnection.playNext(mediaMetadata.toMediaItem()) }
-              }
-            ),
-            Material3MenuItemData(
-              title = { Text(text = stringResource(R.string.add_to_queue)) },
-              description = { Text(text = stringResource(R.string.add_to_queue_desc)) },
-              icon = {
-                Icon(
-                  painter = painterResource(R.drawable.queue_music),
-                  contentDescription = null,
-                )
-              },
-              onClick = {
-                onDismiss()
-                librarySong?.let { playerConnection.addToQueue(it.toMediaItem()) }
-                  ?: run { playerConnection.addToQueue(mediaMetadata.toMediaItem()) }
-              }
-            )
-          )
-      )
-    }
-
-    item { Spacer(modifier = Modifier.height(12.dp)) }
-
-    item {
-      Material3MenuGroup(
-        items =
-          listOf(
-            when (download?.state) {
-              Download.STATE_COMPLETED -> {
-                Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.remove_download)) },
-                  icon = {
-                    Icon(
-                      painter = painterResource(R.drawable.offline),
-                      contentDescription = null,
-                      modifier = Modifier.size(24.dp)
-                    )
-                  },
-                  onClick = {
-                    DownloadService.sendRemoveDownload(
-                      context,
-                      ExoDownloadService::class.java,
-                      mediaMetadata.id,
-                      false,
-                    )
-                  }
-                )
-              }
-              Download.STATE_QUEUED,
-              Download.STATE_DOWNLOADING -> {
-                Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.downloading)) },
-                  icon = {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                  },
-                  onClick = {
-                    DownloadService.sendRemoveDownload(
-                      context,
-                      ExoDownloadService::class.java,
-                      mediaMetadata.id,
-                      false,
-                    )
-                  }
-                )
-              }
-              else -> {
-                Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.action_download)) },
-                  description = { Text(text = stringResource(R.string.download_desc)) },
-                  icon = {
-                    Icon(
-                      painter = painterResource(R.drawable.download),
-                      contentDescription = null,
-                      modifier = Modifier.size(24.dp)
-                    )
-                  },
-                  onClick = {
-                    database.transaction { insert(mediaMetadata) }
-                    val downloadRequest =
-                      DownloadRequest.Builder(mediaMetadata.id, mediaMetadata.id.toUri())
-                        .setCustomCacheKey(mediaMetadata.id)
-                        .setData(mediaMetadata.title.toByteArray())
-                        .build()
-                    DownloadService.sendAddDownload(
-                      context,
-                      ExoDownloadService::class.java,
-                      downloadRequest,
-                      false,
-                    )
-                  }
-                )
-              }
-            }
-          )
-      )
-    }
-
-    item { Spacer(modifier = Modifier.height(12.dp)) }
-
-    item {
-      Material3MenuGroup(
+      MenuActionGrid(
         items =
           buildList {
+            addAll(
+              listOf(
+                Material3MenuItemData(
+                  icon = {
+                    Icon(
+                      painter = painterResource(R.drawable.radio),
+                      contentDescription = null,
+                      modifier = Modifier.size(24.dp),
+                    )
+                  },
+                  title = { MenuTileLabel(text = stringResource(R.string.start_an_radio)) },
+                  onClick = {
+                    onDismiss()
+                    playerConnection.playQueue(YouTubeQueue.radio(mediaMetadata))
+                  }
+                ),
+                Material3MenuItemData(
+                  icon = {
+                    Icon(
+                      painter = painterResource(R.drawable.playlist_add),
+                      contentDescription = null,
+                      modifier = Modifier.size(24.dp),
+                    )
+                  },
+                  title = { MenuTileLabel(text = stringResource(R.string.add_to_an_playlist)) },
+                  onClick = { showChoosePlaylistDialog = true }
+                ),
+                Material3MenuItemData(
+                  icon = {
+                    Icon(
+                      painter = painterResource(R.drawable.share),
+                      contentDescription = null,
+                      modifier = Modifier.size(24.dp),
+                    )
+                  },
+                  title = { MenuTileLabel(text = stringResource(R.string.share)) },
+                  onClick = {
+                    onDismiss()
+                    val intent =
+                      Intent().apply {
+                        action = Intent.ACTION_SEND
+                        type = "text/plain"
+                        putExtra(
+                          Intent.EXTRA_TEXT,
+                          "https://share.echomusic.fun/watch?v=${mediaMetadata.id}"
+                        )
+                      }
+                    context.startActivity(Intent.createChooser(intent, null))
+                  }
+                )
+              )
+            )
+            addAll(
+              listOf(
+                Material3MenuItemData(
+                  title = { MenuTileLabel(text = stringResource(R.string.play_next)) },
+                  icon = {
+                    Icon(
+                      painter = painterResource(R.drawable.playlist_play),
+                      contentDescription = null,
+                    )
+                  },
+                  onClick = {
+                    onDismiss()
+                    librarySong?.let { playerConnection.playNext(it.toMediaItem()) }
+                      ?: run { playerConnection.playNext(mediaMetadata.toMediaItem()) }
+                  }
+                ),
+                Material3MenuItemData(
+                  title = { MenuTileLabel(text = stringResource(R.string.add_to_queue)) },
+                  icon = {
+                    Icon(
+                      painter = painterResource(R.drawable.queue_music),
+                      contentDescription = null,
+                    )
+                  },
+                  onClick = {
+                    onDismiss()
+                    librarySong?.let { playerConnection.addToQueue(it.toMediaItem()) }
+                      ?: run { playerConnection.addToQueue(mediaMetadata.toMediaItem()) }
+                  }
+                )
+              )
+            )
+            addAll(
+              listOf(
+                when (download?.state) {
+                  Download.STATE_COMPLETED -> {
+                    Material3MenuItemData(
+                      title = { MenuTileLabel(text = stringResource(R.string.remove_download)) },
+                      icon = {
+                        Icon(
+                          painter = painterResource(R.drawable.offline),
+                          contentDescription = null,
+                          modifier = Modifier.size(24.dp)
+                        )
+                      },
+                      onClick = {
+                        DownloadService.sendRemoveDownload(
+                          context,
+                          ExoDownloadService::class.java,
+                          mediaMetadata.id,
+                          false,
+                        )
+                      }
+                    )
+                  }
+                  Download.STATE_QUEUED,
+                  Download.STATE_DOWNLOADING -> {
+                    Material3MenuItemData(
+                      title = { MenuTileLabel(text = stringResource(R.string.downloading)) },
+                      icon = {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                      },
+                      onClick = {
+                        DownloadService.sendRemoveDownload(
+                          context,
+                          ExoDownloadService::class.java,
+                          mediaMetadata.id,
+                          false,
+                        )
+                      }
+                    )
+                  }
+                  else -> {
+                    Material3MenuItemData(
+                      title = { MenuTileLabel(text = stringResource(R.string.action_download)) },
+                      icon = {
+                        Icon(
+                          painter = painterResource(R.drawable.download),
+                          contentDescription = null,
+                          modifier = Modifier.size(24.dp)
+                        )
+                      },
+                      onClick = {
+                        database.transaction { insert(mediaMetadata) }
+                        val downloadRequest =
+                          DownloadRequest.Builder(mediaMetadata.id, mediaMetadata.id.toUri())
+                            .setCustomCacheKey(mediaMetadata.id)
+                            .setData(mediaMetadata.title.toByteArray())
+                            .build()
+                        DownloadService.sendAddDownload(
+                          context,
+                          ExoDownloadService::class.java,
+                          downloadRequest,
+                          false,
+                        )
+                      }
+                    )
+                  }
+                }
+              )
+            )
             if (artists.isNotEmpty()) {
               add(
                 Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.view_artist)) },
-                  description = {
-                    Text(
-                      text = mediaMetadata.artists.joinToString { it.name },
-                      maxLines = 1,
-                      overflow = TextOverflow.Ellipsis
-                    )
-                  },
+                  title = { MenuTileLabel(text = stringResource(R.string.view_artist)) },
                   icon = {
                     Icon(
                       painter = painterResource(R.drawable.artist),
@@ -447,14 +413,7 @@ fun QueueMenu(
             if (mediaMetadata.album != null) {
               add(
                 Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.view_album)) },
-                  description = {
-                    Text(
-                      text = mediaMetadata.album!!.title,
-                      maxLines = 1,
-                      overflow = TextOverflow.Ellipsis
-                    )
-                  },
+                  title = { MenuTileLabel(text = stringResource(R.string.view_album)) },
                   icon = {
                     Icon(
                       painter = painterResource(R.drawable.album),
@@ -470,20 +429,9 @@ fun QueueMenu(
                 )
               )
             }
-          }
-      )
-    }
-
-    item { Spacer(modifier = Modifier.height(12.dp)) }
-
-    item {
-      Material3MenuGroup(
-        items =
-          buildList {
             add(
               Material3MenuItemData(
-                title = { Text(text = stringResource(R.string.refetch)) },
-                description = { Text(text = stringResource(R.string.refetch_desc)) },
+                title = { MenuTileLabel(text = stringResource(R.string.refetch)) },
                 icon = {
                   Icon(
                     painter = painterResource(R.drawable.sync),
@@ -521,8 +469,7 @@ fun QueueMenu(
             )
             add(
               Material3MenuItemData(
-                title = { Text(text = stringResource(R.string.details)) },
-                description = { Text(text = stringResource(R.string.details_desc)) },
+                title = { MenuTileLabel(text = stringResource(R.string.details)) },
                 icon = {
                   Icon(
                     painter = painterResource(R.drawable.info),
