@@ -503,8 +503,6 @@ private fun NewMiniPlayer(progressState: ProgressState, modifier: Modifier = Mod
           modifier = Modifier.weight(1f)
         )
 
-        Spacer(modifier = Modifier.width(4.dp))
-
         if (isCasting) {
           Icon(
             painter = painterResource(R.drawable.cast_connected),
@@ -531,7 +529,6 @@ private fun NewMiniPlayer(progressState: ProgressState, modifier: Modifier = Mod
             errorColor = errorColor,
             outlineColor = outlineColor
           )
-          Spacer(modifier = Modifier.width(4.dp))
         }
 
         MiniPlayerControls(
@@ -608,7 +605,7 @@ private fun NewMiniPlayerSongInfo(
           Text(
             text = metadata.artists.joinToString { it.name },
             color = onSurfaceColor.copy(alpha = 0.7f),
-            fontSize = 12.sp,
+            fontSize = 13.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier =

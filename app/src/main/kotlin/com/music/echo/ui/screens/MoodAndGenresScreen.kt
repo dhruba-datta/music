@@ -3,6 +3,7 @@ package echo.music.iad1tya.ui.screens
 import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,15 +22,26 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.center
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.LinearGradientShader
+import androidx.compose.ui.graphics.Shader
+import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
@@ -41,6 +53,9 @@ import echo.music.iad1tya.ui.component.shimmer.ListItemPlaceHolder
 import echo.music.iad1tya.ui.component.shimmer.ShimmerHost
 import echo.music.iad1tya.ui.utils.backToMain
 import echo.music.iad1tya.viewmodels.MoodAndGenresViewModel
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,26 +81,32 @@ fun MoodAndGenresScreen(
     moodAndGenresList?.forEachIndexed { index, moodAndGenres ->
       item(key = "mood_and_genres_section_$index") {
         Column(
-          modifier = Modifier.animateItem().padding(horizontal = 6.dp),
+          modifier = Modifier.animateItem(),
         ) {
           NavigationTitle(
             title = moodAndGenres.title,
           )
-          moodAndGenres.items.chunked(itemsPerRow).forEach { row ->
-            Row {
-              row.forEach {
-                MoodAndGenresButton(
-                  title = it.title,
-                  onClick = {
-                    navController.navigate(
-                      "youtube_browse/${it.endpoint.browseId}?params=${it.endpoint.params}"
-                    )
-                  },
-                  modifier = Modifier.weight(1f).padding(6.dp),
-                )
-              }
+          Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(horizontal = 18.dp),
+          ) {
+            moodAndGenres.items.chunked(itemsPerRow).forEach { row ->
+              Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                row.forEach {
+                  MoodAndGenresButton(
+                    title = it.title,
+                    height = if (index == 0) MoodButtonHeight else MoodAndGenresButtonHeight,
+                    onClick = {
+                      navController.navigate(
+                        "youtube_browse/${it.endpoint.browseId}?params=${it.endpoint.params}"
+                      )
+                    },
+                    modifier = Modifier.weight(1f),
+                  )
+                }
 
-              repeat(itemsPerRow - row.size) { Spacer(Modifier.weight(1f)) }
+                repeat(itemsPerRow - row.size) { Spacer(Modifier.weight(1f)) }
+              }
             }
           }
         }
@@ -109,26 +130,61 @@ fun MoodAndGenresScreen(
   )
 }
 
+/** The 145 degree gradients of the Stage mood tiles; a title always gets the same one. */
+private val MoodTileGradients =
+  listOf(
+    listOf(0f to Color(0xFFFF8A5C), 0.55f to Color(0xFFD9486A), 1f to Color(0xFF512A72)),
+    listOf(0f to Color(0xFF6A4C93), 1f to Color(0xFF2A6F97)),
+    listOf(0f to Color(0xFF2A6F97), 1f to Color(0xFF45B26B)),
+    listOf(0f to Color(0xFFE04F7F), 1f to Color(0xFF6A4C93)),
+    listOf(0f to Color(0xFFF4B860), 1f to Color(0xFFD9486A)),
+    listOf(0f to Color(0xFF386641), 1f to Color(0xFFA7C957)),
+  )
+
+private fun moodTileBrush(title: String): Brush {
+  val stops = MoodTileGradients[title.hashCode().mod(MoodTileGradients.size)]
+  return object : ShaderBrush() {
+    override fun createShader(size: Size): Shader {
+      // CSS linear-gradient(145deg): the gradient line runs corner to corner along that angle.
+      val angle = Math.toRadians(145.0)
+      val dirX = sin(angle).toFloat()
+      val dirY = -cos(angle).toFloat()
+      val half = (abs(size.width * dirX) + abs(size.height * dirY)) / 2f
+      val center = size.center
+      return LinearGradientShader(
+        from = Offset(center.x - dirX * half, center.y - dirY * half),
+        to = Offset(center.x + dirX * half, center.y + dirY * half),
+        colors = stops.map { it.second },
+        colorStops = stops.map { it.first },
+      )
+    }
+  }
+}
+
 @Composable
 fun MoodAndGenresButton(
   title: String,
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
+  height: Dp = MoodAndGenresButtonHeight,
 ) {
+  val brush = remember(title) { moodTileBrush(title) }
   Box(
-    contentAlignment = Alignment.CenterStart,
+    contentAlignment = Alignment.BottomStart,
     modifier =
       modifier
-        .height(MoodAndGenresButtonHeight)
+        .height(height)
         .clip(RoundedCornerShape(18.dp))
-        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+        .background(brush)
         .clickable(onClick = onClick)
-        .padding(horizontal = 14.dp),
+        .padding(14.dp),
   ) {
     Text(
       text = title,
-      style = MaterialTheme.typography.titleSmall,
+      fontSize = 17.sp,
+      lineHeight = 21.sp,
       fontWeight = FontWeight.ExtraBold,
+      color = Color.White,
       maxLines = 2,
       overflow = TextOverflow.Ellipsis,
     )
@@ -136,3 +192,4 @@ fun MoodAndGenresButton(
 }
 
 val MoodAndGenresButtonHeight = 72.dp
+private val MoodButtonHeight = 80.dp

@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="horizontal"
     android:background="@drawable/widget_card_dark_bg"
-    android:padding="10dp"
+    android:padding="12dp"
     android:gravity="center_vertical">
 
     <!-- Album Art -->
@@ -32,7 +32,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/not_playing"
-            android:textSize="13sp"
+            android:textSize="15sp"
             android:textStyle="bold"
             android:textColor="@color/widget_text_title"
             android:maxLines="1"
@@ -43,7 +43,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/tap_to_play"
-            android:textSize="11sp"
+            android:textSize="13sp"
             android:textColor="@color/widget_text_subtitle"
             android:maxLines="1"
             android:ellipsize="end"

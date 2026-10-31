@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.screens
 
+import echo.music.iad1tya.ui.component.StageCheckbox
 import echo.music.iad1tya.ui.component.StageTopBar
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -19,7 +20,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -321,7 +321,7 @@ fun HistoryScreen(
               shape = listItemShape(index, dateEvents.size),
               trailingContent = {
                 if (inSelectMode) {
-                  Checkbox(checked = event.event.id in selection, onCheckedChange = onCheckedChange)
+                  StageCheckbox(checked = event.event.id in selection, onCheckedChange = onCheckedChange)
                 } else {
                   IconButton(
                     onClick = {
@@ -469,7 +469,7 @@ fun HistoryScreen(
     },
     actions = {
       if (inSelectMode) {
-        Checkbox(
+        StageCheckbox(
           checked = selection.size == allEvents.size && selection.isNotEmpty(),
           onCheckedChange = {
             if (selection.size == allEvents.size) {

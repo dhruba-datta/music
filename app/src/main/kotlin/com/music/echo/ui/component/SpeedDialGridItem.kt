@@ -41,7 +41,7 @@ fun SpeedDialGridItem(
   val scope = rememberCoroutineScope()
 
   Box(
-    modifier = modifier.aspectRatio(1f).clip(RoundedCornerShape(18.dp)),
+    modifier = modifier.clip(RoundedCornerShape(18.dp)),
     contentAlignment = Alignment.Center
   ) {
     ItemThumbnail(

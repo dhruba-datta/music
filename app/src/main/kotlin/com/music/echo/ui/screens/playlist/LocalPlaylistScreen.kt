@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.screens.playlist
 
+import echo.music.iad1tya.ui.component.StageCheckbox
 import echo.music.iad1tya.ui.component.StagePillButton
 import android.annotation.SuppressLint
 import android.content.Context
@@ -36,7 +37,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconToggleButton
@@ -132,7 +132,6 @@ import echo.music.iad1tya.ui.component.ActionPromptDialog
 import echo.music.iad1tya.ui.component.DefaultDialog
 import echo.music.iad1tya.ui.component.DraggableScrollbar
 import echo.music.iad1tya.ui.component.EmptyPlaceholder
-import echo.music.iad1tya.ui.component.ExpandableText
 import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.SongListItem
@@ -587,7 +586,9 @@ fun LocalPlaylistScreen(
           item(key = "controls_row") {
             Row(
               verticalAlignment = Alignment.CenterVertically,
-              modifier = Modifier.padding(start = 16.dp).animateItem(),
+              modifier =
+                Modifier.padding(start = 22.dp, end = 12.dp, top = 18.dp, bottom = 8.dp)
+                  .animateItem(),
             ) {
               SortHeader(
                 sortType = sortType,
@@ -604,6 +605,7 @@ fun LocalPlaylistScreen(
                   }
                 },
                 modifier = Modifier.weight(1f),
+                asHeading = true,
               )
               if (editable) {
                 val description = if (locked) "Unlock playlist" else "Lock playlist"
@@ -702,7 +704,7 @@ fun LocalPlaylistScreen(
                 ),
               trailingContent = {
                 if (inSelectMode) {
-                  Checkbox(
+                  StageCheckbox(
                     checked = selection.contains(song.map.id),
                     onCheckedChange = onCheckedChange
                   )
@@ -859,7 +861,7 @@ fun LocalPlaylistScreen(
       },
       actions = {
         if (inSelectMode) {
-          Checkbox(
+          StageCheckbox(
             checked = selection.size == songs.size && selection.isNotEmpty(),
             onCheckedChange = {
               if (selection.size == songs.size) {
@@ -1241,27 +1243,7 @@ fun LocalPlaylistHeader(
       }
     )
 
-    val staticDescription =
-      remember(songCount, playlistLength) {
-        val name = playlist.playlist.name
-        val trackCountText =
-          context.resources.getQuantityString(R.plurals.n_song, songCount, songCount)
-        "$name is a custom playlist featuring $trackCountText.${
-                if (playlistLength > 0) " Combined duration is ${makeTimeString(playlistLength * 1000L)}." else ""
-            }"
-      }
 
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp)) {
-      Text(
-        text = stringResource(R.string.about_playlist),
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onSurface,
-        modifier = Modifier.padding(bottom = 8.dp)
-      )
-
-      ExpandableText(text = staticDescription, runs = null, collapsedMaxLines = 3)
-    }
   }
 }
 

@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:background="@drawable/widget_background"
-    android:padding="16dp"
+    android:padding="12dp"
     android:gravity="center_vertical"
     android:theme="@style/Theme.Widget.echomusic">
 
@@ -38,7 +38,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/not_playing"
-                android:textSize="16sp"
+                android:textSize="15sp"
                 android:textStyle="bold"
                 android:textColor="@color/widget_text_primary"
                 android:maxLines="1"

@@ -41,6 +41,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import echo.music.iad1tya.R
+import echo.music.iad1tya.ui.component.StageSheetHandle
+import echo.music.iad1tya.ui.component.StageSheetShape
 import echo.music.iad1tya.ui.screens.Screens
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -179,8 +181,9 @@ fun AppNavigationRail(
     ModalBottomSheet(
       onDismissRequest = { showMoreOptionsSheet = false },
       sheetState = sheetState,
-      dragHandle = { BottomSheetDefaults.DragHandle() },
-      containerColor = MaterialTheme.colorScheme.surfaceContainer
+      shape = StageSheetShape,
+      dragHandle = { StageSheetHandle() },
+      containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
       Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 32.dp),

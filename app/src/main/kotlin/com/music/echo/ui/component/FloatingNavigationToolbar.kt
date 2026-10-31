@@ -444,7 +444,7 @@ private fun FloatingNavigationToolbarItem(
       },
       label = "iconScale",
     ) { isSelected ->
-      if (isSelected) 1.12f else 1.0f
+      1f
     }
 
   val horizontalPadding by

@@ -51,6 +51,10 @@ import echo.music.iad1tya.constants.GridThumbnailHeight
 import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.LibraryAlbumGridItem
 import echo.music.iad1tya.ui.component.LocalMenuState
+import echo.music.iad1tya.ui.component.NavigationTitle
+import echo.music.iad1tya.ui.component.StageBarTitle
+import echo.music.iad1tya.ui.component.stageGridFullWidth
+import echo.music.iad1tya.ui.component.stageGridPadding
 import echo.music.iad1tya.ui.utils.backToMain
 import echo.music.iad1tya.utils.rememberEnumPreference
 import echo.music.iad1tya.viewmodels.ArtistAlbumsViewModel
@@ -102,25 +106,17 @@ fun ArtistAlbumsScreen(
         GridCells.Adaptive(
           minSize = GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp
         ),
-      contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
+      contentPadding = stageGridPadding()
     ) {
       item(
         key = "header",
         span = { GridItemSpan(maxLineSpan) },
         contentType = CONTENT_TYPE_HEADER
       ) {
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          modifier = Modifier.padding(horizontal = 16.dp)
-        ) {
-          Spacer(Modifier.weight(1f))
-
-          Text(
-            text = pluralStringResource(R.plurals.n_album, albums.size, albums.size),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.secondary
-          )
-        }
+        NavigationTitle(
+          title = "Albums and singles",
+          modifier = Modifier.stageGridFullWidth().padding(bottom = 12.dp),
+        )
       }
 
       items(
@@ -141,7 +137,7 @@ fun ArtistAlbumsScreen(
     }
 
     TopAppBar(
-      title = { Text(artist?.artist?.name.orEmpty()) },
+      title = { StageBarTitle(artist?.artist?.name.orEmpty()) },
       navigationIcon = {
         IconButton(onClick = navController::navigateUp, onLongClick = navController::backToMain) {
           Icon(painter = painterResource(id = R.drawable.arrow_back), contentDescription = null)

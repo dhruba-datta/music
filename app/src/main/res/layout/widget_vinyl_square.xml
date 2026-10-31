@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_vinyl_glass_bg"
-    android:padding="16dp"
+    android:padding="12dp"
     android:theme="@style/Theme.Widget.echomusic">
 
     <LinearLayout
@@ -53,8 +53,8 @@
             android:ellipsize="marquee"
             android:text="@string/app_name"
             android:textColor="@color/widget_text_title"
-            android:textSize="17sp"
-            android:textStyle="bold|italic" />
+            android:textSize="15sp"
+            android:textStyle="bold" />
 
         <!-- Artist Name -->
         <TextView
@@ -67,7 +67,6 @@
             android:text=""
             android:textColor="@color/widget_text_subtitle"
             android:textSize="13sp"
-            android:textStyle="italic"
             android:layout_marginTop="2dp"
             android:layout_marginBottom="10dp" />
 

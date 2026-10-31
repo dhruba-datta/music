@@ -78,7 +78,6 @@ import echo.music.iad1tya.playback.ExoDownloadService
 import echo.music.iad1tya.playback.queues.ListQueue
 import echo.music.iad1tya.ui.component.DraggableScrollbar
 import echo.music.iad1tya.ui.component.EmptyPlaceholder
-import echo.music.iad1tya.ui.component.ExpandableText
 import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.SongListItem
@@ -262,7 +261,9 @@ fun CachePlaylistScreen(
           item(key = "sort_header") {
             Row(
               verticalAlignment = Alignment.CenterVertically,
-              modifier = Modifier.padding(start = 16.dp).animateItem(),
+              modifier =
+                Modifier.padding(start = 22.dp, end = 22.dp, top = 18.dp, bottom = 8.dp)
+                  .animateItem(),
             ) {
               SortHeader(
                 sortType = sortType,
@@ -278,6 +279,7 @@ fun CachePlaylistScreen(
                   }
                 },
                 modifier = Modifier.weight(1f),
+                asHeading = true,
               )
             }
           }
@@ -535,26 +537,6 @@ private fun CachePlaylistHeader(
       }
     )
 
-    val staticDescription =
-      remember(songs.size, cacheLength) {
-        val name = context.getString(R.string.cached_playlist)
-        val trackCountText =
-          context.resources.getQuantityString(R.plurals.n_song, songs.size, songs.size)
-        "$name is your local collection of cached tracks, featuring $trackCountText.${
-                if (cacheLength > 0) " Combined duration is ${makeTimeString(cacheLength * 1000L)}." else ""
-            } These songs are stored on your device for quick access."
-      }
 
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp)) {
-      Text(
-        text = stringResource(R.string.about_album),
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onSurface,
-        modifier = Modifier.padding(bottom = 8.dp)
-      )
-
-      ExpandableText(text = staticDescription, runs = null, collapsedMaxLines = 3)
-    }
   }
 }

@@ -41,6 +41,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -58,6 +59,7 @@ inline fun <reified T : Enum<T>> SortHeader(
   crossinline sortTypeText: (T) -> Int,
   modifier: Modifier = Modifier,
   showDescending: Boolean? = true,
+  asHeading: Boolean = false,
 ) {
   var sheetVisible by remember { mutableStateOf(false) }
 
@@ -65,18 +67,27 @@ inline fun <reified T : Enum<T>> SortHeader(
 
   Text(
     text = stringResource(sortTypeText(sortType)),
-    fontSize = 14.sp,
-    fontWeight = FontWeight.Bold,
-    color = MaterialTheme.colorScheme.onSurfaceVariant,
+    fontSize = if (asHeading) 19.sp else 14.sp,
+    lineHeight = if (asHeading) 24.sp else TextUnit.Unspecified,
+    fontWeight = if (asHeading) FontWeight.ExtraBold else FontWeight.Bold,
+    color =
+      if (asHeading) MaterialTheme.colorScheme.onSurface
+      else MaterialTheme.colorScheme.onSurfaceVariant,
     maxLines = 1,
     overflow = TextOverflow.Ellipsis,
-    modifier = modifier.clickable { sheetVisible = true }.padding(vertical = 6.dp),
+    modifier =
+      modifier
+        .clickable { sheetVisible = true }
+        .padding(vertical = if (asHeading) 0.dp else 6.dp),
   )
 
   if (sheetVisible) {
     ModalBottomSheet(
       onDismissRequest = { sheetVisible = false },
       sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+      shape = StageSheetShape,
+      dragHandle = { StageSheetHandle() },
+      containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
       StageSheetTitle(stringResource(R.string.sort_by))
       StageSheetGroup {

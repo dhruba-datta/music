@@ -47,14 +47,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -84,7 +82,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
@@ -120,7 +117,12 @@ import echo.music.iad1tya.playback.queues.ListQueue
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.SongListItem
 import echo.music.iad1tya.ui.component.SortHeader
+import echo.music.iad1tya.ui.component.StageBarTitle
+import echo.music.iad1tya.ui.component.StageCheckbox
 import echo.music.iad1tya.ui.component.StageSectionTitle
+import echo.music.iad1tya.ui.component.StageSheetHandle
+import echo.music.iad1tya.ui.component.StageSheetShape
+import echo.music.iad1tya.ui.component.StageTopBar
 import echo.music.iad1tya.ui.menu.SelectionSongMenu
 import echo.music.iad1tya.ui.menu.SongMenu
 import echo.music.iad1tya.utils.launchSafely
@@ -164,7 +166,6 @@ fun LocalSongScreen(
     selection.clear()
   }
   var isSearchActive by rememberSaveable { mutableStateOf(false) }
-  val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
   var query by rememberSaveable { mutableStateOf("") }
   val (sortDescending, onSortDescendingChange) =
     rememberPreference(LocalSongsSortDescendingKey, true)
@@ -367,7 +368,7 @@ fun LocalSongScreen(
             }
           },
           actions = {
-            Checkbox(
+            StageCheckbox(
               checked = selection.size == visibleSongs.size && selection.isNotEmpty(),
               onCheckedChange = {
                 if (selection.size == visibleSongs.size) {
@@ -446,15 +447,8 @@ fun LocalSongScreen(
           windowInsets = SearchBarDefaults.windowInsets,
         ) {}
       } else {
-        LargeTopAppBar(
-          title = {
-            Text(
-              text = stringResource(R.string.local_history),
-              fontWeight = FontWeight.Bold,
-              maxLines = 1,
-              overflow = TextOverflow.Ellipsis,
-            )
-          },
+        StageTopBar(
+          title = { StageBarTitle(stringResource(R.string.local_history)) },
           navigationIcon = {
             IconButton(onClick = onBack) {
               Icon(
@@ -477,13 +471,7 @@ fun LocalSongScreen(
               )
             }
           },
-          colors =
-            TopAppBarDefaults.largeTopAppBarColors(
-              containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
-              scrolledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
-            ),
-          scrollBehavior = scrollBehavior,
-          windowInsets = TopAppBarDefaults.windowInsets,
+          containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
         )
       }
     }
@@ -622,7 +610,7 @@ fun LocalSongScreen(
             isPlaying = isPlaying,
             trailingContent = {
               if (inSelectMode) {
-                Checkbox(checked = selection.contains(song.id), onCheckedChange = onCheckedChange)
+                StageCheckbox(checked = selection.contains(song.id), onCheckedChange = onCheckedChange)
               } else {
                 IconButton(
                   onClick = {
@@ -712,7 +700,7 @@ fun LocalSongScreen(
             }
           },
           actions = {
-            Checkbox(
+            StageCheckbox(
               checked = selection.size == visibleSongs.size && selection.isNotEmpty(),
               onCheckedChange = {
                 if (selection.size == visibleSongs.size) {
@@ -748,9 +736,7 @@ fun LocalSongScreen(
     }
   } else {
     Scaffold(
-      modifier =
-        Modifier.fillMaxSize()
-          .nestedScroll(scrollBehavior.nestedScrollConnection),
+      modifier = Modifier.fillMaxSize(),
       containerColor = MaterialTheme.colorScheme.surface,
       topBar = topBarContent,
     ) { paddingValues ->
@@ -1057,19 +1043,9 @@ private fun LocalSongScanSheet(
   ModalBottomSheet(
     onDismissRequest = onDismiss,
     sheetState = sheetState,
-    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-    shape =
-      AbsoluteSmoothCornerShape(
-        cornerRadiusTL = 36.dp,
-        cornerRadiusTR = 36.dp,
-        cornerRadiusBL = 0.dp,
-        cornerRadiusBR = 0.dp,
-        smoothnessAsPercentTL = 60,
-        smoothnessAsPercentTR = 60,
-        smoothnessAsPercentBL = 0,
-        smoothnessAsPercentBR = 0,
-      ),
-    tonalElevation = 2.dp,
+    shape = StageSheetShape,
+    dragHandle = { StageSheetHandle() },
+    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
   ) {
     Column(
       horizontalAlignment = Alignment.CenterHorizontally,

@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -16,20 +17,21 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,11 +44,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -54,9 +58,11 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.music.innertube.YouTube.SearchFilter.Companion.FILTER_ALBUM
@@ -72,11 +78,9 @@ import com.music.innertube.models.SongItem
 import com.music.innertube.models.WatchEndpoint
 import com.music.innertube.models.YTItem
 import echo.music.iad1tya.LocalDatabase
+import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.LocalPlayerConnection
 import echo.music.iad1tya.R
-import echo.music.iad1tya.constants.MiniPlayerBottomSpacing
-import echo.music.iad1tya.constants.MiniPlayerHeight
-import echo.music.iad1tya.constants.NavigationBarHeight
 import echo.music.iad1tya.constants.PauseSearchHistoryKey
 import echo.music.iad1tya.db.entities.SearchHistory
 import echo.music.iad1tya.models.toMediaMetadata
@@ -266,61 +270,66 @@ fun OnlineSearchResult(
         .background(if (pureBlack) Color.Black else MaterialTheme.colorScheme.background)
         .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
   ) {
-    OutlinedTextField(
-      value = query,
-      onValueChange = { newQuery -> query = newQuery },
-      placeholder = {
-        Text(
-          text = stringResource(R.string.search_yt_music),
-          style = MaterialTheme.typography.bodyLarge,
-          color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-      },
-      leadingIcon = {
-        IconButton(onClick = { navController.navigateUp() }) {
-          Icon(
-            painter = painterResource(R.drawable.arrow_back),
-            contentDescription = stringResource(R.string.dismiss),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-          )
-        }
-      },
-      trailingIcon = {
-        if (query.text.isNotEmpty()) {
-          IconButton(onClick = { query = TextFieldValue("") }) {
-            Icon(
-              painter = painterResource(R.drawable.close),
-              contentDescription = null,
-              tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-          }
-        }
-      },
-      keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-      keyboardActions = KeyboardActions(onSearch = { onSearch(query.text) }),
-      singleLine = true,
+    Surface(
       shape = RoundedCornerShape(24.dp),
-      colors =
-        OutlinedTextFieldDefaults.colors(
-          focusedContainerColor =
-            if (pureBlack) MaterialTheme.colorScheme.surface
-            else MaterialTheme.colorScheme.surfaceContainerHighest,
-          unfocusedContainerColor =
-            if (pureBlack) MaterialTheme.colorScheme.surface
-            else MaterialTheme.colorScheme.surfaceContainerHighest,
-          focusedBorderColor = Color.Transparent,
-          unfocusedBorderColor = Color.Transparent
-        ),
-      modifier =
-        Modifier.fillMaxWidth()
-          .padding(horizontal = 18.dp, vertical = 8.dp)
-          .focusRequester(focusRequester)
-          .onFocusChanged { focusState ->
-            if (focusState.isFocused) {
-              isSearchFocused = true
+      color =
+        if (pureBlack) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+        else MaterialTheme.colorScheme.surfaceContainerHighest,
+      modifier = Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 18.dp),
+    ) {
+      BasicTextField(
+        value = query,
+        onValueChange = { newQuery -> query = newQuery },
+        modifier =
+          Modifier.fillMaxWidth()
+            .height(48.dp)
+            .focusRequester(focusRequester)
+            .onFocusChanged { focusState ->
+              if (focusState.isFocused) {
+                isSearchFocused = true
+              }
+            },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(onSearch = { onSearch(query.text) }),
+        textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp),
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        decorationBox = { innerTextField ->
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 4.dp),
+          ) {
+            IconButton(onClick = { navController.navigateUp() }) {
+              Icon(
+                painter = painterResource(R.drawable.arrow_back),
+                contentDescription = stringResource(R.string.dismiss),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
+            }
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+              if (query.text.isEmpty()) {
+                Text(
+                  text = stringResource(R.string.search_yt_music),
+                  fontSize = 15.sp,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
+                  maxLines = 1,
+                )
+              }
+              innerTextField()
+            }
+            if (query.text.isNotEmpty()) {
+              IconButton(onClick = { query = TextFieldValue("") }) {
+                Icon(
+                  painter = painterResource(R.drawable.close),
+                  contentDescription = null,
+                  tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+              }
             }
           }
-    )
+        },
+      )
+    }
 
     Box(modifier = Modifier.weight(1f)) {
       Column(modifier = Modifier.fillMaxWidth()) {
@@ -402,7 +411,7 @@ fun OnlineSearchResult(
           item(key = "bottom_spacer") {
             Spacer(
               modifier =
-                Modifier.height(MiniPlayerHeight + MiniPlayerBottomSpacing + NavigationBarHeight)
+                Modifier.windowInsetsBottomHeight(LocalPlayerAwareWindowInsets.current)
             )
           }
         }

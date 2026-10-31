@@ -18,7 +18,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -57,6 +56,9 @@ import com.music.innertube.YouTube
 import com.music.innertube.models.comment.CommentRenderer
 import com.music.innertube.models.comment.CommentThreadRenderer
 import echo.music.iad1tya.R
+import echo.music.iad1tya.ui.component.StageSheetHandle
+import echo.music.iad1tya.ui.component.StageSheetShape
+import echo.music.iad1tya.ui.component.StageSheetTitle
 import kotlinx.coroutines.launch
 
 @OptIn(
@@ -94,44 +96,30 @@ fun CommentSheet(videoId: String, onDismiss: () -> Unit) {
   ModalBottomSheet(
     onDismissRequest = onDismiss,
     sheetState = sheetState,
-    dragHandle = { BottomSheetDefaults.DragHandle() },
-    containerColor = MaterialTheme.colorScheme.surfaceContainer
+    shape = StageSheetShape,
+    dragHandle = { StageSheetHandle() },
+    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
   ) {
     Column(modifier = Modifier.fillMaxHeight()) {
-      Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-      ) {
-        Column {
-          Text(
-            text = stringResource(R.string.comments),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-          )
-          if (totalComments != null) {
-            Text(
-              text = "$totalComments",
-              style = MaterialTheme.typography.labelMedium,
-              color = MaterialTheme.colorScheme.onSurfaceVariant
+      val commentCount = totalComments ?: comments.size.takeIf { it > 0 }?.toString()
+      StageSheetTitle(
+        title =
+          listOfNotNull(stringResource(R.string.comments), commentCount).joinToString(" · "),
+        trailing = {
+          IconButton(
+            onClick = {
+              scope
+                .launch { sheetState.hide() }
+                .invokeOnCompletion { if (!sheetState.isVisible) onDismiss() }
+            }
+          ) {
+            Icon(
+              painter = painterResource(R.drawable.close),
+              contentDescription = stringResource(R.string.close)
             )
           }
-        }
-        IconButton(
-          onClick = {
-            scope
-              .launch { sheetState.hide() }
-              .invokeOnCompletion { if (!sheetState.isVisible) onDismiss() }
-          }
-        ) {
-          Icon(
-            painter = painterResource(R.drawable.close),
-            contentDescription = stringResource(R.string.close)
-          )
-        }
-      }
-
-      HorizontalDivider()
+        },
+      )
 
       when {
         isLoading && comments.isEmpty() -> {

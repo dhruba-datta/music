@@ -2,6 +2,8 @@
 
 package echo.music.iad1tya.ui.screens
 
+import echo.music.iad1tya.ui.component.StageSheetHandle
+import echo.music.iad1tya.ui.component.StageSheetShape
 import echo.music.iad1tya.ui.component.StageTile
 import echo.music.iad1tya.ui.component.StagePillButton
 import echo.music.iad1tya.ui.component.StageTopBar
@@ -72,6 +74,15 @@ fun SpotifyImportScreen(
 )
     }
   ) { innerPadding ->
+    val groups =
+      spotifyImportGroups(
+        state = state,
+        viewModel = spotifyImportViewModel,
+        onConnect = { showSpotifyLogin = true },
+        onSelectSources = { showSpotifySources = true },
+        onAddByLink = { showAddByLink = true },
+      )
+
     LazyColumn(
       modifier =
         Modifier.fillMaxSize()
@@ -82,27 +93,25 @@ fun SpotifyImportScreen(
           ),
       contentPadding =
         PaddingValues(
-          top = innerPadding.calculateTopPadding(),
-          bottom = innerPadding.calculateBottomPadding() + 32.dp,
-          start = 16.dp,
-          end = 16.dp
+          top = innerPadding.calculateTopPadding() + 12.dp,
+          bottom = innerPadding.calculateBottomPadding() + 18.dp,
+          start = 18.dp,
+          end = 18.dp
         ),
-      verticalArrangement = Arrangement.spacedBy(16.dp)
+      verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-      item {
-        Spacer(modifier = Modifier.height(16.dp))
+      items(groups) { group -> Material3SettingsGroup(items = group) }
 
-        Material3SettingsGroup(
-          title = "Spotify Import",
-          items =
-            spotifyImportItems(
-              state = state,
-              viewModel = spotifyImportViewModel,
-              onConnect = { showSpotifyLogin = true },
-              onSelectSources = { showSpotifySources = true },
-              onAddByLink = { showAddByLink = true },
-            ),
-        )
+      if (state.isAuthenticated) {
+        item {
+          StagePillButton(
+            onClick = { spotifyImportViewModel.importSelectedSources() },
+            enabled = state.canImport,
+            modifier = Modifier.padding(top = 6.dp),
+          ) {
+            Text(stringResource(R.string.spotify_import_selected))
+          }
+        }
       }
     }
   }
@@ -120,94 +129,92 @@ fun SpotifyImportScreen(
 }
 
 @Composable
-private fun spotifyImportItems(
+private fun spotifyImportGroups(
   state: SpotifyImportUiState,
   viewModel: SpotifyImportViewModel,
   onConnect: () -> Unit,
   onSelectSources: () -> Unit,
   onAddByLink: () -> Unit,
-): List<Material3SettingsItem> {
+): List<List<Material3SettingsItem>> {
   if (!state.isAuthenticated) {
     return listOf(
-      Material3SettingsItem(
-        title = { Text(stringResource(R.string.spotify_connect)) },
-        description = { Text(stringResource(R.string.spotify_not_connected)) },
-        icon = painterResource(R.drawable.ic_spotify),
-        enabled = state.progress == null && !state.isLoading,
-        onClick = onConnect,
-      ),
-      Material3SettingsItem(
-        title = { Text(stringResource(R.string.spotify_import_by_link)) },
-        description = { Text(stringResource(R.string.spotify_import_by_link_desc)) },
-        icon = painterResource(R.drawable.link),
-                  iconBackground = StageTile.Slate,
-        enabled = state.progress == null && !state.isLoading,
-        onClick = onAddByLink,
-      ),
+      listOf(
+        Material3SettingsItem(
+          title = { Text(stringResource(R.string.spotify_connect)) },
+          description = { Text(stringResource(R.string.spotify_not_connected)) },
+          icon = painterResource(R.drawable.ic_spotify),
+          iconBackground = StageTile.Spotify,
+          enabled = state.progress == null && !state.isLoading,
+          onClick = onConnect,
+        ),
+        Material3SettingsItem(
+          title = { Text(stringResource(R.string.spotify_import_by_link)) },
+          description = { Text(stringResource(R.string.spotify_import_by_link_desc)) },
+          icon = painterResource(R.drawable.link),
+          iconBackground = StageTile.Slate,
+          enabled = state.progress == null && !state.isLoading,
+          onClick = onAddByLink,
+        ),
+      )
     )
   }
 
   val idle = !state.isLoading && state.progress == null
+  val accountLine =
+    when {
+      state.isLoading -> stringResource(R.string.spotify_loading_library)
+      state.accountName.isNotBlank() ->
+        stringResource(R.string.spotify_connected_as, state.accountName)
+      else -> null
+    }
   return listOf(
-    Material3SettingsItem(
-      title = {
-        Text(
-          if (state.accountName.isNotBlank())
-            stringResource(R.string.spotify_connected_as, state.accountName)
-          else stringResource(R.string.spotify_account)
-        )
-      },
-      description =
-        if (state.isLoading) {
-          { Text(stringResource(R.string.spotify_loading_library)) }
-        } else null,
-      icon = painterResource(R.drawable.ic_spotify),
-      enabled = true,
-      onClick = null,
+    listOf(
+      Material3SettingsItem(
+        title = { Text(stringResource(R.string.spotify_account)) },
+        description = accountLine?.let { line -> { Text(line) } },
+        icon = painterResource(R.drawable.ic_spotify),
+        iconBackground = StageTile.Spotify,
+        enabled = true,
+        onClick = null,
+      ),
+      Material3SettingsItem(
+        title = { Text(stringResource(R.string.spotify_refresh)) },
+        enabled = idle,
+        onClick = { viewModel.loadSources() },
+      ),
+      Material3SettingsItem(
+        title = { Text(stringResource(R.string.action_logout)) },
+        enabled = idle,
+        onClick = { viewModel.logout() },
+      ),
     ),
-    Material3SettingsItem(
-      title = { Text(stringResource(R.string.spotify_select_sources)) },
-      description = {
-        Text(
-          if (state.hasSources) stringResource(R.string.spotify_available_count, state.sources.size)
-          else stringResource(R.string.spotify_no_sources)
-        )
-      },
-      icon = painterResource(R.drawable.playlist_play),
-                  iconBackground = StageTile.Slate,
-      enabled = state.hasSources && state.progress == null,
-      onClick = onSelectSources,
-    ),
-    Material3SettingsItem(
-      title = { Text(stringResource(R.string.spotify_import_by_link)) },
-      description = { Text(stringResource(R.string.spotify_import_by_link_desc)) },
-      icon = painterResource(R.drawable.link),
-                  iconBackground = StageTile.Slate,
-      enabled = idle,
-      onClick = onAddByLink,
-    ),
-    Material3SettingsItem(
-      title = { Text(stringResource(R.string.spotify_import_selected)) },
-      description = {
-        Text(stringResource(R.string.spotify_selected_count, state.selectedSourceIds.size))
-      },
-      icon = painterResource(R.drawable.playlist_add),
-      enabled = state.canImport,
-      onClick = { viewModel.importSelectedSources() },
-    ),
-    Material3SettingsItem(
-      title = { Text(stringResource(R.string.spotify_refresh)) },
-      description = { Text(stringResource(R.string.spotify_import_desc)) },
-      icon = painterResource(R.drawable.sync),
-      enabled = idle,
-      onClick = { viewModel.loadSources() },
-    ),
-    Material3SettingsItem(
-      title = { Text(stringResource(R.string.action_logout)) },
-      description = { Text(stringResource(R.string.action_logout_desc)) },
-      icon = painterResource(R.drawable.logout),
-      enabled = idle,
-      onClick = { viewModel.logout() },
+    listOf(
+      Material3SettingsItem(
+        title = { Text(stringResource(R.string.spotify_import_by_link)) },
+        description = { Text(stringResource(R.string.spotify_import_by_link_desc)) },
+        icon = painterResource(R.drawable.link),
+        iconBackground = StageTile.Slate,
+        enabled = idle,
+        onClick = onAddByLink,
+      ),
+      Material3SettingsItem(
+        title = { Text(stringResource(R.string.spotify_select_sources)) },
+        description = {
+          Text(
+            when {
+              state.selectedSourceIds.isNotEmpty() ->
+                stringResource(R.string.spotify_selected_count, state.selectedSourceIds.size)
+              state.hasSources ->
+                stringResource(R.string.spotify_available_count, state.sources.size)
+              else -> stringResource(R.string.spotify_no_sources)
+            }
+          )
+        },
+        icon = painterResource(R.drawable.playlist_play),
+        iconBackground = StageTile.Slate,
+        enabled = state.hasSources && state.progress == null,
+        onClick = onSelectSources,
+      ),
     ),
   )
 }
@@ -333,8 +340,9 @@ private fun SpotifyLoginSheet(
     modifier = Modifier.fillMaxHeight(),
     onDismissRequest = onDismiss,
     sheetState = sheetState,
-    shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-    containerColor = MaterialTheme.colorScheme.surface,
+    shape = StageSheetShape,
+    dragHandle = { StageSheetHandle() },
+    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
   ) {
     Column(
       modifier =
@@ -677,8 +685,9 @@ private fun SpotifySourcePickerSheet(
     modifier = Modifier.fillMaxHeight(),
     onDismissRequest = onDismiss,
     sheetState = sheetState,
-    shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-    containerColor = MaterialTheme.colorScheme.surface,
+    shape = StageSheetShape,
+    dragHandle = { StageSheetHandle() },
+    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
   ) {
     Column(
       modifier =

@@ -79,7 +79,6 @@ import echo.music.iad1tya.playback.queues.ListQueue
 import echo.music.iad1tya.ui.component.DefaultDialog
 import echo.music.iad1tya.ui.component.DraggableScrollbar
 import echo.music.iad1tya.ui.component.EmptyPlaceholder
-import echo.music.iad1tya.ui.component.ExpandableText
 import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.SongListItem
@@ -585,18 +584,5 @@ private fun BottomPlaylistHeader(
       }
     )
 
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp).padding(bottom = 16.dp)) {
-      Text(
-        text = stringResource(R.string.about_playlist),
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onSurface,
-        modifier = Modifier.padding(bottom = 8.dp)
-      )
-      ExpandableText(
-        text = stringResource(R.string.bottom_playlist_description, name, songs.size),
-        collapsedMaxLines = 3
-      )
-    }
   }
 }

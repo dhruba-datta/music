@@ -91,7 +91,6 @@ import echo.music.iad1tya.playback.queues.ListQueue
 import echo.music.iad1tya.ui.component.DefaultDialog
 import echo.music.iad1tya.ui.component.DraggableScrollbar
 import echo.music.iad1tya.ui.component.EmptyPlaceholder
-import echo.music.iad1tya.ui.component.ExpandableText
 import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.SongListItem
@@ -390,7 +389,7 @@ fun AutoPlaylistScreen(
           item(key = "songs_header") {
             Row(
               verticalAlignment = Alignment.CenterVertically,
-              modifier = Modifier.padding(start = 16.dp),
+              modifier = Modifier.padding(start = 22.dp, end = 22.dp, top = 18.dp, bottom = 8.dp),
             ) {
               SortHeader(
                 sortType = sortType,
@@ -406,6 +405,7 @@ fun AutoPlaylistScreen(
                   }
                 },
                 modifier = Modifier.weight(1f),
+                asHeading = true,
               )
             }
           }
@@ -676,26 +676,7 @@ private fun AutoPlaylistHeader(
       }
     )
 
-    val staticDescription =
-      remember(name, songs.size, likeLength) {
-        val trackCountText =
-          context.resources.getQuantityString(R.plurals.n_song, songs.size, songs.size)
-        "$name is a personalized collection featuring $trackCountText.${
-                if (likeLength > 0) " Total listening time is ${makeTimeString(likeLength * 1000L)}." else ""
-            } This playlist is automatically curated for your musical enjoyment."
-      }
 
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp).padding(bottom = 16.dp)) {
-      Text(
-        text = stringResource(R.string.about_album),
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onSurface,
-        modifier = Modifier.padding(bottom = 8.dp)
-      )
-
-      ExpandableText(text = staticDescription, runs = null, collapsedMaxLines = 3)
-    }
   }
 }
 

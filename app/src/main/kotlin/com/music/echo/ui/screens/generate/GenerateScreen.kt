@@ -2,42 +2,35 @@
 
 package echo.music.iad1tya.ui.screens.generate
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -46,7 +39,12 @@ import androidx.navigation.NavController
 import echo.music.iad1tya.LocalDatabase
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.R
+import echo.music.iad1tya.ui.component.Material3SettingsGroup
+import echo.music.iad1tya.ui.component.Material3SettingsItem
 import echo.music.iad1tya.ui.component.StageBarTitle
+import echo.music.iad1tya.ui.component.StageButton
+import echo.music.iad1tya.ui.component.StageRowValue
+import echo.music.iad1tya.ui.component.StageTopBar
 import echo.music.iad1tya.viewmodels.GenerateUiState
 import echo.music.iad1tya.viewmodels.GenerateViewModel
 import kotlinx.coroutines.Dispatchers
@@ -63,12 +61,12 @@ fun GenerateScreen(
   val database = LocalDatabase.current
   val coroutineScope = rememberCoroutineScope()
 
+  val background = MaterialTheme.colorScheme.background
+
   Scaffold(
     topBar = {
-      TopAppBar(
-        title = {
-          StageBarTitle("Local Taste Engine")
-        },
+      StageTopBar(
+        title = { StageBarTitle("Local Taste Engine") },
         navigationIcon = {
           IconButton(onClick = { navController.navigateUp() }) {
             Icon(
@@ -77,11 +75,10 @@ fun GenerateScreen(
             )
           }
         },
-        colors = TopAppBarDefaults.topAppBarColors(
-          containerColor = MaterialTheme.colorScheme.background,
-        ),
+        containerColor = background,
       )
     },
+    containerColor = background,
     contentWindowInsets = LocalPlayerAwareWindowInsets.current,
   ) { paddingValues ->
     Column(
@@ -89,369 +86,200 @@ fun GenerateScreen(
         .fillMaxSize()
         .padding(paddingValues)
         .verticalScroll(rememberScrollState())
-        .padding(horizontal = 20.dp, vertical = 12.dp),
+        .padding(bottom = 18.dp),
       horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-      // Header Card
-      Box(
-        modifier = Modifier
-          .fillMaxWidth()
-          .clip(RoundedCornerShape(18.dp))
-          .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-          .padding(20.dp),
-      ) {
-        Column {
-          Text(
-            text = "Smart Taste Mix",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.ExtraBold,
-            color = MaterialTheme.colorScheme.onSurface,
-          )
-          Spacer(modifier = Modifier.height(6.dp))
-          Text(
-            text = "Generates a personalized mix from your listening momentum. 100% on-device, offline, and account-free.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-        }
-      }
-
-      Spacer(modifier = Modifier.height(16.dp))
-
-      // Status / Insights Grid
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-      ) {
-        Box(
-          modifier = Modifier
-            .weight(1f)
-            .clip(RoundedCornerShape(18.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-            .padding(16.dp),
-        ) {
-          Column {
-            Text(
-              text = "Track Profile",
-              style = MaterialTheme.typography.labelMedium,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-              text = if (stats.isNotEmpty()) "Active" else "Building",
-              style = MaterialTheme.typography.titleMedium,
-              fontWeight = FontWeight.ExtraBold,
-              color = MaterialTheme.colorScheme.onSurface,
-            )
-          }
-        }
-
-        Box(
-          modifier = Modifier
-            .weight(1f)
-            .clip(RoundedCornerShape(18.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-            .padding(16.dp),
-        ) {
-          Column {
-            Text(
-              text = "Exclusions",
-              style = MaterialTheme.typography.labelMedium,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-              text = "${exclusions.size} hidden",
-              style = MaterialTheme.typography.titleMedium,
-              fontWeight = FontWeight.ExtraBold,
-              color = MaterialTheme.colorScheme.onSurface,
-            )
-          }
-        }
-      }
-
-      Spacer(modifier = Modifier.height(24.dp))
-
-      // Main State Content
       when (val state = uiState) {
         is GenerateUiState.Idle -> {
-          Box(
-            modifier = Modifier
-              .fillMaxWidth()
-              .clip(RoundedCornerShape(18.dp))
-              .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f))
-              .padding(20.dp),
+          TasteState(
+            title = "Smart Taste Mix",
+            message = "A personal mix from your listening. On-device, offline, no account.",
+            discColor = TasteDiscColor,
+            topPadding = 34.dp,
+            discSize = 120.dp,
           ) {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-              Text(
-                text = "How it works",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.onSurface,
-              )
-              Text(
-                text = "• Uses total listened time, completion ratios, and skip penalties",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-              )
-              Text(
-                text = "• Weights recent tracks and adapts to the current time of day",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-              )
-              Text(
-                text = "• Expands seeds via related track graph with strict deduplication",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-              )
-            }
-          }
-
-          Spacer(modifier = Modifier.height(32.dp))
-
-          Button(
-            onClick = { viewModel.generate() },
-            modifier = Modifier
-              .fillMaxWidth()
-              .height(54.dp),
-            shape = RoundedCornerShape(25.dp),
-            colors = ButtonDefaults.buttonColors(
-              containerColor = MaterialTheme.colorScheme.primary,
-              contentColor = MaterialTheme.colorScheme.onPrimary,
-            ),
-          ) {
-            Text(
-              text = "Generate Taste Mix",
-              fontWeight = FontWeight.Bold,
-              fontSize = 16.sp,
+            Icon(
+              painter = painterResource(R.drawable.stage_sparkle),
+              contentDescription = null,
+              tint = Color.White,
+              modifier = Modifier.size(50.dp),
             )
           }
+          Box(modifier = Modifier.padding(horizontal = 18.dp)) {
+            Material3SettingsGroup(
+              items = listOf(
+                Material3SettingsItem(
+                  title = { Text("Track Profile") },
+                  description = { Text(if (stats.isNotEmpty()) "Active" else "Building") },
+                  showChevron = false,
+                ),
+                Material3SettingsItem(
+                  title = { Text("Exclusions") },
+                  value = { StageRowValue("${exclusions.size} hidden") },
+                  showChevron = false,
+                ),
+                Material3SettingsItem(
+                  title = { Text("How it works") },
+                  description = { Text("Uses listening time, completion and skips") },
+                  showChevron = false,
+                ),
+              ),
+            )
+          }
+          StageButton(
+            text = "Generate Taste Mix",
+            onClick = { viewModel.generate() },
+            modifier = Modifier.padding(18.dp),
+          )
         }
 
         is GenerateUiState.Generating -> {
-          Box(
-            modifier = Modifier
-              .fillMaxWidth()
-              .clip(RoundedCornerShape(18.dp))
-              .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-              .padding(32.dp),
-            contentAlignment = Alignment.Center,
-          ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-              CircularProgressIndicator(
-                modifier = Modifier.size(48.dp),
-                color = MaterialTheme.colorScheme.primary,
-                strokeWidth = 3.dp,
-              )
-              Spacer(modifier = Modifier.height(16.dp))
-              Text(
-                text = state.message,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-              )
-              Spacer(modifier = Modifier.height(24.dp))
-              OutlinedButton(
-                onClick = { viewModel.cancelGeneration() },
-                shape = RoundedCornerShape(25.dp),
-              ) {
-                Text("Cancel")
-              }
-            }
+          TasteState(title = "Smart Taste Mix", message = state.message) {
+            CircularProgressIndicator(
+              modifier = Modifier.size(44.dp),
+              color = MaterialTheme.colorScheme.onSurface,
+              strokeWidth = 3.dp,
+            )
+          }
+          TasteActions {
+            StageButton(
+              text = "Cancel",
+              onClick = { viewModel.cancelGeneration() },
+              primary = false,
+            )
           }
         }
 
         is GenerateUiState.Success -> {
-          Box(
-            modifier = Modifier
-              .fillMaxWidth()
-              .clip(RoundedCornerShape(18.dp))
-              .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-              .padding(28.dp),
-            contentAlignment = Alignment.Center,
+          TasteState(
+            title = "Taste Mix Ready!",
+            message = "Your playlist has been saved to your library.",
           ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-              Box(
-                modifier = Modifier
-                  .size(56.dp)
-                  .clip(CircleShape)
-                  .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center,
-              ) {
-                Icon(
-                  painter = painterResource(R.drawable.check),
-                  contentDescription = null,
-                  tint = MaterialTheme.colorScheme.primary,
-                  modifier = Modifier.size(28.dp),
-                )
-              }
-              Spacer(modifier = Modifier.height(16.dp))
-              Text(
-                text = "Taste Mix Ready!",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.onSurface,
-              )
-              Spacer(modifier = Modifier.height(6.dp))
-              Text(
-                text = "Your personalized offline playlist has been saved to your library.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-              )
-              Spacer(modifier = Modifier.height(24.dp))
-              Button(
-                onClick = {
-                  navController.navigate("local_playlist/${state.playlistId}")
-                },
-                modifier = Modifier
-                  .fillMaxWidth()
-                  .height(50.dp),
-                shape = RoundedCornerShape(18.dp),
-              ) {
-                Text(
-                  text = "Open Playlist",
-                  fontWeight = FontWeight.Bold,
-                )
-              }
-              Spacer(modifier = Modifier.height(10.dp))
-              OutlinedButton(
-                onClick = { viewModel.generate() },
-                modifier = Modifier
-                  .fillMaxWidth()
-                  .height(50.dp),
-                shape = RoundedCornerShape(25.dp),
-              ) {
-                Text("Generate Another")
-              }
-            }
+            TasteDiscIcon(R.drawable.check)
+          }
+          TasteActions {
+            StageButton(
+              text = "Open Playlist",
+              onClick = { navController.navigate("local_playlist/${state.playlistId}") },
+            )
+            StageButton(
+              text = "Generate Another",
+              onClick = { viewModel.generate() },
+              primary = false,
+            )
           }
         }
 
         is GenerateUiState.EmptyHistory -> {
-          Box(
-            modifier = Modifier
-              .fillMaxWidth()
-              .clip(RoundedCornerShape(18.dp))
-              .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-              .padding(28.dp),
-            contentAlignment = Alignment.Center,
+          TasteState(
+            title = "Not Enough History",
+            message = "Play a few songs first.",
           ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-              Icon(
-                painter = painterResource(R.drawable.music_note),
-                contentDescription = null,
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-              )
-              Spacer(modifier = Modifier.height(16.dp))
-              Text(
-                text = "Not Enough History",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.onSurface,
-              )
-              Spacer(modifier = Modifier.height(6.dp))
-              Text(
-                text = "Play a few songs first so the engine can record your listening momentum.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-              )
-              Spacer(modifier = Modifier.height(20.dp))
-              Button(
-                onClick = { navController.navigate("home") },
-                shape = RoundedCornerShape(25.dp),
-              ) {
-                Text("Explore Music")
-              }
-            }
+            TasteDiscIcon(R.drawable.music_note)
+          }
+          TasteActions {
+            StageButton(
+              text = "Explore Music",
+              onClick = { navController.navigate("home") },
+            )
           }
         }
 
         is GenerateUiState.AllExcluded -> {
-          Box(
-            modifier = Modifier
-              .fillMaxWidth()
-              .clip(RoundedCornerShape(18.dp))
-              .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-              .padding(28.dp),
-            contentAlignment = Alignment.Center,
+          TasteState(
+            title = "All Candidates Excluded",
+            message = "All potential seed tracks are currently in your exclusion list.",
           ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-              Icon(
-                painter = painterResource(R.drawable.close),
-                contentDescription = null,
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.error,
-              )
-              Spacer(modifier = Modifier.height(16.dp))
-              Text(
-                text = "All Candidates Excluded",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.onSurface,
-              )
-              Spacer(modifier = Modifier.height(6.dp))
-              Text(
-                text = "All potential seed tracks are currently in your exclusion list.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-              )
-              Spacer(modifier = Modifier.height(20.dp))
-              Button(
-                onClick = {
-                  coroutineScope.launch(Dispatchers.IO) {
-                    database.recommendationExclusionDao.clear()
-                    viewModel.generate()
-                  }
-                },
-                shape = RoundedCornerShape(18.dp),
-              ) {
-                Text("Reset Exclusions & Retry")
-              }
-            }
+            TasteDiscIcon(R.drawable.close)
+          }
+          TasteActions {
+            StageButton(
+              text = "Reset Exclusions & Retry",
+              onClick = {
+                coroutineScope.launch(Dispatchers.IO) {
+                  database.recommendationExclusionDao.clear()
+                  viewModel.generate()
+                }
+              },
+            )
           }
         }
 
         is GenerateUiState.Error -> {
-          Box(
-            modifier = Modifier
-              .fillMaxWidth()
-              .clip(RoundedCornerShape(18.dp))
-              .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-              .padding(28.dp),
-            contentAlignment = Alignment.Center,
-          ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-              Text(
-                text = "Generation Error",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.error,
-              )
-              Spacer(modifier = Modifier.height(8.dp))
-              Text(
-                text = state.message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-              )
-              Spacer(modifier = Modifier.height(20.dp))
-              Button(
-                onClick = { viewModel.generate() },
-                shape = RoundedCornerShape(25.dp),
-              ) {
-                Text("Retry")
-              }
-            }
+          TasteState(title = "Generation Error", message = state.message) {
+            TasteDiscIcon(R.drawable.close)
+          }
+          TasteActions {
+            StageButton(text = "Retry", onClick = { viewModel.generate() })
           }
         }
       }
-
-      Spacer(modifier = Modifier.height(24.dp))
     }
+  }
+}
+
+private val TasteDiscColor = Color(0xFF8B63D9)
+
+/** The centred page head of the Stage state screens: a disc, a 23sp title and a short message. */
+@Composable
+private fun TasteState(
+  title: String,
+  message: String,
+  discColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
+  topPadding: Dp = 26.dp,
+  discSize: Dp = 84.dp,
+  disc: @Composable () -> Unit,
+) {
+  Column(
+    horizontalAlignment = Alignment.CenterHorizontally,
+    verticalArrangement = Arrangement.spacedBy(6.dp),
+    modifier = Modifier.fillMaxWidth().padding(start = 30.dp, end = 30.dp, top = topPadding),
+  ) {
+    Box(
+      modifier = Modifier
+        .padding(bottom = 10.dp)
+        .size(discSize)
+        .background(discColor, CircleShape),
+      contentAlignment = Alignment.Center,
+    ) {
+      disc()
+    }
+    Text(
+      text = title,
+      fontSize = 23.sp,
+      lineHeight = 29.sp,
+      fontWeight = FontWeight.ExtraBold,
+      color = MaterialTheme.colorScheme.onSurface,
+      textAlign = TextAlign.Center,
+    )
+    Text(
+      text = message,
+      fontSize = 15.sp,
+      lineHeight = 21.sp,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      textAlign = TextAlign.Center,
+      modifier = Modifier.padding(bottom = 10.dp),
+    )
+  }
+}
+
+@Composable
+private fun TasteDiscIcon(@DrawableRes icon: Int) {
+  Icon(
+    painter = painterResource(icon),
+    contentDescription = null,
+    tint = MaterialTheme.colorScheme.onSurface,
+    modifier = Modifier.size(38.dp),
+  )
+}
+
+/** The stacked pills under a state page. */
+@Composable
+private fun TasteActions(content: @Composable () -> Unit) {
+  Column(
+    verticalArrangement = Arrangement.spacedBy(8.dp),
+    modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp),
+  ) {
+    content()
   }
 }

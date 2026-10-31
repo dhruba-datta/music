@@ -55,7 +55,7 @@
                 android:maxLines="1"
                 android:text="@string/no_song_playing"
                 android:textColor="@color/widget_text_title"
-                android:textSize="14sp"
+                android:textSize="15sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -67,7 +67,7 @@
                 android:maxLines="1"
                 android:text="@string/tap_to_open"
                 android:textColor="@color/widget_text_subtitle"
-                android:textSize="11sp" />
+                android:textSize="13sp" />
 
             <!-- Control Bar (Shuffle, Prev, Play/Pause, Next, Repeat) -->
             <LinearLayout

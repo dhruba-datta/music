@@ -28,6 +28,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -47,6 +48,8 @@ import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.SongListItem
 import echo.music.iad1tya.ui.component.SortHeader
+import echo.music.iad1tya.ui.component.StageBarTitle
+import echo.music.iad1tya.ui.component.StageSectionTitle
 import echo.music.iad1tya.ui.menu.SongMenu
 import echo.music.iad1tya.ui.utils.backToMain
 import echo.music.iad1tya.utils.listItemShape
@@ -90,8 +93,14 @@ fun ArtistSongsScreen(
       ) {
         Row(
           verticalAlignment = Alignment.CenterVertically,
-          modifier = Modifier.padding(horizontal = 16.dp),
+          modifier =
+            Modifier.fillMaxWidth()
+              .padding(start = 22.dp, end = 22.dp, top = 18.dp, bottom = 8.dp),
         ) {
+          StageSectionTitle(text = stringResource(R.string.queue_all_songs))
+
+          Spacer(Modifier.weight(1f))
+
           SortHeader(
             sortType = sortType,
             sortDescending = sortDescending,
@@ -104,14 +113,6 @@ fun ArtistSongsScreen(
                 ArtistSongSortType.PLAY_TIME -> R.string.sort_by_play_time
               }
             },
-          )
-
-          Spacer(Modifier.weight(1f))
-
-          Text(
-            text = pluralStringResource(R.plurals.n_song, songs.size, songs.size),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.secondary,
           )
         }
       }
@@ -177,7 +178,7 @@ fun ArtistSongsScreen(
     }
 
     TopAppBar(
-      title = { Text(artist?.artist?.name.orEmpty()) },
+      title = { StageBarTitle(artist?.artist?.name.orEmpty()) },
       navigationIcon = {
         IconButton(
           onClick = navController::navigateUp,

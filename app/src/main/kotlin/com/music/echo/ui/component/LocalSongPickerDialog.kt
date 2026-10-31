@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import echo.music.iad1tya.LocalDatabase
 import echo.music.iad1tya.R
 import echo.music.iad1tya.db.entities.Playlist
+import echo.music.iad1tya.ui.component.StageSheetHandle
+import echo.music.iad1tya.ui.component.StageSheetShape
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -33,7 +35,10 @@ fun LocalSongPickerDialog(playlist: Playlist, onDismiss: () -> Unit) {
   ModalBottomSheet(
     onDismissRequest = onDismiss,
     sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-    modifier = Modifier.fillMaxHeight(0.9f)
+    modifier = Modifier.fillMaxHeight(0.9f),
+    shape = StageSheetShape,
+    dragHandle = { StageSheetHandle() },
+    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
   ) {
     Column(modifier = Modifier.fillMaxSize()) {
       Row(

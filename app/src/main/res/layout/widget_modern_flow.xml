@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/widget_card_dark_bg"
-    android:padding="16dp">
+    android:padding="12dp">
 
     <!-- Top Section: Album Art + Info & Progress -->
     <LinearLayout
@@ -62,7 +62,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/tap_to_play"
-                        android:textSize="12sp"
+                        android:textSize="13sp"
                         android:textColor="@color/widget_text_subtitle"
                         android:maxLines="1"
                         android:ellipsize="end"

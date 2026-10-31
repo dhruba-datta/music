@@ -47,7 +47,9 @@ import echo.music.iad1tya.constants.LibraryFilter
 import echo.music.iad1tya.ui.component.ChipsRow
 import echo.music.iad1tya.ui.component.DefaultDialog
 import echo.music.iad1tya.ui.component.StageSheetGroup
+import echo.music.iad1tya.ui.component.StageSheetHandle
 import echo.music.iad1tya.ui.component.StageSheetRow
+import echo.music.iad1tya.ui.component.StageSheetShape
 import echo.music.iad1tya.ui.component.StageSheetTitle
 import echo.music.iad1tya.ui.component.TextFieldDialog
 import echo.music.iad1tya.utils.onlinePlaylistIdFromUrl
@@ -98,7 +100,8 @@ fun LibraryScreen(navController: NavController) {
   val currentInsets = LocalPlayerAwareWindowInsets.current
   val density = LocalDensity.current
   val layoutDirection = LocalLayoutDirection.current
-  val fabHeightPlusSpacing = 128.dp
+  // Create button (56) plus the 4dp gap the stacked shuffle button sits above it with.
+  val fabHeightPlusSpacing = 60.dp
   val newInsets =
     remember(currentInsets, density, layoutDirection) {
       object : WindowInsets {
@@ -168,7 +171,10 @@ fun LibraryScreen(navController: NavController) {
       onDismissRequest = { showFabMenu = false },
       sheetState =
         @kotlin.OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-        androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true),
+      shape = StageSheetShape,
+      dragHandle = { StageSheetHandle() },
+      containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
       StageSheetTitle(stringResource(R.string.create))
       StageSheetGroup {
@@ -224,7 +230,10 @@ fun LibraryScreen(navController: NavController) {
       onDismissRequest = { showImportMenu = false },
       sheetState =
         @kotlin.OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-        androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true),
+      shape = StageSheetShape,
+      dragHandle = { StageSheetHandle() },
+      containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
       StageSheetTitle(stringResource(R.string.import_playlist))
       StageSheetGroup {

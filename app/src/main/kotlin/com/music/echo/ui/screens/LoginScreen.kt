@@ -1,5 +1,9 @@
 package echo.music.iad1tya.ui.screens
 
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
 import echo.music.iad1tya.ui.component.StageTopBar
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -68,7 +72,11 @@ fun LoginScreen(
   var webView: WebView? = null
 
   AndroidView(
-    modifier = Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current).fillMaxSize(),
+    modifier =
+      Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current)
+        .padding(start = 18.dp, end = 18.dp, top = 8.dp, bottom = 14.dp)
+        .fillMaxSize()
+        .clip(RoundedCornerShape(18.dp)),
     factory = { webViewContext ->
       WebView(webViewContext).apply {
         webViewClient =

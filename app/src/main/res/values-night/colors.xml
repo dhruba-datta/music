@@ -2,16 +2,16 @@
 <resources>
     <!-- Widget colors for dark mode -->
     <color name="widget_text_primary">#FFFFFF</color>
-    <color name="widget_text_secondary">#B8B8C2</color>
+    <color name="widget_text_secondary">#C9C9D0</color>
     <color name="widget_card_bg_color">#1F1F25</color>
     <color name="widget_card_stroke_color">#1F1F25</color>
-    <color name="widget_queue_bg_color">#17171C</color>
-    <color name="widget_queue_stroke_color">#2A2A32</color>
+    <color name="widget_queue_bg_color">#00000000</color>
+    <color name="widget_queue_stroke_color">#00000000</color>
     <color name="widget_thumbnail_placeholder_bg">#2C2C34</color>
     <color name="widget_icon_tint">#FFFFFF</color>
     <color name="widget_icon_dimmed">#8C8C98</color>
     <color name="widget_text_title">#FFFFFF</color>
-    <color name="widget_text_subtitle">#B8B8C2</color>
+    <color name="widget_text_subtitle">#C9C9D0</color>
     <color name="widget_accent_blue">#FF8A5C</color>
     <color name="widget_accent_blue_sub">#B8B8C2</color>
     <color name="widget_button_bg">#2C2C34</color>

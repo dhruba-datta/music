@@ -1128,7 +1128,7 @@ fun HomeScreen(
                           for (row in 0 until rows) {
                             Row(
                               modifier = Modifier.fillMaxWidth(),
-                              horizontalArrangement = Arrangement.SpaceBetween
+                              horizontalArrangement = Arrangement.spacedBy(tileGap)
                             ) {
                               for (col in 0 until columns) {
                                 val itemIndex = row * columns + col
@@ -1136,38 +1136,43 @@ fun HomeScreen(
                                 val item = pageTiles.getOrNull(itemIndex)
 
                                 if (isRandomizeSlot) {
-                                  RandomizeGridItem(
-                                    isLoading = isRandomizing,
-                                    modifier = Modifier.size(tileSize),
-                                    onClick = {
-                                      if (isRandomizing) {
-                                        randomizeJob?.cancel()
-                                      } else {
-                                        randomizeJob =
-                                          scope.launch {
-                                            val randomItem = viewModel.getRandomItem()
-                                            if (randomItem != null) {
-                                              when (randomItem) {
-                                                is SongItem ->
-                                                  playerConnection.playQueue(
-                                                    YouTubeQueue(
-                                                      randomItem.endpoint
-                                                        ?: WatchEndpoint(videoId = randomItem.id),
-                                                      randomItem.toMediaMetadata()
+                                  Box(
+                                    modifier = Modifier.weight(1f).height(tileSize),
+                                    contentAlignment = Alignment.Center,
+                                  ) {
+                                    RandomizeGridItem(
+                                      isLoading = isRandomizing,
+                                      modifier = Modifier.size(tileSize),
+                                      onClick = {
+                                        if (isRandomizing) {
+                                          randomizeJob?.cancel()
+                                        } else {
+                                          randomizeJob =
+                                            scope.launch {
+                                              val randomItem = viewModel.getRandomItem()
+                                              if (randomItem != null) {
+                                                when (randomItem) {
+                                                  is SongItem ->
+                                                    playerConnection.playQueue(
+                                                      YouTubeQueue(
+                                                        randomItem.endpoint
+                                                          ?: WatchEndpoint(videoId = randomItem.id),
+                                                        randomItem.toMediaMetadata()
+                                                      )
                                                     )
-                                                  )
-                                                is AlbumItem ->
-                                                  navController.navigate("album/${randomItem.id}")
-                                                is ArtistItem ->
-                                                  navController.navigate("artist/${randomItem.id}")
-                                                is PlaylistItem ->
-                                                  navController.navigateToPlaylistItem(randomItem)
+                                                  is AlbumItem ->
+                                                    navController.navigate("album/${randomItem.id}")
+                                                  is ArtistItem ->
+                                                    navController.navigate("artist/${randomItem.id}")
+                                                  is PlaylistItem ->
+                                                    navController.navigateToPlaylistItem(randomItem)
+                                                }
                                               }
                                             }
-                                          }
+                                        }
                                       }
-                                    }
-                                  )
+                                    )
+                                  }
                                 } else if (item != null) {
                                   val isPinned by
                                     database.speedDialDao
@@ -1182,7 +1187,8 @@ fun HomeScreen(
                                         listOf(mediaMetadata?.album?.id, mediaMetadata?.id),
                                     isPlaying = isPlaying,
                                     modifier =
-                                      Modifier.size(tileSize)
+                                      Modifier.weight(1f)
+                                        .height(tileSize)
                                         .combinedClickable(
                                           onClick = {
                                             when (item) {
@@ -1218,7 +1224,7 @@ fun HomeScreen(
                                         )
                                   )
                                 } else {
-                                  Spacer(modifier = Modifier.size(tileSize))
+                                  Spacer(modifier = Modifier.weight(1f).height(tileSize))
                                 }
                               }
                             }

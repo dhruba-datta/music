@@ -988,13 +988,16 @@ class MainActivity : ComponentActivity() {
             playerBottomSheetState.isDismissed,
             showRail,
             hasDockedPlayerAccessory,
+            useNewMiniPlayerDesign,
           ) {
             var bottom = bottomInset
             if (shouldShowNavigationBar && !showRail) {
-              bottom += NavigationBarHeight
+              bottom += NavigationBarHeight + FloatingToolbarBottomPadding
             }
-            if (!playerBottomSheetState.isDismissed || hasDockedPlayerAccessory)
+            if (!playerBottomSheetState.isDismissed || hasDockedPlayerAccessory) {
               bottom += MiniPlayerHeight
+              if (useNewMiniPlayerDesign) bottom += MiniPlayerBottomSpacing
+            }
             windowsInsets
               .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
               .add(WindowInsets(top = AppBarHeight, bottom = bottom))

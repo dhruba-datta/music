@@ -1,5 +1,6 @@
 package echo.music.iad1tya.echomusic.updater
 
+import androidx.compose.ui.text.style.TextOverflow
 import echo.music.iad1tya.ui.component.StagePillButton
 import android.content.Context
 import android.content.Intent
@@ -31,14 +32,12 @@ import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,7 +48,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -83,6 +81,7 @@ import echo.music.iad1tya.ui.component.ChangelogItem
 import echo.music.iad1tya.ui.component.DefaultDialog
 import echo.music.iad1tya.ui.component.ErrorSnackbar
 import echo.music.iad1tya.ui.component.ExpressiveIconButton
+import echo.music.iad1tya.ui.component.StageTopBar
 import echo.music.iad1tya.ui.component.detachedItemShape
 import echo.music.iad1tya.ui.component.endItemShape
 import echo.music.iad1tya.ui.component.leadingItemShape
@@ -227,11 +226,9 @@ fun UpdateScreen(navController: NavHostController) {
     }
   }
 
-  val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-
   Scaffold(
     topBar = {
-      LargeTopAppBar(
+      StageTopBar(
         title = {
           val titleText =
             if (status is EchoUpdateStatus.Available) {
@@ -246,26 +243,24 @@ fun UpdateScreen(navController: NavHostController) {
             } else {
               AnnotatedString(stringResource(R.string.settings_check_updates_title))
             }
-          Text(text = titleText, maxLines = 1)
+          Text(
+            text = titleText,
+            fontSize = 24.sp,
+            lineHeight = 28.sp,
+            fontWeight = FontWeight.ExtraBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+          )
         },
         navigationIcon = {
-          Box(modifier = Modifier.padding(start = 16.dp, end = 16.dp)) {
-            ExpressiveIconButton(
-              onClick = { navController.navigateUp() },
-              painter = painterResource(R.drawable.arrow_back),
-              contentDescription = stringResource(R.string.cancel),
-              containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-              contentColor = MaterialTheme.colorScheme.onSurface
-            )
-          }
-        },
-        scrollBehavior = scrollBehavior,
-        colors =
-          TopAppBarDefaults.largeTopAppBarColors(
-            containerColor = MaterialTheme.colorScheme.background,
-            scrolledContainerColor = MaterialTheme.colorScheme.background,
-            titleContentColor = MaterialTheme.colorScheme.onBackground
+          ExpressiveIconButton(
+            onClick = { navController.navigateUp() },
+            painter = painterResource(R.drawable.arrow_back),
+            contentDescription = stringResource(R.string.cancel),
+            contentColor = MaterialTheme.colorScheme.onSurface
           )
+        },
+        containerColor = MaterialTheme.colorScheme.background,
       )
     },
     bottomBar = {
@@ -387,7 +382,6 @@ fun UpdateScreen(navController: NavHostController) {
     modifier =
       Modifier.widthIn(max = 700.dp)
         .fillMaxSize()
-        .nestedScroll(scrollBehavior.nestedScrollConnection)
   ) { padding ->
     Box(modifier = Modifier.fillMaxSize().padding(padding)) {
       LazyColumn(

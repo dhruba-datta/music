@@ -402,7 +402,7 @@ private fun TopBar(
         .windowInsetsPadding(WindowInsets.safeDrawing)
   ) {
     Column(
-      modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+      modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 16.dp, top = 14.dp, bottom = 8.dp)
     ) {
       Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -411,10 +411,9 @@ private fun TopBar(
         Box(
           contentAlignment = Alignment.Center,
           modifier =
-            Modifier.size(40.dp)
+            Modifier.size(44.dp)
               .clip(CircleShape)
-              .background(Color.White.copy(alpha = 0.10f))
-              .border(1.dp, Color.White.copy(alpha = 0.15f), CircleShape)
+              .background(Color.Black.copy(alpha = 0.3f))
               .clickable(role = Role.Button, onClickLabel = stringResource(R.string.back_button_desc), onClick = onBack),
         ) {
           Icon(

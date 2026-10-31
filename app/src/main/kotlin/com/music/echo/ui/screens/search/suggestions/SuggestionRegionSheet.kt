@@ -14,12 +14,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import echo.music.iad1tya.constants.SuggestionRegionSlugToName
+import echo.music.iad1tya.ui.component.StageSheetHandle
+import echo.music.iad1tya.ui.component.StageSheetShape
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,7 +45,13 @@ fun SuggestionRegionSheet(
   val scope = rememberCoroutineScope()
   val bottomSheetState = rememberModalBottomSheetState()
 
-  ModalBottomSheet(onDismissRequest = onDismiss, sheetState = bottomSheetState) {
+  ModalBottomSheet(
+    onDismissRequest = onDismiss,
+    sheetState = bottomSheetState,
+    shape = StageSheetShape,
+    dragHandle = { StageSheetHandle() },
+    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+  ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
       Text(text = "Choose Suggestions Region", style = MaterialTheme.typography.labelLarge)
 

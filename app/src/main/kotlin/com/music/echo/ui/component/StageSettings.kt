@@ -263,6 +263,52 @@ fun StageRadio(selected: Boolean, modifier: Modifier = Modifier) {
   )
 }
 
+/** The 26dp check box of the Stage selection pages, inside a 44dp touch target. */
+@Composable
+fun StageCheckbox(
+  checked: Boolean,
+  onCheckedChange: ((Boolean) -> Unit)?,
+  modifier: Modifier = Modifier,
+) {
+  val colors = MaterialTheme.colorScheme
+  Box(
+    contentAlignment = Alignment.Center,
+    modifier =
+      modifier
+        .size(44.dp)
+        .then(
+          if (onCheckedChange != null) {
+            Modifier.toggleable(
+              value = checked,
+              role = Role.Checkbox,
+              onValueChange = onCheckedChange,
+            )
+          } else {
+            Modifier
+          }
+        ),
+  ) {
+    Box(
+      contentAlignment = Alignment.Center,
+      modifier =
+        Modifier.size(26.dp)
+          .background(
+            if (checked) colors.primary else colors.surfaceContainerHighest,
+            RoundedCornerShape(8.dp),
+          ),
+    ) {
+      if (checked) {
+        Icon(
+          painter = painterResource(R.drawable.check),
+          contentDescription = null,
+          tint = colors.onPrimary,
+          modifier = Modifier.size(18.dp),
+        )
+      }
+    }
+  }
+}
+
 /** A value shown at the end of a row, such as the current choice of a setting. */
 @Composable
 fun StageRowValue(text: String, modifier: Modifier = Modifier) {

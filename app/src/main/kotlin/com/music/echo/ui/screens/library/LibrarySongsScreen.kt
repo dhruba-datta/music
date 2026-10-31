@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -26,7 +25,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -67,7 +65,9 @@ import echo.music.iad1tya.ui.component.HideOnScrollFAB
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.SongListItem
 import echo.music.iad1tya.ui.component.SortHeader
+import echo.music.iad1tya.ui.component.StageCheckbox
 import echo.music.iad1tya.ui.component.StageSectionTitle
+import echo.music.iad1tya.ui.component.StageTopBar
 import echo.music.iad1tya.ui.menu.SelectionSongMenu
 import echo.music.iad1tya.ui.menu.SongMenu
 import echo.music.iad1tya.utils.listItemShape
@@ -240,7 +240,7 @@ fun LibrarySongsScreen(
             shape = listItemShape(index, filteredSongs.size),
             trailingContent = {
               if (inSelectMode) {
-                Checkbox(checked = selection.contains(song.id), onCheckedChange = onCheckedChange)
+                StageCheckbox(checked = selection.contains(song.id), onCheckedChange = onCheckedChange)
               } else {
                 IconButton(
                   onClick = {
@@ -305,7 +305,7 @@ fun LibrarySongsScreen(
         exit = androidx.compose.animation.fadeOut(),
         modifier = Modifier.align(Alignment.TopCenter)
       ) {
-        androidx.compose.material3.TopAppBar(
+        StageTopBar(
           title = {
             Text(pluralStringResource(R.plurals.n_selected, selection.size, selection.size))
           },
@@ -315,7 +315,7 @@ fun LibrarySongsScreen(
             }
           },
           actions = {
-            Checkbox(
+            StageCheckbox(
               checked = selection.size == filteredSongs.size && selection.isNotEmpty(),
               onCheckedChange = {
                 if (selection.size == filteredSongs.size) {
@@ -341,11 +341,8 @@ fun LibrarySongsScreen(
               Icon(painter = painterResource(R.drawable.more_vert), contentDescription = null)
             }
           },
-          colors =
-            TopAppBarDefaults.topAppBarColors(
-              containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f)
-            ),
-          windowInsets = WindowInsets(0.dp)
+          containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
+          windowInsets = WindowInsets(0.dp),
         )
       }
 

@@ -25,7 +25,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -87,6 +86,7 @@ import echo.music.iad1tya.ui.component.LinkSegment
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.NavigationTitle
 import echo.music.iad1tya.ui.component.SongListItem
+import echo.music.iad1tya.ui.component.StageCheckbox
 import echo.music.iad1tya.ui.component.StageHero
 import echo.music.iad1tya.ui.component.StageHeroAction
 import echo.music.iad1tya.ui.component.StageHeroArtwork
@@ -440,7 +440,7 @@ fun AlbumScreen(
             shape = listItemShape(index, filteredSongs.size),
             trailingContent = {
               if (inSelectMode) {
-                Checkbox(checked = song.id in selection, onCheckedChange = onCheckedChange)
+                StageCheckbox(checked = song.id in selection, onCheckedChange = onCheckedChange)
               } else {
                 IconButton(
                   onClick = {
@@ -615,7 +615,7 @@ fun AlbumScreen(
     },
     actions = {
       if (inSelectMode) {
-        Checkbox(
+        StageCheckbox(
           checked = selection.size == filteredSongs.size && selection.isNotEmpty(),
           onCheckedChange = {
             if (selection.size == filteredSongs.size) {

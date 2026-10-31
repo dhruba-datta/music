@@ -36,6 +36,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import echo.music.iad1tya.R
+import echo.music.iad1tya.ui.component.StageSheetHandle
+import echo.music.iad1tya.ui.component.StageSheetShape
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,9 +55,9 @@ fun ActivityHistoryBottomSheet(
   ModalBottomSheet(
     onDismissRequest = onDismiss,
     sheetState = sheetState,
-    dragHandle = { BottomSheetDefaults.DragHandle() },
-    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-    shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+    dragHandle = { StageSheetHandle() },
+    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+    shape = StageSheetShape
   ) {
     Column(
       modifier =

@@ -47,7 +47,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -201,29 +200,33 @@ fun RecognitionScreen(navController: NavController) {
           Scaffold(
             containerColor = Color.Transparent,
             topBar = {
-              TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
-                title = {
-                  Text(
-                    text = stringResource(R.string.recognize_music),
-                    fontSize = 34.sp,
-                    lineHeight = 40.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+              Row(
+                modifier =
+                  Modifier.fillMaxWidth()
+                    .windowInsetsPadding(TopAppBarDefaults.windowInsets)
+                    .padding(start = 22.dp, end = 12.dp, top = 20.dp),
+                verticalAlignment = Alignment.CenterVertically
+              ) {
+                Text(
+                  text = stringResource(R.string.recognize_music),
+                  fontSize = 34.sp,
+                  lineHeight = 40.sp,
+                  letterSpacing = (-0.68).sp,
+                  fontWeight = FontWeight.ExtraBold,
+                  color = MaterialTheme.colorScheme.onBackground,
+                  maxLines = 1,
+                  overflow = TextOverflow.Ellipsis,
+                  modifier = Modifier.weight(1f)
+                )
+                androidx.compose.material3.IconButton(
+                  onClick = { navController.navigate("recognition_history") }
+                ) {
+                  Icon(
+                    painter = painterResource(R.drawable.history),
+                    contentDescription = stringResource(R.string.recognition_history)
                   )
-                },
-                actions = {
-                  androidx.compose.material3.IconButton(
-                    onClick = { navController.navigate("recognition_history") }
-                  ) {
-                    Icon(
-                      painter = painterResource(R.drawable.history),
-                      contentDescription = stringResource(R.string.recognition_history)
-                    )
-                  }
                 }
-              )
+              }
             }
           ) { paddingValues ->
             Column(
@@ -457,6 +460,7 @@ private fun SuccessState(
           text = stringResource(R.string.recognize_music),
           fontSize = 34.sp,
           lineHeight = 40.sp,
+          letterSpacing = (-0.68).sp,
           fontWeight = FontWeight.ExtraBold,
           color = MaterialTheme.colorScheme.onBackground,
           maxLines = 1,
