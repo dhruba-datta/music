@@ -236,9 +236,9 @@ fun RecognitionScreen(navController: NavController) {
                   .windowInsetsPadding(
                     LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Bottom)
                   )
-                  .padding(start = 16.dp, end = 16.dp, top = 70.dp),
+                  .padding(horizontal = 16.dp),
               horizontalAlignment = Alignment.CenterHorizontally,
-              verticalArrangement = Arrangement.Top
+              verticalArrangement = Arrangement.Center
             ) {
               when (status) {
                 is RecognitionStatus.Ready -> {
