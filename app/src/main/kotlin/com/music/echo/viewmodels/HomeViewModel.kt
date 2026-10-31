@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.music.echo.spotify.LoadSpotifyRecommendationsUseCase
+import echo.music.iad1tya.spotifyimport.SpotifyImportRepository
 import com.music.innertube.YouTube
 import com.music.innertube.models.AlbumItem
 import com.music.innertube.models.Artist
@@ -89,7 +90,16 @@ constructor(
   val database: MusicDatabase,
   val syncUtils: SyncUtils,
   val loadSpotifyRecommendationsUseCase: LoadSpotifyRecommendationsUseCase,
+  private val spotifyImportRepository: SpotifyImportRepository,
 ) : ViewModel() {
+  suspend fun isSpotifyConnected(): Boolean =
+    try {
+      spotifyImportRepository.restoreSession().isAuthenticated
+    } catch (e: Exception) {
+      if (e is kotlinx.coroutines.CancellationException) throw e
+      false
+    }
+
   val isRefreshing = MutableStateFlow(false)
   val isLoading = MutableStateFlow(false)
   val isRandomizing = MutableStateFlow(false)

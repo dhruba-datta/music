@@ -37,6 +37,7 @@ fun NavigationTitle(
   thumbnail: (@Composable () -> Unit)? = null,
   onClick: (() -> Unit)? = null,
   onPlayAllClick: (() -> Unit)? = null,
+  endText: String? = null,
 ) {
   Row(
     verticalAlignment = Alignment.CenterVertically,
@@ -86,9 +87,9 @@ fun NavigationTitle(
       }
     }
 
-    if (onClick != null) {
+    if (endText != null || onClick != null) {
       Text(
-        text = stringResource(R.string.more_label),
+        text = endText ?: stringResource(R.string.more_label),
         style = MaterialTheme.typography.labelLarge,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onSurfaceVariant

@@ -85,11 +85,18 @@ fun <E> ChipsRow(
         )
 
       FilterChip(
-        label = { Text(text = label, fontWeight = FontWeight.Bold) },
+        label = {
+          Text(
+            text = label,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 8.dp)
+          )
+        },
         selected = isSelected,
         colors =
           FilterChipDefaults.filterChipColors(
             containerColor = containerColor,
+            labelColor = MaterialTheme.colorScheme.onSurface,
             selectedContainerColor = MaterialTheme.colorScheme.onSurface,
             selectedLabelColor = MaterialTheme.colorScheme.surface,
             selectedLeadingIconColor = MaterialTheme.colorScheme.surface

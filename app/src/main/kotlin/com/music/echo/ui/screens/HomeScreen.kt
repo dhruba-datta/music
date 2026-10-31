@@ -1,14 +1,36 @@
 package echo.music.iad1tya.ui.screens
 
+import android.content.Intent
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.offset
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.sp
+import androidx.media3.common.MediaItem
+import echo.music.iad1tya.LocalListenTogetherManager
+import echo.music.iad1tya.db.MusicDatabase
+import echo.music.iad1tya.db.entities.SpeedDialItem
+import echo.music.iad1tya.playback.queues.LocalAlbumRadio
+import echo.music.iad1tya.ui.component.AlbumPlayButton
+import echo.music.iad1tya.ui.component.ItemThumbnail
+import echo.music.iad1tya.ui.component.StageButton
+import echo.music.iad1tya.ui.component.StageSheetRow
+import echo.music.iad1tya.ui.component.StageSheetTitle
+import echo.music.iad1tya.utils.joinByBullet
+import echo.music.iad1tya.utils.makeTimeString
+import echo.music.iad1tya.utils.reportException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -50,13 +72,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.carousel.HorizontalCenteredHeroCarousel
 import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -78,7 +98,6 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -89,7 +108,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import coil3.compose.AsyncImage
-import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.music.echo.utils.hapticScrollEdge
@@ -107,18 +125,12 @@ import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.LocalPlayerConnection
 import echo.music.iad1tya.constants.RecommendationSource
 import echo.music.iad1tya.constants.RecommendationSourceKey
-import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
 import echo.music.iad1tya.R
-import echo.music.iad1tya.constants.GridItemSize
-import echo.music.iad1tya.constants.GridItemsSizeKey
-import echo.music.iad1tya.constants.GridThumbnailHeight
 import echo.music.iad1tya.constants.InnerTubeCookieKey
 import echo.music.iad1tya.constants.ListItemHeight
 import echo.music.iad1tya.constants.ListThumbnailSize
 import echo.music.iad1tya.constants.RandomizeHomeOrderKey
 import echo.music.iad1tya.constants.ShowSpeedDialKey
-import echo.music.iad1tya.constants.SmallGridThumbnailHeight
 import echo.music.iad1tya.constants.ThumbnailCornerRadius
 import echo.music.iad1tya.db.entities.Album
 import echo.music.iad1tya.db.entities.Artist
@@ -131,17 +143,13 @@ import echo.music.iad1tya.extensions.toMediaItem
 import echo.music.iad1tya.models.toMediaMetadata
 import echo.music.iad1tya.playback.queues.ListQueue
 import echo.music.iad1tya.playback.queues.YouTubeQueue
-import echo.music.iad1tya.ui.component.AlbumGridItem
-import echo.music.iad1tya.ui.component.ArtistGridItem
 import echo.music.iad1tya.ui.component.ChipsRow
 import echo.music.iad1tya.ui.component.LocalBottomSheetPageState
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.NavigationTitle
 import echo.music.iad1tya.ui.component.RandomizeGridItem
-import echo.music.iad1tya.ui.component.SongGridItem
 import echo.music.iad1tya.ui.component.SongListItem
 import echo.music.iad1tya.ui.component.SpeedDialGridItem
-import echo.music.iad1tya.ui.component.YouTubeGridItem
 import echo.music.iad1tya.ui.component.YouTubeListItem
 import echo.music.iad1tya.ui.component.shimmer.GridItemPlaceHolder
 import echo.music.iad1tya.ui.component.shimmer.ShimmerHost
@@ -202,127 +210,65 @@ sealed class HomeSection(val id: String, val baseWeight: Int) {
   data object MoodAndGenres : HomeSection("mood_and_genres", 5)
 }
 
+private val StageCardShape = RoundedCornerShape(18.dp)
+private val StageCardArtHeight = 92.dp
+private val StageCardTextHeight = 49.dp
+private val StageRowPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 12.dp)
+
 @Composable
 fun CommunityPlaylistCard(
   item: CommunityPlaylistItem,
   onClick: () -> Unit,
-  onSongClick: (SongItem) -> Unit,
   modifier: Modifier = Modifier
 ) {
   val database = LocalDatabase.current
   val playerConnection = LocalPlayerConnection.current
   val scope = rememberCoroutineScope()
-  val isDark = isSystemInDarkTheme()
-
-  val containerColor =
-    if (isDark) {
-      MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)
-    } else {
-      MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-    }
 
   val dbPlaylist by database.playlistByBrowseId(item.playlist.id).collectAsState(initial = null)
   val isBookmarked = dbPlaylist?.playlist?.bookmarkedAt != null
 
   Card(
-    modifier = modifier.width(320.dp).height(420.dp),
-    colors = CardDefaults.cardColors(containerColor = containerColor),
-    shape = RoundedCornerShape(28.dp),
+    modifier = modifier,
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+    shape = StageCardShape,
     onClick = onClick
   ) {
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxWidth().padding(14.dp)) {
       Row(
-        modifier = Modifier.fillMaxWidth().padding(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
       ) {
-        Box(modifier = Modifier.size(100.dp).clip(RoundedCornerShape(12.dp))) {
-          Column(modifier = Modifier.fillMaxSize()) {
-            Row(modifier = Modifier.weight(1f)) {
-              AsyncImage(
-                model = item.songs.getOrNull(0)?.thumbnail?.resize(544, 544),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.weight(1f).fillMaxSize()
-              )
-              AsyncImage(
-                model = item.songs.getOrNull(1)?.thumbnail?.resize(544, 544),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.weight(1f).fillMaxSize()
-              )
-            }
-            Row(modifier = Modifier.weight(1f)) {
-              AsyncImage(
-                model = item.songs.getOrNull(2)?.thumbnail?.resize(544, 544),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.weight(1f).fillMaxSize()
-              )
-              AsyncImage(
-                model = item.songs.getOrNull(3)?.thumbnail?.resize(544, 544),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.weight(1f).fillMaxSize()
-              )
-            }
-          }
-        }
+        AsyncImage(
+          model =
+            (item.playlist.thumbnail ?: item.songs.firstOrNull()?.thumbnail)?.resize(544, 544),
+          contentDescription = null,
+          contentScale = ContentScale.Crop,
+          modifier = Modifier.size(84.dp).clip(RoundedCornerShape(12.dp))
+        )
 
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
           Text(
             text = item.playlist.title,
-            style = MaterialTheme.typography.titleMedium,
+            fontSize = 16.sp,
+            lineHeight = 20.sp,
+            fontWeight = FontWeight.Bold,
             maxLines = 2,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis
           )
-          Spacer(modifier = Modifier.height(4.dp))
           Text(
             text = item.playlist.author?.name ?: "",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-            maxLines = 1
+            fontSize = 13.sp,
+            lineHeight = 17.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
           )
-        }
-      }
-
-      Column(modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 16.dp)) {
-        item.songs.take(3).forEach { song ->
-          Row(
-            modifier =
-              Modifier.fillMaxWidth()
-                .padding(vertical = 4.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .combinedClickable(onClick = { onSongClick(song) }),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-          ) {
-            AsyncImage(
-              model = song.thumbnail.resize(544, 544),
-              contentDescription = null,
-              modifier = Modifier.size(56.dp).clip(RoundedCornerShape(12.dp)),
-              contentScale = ContentScale.Crop
-            )
-            Column(modifier = Modifier.weight(1f)) {
-              Text(
-                text = song.title,
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-              )
-              Text(
-                text = song.artists.joinToString(", ") { it.name },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-              )
-            }
-          }
         }
       }
 
       Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp),
+        modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
       ) {
         IconButton(
@@ -333,10 +279,10 @@ fun CommunityPlaylistCard(
             Modifier.size(48.dp).background(MaterialTheme.colorScheme.onSurface, CircleShape)
         ) {
           Icon(
-            painter = painterResource(R.drawable.ic_widget_play),
-            contentDescription = null,
+            painter = painterResource(R.drawable.stage_round_play),
+            contentDescription = "Play",
             tint = MaterialTheme.colorScheme.surface,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(22.dp)
           )
         }
 
@@ -346,16 +292,13 @@ fun CommunityPlaylistCard(
           },
           modifier =
             Modifier.size(48.dp)
-              .background(
-                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
-                CircleShape
-              )
+              .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape)
         ) {
           Icon(
-            painter = painterResource(R.drawable.radio),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSecondaryContainer,
-            modifier = Modifier.size(24.dp)
+            painter = painterResource(R.drawable.stage_radio),
+            contentDescription = "Start radio",
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(22.dp)
           )
         }
 
@@ -405,19 +348,16 @@ fun CommunityPlaylistCard(
           },
           modifier =
             Modifier.size(48.dp)
-              .background(
-                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
-                CircleShape
-              )
+              .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape)
         ) {
           Icon(
             painter =
               painterResource(
-                if (isBookmarked) R.drawable.library_add_check else R.drawable.library_add
+                if (isBookmarked) R.drawable.library_add_check else R.drawable.stage_save
               ),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSecondaryContainer,
-            modifier = Modifier.size(24.dp)
+            contentDescription = "Save to library",
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(22.dp)
           )
         }
       }
@@ -433,126 +373,229 @@ fun DailyDiscoverCard(
   navController: NavController,
   modifier: Modifier = Modifier
 ) {
-  val database = LocalDatabase.current
-  val playCount by
-    database.getLifetimePlayCount(dailyDiscover.recommendation.id).collectAsState(initial = 0)
   val menuState = LocalMenuState.current
   val haptic = LocalHapticFeedback.current
 
   val song = dailyDiscover.recommendation as? SongItem
-  val playsString = stringResource(R.string.plays)
-
-  Card(
-    modifier =
-      modifier
-        .fillMaxSize()
-        .clip(RoundedCornerShape(28.dp))
-        .combinedClickable(
-          onClick = onClick,
-          onLongClick = {
-            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            if (song != null) {
-              menuState.show {
-                YouTubeSongMenu(
-                  song = song,
-                  navController = navController,
-                  onDismiss = { menuState.dismiss() }
-                )
-              }
-            }
-          }
-        ),
-    colors =
-      CardDefaults.cardColors(
-        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-      ),
-    shape = RoundedCornerShape(28.dp)
-  ) {
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-      AsyncImage(
-        model =
-          ImageRequest.Builder(LocalContext.current)
-            .data(dailyDiscover.recommendation.thumbnail?.resize(1200, 1200))
-            .crossfade(true)
-            .build(),
-        contentDescription = null,
-        contentScale = ContentScale.Crop,
-        modifier = Modifier.fillMaxSize()
-      )
-
-      if (maxWidth > 200.dp) {
-        Box(
-          modifier =
-            Modifier.fillMaxSize()
-              .background(
-                brush =
-                  Brush.verticalGradient(
-                    colors =
-                      listOf(
-                        Color.Black.copy(alpha = 0.3f),
-                        Color.Transparent,
-                        Color.Black.copy(alpha = 0.6f),
-                        Color.Black.copy(alpha = 0.9f)
-                      )
-                  )
-              )
-        )
-
-        Column(
-          modifier = Modifier.fillMaxSize().padding(24.dp),
-          verticalArrangement = Arrangement.SpaceBetween
-        ) {
-          Column {
-            Text(
-              text = dailyDiscover.recommendation.title,
-              style = MaterialTheme.typography.titleMedium,
-              color = Color.White
-            )
-            Text(
-              text =
-                buildString {
-                  append(
-                    (dailyDiscover.recommendation as? SongItem)?.artists?.joinToString(", ") {
-                      it.name
-                    } ?: ""
-                  )
-                  if (playCount > 0) {
-                    append(" • $playCount $playsString")
-                  }
-                },
-              style = MaterialTheme.typography.bodyMedium,
-              color = Color.White.copy(alpha = 0.7f)
-            )
-          }
-
-          val messages =
-            listOf(
-              R.string.daily_discover_sounds_like,
-              R.string.daily_discover_because_you_listen_to,
-              R.string.daily_discover_similar_to,
-              R.string.daily_discover_based_on,
-              R.string.daily_discover_for_fans_of
-            )
-          val messageRes =
-            remember(dailyDiscover.seed.id) {
-              messages[kotlin.math.abs(dailyDiscover.seed.id.hashCode()) % messages.size]
-            }
-
-          Text(
-            text =
-              stringResource(
-                messageRes,
-                "${dailyDiscover.seed.title} • ${dailyDiscover.seed.artists.joinToString(", ") { it.name }}"
-              ),
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
-            color = Color.White.copy(alpha = 0.6f),
-            maxLines = 1,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-          )
-        }
-      }
+  val messages =
+    listOf(
+      R.string.daily_discover_sounds_like,
+      R.string.daily_discover_because_you_listen_to,
+      R.string.daily_discover_similar_to,
+      R.string.daily_discover_based_on,
+      R.string.daily_discover_for_fans_of
+    )
+  val messageRes =
+    remember(dailyDiscover.seed.id) {
+      messages[kotlin.math.abs(dailyDiscover.seed.id.hashCode()) % messages.size]
     }
+  val seedName =
+    dailyDiscover.seed.artists.joinToString(", ") { it.name }.ifEmpty { dailyDiscover.seed.title }
+
+  Column(
+    modifier =
+      modifier.combinedClickable(
+        onClick = onClick,
+        onLongClick = {
+          haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+          if (song != null) {
+            menuState.show {
+              YouTubeSongMenu(
+                song = song,
+                navController = navController,
+                onDismiss = { menuState.dismiss() }
+              )
+            }
+          }
+        }
+      )
+  ) {
+    AsyncImage(
+      model =
+        ImageRequest.Builder(LocalContext.current)
+          .data(dailyDiscover.recommendation.thumbnail?.resize(1200, 1200))
+          .crossfade(true)
+          .build(),
+      contentDescription = null,
+      contentScale = ContentScale.Crop,
+      modifier = Modifier.fillMaxWidth().height(92.dp).clip(StageCardShape)
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    Text(
+      text = stringResource(messageRes, seedName),
+      fontSize = 15.sp,
+      lineHeight = 20.sp,
+      fontWeight = FontWeight.Bold,
+      maxLines = 2,
+      overflow = TextOverflow.Ellipsis
+    )
+    Spacer(modifier = Modifier.height(3.dp))
+    Text(
+      text = dailyDiscover.recommendation.title,
+      fontSize = 13.sp,
+      lineHeight = 18.sp,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      maxLines = 1,
+      overflow = TextOverflow.Ellipsis
+    )
+  }
+}
+
+/** The 18dp art tile with a 15sp title and 13sp line under it. */
+@Composable
+private fun StageCard(
+  title: String,
+  subtitle: String?,
+  modifier: Modifier = Modifier,
+  artHeight: Dp = StageCardArtHeight,
+  circle: Boolean = false,
+  art: @Composable BoxScope.() -> Unit,
+) {
+  Column(modifier = modifier) {
+    Box(
+      modifier = Modifier.fillMaxWidth().height(artHeight),
+      contentAlignment = Alignment.Center
+    ) {
+      Box(
+        modifier =
+          if (circle) Modifier.size(artHeight).clip(CircleShape)
+          else Modifier.fillMaxSize().clip(StageCardShape),
+        contentAlignment = Alignment.Center,
+        content = art
+      )
+    }
+    Spacer(modifier = Modifier.height(8.dp))
+    Text(
+      text = title,
+      fontSize = 15.sp,
+      lineHeight = 20.sp,
+      fontWeight = FontWeight.Bold,
+      maxLines = 1,
+      overflow = TextOverflow.Ellipsis
+    )
+    Spacer(modifier = Modifier.height(3.dp))
+    Text(
+      text = subtitle.orEmpty(),
+      fontSize = 13.sp,
+      lineHeight = 18.sp,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      maxLines = 1,
+      overflow = TextOverflow.Ellipsis
+    )
+  }
+}
+
+/** The grey 22dp dots at the end of a song row. */
+@Composable
+private fun StageRowMoreButton(onClick: () -> Unit) {
+  IconButton(onClick = onClick, modifier = Modifier.offset(x = 3.dp)) {
+    Icon(
+      painter = painterResource(R.drawable.stage_more_row),
+      contentDescription = stringResource(R.string.more_label),
+      tint = MaterialTheme.colorScheme.onSurfaceVariant,
+      modifier = Modifier.size(22.dp)
+    )
+  }
+}
+
+private suspend fun speedDialQueueItems(item: YTItem, database: MusicDatabase): List<MediaItem> =
+  when (item) {
+    is SongItem -> listOf(item.toMediaMetadata().toMediaItem())
+    is AlbumItem -> {
+      var album = database.albumWithSongs(item.id).first()
+      if (album?.songs.isNullOrEmpty()) {
+        YouTube.album(item.id)
+          .onSuccess { albumPage -> database.transaction { insert(albumPage) } }
+          .onFailure { reportException(it) }
+        album = database.albumWithSongs(item.id).first()
+      }
+      album?.songs.orEmpty().map { it.toMediaItem() }
+    }
+    is PlaylistItem ->
+      YouTube.playlist(item.id).completed().getOrNull()?.songs.orEmpty().map {
+        it.toMediaMetadata().toMediaItem()
+      }
+    is ArtistItem -> emptyList()
+  }
+
+/** The speed dial long-press sheet; More options opens the item's full menu. */
+@Composable
+private fun SpeedDialMenu(
+  item: YTItem,
+  scope: CoroutineScope,
+  onMoreOptions: () -> Unit,
+  onDismiss: () -> Unit,
+) {
+  val context = LocalContext.current
+  val database = LocalDatabase.current
+  val playerConnection = LocalPlayerConnection.current ?: return
+  val listenTogetherManager = LocalListenTogetherManager.current
+  val isGuest = listenTogetherManager?.isGuestPlaybackRestricted == true
+  val isPinned by database.speedDialDao.isPinned(item.id).collectAsState(initial = false)
+
+  StageSheetTitle(item.title)
+  Column(
+    modifier =
+      Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 4.dp, bottom = 12.dp)
+  ) {
+    if (!isGuest && item !is ArtistItem) {
+      StageSheetRow(
+        text = stringResource(R.string.play_next),
+        icon = R.drawable.stage_round_play,
+        onClick = {
+          scope.launch {
+            val items = withContext(Dispatchers.IO) { speedDialQueueItems(item, database) }
+            playerConnection.playNext(items)
+          }
+          onDismiss()
+        }
+      )
+      StageSheetRow(
+        text = stringResource(R.string.add_to_queue),
+        icon = R.drawable.stage_queue,
+        onClick = {
+          scope.launch {
+            val items = withContext(Dispatchers.IO) { speedDialQueueItems(item, database) }
+            playerConnection.addToQueue(items)
+          }
+          onDismiss()
+        }
+      )
+    }
+    StageSheetRow(
+      text =
+        stringResource(if (isPinned) R.string.unpin_from_speed_dial else R.string.pin_to_speed_dial),
+      icon = R.drawable.stage_pin,
+      onClick = {
+        scope.launch(Dispatchers.IO) {
+          if (isPinned) {
+            database.speedDialDao.delete(item.id)
+          } else {
+            database.speedDialDao.insert(SpeedDialItem.fromYTItem(item))
+          }
+        }
+        onDismiss()
+      }
+    )
+    StageSheetRow(
+      text = stringResource(R.string.share),
+      icon = R.drawable.stage_share,
+      onClick = {
+        val intent =
+          Intent().apply {
+            action = Intent.ACTION_SEND
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, item.shareLink)
+          }
+        context.startActivity(Intent.createChooser(intent, null))
+        onDismiss()
+      }
+    )
+    StageSheetRow(
+      text = stringResource(R.string.more_options),
+      icon = R.drawable.stage_more_row,
+      onClick = onMoreOptions
+    )
   }
 }
 
@@ -602,23 +645,21 @@ fun HomeScreen(
   val quickPicksLazyGridState = rememberLazyGridState()
   val forgottenFavoritesLazyGridState = rememberLazyGridState()
 
-  val accountName by viewModel.accountName.collectAsState()
-  val accountImageUrl by viewModel.accountImageUrl.collectAsState()
   val innerTubeCookie by rememberPreference(InnerTubeCookieKey, "")
   val (randomizeHomeOrder) = rememberPreference(RandomizeHomeOrderKey, true)
   val (showSpeedDial) = rememberPreference(ShowSpeedDialKey, true)
 
   val isLoggedIn = remember(innerTubeCookie) { "SAPISID" in parseCookieString(innerTubeCookie) }
-  val url = if (isLoggedIn) accountImageUrl else null
+  val spotifyConnected by
+    produceState(initialValue = false, isRefreshing) { value = viewModel.isSpotifyConnected() }
 
   val scope = rememberCoroutineScope()
 
   var randomizeJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
 
   val lazylistState = rememberLazyListState()
-  val gridItemSize by rememberEnumPreference(GridItemsSizeKey, GridItemSize.BIG)
-  val currentGridHeight =
-    if (gridItemSize == GridItemSize.BIG) GridThumbnailHeight else SmallGridThumbnailHeight
+  val cardWidth =
+    ((LocalConfiguration.current.screenWidthDp.dp - 60.dp) / 3).coerceAtMost(160.dp)
   val backStackEntry by navController.currentBackStackEntryAsState()
   val scrollToTop =
     backStackEntry?.savedStateHandle?.getStateFlow("scrollToTop", false)?.collectAsState()
@@ -656,13 +697,35 @@ fun HomeScreen(
     BackHandler { viewModel.toggleChip(selectedChip) }
   }
 
+  val playAlbum: (String) -> Unit = { albumId ->
+    scope.launch(Dispatchers.IO) {
+      var albumWithSongs = database.albumWithSongs(albumId).first()
+      if (albumWithSongs?.songs.isNullOrEmpty()) {
+        YouTube.album(albumId)
+          .onSuccess { albumPage ->
+            database.transaction { insert(albumPage) }
+            albumWithSongs = database.albumWithSongs(albumId).first()
+          }
+          .onFailure { reportException(it) }
+      }
+      albumWithSongs?.let {
+        withContext(Dispatchers.Main) { playerConnection.playQueue(LocalAlbumRadio(it)) }
+      }
+    }
+  }
+
   val localGridItem: @Composable (LocalItem) -> Unit = {
     when (it) {
       is Song ->
-        SongGridItem(
-          song = it,
+        StageCard(
+          title = it.song.title,
+          subtitle =
+            joinByBullet(
+              it.artists.joinToString { artist -> artist.name },
+              makeTimeString(it.song.duration * 1000L)
+            ),
           modifier =
-            Modifier.fillMaxWidth()
+            Modifier.width(cardWidth)
               .combinedClickable(
                 onClick = {
                   if (it.id == mediaMetadata?.id) {
@@ -686,17 +749,26 @@ fun HomeScreen(
                   }
                 },
               ),
-          isActive = it.id == mediaMetadata?.id,
-          isPlaying = isPlaying,
-        )
-      is Album ->
-        AlbumGridItem(
-          album = it,
-          isActive = it.id == mediaMetadata?.album?.id,
-          isPlaying = isPlaying,
-          coroutineScope = scope,
+        ) {
+          ItemThumbnail(
+            thumbnailUrl = it.thumbnailUrl,
+            isActive = it.id == mediaMetadata?.id,
+            isPlaying = isPlaying,
+            shape = StageCardShape,
+            forceCrop = true,
+          )
+        }
+      is Album -> {
+        val isActive = it.id == mediaMetadata?.album?.id
+        StageCard(
+          title = it.album.title,
+          subtitle =
+            joinByBullet(
+              it.artists.joinToString { artist -> artist.name },
+              it.album.year?.toString()
+            ),
           modifier =
-            Modifier.fillMaxWidth()
+            Modifier.width(cardWidth)
               .combinedClickable(
                 onClick = { navController.navigate("album/${it.id}") },
                 onLongClick = {
@@ -709,13 +781,25 @@ fun HomeScreen(
                     )
                   }
                 }
-              )
-        )
+              ),
+        ) {
+          ItemThumbnail(
+            thumbnailUrl = it.album.thumbnailUrl,
+            isActive = isActive,
+            isPlaying = isPlaying,
+            shape = StageCardShape,
+            forceCrop = true,
+          )
+          AlbumPlayButton(visible = !isActive, onClick = { playAlbum(it.id) })
+        }
+      }
       is Artist ->
-        ArtistGridItem(
-          artist = it,
+        StageCard(
+          title = it.artist.name,
+          subtitle = pluralStringResource(R.plurals.n_song, it.songCount, it.songCount),
+          circle = true,
           modifier =
-            Modifier.fillMaxWidth()
+            Modifier.width(cardWidth)
               .combinedClickable(
                 onClick = { navController.navigate("artist/${it.id}") },
                 onLongClick = {
@@ -731,63 +815,97 @@ fun HomeScreen(
                   }
                 },
               ),
-        )
+        ) {
+          ItemThumbnail(
+            thumbnailUrl = it.artist.thumbnailUrl,
+            isActive = false,
+            isPlaying = false,
+            shape = CircleShape,
+            forceCrop = true,
+          )
+        }
       is Playlist -> {}
     }
   }
 
-  val ytGridItem: @Composable (YTItem) -> Unit = { item ->
-    YouTubeGridItem(
-      item = item,
-      isActive = item.id in listOf(mediaMetadata?.album?.id, mediaMetadata?.id),
-      isPlaying = isPlaying,
-      coroutineScope = scope,
-      thumbnailRatio = 1f,
-      forceCrop = true,
+  val showYtItemMenu: (YTItem) -> Unit = { item ->
+    menuState.show {
+      when (item) {
+        is SongItem ->
+          YouTubeSongMenu(
+            song = item,
+            navController = navController,
+            onDismiss = menuState::dismiss
+          )
+        is AlbumItem ->
+          YouTubeAlbumMenu(
+            albumItem = item,
+            navController = navController,
+            onDismiss = menuState::dismiss
+          )
+        is ArtistItem -> YouTubeArtistMenu(artist = item, onDismiss = menuState::dismiss)
+        is PlaylistItem ->
+          YouTubePlaylistMenu(
+            playlist = item,
+            coroutineScope = scope,
+            onDismiss = menuState::dismiss
+          )
+      }
+    }
+  }
+
+  val ytGridItem: @Composable (YTItem, Dp) -> Unit = { item, artHeight ->
+    val isActive = item.id in listOf(mediaMetadata?.album?.id, mediaMetadata?.id)
+    StageCard(
+      title = item.title,
+      subtitle =
+        when (item) {
+          is SongItem ->
+            joinByBullet(
+              item.artists.joinToString { it.name },
+              makeTimeString(item.duration?.times(1000L))
+            )
+          is AlbumItem ->
+            joinByBullet(item.artists?.joinToString { it.name }, item.year?.toString())
+          is ArtistItem -> null
+          is PlaylistItem -> joinByBullet(item.author?.name, item.songCountText)
+        },
+      artHeight = artHeight,
+      circle = item is ArtistItem,
       modifier =
-        Modifier.combinedClickable(
-          onClick = {
-            when (item) {
-              is SongItem ->
-                playerConnection.playQueue(
-                  YouTubeQueue(
-                    item.endpoint ?: WatchEndpoint(videoId = item.id),
-                    item.toMediaMetadata()
-                  )
-                )
-              is AlbumItem -> navController.navigate("album/${item.id}")
-              is ArtistItem -> navController.navigate("artist/${item.id}")
-              is PlaylistItem -> navController.navigateToPlaylistItem(item)
-            }
-          },
-          onLongClick = {
-            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            menuState.show {
+        Modifier.width(cardWidth)
+          .combinedClickable(
+            onClick = {
               when (item) {
                 is SongItem ->
-                  YouTubeSongMenu(
-                    song = item,
-                    navController = navController,
-                    onDismiss = menuState::dismiss
+                  playerConnection.playQueue(
+                    YouTubeQueue(
+                      item.endpoint ?: WatchEndpoint(videoId = item.id),
+                      item.toMediaMetadata()
+                    )
                   )
-                is AlbumItem ->
-                  YouTubeAlbumMenu(
-                    albumItem = item,
-                    navController = navController,
-                    onDismiss = menuState::dismiss
-                  )
-                is ArtistItem -> YouTubeArtistMenu(artist = item, onDismiss = menuState::dismiss)
-                is PlaylistItem ->
-                  YouTubePlaylistMenu(
-                    playlist = item,
-                    coroutineScope = scope,
-                    onDismiss = menuState::dismiss
-                  )
+                is AlbumItem -> navController.navigate("album/${item.id}")
+                is ArtistItem -> navController.navigate("artist/${item.id}")
+                is PlaylistItem -> navController.navigateToPlaylistItem(item)
               }
+            },
+            onLongClick = {
+              haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+              showYtItemMenu(item)
             }
-          }
-        )
-    )
+          ),
+    ) {
+      ItemThumbnail(
+        thumbnailUrl = item.thumbnail,
+        isActive = isActive,
+        isPlaying = isPlaying,
+        shape = if (item is ArtistItem) CircleShape else StageCardShape,
+        forceCrop = true,
+      )
+      if (item is AlbumItem) {
+        AlbumPlayButton(visible = !isActive, onClick = { playAlbum(item.id) })
+      }
+    }
   }
 
   val homeSections =
@@ -833,9 +951,11 @@ fun HomeScreen(
 
           val base =
             when (section) {
-              HomeSection.HeroCarousel -> 10000
+              HomeSection.SpeedDial -> 20000
+              HomeSection.HeroCarousel -> 19000
+              HomeSection.ForYou -> 18000
+              is HomeSection.SimilarRecommendation -> if (section.index == 0) 17000 else 100
               is HomeSection.HomePageSection -> 9000 - (section.index * 10)
-              HomeSection.SpeedDial,
               HomeSection.DailyDiscover -> 500
               HomeSection.KeepListening,
               HomeSection.AccountPlaylists,
@@ -846,8 +966,9 @@ fun HomeScreen(
 
           val modifier =
             when (section) {
-              HomeSection.HeroCarousel -> 0
               HomeSection.SpeedDial,
+              HomeSection.HeroCarousel,
+              HomeSection.ForYou -> 0
               HomeSection.DailyDiscover -> sectionRandom.nextInt(-200, 400)
               HomeSection.KeepListening,
               HomeSection.AccountPlaylists,
@@ -860,20 +981,22 @@ fun HomeScreen(
       } else {
         val defaultOrder =
           mapOf(
+            HomeSection.SpeedDial to 1100,
             HomeSection.HeroCarousel to 1000,
-            HomeSection.SpeedDial to 100,
-            HomeSection.FromTheCommunity to 80,
-            HomeSection.DailyDiscover to 70,
-            HomeSection.KeepListening to 60,
-            HomeSection.AccountPlaylists to 50,
-            HomeSection.ForgottenFavorites to 40,
+            HomeSection.ForYou to 990,
+            HomeSection.FromTheCommunity to 980,
+            HomeSection.DailyDiscover to 970,
+            HomeSection.KeepListening to 960,
+            HomeSection.AccountPlaylists to 950,
+            HomeSection.ForgottenFavorites to 940,
             HomeSection.MoodAndGenres to 10
           )
 
         list.sortedByDescending { section ->
           when (section) {
             is HomeSection.HomePageSection -> 900 - section.index
-            is HomeSection.SimilarRecommendation -> 30 - section.index
+            is HomeSection.SimilarRecommendation ->
+              if (section.index == 0) 985 else 30 - section.index
             else -> defaultOrder[section] ?: 0
           }
         }
@@ -930,10 +1053,8 @@ fun HomeScreen(
             chips =
               homePage
                 ?.chips
-                ?.filter {
-                  !it.title.equals("Podcasts", ignoreCase = true) &&
-                    !it.title.equals("Uploaded", ignoreCase = true)
-                }
+                ?.filter { !it.title.equals("Uploaded", ignoreCase = true) }
+                ?.sortedByDescending { it.title.equals("Podcasts", ignoreCase = true) }
                 ?.map { it to it.title } ?: emptyList(),
             currentValue = selectedChip,
             onValueUpdate = { viewModel.toggleChip(it) }
@@ -945,14 +1066,14 @@ fun HomeScreen(
             ShimmerHost {
               Row(
                 modifier =
-                  Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                  Modifier.padding(start = 22.dp, end = 22.dp, top = 12.dp)
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
               ) {
                 repeat(5) {
                   TextPlaceholder(
-                    height = 30.dp,
-                    shape = RoundedCornerShape(16.dp),
+                    height = 44.dp,
+                    shape = RoundedCornerShape(22.dp),
                     modifier = Modifier.width(72.dp)
                   )
                 }
@@ -975,16 +1096,17 @@ fun HomeScreen(
                   }
 
                   item(key = "speed_dial_list") {
-                    val targetItemSize = 160.dp
-                    val availableWidth = maxWidth - 32.dp
-                    val columns = (availableWidth / targetItemSize).toInt().coerceAtLeast(3)
-                    val rows = if (columns >= 6) 1 else if (columns >= 4) 2 else 3
-                    val itemsPerPage = columns * rows
-                    val itemWidth = availableWidth / columns
+                    val tileSize = 74.dp
+                    val tileGap = 10.dp
+                    val columns = if (maxWidth >= 600.dp) 8 else 4
+                    val itemsPerPage = 8
+                    // The random tile always sits in the first slot of the first page.
+                    val tiles = remember(items) { listOf<YTItem?>(null) + items }
+                    val rows = if (columns == 4 && tiles.size > 4) 2 else 1
 
                     val pagerState =
                       rememberPagerState(
-                        pageCount = { (items.size + itemsPerPage - 1) / itemsPerPage }
+                        pageCount = { (tiles.size + itemsPerPage - 1) / itemsPerPage }
                       )
 
                     Column(
@@ -992,136 +1114,111 @@ fun HomeScreen(
                     ) {
                       HorizontalPager(
                         state = pagerState,
-                        contentPadding = PaddingValues(horizontal = 16.dp),
-                        pageSpacing = 16.dp,
-                        modifier = Modifier.fillMaxWidth().height(itemWidth * rows),
+                        contentPadding = PaddingValues(horizontal = 18.dp),
+                        pageSpacing = 18.dp,
+                        modifier =
+                          Modifier.fillMaxWidth().height(tileSize * rows + tileGap * (rows - 1)),
                       ) { page ->
-                        val pageStartIndex = page * itemsPerPage
-                        val pageItems = items.drop(pageStartIndex).take(itemsPerPage)
+                        val pageTiles = tiles.drop(page * itemsPerPage).take(itemsPerPage)
 
-                        Column(modifier = Modifier.fillMaxSize()) {
+                        Column(
+                          modifier = Modifier.fillMaxSize(),
+                          verticalArrangement = Arrangement.spacedBy(tileGap)
+                        ) {
                           for (row in 0 until rows) {
-                            Row(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                              modifier = Modifier.fillMaxWidth(),
+                              horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
                               for (col in 0 until columns) {
                                 val itemIndex = row * columns + col
-
-                                val isRandomizeSlot = (page == 0 && itemIndex == itemsPerPage - 1)
+                                val isRandomizeSlot = page == 0 && itemIndex == 0
+                                val item = pageTiles.getOrNull(itemIndex)
 
                                 if (isRandomizeSlot) {
-                                  Box(
-                                    modifier =
-                                      Modifier.width(itemWidth).height(itemWidth).padding(4.dp)
-                                  ) {
-                                    RandomizeGridItem(
-                                      isLoading = isRandomizing,
-                                      onClick = {
-                                        if (isRandomizing) {
-                                          randomizeJob?.cancel()
-                                        } else {
-                                          randomizeJob =
-                                            scope.launch {
-                                              val randomItem = viewModel.getRandomItem()
-                                              if (randomItem != null) {
-                                                when (randomItem) {
-                                                  is SongItem ->
-                                                    playerConnection.playQueue(
-                                                      YouTubeQueue(
-                                                        randomItem.endpoint
-                                                          ?: WatchEndpoint(videoId = randomItem.id),
-                                                        randomItem.toMediaMetadata()
-                                                      )
+                                  RandomizeGridItem(
+                                    isLoading = isRandomizing,
+                                    modifier = Modifier.size(tileSize),
+                                    onClick = {
+                                      if (isRandomizing) {
+                                        randomizeJob?.cancel()
+                                      } else {
+                                        randomizeJob =
+                                          scope.launch {
+                                            val randomItem = viewModel.getRandomItem()
+                                            if (randomItem != null) {
+                                              when (randomItem) {
+                                                is SongItem ->
+                                                  playerConnection.playQueue(
+                                                    YouTubeQueue(
+                                                      randomItem.endpoint
+                                                        ?: WatchEndpoint(videoId = randomItem.id),
+                                                      randomItem.toMediaMetadata()
                                                     )
-                                                  is AlbumItem ->
-                                                    navController.navigate("album/${randomItem.id}")
-                                                  is ArtistItem ->
-                                                    navController.navigate(
-                                                      "artist/${randomItem.id}"
-                                                    )
-                                                  is PlaylistItem ->
-                                                    navController.navigateToPlaylistItem(randomItem)
-                                                }
+                                                  )
+                                                is AlbumItem ->
+                                                  navController.navigate("album/${randomItem.id}")
+                                                is ArtistItem ->
+                                                  navController.navigate("artist/${randomItem.id}")
+                                                is PlaylistItem ->
+                                                  navController.navigateToPlaylistItem(randomItem)
                                               }
                                             }
-                                        }
+                                          }
                                       }
-                                    )
-                                  }
-                                } else if (itemIndex < pageItems.size) {
-                                  val item = pageItems[itemIndex]
+                                    }
+                                  )
+                                } else if (item != null) {
                                   val isPinned by
                                     database.speedDialDao
                                       .isPinned(item.id)
                                       .collectAsState(initial = false)
 
-                                  Box(
+                                  SpeedDialGridItem(
+                                    item = item,
+                                    isPinned = isPinned,
+                                    isActive =
+                                      item.id in
+                                        listOf(mediaMetadata?.album?.id, mediaMetadata?.id),
+                                    isPlaying = isPlaying,
                                     modifier =
-                                      Modifier.width(itemWidth).height(itemWidth).padding(4.dp)
-                                  ) {
-                                    SpeedDialGridItem(
-                                      item = item,
-                                      isPinned = isPinned,
-                                      isActive =
-                                        item.id in
-                                          listOf(mediaMetadata?.album?.id, mediaMetadata?.id),
-                                      isPlaying = isPlaying,
-                                      modifier =
-                                        Modifier.fillMaxSize()
-                                          .combinedClickable(
-                                            onClick = {
-                                              when (item) {
-                                                is SongItem ->
-                                                  playerConnection.playQueue(
-                                                    YouTubeQueue(
-                                                      item.endpoint
-                                                        ?: WatchEndpoint(videoId = item.id),
-                                                      item.toMediaMetadata()
-                                                    )
+                                      Modifier.size(tileSize)
+                                        .combinedClickable(
+                                          onClick = {
+                                            when (item) {
+                                              is SongItem ->
+                                                playerConnection.playQueue(
+                                                  YouTubeQueue(
+                                                    item.endpoint
+                                                      ?: WatchEndpoint(videoId = item.id),
+                                                    item.toMediaMetadata()
                                                   )
-                                                is AlbumItem ->
-                                                  navController.navigate("album/${item.id}")
-                                                is ArtistItem ->
-                                                  navController.navigate("artist/${item.id}")
-                                                is PlaylistItem ->
-                                                  navController.navigateToPlaylistItem(item)
-                                              }
-                                            },
-                                            onLongClick = {
-                                              haptic.performHapticFeedback(
-                                                HapticFeedbackType.LongPress
-                                              )
-                                              menuState.show {
-                                                when (item) {
-                                                  is SongItem ->
-                                                    YouTubeSongMenu(
-                                                      song = item,
-                                                      navController = navController,
-                                                      onDismiss = menuState::dismiss
-                                                    )
-                                                  is AlbumItem ->
-                                                    YouTubeAlbumMenu(
-                                                      albumItem = item,
-                                                      navController = navController,
-                                                      onDismiss = menuState::dismiss
-                                                    )
-                                                  is ArtistItem ->
-                                                    YouTubeArtistMenu(
-                                                      artist = item,
-                                                      onDismiss = menuState::dismiss
-                                                    )
-                                                  is PlaylistItem ->
-                                                    YouTubePlaylistMenu(
-                                                      playlist = item,
-                                                      coroutineScope = scope,
-                                                      onDismiss = menuState::dismiss
-                                                    )
-                                                }
-                                              }
+                                                )
+                                              is AlbumItem ->
+                                                navController.navigate("album/${item.id}")
+                                              is ArtistItem ->
+                                                navController.navigate("artist/${item.id}")
+                                              is PlaylistItem ->
+                                                navController.navigateToPlaylistItem(item)
                                             }
-                                          )
-                                    )
-                                  }
+                                          },
+                                          onLongClick = {
+                                            haptic.performHapticFeedback(
+                                              HapticFeedbackType.LongPress
+                                            )
+                                            menuState.show {
+                                              SpeedDialMenu(
+                                                item = item,
+                                                scope = scope,
+                                                onMoreOptions = { showYtItemMenu(item) },
+                                                onDismiss = menuState::dismiss
+                                              )
+                                            }
+                                          }
+                                        )
+                                  )
                                 } else {
-                                  Spacer(modifier = Modifier.width(itemWidth))
+                                  Spacer(modifier = Modifier.size(tileSize))
                                 }
                               }
                             }
@@ -1173,8 +1270,8 @@ fun HomeScreen(
                 }
                 item(key = "ai_recommendation_list") {
                   LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = StageRowPadding,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.animateItem()
                   ) {
                     items(items = songs.distinctBy { it.id }, key = { it.id }) { songObj ->
@@ -1197,53 +1294,97 @@ fun HomeScreen(
                       .distinctBy { it.id }
                       .take(5)
                   }
+                val spotify = recommendationSource == RecommendationSource.SPOTIFY
+                val noAccount = !isLoggedIn && !spotifyConnected
+                val sourceConnected = if (spotify) spotifyConnected else isLoggedIn
                 Column(modifier = Modifier.animateItem()) {
-                  NavigationTitle(title = "For you")
-                  Row(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                  ) {
-                    listOf(
-                        RecommendationSource.YOUTUBE to "YouTube Music",
-                        RecommendationSource.SPOTIFY to "Spotify"
-                      )
-                      .forEach { (source, label) ->
-                        FilterChip(
-                          selected = recommendationSource == source,
-                          onClick = {
-                            if (recommendationSource != source) {
-                              onRecommendationSourceChange(source)
-                              viewModel.refresh()
-                            }
-                          },
-                          label = { Text(label) }
-                        )
+                  NavigationTitle(
+                    title = "For you",
+                    endText = if (noAccount) null else "Pull down to refresh"
+                  )
+                  if (!noAccount) {
+                    ChipsRow(
+                      chips =
+                        listOf(
+                          RecommendationSource.YOUTUBE to "YouTube Music",
+                          RecommendationSource.SPOTIFY to "Spotify"
+                        ),
+                      currentValue = recommendationSource,
+                      onValueUpdate = { source ->
+                        if (recommendationSource != source) {
+                          onRecommendationSourceChange(source)
+                          viewModel.refresh()
+                        }
                       }
+                    )
                   }
-                  if (songs.isEmpty()) {
-                    val spotify = recommendationSource == RecommendationSource.SPOTIFY
+                  if (noAccount || songs.isEmpty()) {
                     Column(
-                      modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                      verticalArrangement = Arrangement.spacedBy(8.dp)
+                      modifier =
+                        Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp)
+                          .fillMaxWidth()
+                          .background(MaterialTheme.colorScheme.surfaceContainer, StageCardShape)
+                          .padding(14.dp)
                     ) {
                       Text(
-                        text = "Connect an account to fill this list.",
-                        style = MaterialTheme.typography.bodyMedium
+                        text = "Get suggestions from your account",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold
                       )
-                      Button(
-                        onClick = {
-                          navController.navigate(if (spotify) "settings/spotify_import" else "login")
+                      Text(
+                        text =
+                          "Connect one to fill this list. Until then, suggestions come from what you play here.",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
+                      )
+                      Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (noAccount || !spotify) {
+                          StageButton(
+                            text = "Sign in to Google",
+                            onClick = { navController.navigate("login") }
+                          )
                         }
-                      ) {
-                        Text(if (spotify) "Connect Spotify" else "Sign in to Google")
+                        if (noAccount || spotify) {
+                          StageButton(
+                            text = "Connect Spotify",
+                            primary = !noAccount,
+                            onClick = { navController.navigate("settings/spotify_import") }
+                          )
+                        }
                       }
                     }
-                  } else {
+                  }
+                  if (songs.isNotEmpty()) {
+                    if (noAccount) {
+                      NavigationTitle(title = "From your listening")
+                    } else if (sourceConnected) {
+                      Text(
+                        text =
+                          "Based on your connected " +
+                            (if (spotify) "Spotify" else "YouTube Music") +
+                            " account",
+                        fontSize = 14.sp,
+                        lineHeight = 21.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 22.dp, end = 22.dp, top = 10.dp)
+                      )
+                    }
                     songs.forEach { song ->
+                      val showSongMenu = {
+                        menuState.show {
+                          YouTubeSongMenu(
+                            song = song,
+                            navController = navController,
+                            onDismiss = menuState::dismiss
+                          )
+                        }
+                      }
                       YouTubeListItem(
                         item = song,
                         color = Color.Transparent,
                         isSwipeable = false,
+                        trailingContent = { StageRowMoreButton(onClick = showSongMenu) },
                         modifier =
                           Modifier.combinedClickable(
                             onClick = {
@@ -1254,15 +1395,7 @@ fun HomeScreen(
                                 )
                               )
                             },
-                            onLongClick = {
-                              menuState.show {
-                                YouTubeSongMenu(
-                                  song = song,
-                                  navController = navController,
-                                  onDismiss = menuState::dismiss
-                                )
-                              }
-                            }
+                            onLongClick = showSongMenu
                           )
                       )
                     }
@@ -1275,9 +1408,6 @@ fun HomeScreen(
                 .takeIf { it.isNotEmpty() }
                 ?.let { songs ->
                   item(key = "hero_carousel") {
-                    val configuration = LocalConfiguration.current
-                    val heroWidth = configuration.screenWidthDp.dp - 32.dp
-
                     val currentSongs by rememberUpdatedState(songs)
                     val carouselState = rememberCarouselState { currentSongs.size }
                     val songIds = remember(songs) { songs.map { it.id } }
@@ -1295,14 +1425,20 @@ fun HomeScreen(
                       }
                     }
 
-                    HorizontalCenteredHeroCarousel(
+                    HorizontalMultiBrowseCarousel(
                       state = carouselState,
-                      maxItemWidth = heroWidth,
+                      preferredItemWidth = 304.dp,
                       itemSpacing = 8.dp,
-                      contentPadding = PaddingValues(horizontal = 16.dp),
-                      modifier = Modifier.fillMaxWidth().height(360.dp).animateItem()
+                      minSmallItemWidth = 60.dp,
+                      maxSmallItemWidth = 60.dp,
+                      contentPadding = PaddingValues(start = 18.dp),
+                      modifier =
+                        Modifier.padding(top = 16.dp)
+                          .fillMaxWidth()
+                          .height(236.dp)
+                          .animateItem()
                     ) { index ->
-                      val originalSong = songs.getOrNull(index) ?: return@HorizontalCenteredHeroCarousel
+                      val originalSong = songs.getOrNull(index) ?: return@HorizontalMultiBrowseCarousel
                       val localSong by
                         database.song(originalSong.id).collectAsState(initial = null)
                       val song = localSong?.toMediaMetadata() ?: originalSong.toMediaMetadata()
@@ -1311,11 +1447,7 @@ fun HomeScreen(
                       Box(
                         modifier =
                           Modifier.fillMaxSize()
-                            .maskClip(MaterialTheme.shapes.extraLarge)
-                            .maskBorder(
-                              BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                              MaterialTheme.shapes.extraLarge
-                            )
+                            .maskClip(RoundedCornerShape(28.dp))
                             .focusable()
                             .combinedClickable(
                               onClick = {
@@ -1393,18 +1525,34 @@ fun HomeScreen(
                           }
                         }
 
-                        Column(modifier = Modifier.align(Alignment.BottomStart).padding(16.dp)) {
+                        Column(
+                          modifier =
+                            Modifier.align(Alignment.BottomStart)
+                              .padding(16.dp)
+                              .graphicsLayer {
+                                // Hide the text while the card is squeezed to the 60dp peek.
+                                val range = carouselItemDrawInfo.maxSize - carouselItemDrawInfo.minSize
+                                alpha =
+                                  if (range <= 0f) 1f
+                                  else
+                                    ((carouselItemDrawInfo.size - carouselItemDrawInfo.minSize) / range)
+                                      .coerceIn(0f, 1f)
+                              }
+                        ) {
                           Text(
                             text = song.title,
-                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                            fontSize = 22.sp,
+                            lineHeight = 28.sp,
+                            fontWeight = FontWeight.ExtraBold,
                             color = Color.White,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                           )
                           Text(
                             text = song.artists.joinToString { it.name },
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Color.White.copy(alpha = 0.8f),
+                            fontSize = 14.sp,
+                            lineHeight = 18.sp,
+                            color = Color.White,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                           )
@@ -1427,8 +1575,8 @@ fun HomeScreen(
 
                   item(key = "community_playlists_content") {
                     LazyRow(
-                      contentPadding = PaddingValues(horizontal = 16.dp),
-                      horizontalArrangement = Arrangement.spacedBy(16.dp),
+                      contentPadding = StageRowPadding,
+                      horizontalArrangement = Arrangement.spacedBy(12.dp),
                       modifier = Modifier.animateItem()
                     ) {
                       items(playlists.distinctBy { it.playlist.id }, key = { it.playlist.id }) {
@@ -1436,14 +1584,7 @@ fun HomeScreen(
                         CommunityPlaylistCard(
                           item = item,
                           onClick = { navController.navigateToPlaylistItem(item.playlist) },
-                          onSongClick = { song ->
-                            playerConnection.playQueue(
-                              YouTubeQueue(
-                                song.endpoint ?: WatchEndpoint(videoId = song.id),
-                                song.toMediaMetadata()
-                              )
-                            )
-                          }
+                          modifier = Modifier.width(maxWidth - 36.dp)
                         )
                       }
                     }
@@ -1473,18 +1614,12 @@ fun HomeScreen(
                     )
                   }
                   item(key = "daily_discover_content") {
-                    Box(
-                      modifier = Modifier.fillMaxWidth().height(340.dp).padding(horizontal = 16.dp),
-                      contentAlignment = Alignment.Center
+                    LazyRow(
+                      contentPadding = StageRowPadding,
+                      horizontalArrangement = Arrangement.spacedBy(12.dp),
+                      modifier = Modifier.animateItem()
                     ) {
-                      val carouselState = rememberCarouselState { discoverList.size }
-                      HorizontalMultiBrowseCarousel(
-                        state = carouselState,
-                        preferredItemWidth = 320.dp,
-                        itemSpacing = 16.dp,
-                        modifier = Modifier.fillMaxWidth().height(320.dp)
-                      ) { i ->
-                        val item = discoverList[i]
+                      items(discoverList) { item ->
                         DailyDiscoverCard(
                           dailyDiscover = item,
                           onClick = {
@@ -1500,7 +1635,7 @@ fun HomeScreen(
                             }
                           },
                           navController = navController,
-                          modifier = Modifier.maskClip(MaterialTheme.shapes.extraLarge)
+                          modifier = Modifier.width((maxWidth - 48.dp) / 2)
                         )
                       }
                     }
@@ -1523,18 +1658,14 @@ fun HomeScreen(
                     LazyHorizontalGrid(
                       state = rememberLazyGridState(),
                       rows = GridCells.Fixed(rows),
-                      contentPadding =
-                        WindowInsets.systemBars
-                          .only(WindowInsetsSides.Horizontal)
-                          .asPaddingValues(),
+                      contentPadding = StageRowPadding,
+                      horizontalArrangement = Arrangement.spacedBy(12.dp),
+                      verticalArrangement = Arrangement.spacedBy(12.dp),
                       modifier =
                         Modifier.fillMaxWidth()
                           .height(
-                            (currentGridHeight +
-                              with(LocalDensity.current) {
-                                MaterialTheme.typography.bodyLarge.lineHeight.toDp() * 2 +
-                                  MaterialTheme.typography.bodyMedium.lineHeight.toDp() * 2
-                              }) * rows
+                            (StageCardArtHeight + StageCardTextHeight) * rows +
+                              12.dp * rows
                           )
                           .animateItem()
                     ) {
@@ -1551,52 +1682,24 @@ fun HomeScreen(
                 ?.let { accountPlaylists ->
                   item(key = "account_playlists_title") {
                     NavigationTitle(
-                      label = stringResource(R.string.your_youtube_playlists),
-                      title = accountName,
-                      thumbnail = {
-                        if (url != null) {
-                          AsyncImage(
-                            model =
-                              ImageRequest.Builder(LocalContext.current)
-                                .data(url)
-                                .diskCachePolicy(CachePolicy.ENABLED)
-                                .diskCacheKey(url)
-                                .crossfade(false)
-                                .build(),
-                            placeholder = painterResource(id = R.drawable.person),
-                            error = painterResource(id = R.drawable.person),
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier =
-                              Modifier.size(ListThumbnailSize)
-                                .clip(RoundedCornerShape(ThumbnailCornerRadius))
-                          )
-                        } else {
-                          Icon(
-                            painter = painterResource(id = R.drawable.person),
-                            contentDescription = null,
-                            modifier = Modifier.size(ListThumbnailSize)
-                          )
-                        }
-                      },
+                      title = stringResource(R.string.your_youtube_playlists),
                       onClick = { navController.navigate("account") },
+                      endText = "See all",
                       modifier = Modifier.animateItem()
                     )
                   }
 
                   item(key = "account_playlists_list") {
                     LazyRow(
-                      contentPadding =
-                        WindowInsets.systemBars
-                          .only(WindowInsetsSides.Horizontal)
-                          .asPaddingValues(),
+                      contentPadding = StageRowPadding,
+                      horizontalArrangement = Arrangement.spacedBy(12.dp),
                       modifier = Modifier.animateItem()
                     ) {
                       items(
                         items = accountPlaylists.distinctBy { it.id },
                         key = { it.id },
                       ) { item ->
-                        ytGridItem(item)
+                        ytGridItem(item, StageCardArtHeight)
                       }
                     }
                   }
@@ -1650,7 +1753,7 @@ fun HomeScreen(
                           isSwipeable = false,
                           shape = listItemShape(index = index % rows, count = rows),
                           trailingContent = {
-                            IconButton(
+                            StageRowMoreButton(
                               onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 menuState.show {
@@ -1661,12 +1764,7 @@ fun HomeScreen(
                                   )
                                 }
                               }
-                            ) {
-                              Icon(
-                                painter = painterResource(R.drawable.more_vert),
-                                contentDescription = null
-                              )
-                            }
+                            )
                           },
                           modifier =
                             Modifier.width(horizontalLazyGridItemWidth)
@@ -1702,19 +1800,8 @@ fun HomeScreen(
               recommendation?.let {
                 item(key = "similar_to_title_${section.index}") {
                   NavigationTitle(
-                    label = stringResource(R.string.similar_to),
-                    title = recommendation.title.title,
-                    thumbnail =
-                      recommendation.title.thumbnailUrl?.let { thumbnailUrl ->
-                        {
-                          val shape = RoundedCornerShape(ThumbnailCornerRadius)
-                          AsyncImage(
-                            model = thumbnailUrl,
-                            contentDescription = null,
-                            modifier = Modifier.size(ListThumbnailSize).clip(shape)
-                          )
-                        }
-                      },
+                    title =
+                      stringResource(R.string.similar_to) + " " + recommendation.title.title,
                     onClick = {
                       val recTitle = recommendation.title
                       when (recTitle) {
@@ -1730,12 +1817,12 @@ fun HomeScreen(
 
                 item(key = "similar_to_list_${section.index}") {
                   LazyRow(
-                    contentPadding =
-                      WindowInsets.systemBars.only(WindowInsetsSides.Horizontal).asPaddingValues(),
+                    contentPadding = StageRowPadding,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.animateItem()
                   ) {
                     items(recommendation.items.distinctBy { it.id }, key = { it.id }) { item ->
-                      ytGridItem(item)
+                      ytGridItem(item, 66.dp)
                     }
                   }
                 }
@@ -1817,7 +1904,7 @@ fun HomeScreen(
                           isSwipeable = false,
                           shape = listItemShape(index = index % 4, count = 4),
                           trailingContent = {
-                            IconButton(
+                            StageRowMoreButton(
                               onClick = {
                                 menuState.show {
                                   YouTubeSongMenu(
@@ -1827,12 +1914,7 @@ fun HomeScreen(
                                   )
                                 }
                               }
-                            ) {
-                              Icon(
-                                painter = painterResource(R.drawable.more_vert),
-                                contentDescription = null
-                              )
-                            }
+                            )
                           },
                           modifier =
                             Modifier.width(horizontalLazyGridItemWidth)
@@ -1865,14 +1947,12 @@ fun HomeScreen(
 
                   item(key = "home_section_list_${section.index}") {
                     LazyRow(
-                      contentPadding =
-                        WindowInsets.systemBars
-                          .only(WindowInsetsSides.Horizontal)
-                          .asPaddingValues(),
+                      contentPadding = StageRowPadding,
+                      horizontalArrangement = Arrangement.spacedBy(12.dp),
                       modifier = Modifier.animateItem()
                     ) {
                       items(sectionData.items.distinctBy { it.id }, key = { it.id }) { item ->
-                        ytGridItem(item)
+                        ytGridItem(item, StageCardArtHeight)
                       }
                     }
                   }
@@ -1929,10 +2009,10 @@ fun HomeScreen(
                 repeat(3) {
                   Spacer(
                     modifier =
-                      Modifier.padding(horizontal = 8.dp, vertical = 12.dp)
-                        .width(300.dp)
-                        .height(360.dp)
-                        .clip(MaterialTheme.shapes.extraLarge)
+                      Modifier.padding(start = 18.dp, top = 16.dp)
+                        .width(304.dp)
+                        .height(236.dp)
+                        .clip(RoundedCornerShape(28.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                   )
                 }
@@ -1943,11 +2023,22 @@ fun HomeScreen(
                 height = 36.dp,
                 modifier = Modifier.padding(12.dp).width(200.dp),
               )
-              Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)) {
+              Column(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+              ) {
                 repeat(2) {
-                  Row(modifier = Modifier.fillMaxWidth()) {
-                    repeat(3) {
-                      GridItemPlaceHolder(modifier = Modifier.weight(1f), fillMaxWidth = true)
+                  Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                  ) {
+                    repeat(4) {
+                      Spacer(
+                        modifier =
+                          Modifier.size(74.dp)
+                            .clip(StageCardShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                      )
                     }
                   }
                 }
