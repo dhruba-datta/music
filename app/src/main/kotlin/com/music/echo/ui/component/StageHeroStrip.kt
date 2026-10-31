@@ -29,9 +29,8 @@ import kotlinx.coroutines.launch
 
 private val Gap = 8.dp
 private val Edge = 12.dp
-private val PreviousWidth = 44.dp
-private val NextWidth = 56.dp
-private val LastWidth = 44.dp
+private val PreviousWidth = 36.dp
+private val NextWidth = 76.dp
 
 /** Lets the strip loop forever once a card can never be on screen twice. */
 private const val MIN_LOOPING_CARDS = 6
@@ -43,16 +42,17 @@ private fun lerp(values: List<Float>, position: Float): Float {
 }
 
 /**
- * Home's card strip: one card before the active card and two after it.
+ * Home's card strip: a thin card before the wide active card and one card after it.
  *
- * [item] gets the card index and how open the card is, from 0 (a thin peek) to 1 (active).
+ * [item] gets the card index, how open the card is, from 0 (a peek) to 1 (active), and how visible
+ * the small title of the next card should be.
  */
 @Composable
 fun StageHeroStrip(
   count: Int,
   modifier: Modifier = Modifier,
   autoAdvanceMillis: Long = 5000,
-  item: @Composable BoxScope.(index: Int, expansion: Float) -> Unit,
+  item: @Composable BoxScope.(index: Int, expansion: Float, nextTitleAlpha: Float) -> Unit,
 ) {
   val position = remember { Animatable(if (count > 1) 1f else 0f) }
   val scope = rememberCoroutineScope()
@@ -75,25 +75,23 @@ fun StageHeroStrip(
 
   BoxWithConstraints(modifier = modifier.clipToBounds()) {
     val activeWidth =
-      (maxWidth - Edge * 2 - PreviousWidth - NextWidth - LastWidth - Gap * 3).coerceAtLeast(120.dp)
+      (maxWidth - Edge * 2 - PreviousWidth - NextWidth - Gap * 2).coerceAtLeast(120.dp)
     val slotPx = with(LocalDensity.current) { (activeWidth + Gap).toPx() }
 
-    // Card edges at distances -2 to 3 from the active card.
+    // Card edges at distances -2 to 2 from the active card.
     val previousX = Edge
     val activeX = previousX + PreviousWidth + Gap
     val nextX = activeX + activeWidth + Gap
-    val lastX = nextX + NextWidth + Gap
     val xs: List<Dp> =
       listOf(
         previousX - PreviousWidth - Gap,
         previousX,
         activeX,
         nextX,
-        lastX,
-        lastX + LastWidth + Gap,
+        nextX + NextWidth + Gap,
       )
     val widths: List<Dp> =
-      listOf(PreviousWidth, PreviousWidth, activeWidth, NextWidth, LastWidth, LastWidth)
+      listOf(PreviousWidth, PreviousWidth, activeWidth, NextWidth, NextWidth)
     val xValues = xs.map { it.value }
     val widthValues = widths.map { it.value }
 
@@ -123,7 +121,7 @@ fun StageHeroStrip(
           distance = ((distance % count) + count) % count
           if (distance > count / 2f) distance -= count
         }
-        if (distance < -2f || distance > 3f) continue
+        if (distance < -2f || distance > 2f) continue
 
         val slot = distance + 2f
         val width = lerp(widthValues, slot)
@@ -135,7 +133,7 @@ fun StageHeroStrip(
             modifier =
               Modifier.offset(x = lerp(xValues, slot).dp).width(width.dp).fillMaxHeight()
           ) {
-            item(index, expansion)
+            item(index, expansion, (1f - expansion) * distance.coerceIn(0f, 1f))
           }
         }
       }

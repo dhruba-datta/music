@@ -17,6 +17,7 @@ import echo.music.iad1tya.ui.component.AlbumPlayButton
 import echo.music.iad1tya.ui.component.ItemThumbnail
 import echo.music.iad1tya.ui.component.StageButton
 import echo.music.iad1tya.ui.component.StageSheetRow
+import echo.music.iad1tya.ui.component.StageSheetCards
 import echo.music.iad1tya.ui.component.StageSheetTitle
 import echo.music.iad1tya.utils.joinByBullet
 import echo.music.iad1tya.utils.makeTimeString
@@ -533,10 +534,7 @@ private fun SpeedDialMenu(
   val isPinned by database.speedDialDao.isPinned(item.id).collectAsState(initial = false)
 
   StageSheetTitle(item.title)
-  Column(
-    modifier =
-      Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 4.dp, bottom = 12.dp)
-  ) {
+  StageSheetCards {
     if (!isGuest && item !is ArtistItem) {
       StageSheetRow(
         text = stringResource(R.string.play_next),
@@ -1332,7 +1330,7 @@ fun HomeScreen(
                           .fillMaxWidth()
                           .height(236.dp)
                           .animateItem()
-                    ) { index, expansion ->
+                    ) { index, expansion, nextTitleAlpha ->
                       val originalSong = songs.getOrNull(index) ?: return@StageHeroStrip
                       val localSong by
                         database.song(originalSong.id).collectAsState(initial = null)
@@ -1444,6 +1442,20 @@ fun HomeScreen(
                             overflow = TextOverflow.Ellipsis
                           )
                         }
+
+                        Text(
+                          text = song.title,
+                          fontSize = 12.sp,
+                          lineHeight = 15.sp,
+                          fontWeight = FontWeight.Bold,
+                          color = Color.White,
+                          maxLines = 3,
+                          overflow = TextOverflow.Ellipsis,
+                          modifier =
+                            Modifier.align(Alignment.BottomStart)
+                              .padding(8.dp)
+                              .alpha(nextTitleAlpha)
+                        )
                       }
                     }
                   }

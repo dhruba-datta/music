@@ -263,7 +263,7 @@ fun StageRoomManageRows(
   onTransfer: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  Column(modifier = modifier.fillMaxWidth()) {
+  StageSheetCards(modifier = modifier) {
     StageSheetRow(
       text = stringResource(R.string.kick_user),
       icon = R.drawable.close,

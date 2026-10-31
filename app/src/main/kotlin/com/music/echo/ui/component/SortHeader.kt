@@ -116,6 +116,7 @@ inline fun <reified T : Enum<T>> SortHeader(
 @Composable
 fun StageSheetGroup(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
   Column(
+    verticalArrangement = Arrangement.spacedBy(2.dp),
     modifier =
       modifier
         .fillMaxWidth()
@@ -140,15 +141,16 @@ fun StageSheetRow(
     modifier =
       modifier
         .fillMaxWidth()
-        .heightIn(min = 52.dp)
+        .background(MaterialTheme.colorScheme.surfaceContainerHighest, RoundedCornerShape(4.dp))
+        .heightIn(min = 64.dp)
         .clickable(onClick = onClick)
-        .padding(horizontal = 14.dp, vertical = 6.dp),
+        .padding(horizontal = 16.dp, vertical = 8.dp),
   ) {
     leading()
     Text(
       text = title,
       fontSize = 16.sp,
-      fontWeight = FontWeight.Bold,
+      fontWeight = FontWeight.SemiBold,
       color = MaterialTheme.colorScheme.onSurface,
       maxLines = 1,
       overflow = TextOverflow.Ellipsis,

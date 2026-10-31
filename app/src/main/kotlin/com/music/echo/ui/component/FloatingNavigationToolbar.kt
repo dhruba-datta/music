@@ -332,10 +332,7 @@ fun FloatingToolbarOverflowMenuButton(
         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
       ) {
         StageSheetTitle(stringResource(R.string.more_label))
-        Column(
-          modifier =
-            Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 4.dp, bottom = 12.dp)
-        ) {
+        StageSheetCards {
           if (onMusicFlowClick != null && musicFlowIconRes != null) {
             StageSheetRow(
               text =

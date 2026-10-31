@@ -27,6 +27,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -127,7 +128,9 @@ fun AddToPlaylistDialog(
           text = stringResource(R.string.create_playlist),
           icon = R.drawable.add,
           onClick = { showCreatePlaylistDialog = true },
-          modifier = Modifier.padding(start = 18.dp, top = 4.dp, end = 18.dp),
+          modifier =
+            Modifier.padding(start = 18.dp, top = 4.dp, end = 18.dp)
+              .clip(androidx.compose.foundation.shape.RoundedCornerShape(18.dp)),
         )
       }
 

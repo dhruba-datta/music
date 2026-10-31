@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
 
+private const val FALLBACK_TRACKS = 10
+
 @Singleton
 class LoadSpotifyRecommendationsUseCase @Inject constructor(
     private val spotifyImportRepository: SpotifyImportRepository,
@@ -88,7 +90,27 @@ class LoadSpotifyRecommendationsUseCase @Inject constructor(
             }
         }
 
+        if (recommendations.isEmpty()) {
+            libraryFallback(hideExplicit)?.let { recommendations.add(it) }
+        }
+
         return@withContext recommendations.takeIf { it.isNotEmpty() }
+    }
+
+    /** Spotify restricts recommendations on many accounts, so fall back to the listener's music. */
+    private suspend fun libraryFallback(hideExplicit: Boolean): SimilarRecommendation? {
+        val topTracks = Spotify.topTracks(limit = FALLBACK_TRACKS).getOrNull()?.items.orEmpty()
+        val tracks = topTracks.ifEmpty {
+            Spotify.likedSongs(limit = FALLBACK_TRACKS).getOrNull()?.items.orEmpty().map { it.track }
+        }
+        val resolved = spotifyPlaybackResolver.resolveAndFilter(tracks, hideExplicit)
+        if (resolved.isEmpty()) return null
+
+        val source = echo.music.iad1tya.db.entities.Artist(
+            artist = echo.music.iad1tya.db.entities.ArtistEntity(id = "spotify_library", name = "Spotify"),
+            songCount = 0
+        )
+        return SimilarRecommendation(title = source, items = resolved)
     }
 
     private suspend fun getSpotifyArtistId(artistName: String): String? {

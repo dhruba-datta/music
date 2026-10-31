@@ -21,6 +21,7 @@ import echo.music.iad1tya.constants.AudioQualityKey
 import echo.music.iad1tya.constants.InnerTubeCookieKey
 import echo.music.iad1tya.constants.UseLoginForBrowse
 import echo.music.iad1tya.constants.YtmSyncKey
+import echo.music.iad1tya.ui.component.StageSheetCards
 import echo.music.iad1tya.ui.component.StageSheetHandle
 import echo.music.iad1tya.ui.component.StageSheetRow
 import echo.music.iad1tya.ui.component.StageSheetShape
@@ -60,12 +61,7 @@ fun SettingDialoge(
   ) {
     StageSheetTitle(if (isLoggedIn) accountName else "Anonymous")
 
-    Column(
-      modifier =
-        Modifier.fillMaxWidth()
-          .verticalScroll(rememberScrollState())
-          .padding(start = 18.dp, end = 18.dp, top = 4.dp, bottom = 12.dp)
-    ) {
+    StageSheetCards(modifier = Modifier.verticalScroll(rememberScrollState())) {
       StageSheetRow(
         text = stringResource(R.string.account),
         icon = R.drawable.stage_account,

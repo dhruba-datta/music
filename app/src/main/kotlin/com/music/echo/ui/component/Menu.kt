@@ -36,12 +36,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /**
- * The Stage sheet list: one 18dp group of 52dp rows, 18dp from the sheet's edges. The group has no
- * fill of its own, so the rows sit straight on the sheet.
+ * The Stage sheet list: one 18dp group of 64dp card rows, 18dp from the sheet's edges, spaced like a
+ * Settings group.
  */
 @Composable
 fun Material3MenuGroup(items: List<Material3MenuItemData>, modifier: Modifier = Modifier) {
   Column(
+    verticalArrangement = Arrangement.spacedBy(2.dp),
     modifier =
       modifier
         .fillMaxWidth()
@@ -50,12 +51,13 @@ fun Material3MenuGroup(items: List<Material3MenuItemData>, modifier: Modifier = 
         .animateContentSize()
   ) {
     items.forEach { item ->
-      val background = item.cardColors?.containerColor ?: Color.Transparent
+      val background =
+        item.cardColors?.containerColor ?: MaterialTheme.colorScheme.surfaceContainerHighest
       val contentColor = item.cardColors?.contentColor ?: MaterialTheme.colorScheme.onSurface
       CompositionLocalProvider(LocalContentColor provides contentColor) {
         Box(
           modifier =
-            Modifier.fillMaxWidth().background(background).let { mod ->
+            Modifier.fillMaxWidth().background(background, RoundedCornerShape(4.dp)).let { mod ->
               val onClick = item.onClick
               if (onClick != null) mod.clickable(onClick = onClick) else mod
             }
@@ -75,12 +77,12 @@ fun Material3MenuGroup(items: List<Material3MenuItemData>, modifier: Modifier = 
 private fun Material3MenuItemRow(item: Material3MenuItemData) {
   Row(
     modifier =
-      Modifier.fillMaxWidth().heightIn(min = 52.dp).padding(horizontal = 14.dp, vertical = 6.dp),
+      Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 16.dp, vertical = 8.dp),
     verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.spacedBy(13.dp),
+    horizontalArrangement = Arrangement.spacedBy(16.dp),
   ) {
     item.icon?.let { icon ->
-      Box(modifier = Modifier.size(22.dp), contentAlignment = Alignment.Center) { icon() }
+      Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) { icon() }
     }
 
     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
@@ -88,7 +90,7 @@ private fun Material3MenuItemRow(item: Material3MenuItemData) {
         TextStyle(
           fontSize = 16.sp,
           lineHeight = 20.sp,
-          fontWeight = FontWeight.Bold,
+          fontWeight = FontWeight.SemiBold,
           color = LocalContentColor.current,
         )
       ) {
