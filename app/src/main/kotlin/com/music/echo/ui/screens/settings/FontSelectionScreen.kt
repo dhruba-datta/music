@@ -61,7 +61,7 @@ fun FontSelectionScreen(
   navController: NavController,
   scrollBehavior: TopAppBarScrollBehavior,
 ) {
-  val selectedFontState = rememberPreference(SelectedFontKey, defaultValue = AppFont.SYSTEM.value)
+  val selectedFontState = rememberPreference(SelectedFontKey, defaultValue = AppFont.MANROPE.value)
   val selectedFont = selectedFontState.value
   val onSelectedFontChange: (String) -> Unit = { selectedFontState.value = it }
   val context = LocalContext.current
@@ -97,6 +97,7 @@ fun FontSelectionScreen(
     remember(selectedFont, customFontPath) {
       when (AppFont.fromValue(selectedFont)) {
         AppFont.SYSTEM -> FontFamily.Default
+        AppFont.MANROPE -> echo.music.iad1tya.ui.theme.ManropeFontFamily
         AppFont.GOOGLE_SANS -> GoogleSansFontFamily
         AppFont.SANS_FLEX -> SansFlexFontFamily
         AppFont.OUTFIT -> OutfitFontFamily
@@ -234,6 +235,18 @@ fun FontSelectionScreen(
                 )
               },
               onClick = { onSelectedFontChange(AppFont.SANS_FLEX.value) }
+            ),
+            Material3SettingsItem(
+              customIcon = {
+                AnimatedRadioButton(selected = selectedFont == AppFont.MANROPE.value, onClick = null)
+              },
+              title = {
+                Text(text = "Manrope", fontFamily = echo.music.iad1tya.ui.theme.ManropeFontFamily)
+              },
+              description = {
+                Text(text = "Stage default", fontFamily = echo.music.iad1tya.ui.theme.ManropeFontFamily)
+              },
+              onClick = { onSelectedFontChange(AppFont.MANROPE.value) }
             ),
             Material3SettingsItem(
               customIcon = {

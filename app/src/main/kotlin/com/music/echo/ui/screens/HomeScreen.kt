@@ -105,6 +105,10 @@ import com.music.innertube.utils.parseCookieString
 import echo.music.iad1tya.LocalDatabase
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.LocalPlayerConnection
+import echo.music.iad1tya.constants.RecommendationSource
+import echo.music.iad1tya.constants.RecommendationSourceKey
+import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
 import echo.music.iad1tya.R
 import echo.music.iad1tya.constants.GridItemSize
 import echo.music.iad1tya.constants.GridItemsSizeKey
@@ -187,6 +191,8 @@ sealed class HomeSection(val id: String, val baseWeight: Int) {
   data object ForgottenFavorites : HomeSection("forgotten_favorites", 30)
 
   data object FromTheCommunity : HomeSection("from_the_community", 20)
+
+  data object ForYou : HomeSection("for_you", 10)
 
   data class SimilarRecommendation(val index: Int) :
     HomeSection("similar_recommendation_$index", 10)
@@ -806,6 +812,7 @@ fun HomeScreen(
       if (aiRecommendedPlaylist != null && aiRecommendedPlaylist!!.second.isNotEmpty())
         list.add(HomeSection.AiRecommendations)
       if (heroSongs.isNotEmpty()) list.add(HomeSection.HeroCarousel)
+      list.add(HomeSection.ForYou)
       if (communityPlaylists?.isNotEmpty() == true) list.add(HomeSection.FromTheCommunity)
       if (dailyDiscover?.isNotEmpty() == true) list.add(HomeSection.DailyDiscover)
       if (keepListening?.isNotEmpty() == true) list.add(HomeSection.KeepListening)
@@ -1172,6 +1179,92 @@ fun HomeScreen(
                   ) {
                     items(items = songs.distinctBy { it.id }, key = { it.id }) { songObj ->
                       localGridItem(songObj)
+                    }
+                  }
+                }
+              }
+            }
+            HomeSection.ForYou -> {
+              item(key = "for_you") {
+                val (recommendationSource, onRecommendationSourceChange) =
+                  rememberEnumPreference(RecommendationSourceKey, RecommendationSource.YOUTUBE)
+                val songs =
+                  remember(similarRecommendations) {
+                    similarRecommendations
+                      .orEmpty()
+                      .flatMap { it.items }
+                      .filterIsInstance<SongItem>()
+                      .distinctBy { it.id }
+                      .take(5)
+                  }
+                Column(modifier = Modifier.animateItem()) {
+                  NavigationTitle(title = "For you")
+                  Row(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                  ) {
+                    listOf(
+                        RecommendationSource.YOUTUBE to "YouTube Music",
+                        RecommendationSource.SPOTIFY to "Spotify"
+                      )
+                      .forEach { (source, label) ->
+                        FilterChip(
+                          selected = recommendationSource == source,
+                          onClick = {
+                            if (recommendationSource != source) {
+                              onRecommendationSourceChange(source)
+                              viewModel.refresh()
+                            }
+                          },
+                          label = { Text(label) }
+                        )
+                      }
+                  }
+                  if (songs.isEmpty()) {
+                    val spotify = recommendationSource == RecommendationSource.SPOTIFY
+                    Column(
+                      modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                      verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                      Text(
+                        text = "Connect an account to fill this list.",
+                        style = MaterialTheme.typography.bodyMedium
+                      )
+                      Button(
+                        onClick = {
+                          navController.navigate(if (spotify) "settings/spotify_import" else "login")
+                        }
+                      ) {
+                        Text(if (spotify) "Connect Spotify" else "Sign in to Google")
+                      }
+                    }
+                  } else {
+                    songs.forEach { song ->
+                      YouTubeListItem(
+                        item = song,
+                        color = Color.Transparent,
+                        isSwipeable = false,
+                        modifier =
+                          Modifier.combinedClickable(
+                            onClick = {
+                              playerConnection?.playQueue(
+                                YouTubeQueue(
+                                  song.endpoint ?: WatchEndpoint(videoId = song.id),
+                                  song.toMediaMetadata()
+                                )
+                              )
+                            },
+                            onLongClick = {
+                              menuState.show {
+                                YouTubeSongMenu(
+                                  song = song,
+                                  navController = navController,
+                                  onDismiss = menuState::dismiss
+                                )
+                              }
+                            }
+                          )
+                      )
                     }
                   }
                 }

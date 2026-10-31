@@ -862,6 +862,7 @@ val AmbientSpacingKey = floatPreferencesKey("ambient_spacing")
 
 enum class AppFont(val value: String) {
   SYSTEM("system"),
+  MANROPE("manrope"),
   GOOGLE_SANS("google_sans"),
   SANS_FLEX("sans_flex"),
   OUTFIT("outfit"),

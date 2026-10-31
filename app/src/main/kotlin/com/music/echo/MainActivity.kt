@@ -154,7 +154,6 @@ import echo.music.iad1tya.constants.LiquidGlassSurfaceOpacityKey
 import echo.music.iad1tya.constants.LiquidGlassSurfaceTintColorKey
 import echo.music.iad1tya.constants.LiquidGlassTextColorKey
 import echo.music.iad1tya.constants.LiquidGlassVibrancyKey
-import echo.music.iad1tya.constants.ListenTogetherInTopBarKey
 import echo.music.iad1tya.constants.ListenTogetherUsernameKey
 import echo.music.iad1tya.constants.MiniPlayerBottomSpacing
 import echo.music.iad1tya.constants.MiniPlayerHeight
@@ -670,7 +669,7 @@ class MainActivity : ComponentActivity() {
       }
     }
 
-    val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
+    val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.ON)
     val isSystemInDarkTheme = isSystemInDarkTheme()
     val useDarkTheme =
       remember(darkTheme, isSystemInDarkTheme) {
@@ -800,16 +799,8 @@ class MainActivity : ComponentActivity() {
 
         val (previousTab, setPreviousTab) = rememberSaveable { mutableStateOf("home") }
 
-        val (listenTogetherInTopBar) =
-          rememberPreference(ListenTogetherInTopBarKey, defaultValue = true)
-        val navigationItems =
-          remember(listenTogetherInTopBar) {
-            if (listenTogetherInTopBar) {
-              Screens.MainScreens.filter { it != Screens.ListenTogether }
-            } else {
-              Screens.MainScreens
-            }
-          }
+        val listenTogetherInTopBar = true
+        val navigationItems = Screens.MainScreens
         val (useNewMiniPlayerDesign) =
           rememberPreference(UseNewMiniPlayerDesignKey, defaultValue = true)
         val (musicFlowEnabled) =
@@ -863,6 +854,7 @@ class MainActivity : ComponentActivity() {
           remember(currentRoute, navigationItemRoutes) {
             currentRoute == null ||
               navigationItemRoutes.contains(currentRoute) ||
+              currentRoute == "recognition_history" ||
               currentRoute!!.startsWith("search/") ||
               currentRoute!!.startsWith("album/") ||
               currentRoute!!.startsWith("online_playlist/") ||
@@ -1132,7 +1124,7 @@ class MainActivity : ComponentActivity() {
 
         val currentTitle =
           when (navBackStackEntry?.destination?.route) {
-            Screens.Home.route -> "Echo Music"
+            Screens.Home.route -> stringResource(R.string.home)
             Screens.Search.route -> stringResource(R.string.search)
             Screens.Library.route -> stringResource(R.string.filter_library)
             Screens.ListenTogether.route -> stringResource(R.string.together)
@@ -1415,8 +1407,6 @@ class MainActivity : ComponentActivity() {
                       pureBlack = pureBlack,
                       showPlayerAccessory = hasDockedPlayerAccessory,
                       onAccessoryClick = { playerBottomSheetState.expandSoft() },
-                      onMusicRecognitionClick = onMusicRecognitionClick,
-                      musicRecognitionContentDescription = stringResource(R.string.recognition),
                       onSearchLongClick = onRailSearchLongClick,
                       modifier =
                         Modifier.align(Alignment.BottomCenter)
@@ -1457,8 +1447,6 @@ class MainActivity : ComponentActivity() {
                         shuffleEnabled = shuffleEnabled,
                         shuffleIconRes = R.drawable.shuffle,
                         shuffleContentDescription = stringResource(R.string.shuffle),
-                        onMusicRecognitionClick = onMusicRecognitionClick,
-                        musicRecognitionContentDescription = stringResource(R.string.recognition),
                         onAiHubClick = {
                           navController.navigate("settings/ai") { launchSingleTop = true }
                         },

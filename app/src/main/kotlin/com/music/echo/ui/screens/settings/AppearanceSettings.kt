@@ -145,7 +145,7 @@ fun AppearanceSettings(
 ) {
   val scrollState = androidx.compose.foundation.rememberScrollState()
 
-  val (selectedFontValue) = rememberPreference(SelectedFontKey, defaultValue = AppFont.SYSTEM.value)
+  val (selectedFontValue) = rememberPreference(SelectedFontKey, defaultValue = AppFont.MANROPE.value)
   val (dynamicTheme, onDynamicThemeChange) =
     rememberPreference(DynamicThemeKey, defaultValue = true)
   val (enableLegacyIcon, onEnableLegacyIconChange) =
@@ -947,6 +947,7 @@ fun AppearanceSettings(
                     AppFont.GOOGLE_SANS ->
                       stringResource(echo.music.iad1tya.R.string.font_google_sans)
                     AppFont.SANS_FLEX -> stringResource(echo.music.iad1tya.R.string.font_sans_flex)
+                    AppFont.MANROPE -> "Manrope"
                     AppFont.OUTFIT -> stringResource(echo.music.iad1tya.R.string.font_outfit)
                     AppFont.PLUS_JAKARTA_SANS ->
                       stringResource(echo.music.iad1tya.R.string.font_plus_jakarta_sans)

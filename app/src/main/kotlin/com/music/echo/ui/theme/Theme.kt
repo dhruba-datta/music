@@ -37,13 +37,14 @@ fun echomusicTheme(
   content: @Composable () -> Unit,
 ) {
   val context = LocalContext.current
-  val selectedFontValue by rememberPreference(SelectedFontKey, AppFont.SYSTEM.value)
+  val selectedFontValue by rememberPreference(SelectedFontKey, AppFont.MANROPE.value)
   val customFontPathValue by rememberPreference(echo.music.iad1tya.constants.CustomFontPathKey, "")
 
   val brandFont =
     remember(selectedFontValue, customFontPathValue) {
       when (AppFont.fromValue(selectedFontValue)) {
         AppFont.SYSTEM -> FontFamily.Default
+        AppFont.MANROPE -> ManropeFontFamily
         AppFont.GOOGLE_SANS -> GoogleSansFontFamily
         AppFont.SANS_FLEX -> SansFlexFontFamily
         AppFont.OUTFIT -> OutfitFontFamily
@@ -83,10 +84,10 @@ fun echomusicTheme(
 
   val colorScheme =
     remember(baseColorScheme, pureBlack, darkTheme) {
-      if (darkTheme && pureBlack) {
-        baseColorScheme.pureBlack(true)
-      } else {
-        baseColorScheme
+      when {
+        darkTheme && pureBlack -> baseColorScheme.pureBlack(true)
+        darkTheme -> baseColorScheme.stage()
+        else -> baseColorScheme
       }
     }
 
@@ -95,11 +96,35 @@ fun echomusicTheme(
     typography = getTypography(brandFont),
     shapes =
       androidx.compose.material3.MaterialTheme.shapes.copy(
-        extraSmall = androidx.compose.foundation.shape.RoundedCornerShape(24.dp)
+        extraSmall = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        small = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+        medium = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
+        large = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+        extraLarge = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
       ),
     content = content
   )
 }
+
+private fun ColorScheme.stage(): ColorScheme =
+  copy(
+    primary = Color.White,
+    onPrimary = Color(0xFF111116),
+    secondaryContainer = Color(0xFF2A2A32),
+    onSecondaryContainer = Color.White,
+    background = Color(0xFF0B0B0E),
+    onBackground = Color.White,
+    surface = Color(0xFF0B0B0E),
+    onSurface = Color.White,
+    onSurfaceVariant = Color(0xFFC9C9D0),
+    surfaceDim = Color(0xFF0B0B0E),
+    surfaceBright = Color(0xFF2A2A32),
+    surfaceContainerLowest = Color(0xFF0B0B0E),
+    surfaceContainerLow = Color(0xFF15151A),
+    surfaceContainer = Color(0xFF1A1A20),
+    surfaceContainerHigh = Color(0xFF1F1F25),
+    surfaceContainerHighest = Color(0xFF2A2A32),
+  )
 
 fun Bitmap.extractThemeColor(): Color {
   val colorsToPopulation =

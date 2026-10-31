@@ -205,14 +205,6 @@ fun RecognitionScreen(navController: NavController) {
               TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 title = { Text(stringResource(R.string.recognize_music)) },
-                navigationIcon = {
-                  androidx.compose.material3.IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(
-                      painter = painterResource(R.drawable.arrow_back),
-                      contentDescription = null
-                    )
-                  }
-                },
                 actions = {
                   androidx.compose.material3.IconButton(
                     onClick = { navController.navigate("recognition_history") }

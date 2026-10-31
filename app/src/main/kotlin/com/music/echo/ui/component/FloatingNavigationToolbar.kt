@@ -142,14 +142,14 @@ fun FloatingNavigationToolbar(
       )
 
   val hasOverflowMenu =
-    onMusicFlowClick != null || (onShuffleClick != null && shuffleIconRes != null) || onMusicRecognitionClick != null
+    onMusicFlowClick != null || (onShuffleClick != null && shuffleIconRes != null) || onAiHubClick != null
   val hasFabAction = onFabClick != null && fabIconRes != null
 
   Box(
     modifier = modifier.fillMaxWidth(),
     contentAlignment = Alignment.Center,
   ) {
-    val showSelectedLabels = true
+    val showSelectedLabels = false
 
     HorizontalFloatingToolbar(
       expanded = true,
@@ -606,12 +606,12 @@ private fun floatingToolbarFabContentColor(pureBlack: Boolean): Color {
 
 @Composable
 private fun floatingToolbarSelectedItemContainerColor(pureBlack: Boolean): Color {
-  return MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+  return MaterialTheme.colorScheme.onSurface
 }
 
 @Composable
 private fun floatingToolbarSelectedItemContentColor(pureBlack: Boolean): Color {
-  return MaterialTheme.colorScheme.onSurface
+  return MaterialTheme.colorScheme.surface
 }
 
 @Composable
