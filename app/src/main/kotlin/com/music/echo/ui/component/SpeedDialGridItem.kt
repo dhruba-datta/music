@@ -17,12 +17,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.music.innertube.YouTube
 import com.music.innertube.models.AlbumItem
-import com.music.innertube.models.SongItem
 import com.music.innertube.models.YTItem
 import echo.music.iad1tya.LocalDatabase
 import echo.music.iad1tya.LocalPlayerConnection
 import echo.music.iad1tya.R
-import echo.music.iad1tya.constants.ThumbnailCornerRadius
 import echo.music.iad1tya.playback.queues.LocalAlbumRadio
 import echo.music.iad1tya.utils.reportException
 import kotlinx.coroutines.Dispatchers
@@ -43,21 +41,17 @@ fun SpeedDialGridItem(
   val scope = rememberCoroutineScope()
 
   Box(
-    modifier = modifier.aspectRatio(1f).clip(RoundedCornerShape(ThumbnailCornerRadius)),
+    modifier = modifier.aspectRatio(1f).clip(RoundedCornerShape(18.dp)),
     contentAlignment = Alignment.Center
   ) {
     ItemThumbnail(
       thumbnailUrl = item.thumbnail,
       isActive = isActive,
       isPlaying = isPlaying,
-      shape = RoundedCornerShape(ThumbnailCornerRadius),
+      shape = RoundedCornerShape(18.dp),
       forceCrop = true,
       modifier = Modifier.fillMaxSize()
     )
-
-    if (item is SongItem && !isActive) {
-      OverlayPlayButton(visible = true)
-    }
 
     if (item is AlbumItem && !isActive) {
       AlbumPlayButton(

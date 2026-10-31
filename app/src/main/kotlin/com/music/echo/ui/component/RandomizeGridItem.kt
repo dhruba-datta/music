@@ -6,11 +6,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -19,19 +18,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import echo.music.iad1tya.constants.ThumbnailCornerRadius
+import echo.music.iad1tya.R
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun RandomizeGridItem(isLoading: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-
-  val dotOffsetMultiplier by
-    animateFloatAsState(
-      targetValue = if (isLoading) 0f else 1f,
-      animationSpec = tween(durationMillis = 600),
-      label = "dotOffset"
-    )
 
   val loadingAlpha by
     animateFloatAsState(
@@ -44,54 +38,16 @@ fun RandomizeGridItem(isLoading: Boolean, onClick: () -> Unit, modifier: Modifie
     modifier =
       modifier
         .aspectRatio(1f)
-        .clip(RoundedCornerShape(ThumbnailCornerRadius))
-        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+        .clip(RoundedCornerShape(18.dp))
+        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
         .clickable(onClick = onClick),
     contentAlignment = Alignment.Center
   ) {
-    val dotColor = MaterialTheme.colorScheme.onSurface
-    val dotSize = 14.dp
-    val padding = 24.dp
-
-    Box(
-      modifier =
-        Modifier.align(Alignment.Center)
-          .offset(x = -padding * dotOffsetMultiplier, y = -padding * dotOffsetMultiplier)
-          .size(dotSize)
-          .clip(CircleShape)
-          .background(dotColor)
-    )
-
-    Box(
-      modifier =
-        Modifier.align(Alignment.Center)
-          .offset(x = padding * dotOffsetMultiplier, y = -padding * dotOffsetMultiplier)
-          .size(dotSize)
-          .clip(CircleShape)
-          .background(dotColor)
-    )
-
-    Box(
-      modifier =
-        Modifier.align(Alignment.Center).size(dotSize).clip(CircleShape).background(dotColor)
-    )
-
-    Box(
-      modifier =
-        Modifier.align(Alignment.Center)
-          .offset(x = -padding * dotOffsetMultiplier, y = padding * dotOffsetMultiplier)
-          .size(dotSize)
-          .clip(CircleShape)
-          .background(dotColor)
-    )
-
-    Box(
-      modifier =
-        Modifier.align(Alignment.Center)
-          .offset(x = padding * dotOffsetMultiplier, y = padding * dotOffsetMultiplier)
-          .size(dotSize)
-          .clip(CircleShape)
-          .background(dotColor)
+    Icon(
+      painter = painterResource(R.drawable.stage_shuffle),
+      contentDescription = stringResource(R.string.shuffle),
+      tint = MaterialTheme.colorScheme.onSurface,
+      modifier = Modifier.size(28.dp).alpha(1f - loadingAlpha),
     )
 
     Box(modifier = Modifier.alpha(loadingAlpha)) {

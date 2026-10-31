@@ -6,28 +6,25 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.music.innertube.utils.parseCookieString
 import echo.music.iad1tya.BuildConfig
 import echo.music.iad1tya.R
-import echo.music.iad1tya.constants.AccountEmailKey
 import echo.music.iad1tya.constants.AudioQuality
 import echo.music.iad1tya.constants.AudioQualityKey
 import echo.music.iad1tya.constants.InnerTubeCookieKey
 import echo.music.iad1tya.constants.UseLoginForBrowse
 import echo.music.iad1tya.constants.YtmSyncKey
-import echo.music.iad1tya.ui.component.Material3SettingsGroup
-import echo.music.iad1tya.ui.component.Material3SettingsItem
+import echo.music.iad1tya.ui.component.StageSheetHandle
+import echo.music.iad1tya.ui.component.StageSheetRow
+import echo.music.iad1tya.ui.component.StageSheetShape
+import echo.music.iad1tya.ui.component.StageSheetTitle
 import echo.music.iad1tya.utils.rememberEnumPreference
 import echo.music.iad1tya.utils.rememberPreference
 import echo.music.iad1tya.viewmodels.HomeViewModel
@@ -39,7 +36,6 @@ fun SettingDialoge(
   onNavigate: (String) -> Unit,
   homeViewModel: HomeViewModel
 ) {
-  val uriHandler = LocalUriHandler.current
   val (audioQuality) = rememberEnumPreference(AudioQualityKey, defaultValue = AudioQuality.OPUS)
   val (innerTubeCookie, _) = rememberPreference(InnerTubeCookieKey, "")
   val isLoggedIn =
@@ -47,7 +43,6 @@ fun SettingDialoge(
       innerTubeCookie.isNotEmpty() && "SAPISID" in parseCookieString(innerTubeCookie)
     }
 
-  val (accountEmail, _) = rememberPreference(AccountEmailKey, "")
   val accountName by homeViewModel.accountName.collectAsState()
   val accountImageUrl by homeViewModel.accountImageUrl.collectAsState()
 
@@ -59,191 +54,120 @@ fun SettingDialoge(
   ModalBottomSheet(
     onDismissRequest = onDismissRequest,
     sheetState = sheetState,
-    dragHandle = { BottomSheetDefaults.DragHandle() },
-    containerColor = MaterialTheme.colorScheme.surfaceContainer
+    shape = StageSheetShape,
+    dragHandle = { StageSheetHandle() },
+    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
   ) {
-    val primaryColor = MaterialTheme.colorScheme.onSurface
-    val onSecondaryColor = MaterialTheme.colorScheme.onSurfaceVariant
+    StageSheetTitle(if (isLoggedIn) accountName else "Anonymous")
 
     Column(
       modifier =
         Modifier.fillMaxWidth()
           .verticalScroll(rememberScrollState())
-          .padding(bottom = 32.dp, start = 16.dp, end = 16.dp),
-      verticalArrangement = Arrangement.spacedBy(12.dp)
+          .padding(start = 18.dp, end = 18.dp, top = 4.dp, bottom = 12.dp)
     ) {
-      // Header
-      // Removed Echo Music text
-
-      // Account Group
-      Material3SettingsGroup(
-        title = "Account",
-        compact = true,
-        items =
-          buildList {
-            add(
-              Material3SettingsItem(
-                title = { Text(if (isLoggedIn) accountName else "Anonymous") },
-                description = {
-                  Text(if (isLoggedIn) accountEmail.ifEmpty { "Logged In" } else "Not Logged In")
-                },
-                icon = painterResource(R.drawable.account),
-                trailingContent =
-                  if (isLoggedIn && !accountImageUrl.isNullOrBlank()) {
-                    {
-                      AsyncImage(
-                        model = accountImageUrl,
-                        contentDescription = "Profile Photo",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.size(40.dp).clip(CircleShape)
-                      )
-                    }
-                  } else null,
-                onClick = {
-                  onDismissRequest()
-                  if (isLoggedIn) onNavigate("settings/account") else onNavigate("login")
-                }
-              )
-            )
-            add(
-              Material3SettingsItem(
-                title = {
-                  Text(androidx.compose.ui.res.stringResource(R.string.ai_lyrics_translation))
-                },
-                description = {
-                  Text(androidx.compose.ui.res.stringResource(R.string.setting_desc_ai))
-                },
-                customIcon = {
-                  Text(
-                    text = "Ai",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                  )
-                },
-                onClick = {
-                  onDismissRequest()
-                  onNavigate("settings/ai")
-                }
-              )
-            )
-            add(
-              Material3SettingsItem(
-                title = { Text("Extensions") },
-                description = { Text("Manage third-party content plugins") },
-                icon = androidx.compose.ui.res.painterResource(echo.music.iad1tya.R.drawable.extension),
-                onClick = {
-                  onDismissRequest()
-                  onNavigate("settings/extensions")
-                }
-              )
+      StageSheetRow(
+        text = stringResource(R.string.account),
+        icon = R.drawable.stage_account,
+        onClick = {
+          onDismissRequest()
+          if (isLoggedIn) onNavigate("settings/account") else onNavigate("login")
+        },
+        trailing = {
+          if (isLoggedIn && !accountImageUrl.isNullOrBlank()) {
+            AsyncImage(
+              model = accountImageUrl,
+              contentDescription = "Profile Photo",
+              contentScale = ContentScale.Crop,
+              modifier = Modifier.size(30.dp).clip(CircleShape)
             )
           }
+        }
+      )
+      StageSheetRow(
+        text = stringResource(R.string.ai_lyrics_translation),
+        icon = R.drawable.stage_ai,
+        onClick = {
+          onDismissRequest()
+          onNavigate("settings/ai")
+        }
+      )
+      StageSheetRow(
+        text = stringResource(R.string.settings),
+        icon = R.drawable.stage_settings,
+        onClick = {
+          onDismissRequest()
+          onNavigate("settings")
+        }
+      )
+      StageSheetRow(
+        text = "Extensions",
+        icon = R.drawable.extension,
+        onClick = {
+          onDismissRequest()
+          onNavigate("settings/extensions")
+        }
       )
 
       if (isLoggedIn) {
-        Material3SettingsGroup(
-          title = "Preferences",
-          compact = true,
-          items =
-            listOf(
-              Material3SettingsItem(
-                title = { Text("Use Account for Browsing") },
-                icon = painterResource(R.drawable.add_circle),
-                trailingContent = {
-                  Switch(
-                    checked = useLoginForBrowse,
-                    onCheckedChange = {
-                      com.music.innertube.YouTube.useLoginForBrowse = it
-                      onUseLoginForBrowseChange(it)
-                    },
-                    modifier = Modifier.scale(0.8f),
-                    colors =
-                      SwitchDefaults.colors(
-                        checkedThumbColor = MaterialTheme.colorScheme.surface,
-                        checkedTrackColor = MaterialTheme.colorScheme.onSurface,
-                        uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-                        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                      )
-                  )
-                },
-                onClick = {
-                  val newVal = !useLoginForBrowse
-                  com.music.innertube.YouTube.useLoginForBrowse = newVal
-                  onUseLoginForBrowseChange(newVal)
-                }
-              ),
-              Material3SettingsItem(
-                title = { Text("YouTube Music Sync") },
-                icon = painterResource(R.drawable.cached),
-                trailingContent = {
-                  Switch(
-                    checked = ytmSync,
-                    onCheckedChange = onYtmSyncChange,
-                    modifier = Modifier.scale(0.8f),
-                    colors =
-                      SwitchDefaults.colors(
-                        checkedThumbColor = MaterialTheme.colorScheme.surface,
-                        checkedTrackColor = MaterialTheme.colorScheme.onSurface,
-                        uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-                        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                      )
-                  )
-                },
-                onClick = { onYtmSyncChange(!ytmSync) }
-              )
+        StageSheetRow(
+          text = "Use Account for Browsing",
+          icon = R.drawable.add_circle,
+          onClick = {
+            val newVal = !useLoginForBrowse
+            com.music.innertube.YouTube.useLoginForBrowse = newVal
+            onUseLoginForBrowseChange(newVal)
+          },
+          trailing = {
+            Switch(
+              checked = useLoginForBrowse,
+              onCheckedChange = {
+                com.music.innertube.YouTube.useLoginForBrowse = it
+                onUseLoginForBrowseChange(it)
+              },
+              colors = stageSwitchColors()
             )
+          }
+        )
+        StageSheetRow(
+          text = "YouTube Music Sync",
+          icon = R.drawable.cached,
+          onClick = { onYtmSyncChange(!ytmSync) },
+          trailing = {
+            Switch(
+              checked = ytmSync,
+              onCheckedChange = onYtmSyncChange,
+              colors = stageSwitchColors()
+            )
+          }
         )
       }
 
-      Material3SettingsGroup(
-        title = "App",
-        compact = true,
-        items =
-          listOf(
-            Material3SettingsItem(
-              title = { Text(androidx.compose.ui.res.stringResource(R.string.settings)) },
-              description = {
-                Text(androidx.compose.ui.res.stringResource(R.string.setting_desc_settings_main))
-              },
-              icon = painterResource(R.drawable.settings),
-              onClick = {
-                onDismissRequest()
-                onNavigate("settings")
-              }
-            ),
-            Material3SettingsItem(
-              title = { Text("About") },
-              icon = painterResource(R.drawable.info),
-              trailingContent = {
-                Text(
-                  BuildConfig.VERSION_NAME,
-                  style = MaterialTheme.typography.bodyMedium,
-                  color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-              },
-              onClick = {
-                onDismissRequest()
-                onNavigate("settings/about")
-              }
-            )
+      StageSheetRow(
+        text = "About",
+        icon = R.drawable.info,
+        onClick = {
+          onDismissRequest()
+          onNavigate("settings/about")
+        },
+        trailing = {
+          Text(
+            BuildConfig.VERSION_NAME,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
           )
+        }
       )
-
-      // Footer Links
-      Row(
-        modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
-      ) {
-        Text(
-          text = "Just vibe to the music — the dev's got the rest handled.",
-          style = MaterialTheme.typography.bodySmall,
-          color = onSecondaryColor,
-          modifier = Modifier.padding(4.dp),
-          textAlign = androidx.compose.ui.text.style.TextAlign.Center
-        )
-      }
     }
   }
 }
+
+@Composable
+private fun stageSwitchColors() =
+  SwitchDefaults.colors(
+    checkedThumbColor = MaterialTheme.colorScheme.surface,
+    checkedTrackColor = MaterialTheme.colorScheme.onSurface,
+    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+  )

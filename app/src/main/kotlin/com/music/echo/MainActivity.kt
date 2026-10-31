@@ -79,6 +79,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -1254,75 +1259,116 @@ class MainActivity : ComponentActivity() {
                 exit = fadeOut(animationSpec = tween(durationMillis = 200))
               ) {
                 Row {
+                  val isHomeTopBar = navBackStackEntry?.destination?.route == Screens.Home.route
                   TopAppBar(
                     title = {
                       Text(
                         text = currentTitle,
+                        modifier =
+                          Modifier.padding(start = 6.dp, top = if (isHomeTopBar) 14.dp else 20.dp),
                         style =
-                          if (navBackStackEntry?.destination?.route == Screens.Library.route) {
+                          if (isHomeTopBar) {
                             MaterialTheme.typography.titleLarge.copy(
                               fontWeight = FontWeight.ExtraBold,
-                              fontSize = 34.sp,
-                              lineHeight = 40.sp
+                              fontSize = 26.sp,
+                              lineHeight = 30.sp,
+                              letterSpacing = (-0.26).sp
                             )
                           } else {
                             MaterialTheme.typography.titleLarge.copy(
-                              fontWeight = FontWeight.Bold,
-                              fontSize = 24.sp
+                              fontWeight = FontWeight.ExtraBold,
+                              fontSize = 34.sp,
+                              lineHeight = 46.sp,
+                              letterSpacing = (-0.68).sp
                             )
                           },
                       )
                     },
                     actions = {
-                      if (showHistoryButton) {
-                        IconButton(onClick = { navController.navigate("history") }) {
-                          Icon(
-                            painter = painterResource(R.drawable.music_history),
-                            contentDescription = stringResource(R.string.history)
-                          )
-                        }
-                      }
-                      IconButton(onClick = { navController.navigate("stats") }) {
-                        Icon(
-                          painter = painterResource(R.drawable.stats),
-                          contentDescription = stringResource(R.string.stats)
-                        )
-                      }
-                      if (listenTogetherInTopBar) {
-                        IconButton(
-                          onClick = { navController.navigate("listen_together_from_topbar") }
+                      // The Library board has no top-bar icons; all four stay on Home.
+                      if (isHomeTopBar) {
+                        Row(
+                          modifier = Modifier.padding(top = 14.dp, end = 8.dp),
+                          verticalAlignment = Alignment.CenterVertically
                         ) {
-                          Icon(
-                            painter = painterResource(R.drawable.group_outlined),
-                            contentDescription = stringResource(R.string.together)
-                          )
-                        }
-                      }
-                      IconButton(onClick = { showSettingDialoge = true }) {
-                        BadgedBox(badge = {}) {
-                          if (accountImageUrl != null) {
-                            AsyncImage(
-                              model = accountImageUrl,
-                              contentDescription = stringResource(R.string.account),
-                              modifier = Modifier.size(24.dp).clip(CircleShape)
-                            )
-                          } else {
+                          if (showHistoryButton) {
+                            IconButton(
+                              onClick = { navController.navigate("history") },
+                              modifier = Modifier.size(44.dp)
+                            ) {
+                              Icon(
+                                painter = painterResource(R.drawable.stage_history),
+                                contentDescription = stringResource(R.string.history),
+                                modifier = Modifier.size(24.dp)
+                              )
+                            }
+                          }
+                          IconButton(
+                            onClick = { navController.navigate("stats") },
+                            modifier = Modifier.size(44.dp)
+                          ) {
                             Icon(
-                              painter = painterResource(R.drawable.settings),
-                              contentDescription = stringResource(R.string.account),
+                              painter = painterResource(R.drawable.stage_stats),
+                              contentDescription = stringResource(R.string.stats),
                               modifier = Modifier.size(24.dp)
                             )
+                          }
+                          if (listenTogetherInTopBar) {
+                            IconButton(
+                              onClick = { navController.navigate("listen_together_from_topbar") },
+                              modifier = Modifier.size(44.dp)
+                            ) {
+                              Icon(
+                                painter = painterResource(R.drawable.stage_together),
+                                contentDescription = stringResource(R.string.together),
+                                modifier = Modifier.size(24.dp)
+                              )
+                            }
+                          }
+                          IconButton(
+                            onClick = { showSettingDialoge = true },
+                            modifier = Modifier.size(44.dp)
+                          ) {
+                            if (accountImageUrl != null) {
+                              AsyncImage(
+                                model = accountImageUrl,
+                                contentDescription = stringResource(R.string.account),
+                                modifier = Modifier.size(30.dp).clip(CircleShape)
+                              )
+                            } else {
+                              val accountLabel = stringResource(R.string.account)
+                              Box(
+                                modifier =
+                                  Modifier.size(30.dp)
+                                    .clip(CircleShape)
+                                    .semantics { contentDescription = accountLabel }
+                                    .drawBehind {
+                                      // CSS linear-gradient(145deg, #e04f7f, #6a4c93).
+                                      val half = size.width * 0.6965f
+                                      val dx = 0.5736f * half
+                                      val dy = 0.8192f * half
+                                      drawRect(
+                                        Brush.linearGradient(
+                                          colors = listOf(Color(0xFFE04F7F), Color(0xFF6A4C93)),
+                                          start = Offset(center.x - dx, center.y - dy),
+                                          end = Offset(center.x + dx, center.y + dy)
+                                        )
+                                      )
+                                    }
+                              )
+                            }
                           }
                         }
                       }
                     },
+                    expandedHeight = if (isHomeTopBar) 58.dp else 66.dp,
                     scrollBehavior = topAppBarScrollBehavior,
                     colors =
                       TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.surface,
                         scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                         titleContentColor = MaterialTheme.colorScheme.onSurface,
-                        actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        actionIconContentColor = MaterialTheme.colorScheme.onSurface,
                         navigationIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                       ),
                     windowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Top),

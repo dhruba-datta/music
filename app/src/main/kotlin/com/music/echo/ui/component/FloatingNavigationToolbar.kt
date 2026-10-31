@@ -327,93 +327,65 @@ fun FloatingToolbarOverflowMenuButton(
       ModalBottomSheet(
         onDismissRequest = { showSheet = false },
         sheetState = sheetState,
-        dragHandle = { BottomSheetDefaults.DragHandle() },
-        containerColor = MaterialTheme.colorScheme.surfaceContainer
+        shape = StageSheetShape,
+        dragHandle = { StageSheetHandle() },
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
       ) {
+        StageSheetTitle(stringResource(R.string.more_label))
         Column(
-          modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 32.dp),
-          verticalArrangement = Arrangement.spacedBy(4.dp)
+          modifier =
+            Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 4.dp, bottom = 12.dp)
         ) {
-          Text(
-            text = stringResource(R.string.more_options),
-            style =
-              MaterialTheme.typography.headlineSmall.copy(
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 0.5.sp
-              ),
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-          )
-
-          Material3SettingsGroup(
-            compact = true,
-            items =
-              buildList {
-                if (onMusicFlowClick != null && musicFlowIconRes != null) {
-                  add(
-                    Material3SettingsItem(
-                      title = {
-                        Text(
-                          if (musicFlowContentDescription.isNotEmpty()) musicFlowContentDescription
-                          else stringResource(R.string.music_flow)
-                        )
-                      },
-                      icon = painterResource(musicFlowIconRes),
-                      onClick = {
-                        scope.launch {
-                          sheetState.hide()
-                          showSheet = false
-                          onMusicFlowClick()
-                        }
-                      }
-                    )
-                  )
-                }
-
-                if (onShuffleClick != null && shuffleIconRes != null) {
-                  add(
-                    Material3SettingsItem(
-                      title = { Text(stringResource(R.string.shuffle)) },
-                      icon = painterResource(shuffleIconRes),
-                      trailingContent = {
-                        Switch(
-                          checked = shuffleEnabled,
-                          onCheckedChange = { onShuffleClick() },
-                          modifier = Modifier.scale(0.8f),
-                          colors =
-                            androidx.compose.material3.SwitchDefaults.colors(
-                              checkedThumbColor = MaterialTheme.colorScheme.surface,
-                              checkedTrackColor = MaterialTheme.colorScheme.onSurface,
-                              uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                              uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                            )
-                        )
-                      },
-                      onClick = { onShuffleClick() }
-                    )
-                  )
-                }
-
-                if (onAiHubClick != null && aiHubIconRes != null) {
-                  add(
-                    Material3SettingsItem(
-                      title = { Text(aiHubContentDescription) },
-                      icon = painterResource(aiHubIconRes),
-                      tintIcon = false,
-                      iconShape = androidx.compose.foundation.shape.CircleShape,
-                      onClick = {
-                        scope.launch {
-                          sheetState.hide()
-                          showSheet = false
-                          onAiHubClick()
-                        }
-                      }
-                    )
-                  )
+          if (onMusicFlowClick != null && musicFlowIconRes != null) {
+            StageSheetRow(
+              text =
+                if (musicFlowContentDescription.isNotEmpty()) musicFlowContentDescription
+                else stringResource(R.string.music_flow),
+              icon = R.drawable.stage_flow,
+              onClick = {
+                scope.launch {
+                  sheetState.hide()
+                  showSheet = false
+                  onMusicFlowClick()
                 }
               }
-          )
+            )
+          }
+
+          if (onShuffleClick != null && shuffleIconRes != null) {
+            StageSheetRow(
+              text = stringResource(R.string.shuffle),
+              icon = R.drawable.stage_shuffle,
+              onClick = { onShuffleClick() },
+              trailing = {
+                Switch(
+                  checked = shuffleEnabled,
+                  onCheckedChange = { onShuffleClick() },
+                  colors =
+                    androidx.compose.material3.SwitchDefaults.colors(
+                      checkedThumbColor = MaterialTheme.colorScheme.surface,
+                      checkedTrackColor = MaterialTheme.colorScheme.onSurface,
+                      uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                      uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                    )
+                )
+              }
+            )
+          }
+
+          if (onAiHubClick != null && aiHubIconRes != null) {
+            StageSheetRow(
+              text = aiHubContentDescription,
+              icon = R.drawable.stage_ai,
+              onClick = {
+                scope.launch {
+                  sheetState.hide()
+                  showSheet = false
+                  onAiHubClick()
+                }
+              }
+            )
+          }
         }
       }
     }
