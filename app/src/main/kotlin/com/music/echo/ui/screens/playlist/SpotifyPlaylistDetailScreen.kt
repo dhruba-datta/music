@@ -6,32 +6,20 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.union
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -39,14 +27,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -55,26 +41,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
 import com.music.innertube.models.WatchEndpoint
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.LocalPlayerConnection
 import echo.music.iad1tya.R
-import echo.music.iad1tya.constants.AppBarHeight
 import echo.music.iad1tya.constants.ListThumbnailSize
 import echo.music.iad1tya.constants.ThumbnailCornerRadius
 import echo.music.iad1tya.models.toMediaMetadata
@@ -82,8 +61,13 @@ import echo.music.iad1tya.playback.queues.YouTubeQueue
 import echo.music.iad1tya.spotify.SpotifyMapper
 import echo.music.iad1tya.spotify.models.SpotifyTrack
 import echo.music.iad1tya.ui.component.ListItem
-import echo.music.iad1tya.ui.component.OnlineBlur
 import echo.music.iad1tya.ui.component.PlayingIndicator
+import echo.music.iad1tya.ui.component.StageHero
+import echo.music.iad1tya.ui.component.StageHeroArtwork
+import echo.music.iad1tya.ui.component.StageHeroIconButton
+import echo.music.iad1tya.ui.component.StageHeroPlayButton
+import echo.music.iad1tya.ui.component.StageHeroShuffleButton
+import echo.music.iad1tya.ui.component.rememberStageHeroUnderBar
 import echo.music.iad1tya.utils.joinByBullet
 import echo.music.iad1tya.utils.listItemShape
 import echo.music.iad1tya.utils.makeTimeString
@@ -119,11 +103,7 @@ fun SpotifyPlaylistDetailScreen(
   }
   val isPlaylistPlaying = isPlaying && isPlaylistCurrent
 
-  val transparentAppBar by remember {
-    derivedStateOf {
-      lazyListState.firstVisibleItemIndex == 0 && lazyListState.firstVisibleItemScrollOffset < 150
-    }
-  }
+  val transparentAppBar by rememberStageHeroUnderBar(lazyListState)
 
   Box(modifier = Modifier.fillMaxSize()) {
     if (uiState.isLoading && uiState.tracks.isEmpty()) {
@@ -408,195 +388,38 @@ private fun SpotifyPlaylistHeader(
   onShare: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  val density = LocalDensity.current
-  val systemBarsTopPadding = WindowInsets.systemBars.asPaddingValues().calculateTopPadding()
-  val headerOffset = with(density) { -(systemBarsTopPadding + AppBarHeight).roundToPx() }
+  val totalDurationMs = remember(tracks) { tracks.sumOf { it.durationMs.toLong() } }
 
-  Box(modifier = modifier.fillMaxWidth()) {
-    // Ambient Blur Backdrop extending under status bar and TopAppBar
-    OnlineBlur(
-      thumbnailUrl = coverUrl,
-      modifier = Modifier
-        .matchParentSize()
-        .offset { IntOffset(0, headerOffset) }
-    )
-
-    Column(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(bottom = 24.dp),
-      horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-      Spacer(Modifier.height(16.dp))
-
-      // Hero Artwork
-      Box(
-        modifier = Modifier
-          .fillMaxWidth()
-          .padding(horizontal = 48.dp),
-        contentAlignment = Alignment.Center,
-      ) {
-        AsyncImage(
-          model = ImageRequest.Builder(LocalContext.current).data(coverUrl).build(),
-          contentDescription = title,
-          modifier = Modifier
-            .then(
-              if (LocalConfiguration.current.screenWidthDp > 600) Modifier.size(300.dp)
-              else Modifier.fillMaxWidth().aspectRatio(1f)
-            )
-            .clip(RoundedCornerShape(8.dp)),
-          contentScale = ContentScale.Crop,
-        )
-      }
-
-      Spacer(Modifier.height(28.dp))
-
-      // Playlist Title
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-        modifier = Modifier.padding(horizontal = 32.dp),
-      ) {
-        Text(
-          text = title,
-          style = MaterialTheme.typography.headlineMedium,
-          fontWeight = FontWeight.Bold,
-          textAlign = TextAlign.Center,
-          color = MaterialTheme.colorScheme.onSurface,
-        )
-      }
-
-      Spacer(Modifier.height(8.dp))
-
-      // Subtitle / Source
-      Text(
-        text = "Spotify Playlist",
-        style = MaterialTheme.typography.bodyMedium,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.primary,
-        textAlign = TextAlign.Center,
-        modifier = Modifier.padding(horizontal = 32.dp),
+  StageHero(
+    title = title,
+    modifier = modifier,
+    subtitle =
+      buildString {
+        append("Spotify Playlist • ")
+        append(pluralStringResource(R.plurals.n_song, totalCount, totalCount))
+        if (totalDurationMs > 0) {
+          append(" • ")
+          val totalSec = totalDurationMs / 1000
+          val hours = totalSec / 3600
+          val minutes = (totalSec % 3600) / 60
+          if (hours > 0) {
+            append("${hours}h ${minutes}m")
+          } else {
+            append("${minutes}m")
+          }
+        }
+      },
+    artwork = { StageHeroArtwork(coverUrl) },
+    leadingActions = {
+      StageHeroIconButton(
+        icon = R.drawable.share,
+        contentDescription = stringResource(R.string.share),
+        onClick = onShare,
       )
-
-      Spacer(Modifier.height(16.dp))
-
-      // Metadata Badge
-      val totalDurationMs = remember(tracks) { tracks.sumOf { it.durationMs.toLong() } }
-      Surface(
-        shape = RoundedCornerShape(6.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        modifier = Modifier.padding(horizontal = 32.dp),
-      ) {
-        Text(
-          text = buildString {
-            append(pluralStringResource(R.plurals.n_song, totalCount, totalCount))
-            if (totalDurationMs > 0) {
-              append(" • ")
-              val totalSec = totalDurationMs / 1000
-              val hours = totalSec / 3600
-              val minutes = (totalSec % 3600) / 60
-              if (hours > 0) {
-                append("${hours}h ${minutes}m")
-              } else {
-                append("${minutes}m")
-              }
-            }
-          },
-          style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-          modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-        )
-      }
-
-      Spacer(Modifier.height(24.dp))
-
-      // Action Buttons (Play / Shuffle / Share)
-      Row(
-        modifier = Modifier
-          .fillMaxWidth()
-          .padding(horizontal = 32.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        // Play Button (Uses primary color and toggles play/pause icon)
-        Button(
-          onClick = onPlayClick,
-          shape = ButtonDefaults.shape,
-          colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
-          ),
-          contentPadding = PaddingValues(vertical = 12.dp),
-          modifier = Modifier.weight(1f),
-        ) {
-          Row(
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-          ) {
-            Icon(
-              painter = painterResource(
-                if (isPlaylistPlaying) R.drawable.pause else R.drawable.play
-              ),
-              contentDescription = null,
-              modifier = Modifier.size(20.dp),
-              tint = MaterialTheme.colorScheme.onPrimary,
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-              text = if (isPlaylistPlaying) stringResource(R.string.pause) else stringResource(R.string.play),
-              style = MaterialTheme.typography.labelLarge,
-              fontWeight = FontWeight.Bold,
-            )
-          }
-        }
-
-        // Shuffle Button
-        Button(
-          onClick = onShuffle,
-          shape = ButtonDefaults.shape,
-          colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-          ),
-          contentPadding = PaddingValues(vertical = 12.dp),
-          modifier = Modifier.weight(1f),
-        ) {
-          Row(
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-          ) {
-            Icon(
-              painter = painterResource(R.drawable.shuffle),
-              contentDescription = null,
-              modifier = Modifier.size(20.dp),
-              tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-              text = stringResource(R.string.shuffle),
-              style = MaterialTheme.typography.labelLarge,
-              fontWeight = FontWeight.Bold,
-            )
-          }
-        }
-
-        // Share Button
-        Surface(
-          onClick = onShare,
-          shape = CircleShape,
-          color = MaterialTheme.colorScheme.surfaceVariant,
-          modifier = Modifier.size(48.dp),
-        ) {
-          Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-            Icon(
-              painter = painterResource(R.drawable.share),
-              contentDescription = stringResource(R.string.share),
-              modifier = Modifier.size(20.dp),
-              tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-          }
-        }
-      }
-    }
-  }
+    },
+    trailingActions = {
+      StageHeroShuffleButton(onClick = onShuffle)
+      StageHeroPlayButton(onClick = onPlayClick, isPlaying = isPlaylistPlaying)
+    },
+  )
 }

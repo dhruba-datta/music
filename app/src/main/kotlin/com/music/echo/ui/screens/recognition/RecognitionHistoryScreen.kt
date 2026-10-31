@@ -63,6 +63,7 @@ import echo.music.iad1tya.ui.component.DefaultDialog
 import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.NavigationTitle
+import echo.music.iad1tya.ui.component.StageBarTitle
 import echo.music.iad1tya.ui.utils.backToMain
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -160,7 +161,7 @@ fun RecognitionHistoryScreen(navController: NavController) {
   Scaffold(
     topBar = {
       TopAppBar(
-        title = { Text(stringResource(R.string.recognition_history)) },
+        title = { StageBarTitle(stringResource(R.string.recognition_history)) },
         navigationIcon = {
           IconButton(
             onClick = { navController.navigateUp() },

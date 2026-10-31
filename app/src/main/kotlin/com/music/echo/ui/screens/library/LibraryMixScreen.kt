@@ -39,6 +39,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -245,8 +246,16 @@ fun LibraryMixScreen(
     @Composable {
       Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(start = 16.dp),
+        modifier = Modifier.padding(start = 18.dp),
       ) {
+        androidx.compose.material3.Text(
+          text = stringResource(R.string.from_your_library),
+          style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
+          fontWeight = FontWeight.ExtraBold,
+        )
+
+        Spacer(Modifier.weight(1f))
+
         SortHeader(
           sortType = sortType,
           sortDescending = sortDescending,
@@ -260,8 +269,6 @@ fun LibraryMixScreen(
             }
           },
         )
-
-        Spacer(Modifier.weight(1f))
 
         Spacer(modifier = Modifier.width(16.dp))
       }
@@ -307,10 +314,10 @@ fun LibraryMixScreen(
             contentType = CONTENT_TYPE_HEADER,
           ) {
             FlowRow(
-              maxItemsInEachRow = 2,
+              maxItemsInEachRow = 3,
               horizontalArrangement = Arrangement.spacedBy(8.dp),
               verticalArrangement = Arrangement.spacedBy(8.dp),
-              modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+              modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 8.dp)
             ) {
               val itemModifier = Modifier.weight(1f)
               if (showLiked) {
@@ -373,7 +380,7 @@ fun LibraryMixScreen(
                 icon = R.drawable.snippet_folder,
                 iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
                 onClick = { navController.navigate("local_songs") },
-                modifier = Modifier.fillMaxWidth(0.5f).padding(end = 4.dp)
+                modifier = Modifier.fillMaxWidth(0.32f)
               )
             }
           }
@@ -384,8 +391,8 @@ fun LibraryMixScreen(
           ) {
             androidx.compose.material3.Text(
               text = stringResource(R.string.filter_playlists),
-              style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
-              fontWeight = FontWeight.Bold,
+              fontSize = 19.sp,
+              fontWeight = FontWeight.ExtraBold,
               modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
             )
           }
@@ -585,10 +592,10 @@ fun LibraryMixScreen(
             contentType = CONTENT_TYPE_HEADER,
           ) {
             FlowRow(
-              maxItemsInEachRow = 2,
+              maxItemsInEachRow = 3,
               horizontalArrangement = Arrangement.spacedBy(8.dp),
               verticalArrangement = Arrangement.spacedBy(8.dp),
-              modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+              modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 8.dp)
             ) {
               val itemModifier = Modifier.weight(1f)
               if (showLiked) {
@@ -651,7 +658,7 @@ fun LibraryMixScreen(
                 icon = R.drawable.snippet_folder,
                 iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
                 onClick = { navController.navigate("local_songs") },
-                modifier = Modifier.fillMaxWidth(0.5f).padding(end = 4.dp)
+                modifier = Modifier.fillMaxWidth(0.32f)
               )
             }
           }
@@ -663,8 +670,8 @@ fun LibraryMixScreen(
           ) {
             androidx.compose.material3.Text(
               text = stringResource(R.string.filter_playlists),
-              style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
-              fontWeight = FontWeight.Bold,
+              fontSize = 19.sp,
+              fontWeight = FontWeight.ExtraBold,
               modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
             )
           }

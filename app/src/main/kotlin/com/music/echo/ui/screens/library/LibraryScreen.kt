@@ -142,7 +142,7 @@ fun LibraryScreen(navController: NavController) {
         Box(modifier = Modifier.align(Alignment.BottomEnd)) {
           androidx.compose.material3.FloatingActionButton(
             onClick = { showFabMenu = true },
-            shape = CircleShape,
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
             containerColor = MaterialTheme.colorScheme.onSurface,
             contentColor = MaterialTheme.colorScheme.surface
           ) {

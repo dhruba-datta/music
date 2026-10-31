@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import echo.music.iad1tya.R
 import echo.music.iad1tya.ui.screens.OptionStats
@@ -84,7 +85,7 @@ fun <E> ChipsRow(
         )
 
       FilterChip(
-        label = { Text(label) },
+        label = { Text(text = label, fontWeight = FontWeight.Bold) },
         selected = isSelected,
         colors =
           FilterChipDefaults.filterChipColors(
@@ -94,18 +95,6 @@ fun <E> ChipsRow(
             selectedLeadingIconColor = MaterialTheme.colorScheme.surface
           ),
         onClick = { onValueUpdate(value) },
-        leadingIcon =
-          if (isSelected) {
-            {
-              Icon(
-                imageVector = Icons.Filled.Done,
-                contentDescription = null,
-                modifier = Modifier.size(FilterChipDefaults.IconSize),
-              )
-            }
-          } else {
-            null
-          },
         shape = RoundedCornerShape(cornerRadius),
         border = null,
         modifier =

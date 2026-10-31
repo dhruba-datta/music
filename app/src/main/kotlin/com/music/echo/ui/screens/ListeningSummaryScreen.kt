@@ -25,6 +25,7 @@ import com.music.echo.viewmodels.DayUsageData
 import com.music.echo.viewmodels.ListeningSummaryViewModel
 import echo.music.iad1tya.R
 import echo.music.iad1tya.ui.component.IconButton
+import echo.music.iad1tya.ui.component.StageBarTitle
 import java.time.LocalDate
 import java.time.ZoneOffset
 
@@ -88,7 +89,7 @@ fun ListeningSummaryScreen(
   Scaffold(
     topBar = {
       TopAppBar(
-        title = { Text(text = "Listening Summary") },
+        title = { StageBarTitle("Listening Summary") },
         navigationIcon = {
           IconButton(onClick = { navController.navigateUp() }) {
             Icon(painter = painterResource(id = R.drawable.arrow_back), contentDescription = "Back")
@@ -111,13 +112,13 @@ fun ListeningSummaryScreen(
               CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.secondaryContainer
               ),
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(18.dp)
           ) {
             Column(modifier = Modifier.padding(16.dp)) {
               Text(
                 text = "Your Music Vibe This Week",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
               )
               Spacer(modifier = Modifier.height(4.dp))
               Text(text = "${vibeSummary.dominantVibe} is your most-played style this week!")
@@ -147,7 +148,7 @@ fun ListeningSummaryScreen(
       item {
         Card(
           modifier = Modifier.fillMaxWidth(),
-          shape = RoundedCornerShape(16.dp),
+          shape = RoundedCornerShape(18.dp),
           colors =
             CardDefaults.cardColors(
               containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
@@ -169,7 +170,7 @@ fun ListeningSummaryScreen(
                 Text(
                   text = formatMs(weekTotalMs),
                   style = MaterialTheme.typography.headlineLarge,
-                  fontWeight = FontWeight.Normal
+                  fontWeight = FontWeight.ExtraBold
                 )
               }
               androidx.compose.material3.IconButton(onClick = { showDatePicker = true }) {
@@ -287,6 +288,7 @@ fun ListeningSummaryScreen(
             Text(
               text = "Listening breakdown",
               style = MaterialTheme.typography.titleMedium,
+              fontWeight = FontWeight.ExtraBold,
               color = contentColor
             )
             Switch(checked = showDailyBreakdown, onCheckedChange = { showDailyBreakdown = it })

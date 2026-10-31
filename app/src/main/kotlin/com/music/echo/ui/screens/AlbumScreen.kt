@@ -4,7 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -34,14 +32,12 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -55,13 +51,9 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -70,11 +62,8 @@ import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withLink
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEachIndexed
 import androidx.compose.ui.util.fastForEachReversed
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -87,7 +76,6 @@ import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.LocalPlayerConnection
 import echo.music.iad1tya.R
 import echo.music.iad1tya.constants.AlbumCanvasEnabledKey
-import echo.music.iad1tya.constants.AppBarHeight
 import echo.music.iad1tya.constants.HideExplicitKey
 import echo.music.iad1tya.constants.HideVideoSongsKey
 import echo.music.iad1tya.db.entities.Album
@@ -99,7 +87,15 @@ import echo.music.iad1tya.ui.component.LinkSegment
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.NavigationTitle
 import echo.music.iad1tya.ui.component.SongListItem
+import echo.music.iad1tya.ui.component.StageHero
+import echo.music.iad1tya.ui.component.StageHeroAction
+import echo.music.iad1tya.ui.component.StageHeroArtwork
+import echo.music.iad1tya.ui.component.StageHeroIconButton
+import echo.music.iad1tya.ui.component.StageHeroPlayButton
+import echo.music.iad1tya.ui.component.StageHeroShuffleButton
 import echo.music.iad1tya.ui.component.YouTubeGridItem
+import echo.music.iad1tya.ui.component.rememberStageHeroUnderBar
+import echo.music.iad1tya.ui.component.stageHeroBarColors
 import echo.music.iad1tya.ui.menu.AlbumMenu
 import echo.music.iad1tya.ui.menu.SelectionSongMenu
 import echo.music.iad1tya.ui.menu.SongMenu
@@ -222,11 +218,7 @@ fun AlbumScreen(
 
   val lazyListState = rememberLazyListState()
 
-  val transparentAppBar by remember {
-    derivedStateOf {
-      lazyListState.firstVisibleItemIndex == 0 && lazyListState.firstVisibleItemScrollOffset < 100
-    }
-  }
+  val heroUnderBar by rememberStageHeroUnderBar(lazyListState)
 
   LazyColumn(
     state = lazyListState,
@@ -235,25 +227,28 @@ fun AlbumScreen(
     val albumWithSongs = albumWithSongs
     if (albumWithSongs != null && albumWithSongs.songs.isNotEmpty()) {
       item(key = "album_header") {
-        val systemBarsTopPadding = WindowInsets.systemBars.asPaddingValues().calculateTopPadding()
-        val density = LocalDensity.current
-        val headerOffset = with(density) { -(systemBarsTopPadding + AppBarHeight).roundToPx() }
+        val isCurrentAlbum = mediaMetadata?.album?.id == albumWithSongs.album.id
+        val albumInfoText = buildString {
+          append(stringResource(R.string.album_text))
+          if (albumWithSongs.album.year != null) {
+            append(" • ${albumWithSongs.album.year}")
+          }
+          append(" • ${albumWithSongs.songs.size} Tracks")
+          val totalDuration = albumWithSongs.songs.sumOf { it.song.duration }
+          val hours = totalDuration / 3600
+          val minutes = (totalDuration % 3600) / 60
+          if (hours > 0) {
+            append(" • ${hours}h ${minutes}m")
+          } else {
+            append(" • ${minutes}m")
+          }
+        }
 
-        val configuration = LocalConfiguration.current
-        val isTablet = configuration.screenWidthDp > 600
-        val artSizeDp = if (isTablet) 300.dp else configuration.screenWidthDp.dp
-        val artSizePx = with(density) { artSizeDp.toPx() }
-
-        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
-          Box(modifier = Modifier.matchParentSize().offset { IntOffset(x = 0, y = headerOffset) }) {
-            Box(modifier = Modifier.fillMaxSize()) {
-              AsyncImage(
-                model = albumWithSongs.album.thumbnailUrl,
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-              )
-
+        Column(modifier = Modifier.fillMaxWidth()) {
+          StageHero(
+            title = albumWithSongs.album.title,
+            artwork = {
+              StageHeroArtwork(albumWithSongs.album.thumbnailUrl)
               if (albumCanvasEnabled && canvasArtwork != null) {
                 CanvasArtworkPlayer(
                   primaryUrl = canvasArtwork.animated,
@@ -262,328 +257,160 @@ fun AlbumScreen(
                   modifier = Modifier.fillMaxSize()
                 )
               }
-
-              Box(
-                modifier =
-                  Modifier.fillMaxWidth()
-                    .height(200.dp)
-                    .align(Alignment.BottomCenter)
-                    .background(
-                      brush =
-                        Brush.verticalGradient(
-                          colors = listOf(Color.Transparent, MaterialTheme.colorScheme.background)
-                        )
-                    )
-              )
-            }
-          }
-
-          Column(
-            modifier =
-              Modifier.fillMaxWidth()
-                .padding(top = with(density) { ((artSizePx / 1.2f) - 144).toDp() })
-                .padding(bottom = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-          ) {
-            Column(
-              modifier =
-                Modifier.fillMaxWidth().padding(horizontal = 32.dp).padding(bottom = 16.dp),
-              horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-              val albumInfoText = buildString {
-                append(stringResource(R.string.album_text))
-                if (albumWithSongs.album.year != null) {
-                  append(" • ${albumWithSongs.album.year}")
-                }
-                append(" • ${albumWithSongs.songs.size} Tracks")
-                val totalDuration = albumWithSongs.songs.sumOf { it.song.duration }
-                val hours = totalDuration / 3600
-                val minutes = (totalDuration % 3600) / 60
-                if (hours > 0) {
-                  append(" • ${hours}h ${minutes}m")
-                } else {
-                  append(" • ${minutes}m")
-                }
-              }
-
+            },
+            subtitleContent = {
               if (albumWithSongs.artists.size == 1) {
                 val artist = albumWithSongs.artists.first()
-                Column(
-                  horizontalAlignment = Alignment.CenterHorizontally,
-                  verticalArrangement = Arrangement.spacedBy(8.dp)
+                Row(
+                  verticalAlignment = Alignment.CenterVertically,
+                  modifier =
+                    Modifier.combinedClickable(
+                      onClick = { navController.navigate("artist/${artist.id}") }
+                    )
                 ) {
-                  Text(
-                    text = albumWithSongs.album.title,
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 30.sp,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.fillMaxWidth()
+                  AsyncImage(
+                    model = artist.thumbnailUrl,
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp).clip(CircleShape),
+                    contentScale = ContentScale.Crop
                   )
-
-                  Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                    modifier =
-                      Modifier.combinedClickable(
-                        onClick = { navController.navigate("artist/${artist.id}") }
-                      )
-                  ) {
-                    AsyncImage(
-                      model = artist.thumbnailUrl,
-                      contentDescription = null,
-                      modifier = Modifier.size(28.dp).clip(CircleShape),
-                      contentScale = ContentScale.Crop
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                      text = artist.name,
-                      style = MaterialTheme.typography.titleMedium,
-                      fontWeight = FontWeight.Medium,
-                      color = MaterialTheme.colorScheme.onSurface
-                    )
-                  }
-
-                  Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxWidth()
-                  ) {
-                    Text(
-                      text = albumInfoText,
-                      style = MaterialTheme.typography.bodyMedium,
-                      color = MaterialTheme.colorScheme.onSurfaceVariant,
-                      textAlign = TextAlign.Center
-                    )
-                    if (hasExplicitContent) {
-                      Text(
-                        text = " • ",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                      )
-                      Icon(
-                        painter = painterResource(R.drawable.explicit),
-                        contentDescription = stringResource(R.string.explicit),
-                        modifier = Modifier.size(14.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                      )
-                      Spacer(Modifier.width(4.dp))
-                      Text(
-                        text = stringResource(R.string.explicit),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                      )
-                    }
-                  }
-                }
-              } else {
-                Column(
-                  horizontalAlignment = Alignment.CenterHorizontally,
-                  verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                  Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier
-                  ) {
-                    Text(
-                      text = albumWithSongs.album.title,
-                      style = MaterialTheme.typography.headlineMedium,
-                      fontWeight = FontWeight.Bold,
-                      color = MaterialTheme.colorScheme.onSurface,
-                      maxLines = 2,
-                      overflow = TextOverflow.Ellipsis,
-                      modifier = Modifier.weight(1f, fill = false)
-                    )
-                  }
-
-                  Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxWidth()
-                  ) {
-                    Text(
-                      text = albumInfoText,
-                      style = MaterialTheme.typography.bodyMedium,
-                      color = MaterialTheme.colorScheme.onSurfaceVariant,
-                      textAlign = TextAlign.Center
-                    )
-                    if (hasExplicitContent) {
-                      Text(
-                        text = " • ",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                      )
-                      Icon(
-                        painter = painterResource(R.drawable.explicit),
-                        contentDescription = stringResource(R.string.explicit),
-                        modifier = Modifier.size(14.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                      )
-                      Spacer(Modifier.width(4.dp))
-                      Text(
-                        text = stringResource(R.string.explicit),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                      )
-                    }
-                  }
+                  Spacer(Modifier.width(8.dp))
+                  Text(
+                    text = artist.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                  )
                 }
               }
 
-              Spacer(Modifier.height(24.dp))
-
-              Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+              Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                  text = albumInfoText,
+                  style = MaterialTheme.typography.bodyMedium,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                if (hasExplicitContent) {
+                  Text(
+                    text = " • ",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                  )
+                  Icon(
+                    painter = painterResource(R.drawable.explicit),
+                    contentDescription = stringResource(R.string.explicit),
+                    modifier = Modifier.size(14.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                  )
+                  Spacer(Modifier.width(4.dp))
+                  Text(
+                    text = stringResource(R.string.explicit),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                  )
+                }
+              }
+            },
+            leadingActions = {
+              StageHeroAction(
+                onClick = { database.query { update(albumWithSongs.album.toggleLike()) } }
               ) {
-                Surface(
-                  onClick = { database.query { update(albumWithSongs.album.toggleLike()) } },
-                  shape = CircleShape,
-                  color = MaterialTheme.colorScheme.surfaceVariant,
-                  modifier = Modifier.size(48.dp)
-                ) {
-                  Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                    HeartBurstIcon(
-                      isLiked = albumWithSongs.album.bookmarkedAt != null,
-                      iconSize = 22.dp
-                    )
-                  }
-                }
-
-                androidx.compose.material3.Button(
-                  onClick = {
-                    if (isPlaying && mediaMetadata?.album?.id == albumWithSongs.album.id) {
-                      playerConnection.player.pause()
-                    } else if (mediaMetadata?.album?.id == albumWithSongs.album.id) {
-                      playerConnection.player.play()
-                    } else {
-                      playerConnection.service.getAutomix(playlistId)
-                      playerConnection.playQueue(LocalAlbumRadio(albumWithSongs))
+                HeartBurstIcon(
+                  isLiked = albumWithSongs.album.bookmarkedAt != null,
+                  iconSize = 22.dp
+                )
+              }
+              StageHeroIconButton(
+                icon = R.drawable.ios_share,
+                contentDescription = stringResource(R.string.share),
+                onClick = {
+                  val intent =
+                    android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                      type = "text/plain"
+                      putExtra(
+                        android.content.Intent.EXTRA_TEXT,
+                        "https://share.echomusic.fun/playlist?list=${albumWithSongs.album.playlistId}"
+                      )
                     }
-                  },
-                  shape = CircleShape,
-                  colors =
-                    androidx.compose.material3.ButtonDefaults.buttonColors(
-                      containerColor = MaterialTheme.colorScheme.primary,
-                      contentColor = MaterialTheme.colorScheme.onPrimary
-                    ),
-                  contentPadding =
-                    androidx.compose.foundation.layout.PaddingValues(
-                      vertical = 12.dp,
-                      horizontal = 16.dp
-                    ),
-                  modifier = Modifier.height(48.dp).weight(1.5f)
-                ) {
-                  Row(
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                  ) {
-                    Icon(
-                      painter =
-                        painterResource(
-                          if (isPlaying && mediaMetadata?.album?.id == albumWithSongs.album.id)
-                            R.drawable.pause
-                          else R.drawable.play
-                        ),
-                      contentDescription = null,
-                      modifier = Modifier.size(20.dp),
-                      tint = MaterialTheme.colorScheme.onPrimary
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                      text =
-                        if (isPlaying && mediaMetadata?.album?.id == albumWithSongs.album.id)
-                          stringResource(R.string.pause)
-                        else stringResource(R.string.play),
-                      style = MaterialTheme.typography.labelLarge,
-                      fontWeight = FontWeight.Bold,
-                      maxLines = 1,
-                      overflow = TextOverflow.Ellipsis
-                    )
-                  }
+                  context.startActivity(android.content.Intent.createChooser(intent, null))
                 }
-
-                Surface(
-                  onClick = {
+              )
+            },
+            trailingActions = {
+              StageHeroShuffleButton(
+                onClick = {
+                  playerConnection.service.getAutomix(playlistId)
+                  playerConnection.playQueue(
+                    LocalAlbumRadio(albumWithSongs.copy(songs = albumWithSongs.songs.shuffled())),
+                  )
+                }
+              )
+              StageHeroPlayButton(
+                isPlaying = isPlaying && isCurrentAlbum,
+                onClick = {
+                  if (isPlaying && isCurrentAlbum) {
+                    playerConnection.player.pause()
+                  } else if (isCurrentAlbum) {
+                    playerConnection.player.play()
+                  } else {
                     playerConnection.service.getAutomix(playlistId)
-                    playerConnection.playQueue(
-                      LocalAlbumRadio(albumWithSongs.copy(songs = albumWithSongs.songs.shuffled())),
-                    )
-                  },
-                  shape = CircleShape,
-                  color = MaterialTheme.colorScheme.surfaceVariant,
-                  modifier = Modifier.size(48.dp)
-                ) {
-                  Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                    Icon(
-                      painter = painterResource(R.drawable.shuffle),
-                      contentDescription = stringResource(R.string.shuffle_label),
-                      modifier = Modifier.size(20.dp),
-                      tint = MaterialTheme.colorScheme.onSurface
-                    )
+                    playerConnection.playQueue(LocalAlbumRadio(albumWithSongs))
                   }
                 }
-              }
-            }
-
-            Spacer(Modifier.height(5.dp))
-
-            val staticDescription =
-              remember(albumWithSongs) {
-                "${albumWithSongs.album.title} is an album by ${albumWithSongs.artists.joinToString { it.name }}${
-                            if (albumWithSongs.album.year != null) ", released in ${albumWithSongs.album.year}" else ""
-                        }. This collection features ${albumWithSongs.songs.size} tracks showcasing their musical artistry."
-              }
-
-            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
-              Text(
-                text = stringResource(R.string.about_album),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(bottom = 8.dp)
-              )
-
-              ExpandableText(
-                text = description ?: staticDescription,
-                runs =
-                  descriptionRuns?.map {
-                    LinkSegment(text = it.text, url = it.navigationEndpoint?.urlEndpoint?.url)
-                  },
-                collapsedMaxLines = 3
               )
             }
+          )
 
-            if (albumWithSongs.artists.size > 1) {
-              Spacer(Modifier.height(16.dp))
+          val staticDescription =
+            remember(albumWithSongs) {
+              "${albumWithSongs.album.title} is an album by ${albumWithSongs.artists.joinToString { it.name }}${
+                          if (albumWithSongs.album.year != null) ", released in ${albumWithSongs.album.year}" else ""
+                      }. This collection features ${albumWithSongs.songs.size} tracks showcasing their musical artistry."
+            }
 
-              Text(
-                text =
-                  buildAnnotatedString {
-                    append(stringResource(R.string.by_text))
-                    append(" ")
-                    albumWithSongs.artists.fastForEachIndexed { index, artist ->
-                      val link =
-                        LinkAnnotation.Clickable(artist.id) {
-                          navController.navigate("artist/${artist.id}")
-                        }
-                      withLink(link) { append(artist.name) }
-                      if (index != albumWithSongs.artists.lastIndex) {
-                        append(", ")
+          Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
+            Text(
+              text = stringResource(R.string.about_album),
+              style = MaterialTheme.typography.titleMedium,
+              fontWeight = FontWeight.Bold,
+              color = MaterialTheme.colorScheme.onSurface,
+              modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            ExpandableText(
+              text = description ?: staticDescription,
+              runs =
+                descriptionRuns?.map {
+                  LinkSegment(text = it.text, url = it.navigationEndpoint?.urlEndpoint?.url)
+                },
+              collapsedMaxLines = 3
+            )
+          }
+
+          if (albumWithSongs.artists.size > 1) {
+            Spacer(Modifier.height(16.dp))
+
+            Text(
+              text =
+                buildAnnotatedString {
+                  append(stringResource(R.string.by_text))
+                  append(" ")
+                  albumWithSongs.artists.fastForEachIndexed { index, artist ->
+                    val link =
+                      LinkAnnotation.Clickable(artist.id) {
+                        navController.navigate("artist/${artist.id}")
                       }
+                    withLink(link) { append(artist.name) }
+                    if (index != albumWithSongs.artists.lastIndex) {
+                      append(", ")
                     }
-                  },
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-                textAlign = TextAlign.Start
-              )
-            }
+                  }
+                },
+              style = MaterialTheme.typography.bodyMedium,
+              color = MaterialTheme.colorScheme.onSurface,
+              modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+              textAlign = TextAlign.Start
+            )
           }
         }
       }
@@ -816,64 +643,30 @@ fun AlbumScreen(
         }
       } else {
         albumWithSongs?.let { albumWithSongs ->
-          Row(
-            modifier =
-              Modifier.height(48.dp)
-                .background(
-                  color =
-                    androidx.compose.material3.MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
-                  shape = CircleShape
+          IconButton(
+            onClick = {
+              menuState.show {
+                AlbumMenu(
+                  originalAlbum = Album(albumWithSongs.album, albumWithSongs.artists),
+                  navController = navController,
+                  onDismiss = menuState::dismiss,
                 )
-                .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+              }
+            },
+            modifier =
+              Modifier.background(
+                androidx.compose.material3.MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
+                CircleShape
+              )
           ) {
-            IconButton(
-              onClick = {
-                val intent =
-                  android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(
-                      android.content.Intent.EXTRA_TEXT,
-                      "https://share.echomusic.fun/playlist?list=${albumWithSongs.album.playlistId}"
-                    )
-                  }
-                context.startActivity(android.content.Intent.createChooser(intent, null))
-              },
-              modifier = Modifier.size(40.dp)
-            ) {
-              Icon(
-                painter = painterResource(R.drawable.ios_share),
-                contentDescription = stringResource(R.string.share),
-                modifier = Modifier.size(20.dp)
-              )
-            }
-
-            IconButton(
-              onClick = {
-                menuState.show {
-                  AlbumMenu(
-                    originalAlbum = Album(albumWithSongs.album, albumWithSongs.artists),
-                    navController = navController,
-                    onDismiss = menuState::dismiss,
-                  )
-                }
-              },
-              modifier = Modifier.size(40.dp)
-            ) {
-              Icon(
-                painter = painterResource(R.drawable.more_vert),
-                contentDescription = stringResource(R.string.more_options),
-                modifier = Modifier.size(20.dp)
-              )
-            }
+            Icon(
+              painter = painterResource(R.drawable.more_vert),
+              contentDescription = stringResource(R.string.more_options),
+            )
           }
         }
       }
     },
-    colors =
-      androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
-        containerColor = Color.Transparent
-      )
+    colors = stageHeroBarColors(heroUnderBar && !inSelectMode)
   )
 }

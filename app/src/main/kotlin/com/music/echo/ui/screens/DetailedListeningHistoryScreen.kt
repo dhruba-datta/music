@@ -21,6 +21,7 @@ import echo.music.iad1tya.ui.component.LocalAlbumsGrid
 import echo.music.iad1tya.ui.component.LocalArtistsGrid
 import echo.music.iad1tya.ui.component.LocalSongsGrid
 import echo.music.iad1tya.ui.component.NavigationTitle
+import echo.music.iad1tya.ui.component.StageBarTitle
 import echo.music.iad1tya.ui.utils.resize
 import echo.music.iad1tya.utils.joinByBullet
 import echo.music.iad1tya.utils.makeTimeString
@@ -52,7 +53,7 @@ fun DetailedListeningHistoryScreen(
   Scaffold(
     topBar = {
       TopAppBar(
-        title = { Text(text = dateStr) },
+        title = { StageBarTitle(dateStr) },
         navigationIcon = {
           IconButton(onClick = { navController.navigateUp() }) {
             Icon(painterResource(R.drawable.arrow_back), contentDescription = "Back")
@@ -67,7 +68,7 @@ fun DetailedListeningHistoryScreen(
       item {
         ElevatedCard(
           modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-          shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+          shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp)
         ) {
           Column(
             modifier = Modifier.fillMaxWidth().padding(20.dp),

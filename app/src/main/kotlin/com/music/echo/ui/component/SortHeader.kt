@@ -27,6 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -61,16 +62,16 @@ inline fun <reified T : Enum<T>> SortHeader(
         onClick = { menuExpanded = !menuExpanded },
         colors =
           ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            containerColor = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant
           ),
-        modifier = Modifier.widthIn(min = 120.dp)
       ) {
         Text(
           text = stringResource(sortTypeText(sortType)),
           maxLines = 1,
           overflow = TextOverflow.Ellipsis,
           style = MaterialTheme.typography.labelLarge,
+          fontWeight = FontWeight.Bold,
         )
       }
     },
@@ -88,7 +89,7 @@ inline fun <reified T : Enum<T>> SortHeader(
             onCheckedChange = { onSortDescendingChange(it) },
             colors =
               ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                containerColor = Color.Transparent,
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant
               ),
             modifier =
@@ -118,7 +119,7 @@ inline fun <reified T : Enum<T>> SortHeader(
           onCheckedChange = { menuExpanded = it },
           colors =
             ButtonDefaults.buttonColors(
-              containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+              containerColor = Color.Transparent,
               contentColor = MaterialTheme.colorScheme.onSurfaceVariant
             ),
           modifier =

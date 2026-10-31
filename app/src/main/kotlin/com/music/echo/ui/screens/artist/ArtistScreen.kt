@@ -10,8 +10,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -35,27 +33,21 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
-import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.ToggleButton
-import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -67,25 +59,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEach
 import androidx.datastore.preferences.core.edit
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
-import coil3.compose.AsyncImage
 import com.music.innertube.YouTube
 import com.music.innertube.models.AlbumItem
 import com.music.innertube.models.ArtistItem
@@ -115,14 +100,19 @@ import echo.music.iad1tya.playback.queues.ListQueue
 import echo.music.iad1tya.playback.queues.YouTubeQueue
 import echo.music.iad1tya.ui.component.AlbumGridItem
 import echo.music.iad1tya.ui.component.ExpandableText
-import echo.music.iad1tya.ui.component.HideOnScrollFAB
 import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.LinkSegment
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.NavigationTitle
 import echo.music.iad1tya.ui.component.SongListItem
+import echo.music.iad1tya.ui.component.StageHero
+import echo.music.iad1tya.ui.component.StageHeroArtwork
+import echo.music.iad1tya.ui.component.StageHeroChip
+import echo.music.iad1tya.ui.component.StageHeroPlayButton
+import echo.music.iad1tya.ui.component.StageHeroShuffleButton
 import echo.music.iad1tya.ui.component.YouTubeGridItem
 import echo.music.iad1tya.ui.component.YouTubeListItem
+import echo.music.iad1tya.ui.component.rememberStageHeroUnderBar
 import echo.music.iad1tya.ui.component.shimmer.ButtonPlaceholder
 import echo.music.iad1tya.ui.component.shimmer.ListItemPlaceHolder
 import echo.music.iad1tya.ui.component.shimmer.ShimmerHost
@@ -135,7 +125,6 @@ import echo.music.iad1tya.ui.menu.YouTubePlaylistMenu
 import echo.music.iad1tya.ui.menu.YouTubeSongMenu
 import echo.music.iad1tya.ui.utils.backToMain
 import echo.music.iad1tya.ui.utils.fadingEdge
-import echo.music.iad1tya.ui.utils.isScrollingUp
 import echo.music.iad1tya.ui.utils.resize
 import echo.music.iad1tya.utils.dataStore
 import echo.music.iad1tya.utils.listItemShape
@@ -195,11 +184,78 @@ fun ArtistScreen(
   val systemBarsTopPadding = WindowInsets.systemBars.asPaddingValues().calculateTopPadding()
   val headerOffset = with(density) { -(systemBarsTopPadding + AppBarHeight).roundToPx() }
 
-  val transparentAppBar by remember {
-    derivedStateOf {
-      lazyListState.firstVisibleItemIndex == 0 && lazyListState.firstVisibleItemScrollOffset < 100
+  val transparentAppBar by rememberStageHeroUnderBar(lazyListState)
+
+  val canPlayAll =
+    !isGuest &&
+      ((showLocal && librarySongs.isNotEmpty()) ||
+        (!showLocal &&
+          artistPage?.sections?.any { (it.items.firstOrNull() as? SongItem)?.album != null } ==
+            true))
+
+  val onPlayAllClick: () -> Unit = {
+    if (showLocal) {
+      if (librarySongs.isNotEmpty()) {
+        playerConnection.playQueue(
+          ListQueue(
+            title = libraryArtist?.artist?.name ?: "Unknown Artist",
+            items = librarySongs.map { it.toMediaItem() }
+          )
+        )
+      }
+    } else if (artistPage != null) {
+      val songSection =
+        artistPage.sections.find { section ->
+          (section.items.firstOrNull() as? SongItem)?.album != null
+        }
+
+      val moreEndpoint = songSection?.moreEndpoint
+      if (moreEndpoint != null) {
+        coroutineScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+          val result = YouTube.artistItems(moreEndpoint).getOrNull()
+          withContext(kotlinx.coroutines.Dispatchers.Main) {
+            if (result != null && result.items.isNotEmpty()) {
+              val songs = result.items.filterIsInstance<SongItem>().map { it.toMediaItem() }
+              playerConnection.playQueue(
+                ListQueue(title = artistPage.artist.title, items = songs)
+              )
+            } else {
+
+              val songs =
+                songSection.items.filterIsInstance<SongItem>().map { it.toMediaItem() }
+              if (songs.isNotEmpty()) {
+                playerConnection.playQueue(
+                  ListQueue(title = artistPage.artist.title, items = songs)
+                )
+              }
+            }
+          }
+        }
+      } else if (songSection != null) {
+
+        val songs = songSection.items.filterIsInstance<SongItem>().map { it.toMediaItem() }
+        playerConnection.playQueue(ListQueue(title = artistPage.artist.title, items = songs))
+      } else {
+
+        val shuffleEndpoint = artistPage.artist.shuffleEndpoint
+        if (shuffleEndpoint != null) {
+          val endpoint =
+            if (shuffleEndpoint.playlistId != null) {
+              WatchEndpoint(
+                playlistId = shuffleEndpoint.playlistId,
+                params = null,
+                videoId = null
+              )
+            } else {
+              shuffleEndpoint
+            }
+          playerConnection.playQueue(YouTubeQueue(endpoint))
+        }
+      }
     }
   }
+
+  val showSourceChips = librarySongs.isNotEmpty() && libraryArtist?.artist?.isLocal != true
 
   LaunchedEffect(libraryArtist) { showLocal = libraryArtist?.artist?.isLocal == true }
 
@@ -273,417 +329,190 @@ fun ArtistScreen(
             }
           }
 
-          Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
-            val configuration = LocalConfiguration.current
-            val isTablet = configuration.screenWidthDp > 600
-            val artHeightDp = if (isTablet) 400.dp else configuration.screenWidthDp.dp
-            val artHeightPx = with(density) { artHeightDp.toPx() }
+          val artistStats =
+            listOfNotNull(
+                artistPage?.subscriberCountText
+                  ?.takeIf { showArtistSubscriberCount && it.isNotBlank() }
+                  ?.let { "$it ${stringResource(R.string.subscribers)}" },
+                artistPage?.monthlyListenerCount
+                  ?.takeIf { showMonthlyListeners && it.isNotBlank() }
+                  ?.let { "$it ${stringResource(R.string.monthly_listeners)}" },
+              )
+              .joinToString(" • ")
 
-            if (thumbnail != null || backgroundVideoUrl != null) {
-              Box(
-                modifier =
-                  Modifier.fillMaxWidth().height(artHeightDp).offset {
-                    IntOffset(x = 0, y = headerOffset)
-                  }
-              ) {
-                Box(
-                  modifier =
-                    Modifier.fillMaxSize()
-                      .fadingEdge(
-                        bottom = 350.dp,
-                      )
-                ) {
-                  if (thumbnail != null) {
-                    AsyncImage(
-                      model = thumbnail.resize(1200, 1200),
-                      contentDescription = null,
-                      modifier = Modifier.fillMaxSize(),
-                      contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                    )
-                  }
-                  if (backgroundVideoUrl != null && showArtistBackgroundVideo) {
+          val blockedArtists by
+            context.dataStore.data
+              .map { it[BlockedArtistsKey] ?: emptySet() }
+              .collectAsState(initial = emptySet())
+          val blockedEntry = blockedArtists.find { it.startsWith("${viewModel.artistId}||") }
+          val isBlocked = blockedEntry != null || blockedArtists.contains(viewModel.artistId)
+          val isSubscribed = libraryArtist?.artist?.bookmarkedAt != null
+
+          StageHero(
+            title = artistName ?: "Unknown",
+            subtitle = artistStats.takeIf { it.isNotEmpty() },
+            artwork = {
+              if (thumbnail != null) {
+                StageHeroArtwork(thumbnail.resize(1200, 1200))
+              }
+              if (backgroundVideoUrl != null && showArtistBackgroundVideo) {
+                ArtistVideo(
+                  videoUrl = backgroundVideoUrl!!,
+                  modifier = Modifier.fillMaxSize(),
+                  onClick = {}
+                )
+              }
+            },
+            titleLeading = {
+              if (showArtistVideo && !(showArtistBackgroundVideo && backgroundVideoUrl != null)) {
+                artistVideoUrl?.let { videoUrl ->
+                  artistPage?.artist?.radioEndpoint?.let { radioEndpoint ->
                     ArtistVideo(
-                      videoUrl = backgroundVideoUrl!!,
-                      modifier = Modifier.fillMaxSize(),
-                      onClick = {}
+                      videoUrl = videoUrl,
+                      modifier = Modifier.width(45.dp).height(45.dp),
+                      onClick = {
+                        val watchEndpoint =
+                          artistVideoSong?.endpoint ?: artistPage?.artist?.radioEndpoint
+                        watchEndpoint?.let { playerConnection.playQueue(YouTubeQueue(it)) }
+                      }
                     )
                   }
-                  // Scrim overlay to ensure text readability over bright artist images
-                  Box(
-                    modifier =
-                      Modifier.fillMaxSize()
-                        .background(
-                          androidx.compose.ui.graphics.Brush.verticalGradient(
-                            colors =
-                              listOf(
-                                androidx.compose.ui.graphics.Color.Transparent,
-                                androidx.compose.material3.MaterialTheme.colorScheme.surface.copy(
-                                  alpha = 0.6f
-                                ),
-                                androidx.compose.material3.MaterialTheme.colorScheme.surface
-                              )
-                          )
+                }
+              }
+            },
+            leadingActions = {
+              StageHeroChip(
+                text = stringResource(if (isSubscribed) R.string.subscribed else R.string.subscribe),
+                selected = isSubscribed,
+                onClick = {
+                  database.transaction {
+                    val artist = libraryArtist?.artist
+                    if (artist != null) {
+                      update(artist.toggleLike())
+                    } else {
+                      artistPage?.artist?.let {
+                        insert(
+                          ArtistEntity(
+                              id = it.id,
+                              name = it.title,
+                              channelId = it.channelId,
+                              thumbnailUrl = it.thumbnail,
+                            )
+                            .toggleLike()
                         )
+                      }
+                    }
+                  }
+                }
+              )
+              if (!showLocal && !isGuest) {
+                artistPage?.artist?.radioEndpoint?.let { radioEndpoint ->
+                  StageHeroChip(
+                    text = stringResource(R.string.radio),
+                    onClick = { playerConnection.playQueue(YouTubeQueue(radioEndpoint)) }
                   )
                 }
               }
-            }
-
-            Column(
-              modifier =
-                Modifier.fillMaxWidth()
-                  .padding(
-                    top =
-                      if (thumbnail != null) {
-
-                        with(density) { ((artHeightPx / 1.2f) - 144).toDp() }
+              StageHeroChip(
+                text = if (isBlocked) "Blocked" else "Block",
+                selected = isBlocked,
+                onClick = {
+                  coroutineScope.launch {
+                    context.dataStore.edit { prefs ->
+                      val current = prefs[BlockedArtistsKey] ?: emptySet()
+                      if (isBlocked) {
+                        val toRemove =
+                          current.filter {
+                            it == viewModel.artistId || it.startsWith("${viewModel.artistId}||")
+                          }
+                        prefs[BlockedArtistsKey] = current - toRemove.toSet()
                       } else {
-                        16.dp
+                        val name = artistPage?.artist?.title ?: "Unknown Artist"
+                        prefs[BlockedArtistsKey] = current + "${viewModel.artistId}||${name}"
                       }
+                    }
+                  }
+                }
+              )
+            },
+            trailingActions = {
+              if (!showLocal && !isGuest) {
+                artistPage?.artist?.shuffleEndpoint?.let { shuffleEndpoint ->
+                  StageHeroShuffleButton(
+                    onClick = { playerConnection.playQueue(YouTubeQueue(shuffleEndpoint)) }
                   )
-            ) {
-              Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                }
+              } else if (librarySongs.isNotEmpty() && !isGuest) {
+                StageHeroShuffleButton(
+                  onClick = {
+                    val shuffledSongs = librarySongs.shuffled()
+                    if (shuffledSongs.isNotEmpty()) {
+                      playerConnection.playQueue(
+                        ListQueue(
+                          title = libraryArtist?.artist?.name ?: "Unknown Artist",
+                          items = shuffledSongs.map { it.toMediaItem() }
+                        )
+                      )
+                    }
+                  }
+                )
+              }
+              if (canPlayAll) {
+                StageHeroPlayButton(onClick = onPlayAllClick)
+              }
+            },
+            belowActions = {
+              if (showSourceChips) {
                 Row(
-                  verticalAlignment = Alignment.CenterVertically,
-                  modifier = Modifier.padding(bottom = 16.dp)
+                  horizontalArrangement = Arrangement.spacedBy(8.dp),
+                  modifier = Modifier.padding(horizontal = 18.dp).padding(bottom = 8.dp)
                 ) {
-                  if (
-                    showArtistVideo && !(showArtistBackgroundVideo && backgroundVideoUrl != null)
-                  ) {
-                    artistVideoUrl?.let { videoUrl ->
-                      artistPage?.artist?.radioEndpoint?.let { radioEndpoint ->
-                        Spacer(modifier = Modifier.width(5.dp))
-                        ArtistVideo(
-                          videoUrl = videoUrl,
-                          modifier = Modifier.width(45.dp).height(45.dp),
-                          onClick = {
-                            val watchEndpoint =
-                              artistVideoSong?.endpoint ?: artistPage?.artist?.radioEndpoint
-                            watchEndpoint?.let { playerConnection.playQueue(YouTubeQueue(it)) }
-                          }
-                        )
+                  StageHeroChip(
+                    text = stringResource(R.string.status_online),
+                    selected = !showLocal,
+                    onClick = {
+                      if (showLocal) {
+                        showLocal = false
+                        if (artistPage == null) viewModel.fetchArtistsFromYTM()
                       }
                     }
-                  }
-
-                  Spacer(modifier = Modifier.width(5.dp))
-
-                  Text(
-                    text = artistName ?: "Unknown",
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    fontSize = 32.sp,
-                    modifier = Modifier.weight(1f, fill = false)
+                  )
+                  StageHeroChip(
+                    text = stringResource(R.string.filter_local),
+                    selected = showLocal,
+                    onClick = { showLocal = true }
                   )
                 }
+              }
 
-                @OptIn(ExperimentalLayoutApi::class)
-                FlowRow(
-                  horizontalArrangement = Arrangement.spacedBy(8.dp),
-                  verticalArrangement = Arrangement.spacedBy(8.dp),
-                  modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
-                ) {
-                  if (showArtistSubscriberCount) {
-                    artistPage
-                      ?.subscriberCountText
-                      ?.takeIf { it.isNotBlank() }
-                      ?.let { subscribers ->
-                        Row(
-                          verticalAlignment = Alignment.CenterVertically,
-                          modifier =
-                            Modifier.clip(RoundedCornerShape(12.dp))
-                              .background(MaterialTheme.colorScheme.secondaryContainer)
-                              .padding(horizontal = 12.dp, vertical = 6.dp)
-                        ) {
-                          Icon(
-                            painter = painterResource(R.drawable.artist_screen),
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer
-                          )
-                          Spacer(modifier = Modifier.width(6.dp))
-                          Text(
-                            text = "$subscribers ${stringResource(R.string.subscribers)}",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            fontWeight = FontWeight.Medium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                          )
-                        }
-                      }
-                  }
+              if (!showLocal && showArtistDescription && artistPage != null) {
+                val description = artistPage?.description
+                val descriptionRuns = artistPage?.descriptionRuns
 
-                  if (showMonthlyListeners) {
-                    artistPage
-                      ?.monthlyListenerCount
-                      ?.takeIf { it.isNotBlank() }
-                      ?.let { monthlyListeners ->
-                        Row(
-                          verticalAlignment = Alignment.CenterVertically,
-                          modifier =
-                            Modifier.clip(RoundedCornerShape(12.dp))
-                              .background(MaterialTheme.colorScheme.tertiaryContainer)
-                              .padding(horizontal = 12.dp, vertical = 6.dp)
-                        ) {
-                          Icon(
-                            painter = painterResource(R.drawable.graphic_eq),
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.onTertiaryContainer
-                          )
-                          Spacer(modifier = Modifier.width(6.dp))
-                          Text(
-                            text =
-                              "$monthlyListeners ${stringResource(R.string.monthly_listeners)}",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer,
-                            fontWeight = FontWeight.Medium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                          )
-                        }
-                      }
-                  }
-                }
-
-                if (!showLocal && showArtistDescription && artistPage != null) {
-                  val description = artistPage?.description
-                  val descriptionRuns = artistPage?.descriptionRuns
-
-                  if (!description.isNullOrEmpty() || !descriptionRuns.isNullOrEmpty()) {
-                    Column(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
-                      Text(
-                        text = stringResource(R.string.about_artist),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                      )
-
-                      ExpandableText(
-                        text = description.orEmpty(),
-                        runs =
-                          descriptionRuns?.map {
-                            LinkSegment(
-                              text = it.text,
-                              url = it.navigationEndpoint?.urlEndpoint?.url
-                            )
-                          },
-                        collapsedMaxLines = 3
-                      )
-                    }
-                  }
-                }
-
-                Column(
-                  modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                  verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                  ToggleButton(
-                    checked = libraryArtist?.artist?.bookmarkedAt != null,
-                    onCheckedChange = {
-                      database.transaction {
-                        val artist = libraryArtist?.artist
-                        if (artist != null) {
-                          update(artist.toggleLike())
-                        } else {
-                          artistPage?.artist?.let {
-                            insert(
-                              ArtistEntity(
-                                  id = it.id,
-                                  name = it.title,
-                                  channelId = it.channelId,
-                                  thumbnailUrl = it.thumbnail,
-                                )
-                                .toggleLike()
-                            )
-                          }
-                        }
-                      }
-                    },
-                    modifier =
-                      Modifier.fillMaxWidth().height(52.dp).semantics { role = Role.Button }
+                if (!description.isNullOrEmpty() || !descriptionRuns.isNullOrEmpty()) {
+                  Column(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 8.dp)
                   ) {
-                    Icon(
-                      painter =
-                        painterResource(
-                          if (libraryArtist?.artist?.bookmarkedAt != null) {
-                            R.drawable.subscribed
-                          } else {
-                            R.drawable.subscribe
-                          }
-                        ),
-                      contentDescription = null,
-                      modifier = Modifier.size(20.dp),
-                      tint =
-                        if (libraryArtist?.artist?.bookmarkedAt != null) {
-                          MaterialTheme.colorScheme.onPrimary
-                        } else {
-                          LocalContentColor.current
-                        }
-                    )
-                    Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
                     Text(
-                      text =
-                        stringResource(
-                          if (libraryArtist?.artist?.bookmarkedAt != null) {
-                            R.string.subscribed
-                          } else {
-                            R.string.subscribe
-                          }
-                        ),
-                      style = MaterialTheme.typography.labelMedium,
-                      maxLines = 1,
-                      overflow = TextOverflow.Ellipsis
+                      text = stringResource(R.string.about_artist),
+                      style = MaterialTheme.typography.titleMedium,
+                      fontWeight = FontWeight.Bold,
+                      modifier = Modifier.padding(bottom = 8.dp)
                     )
-                  }
 
-                  Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement =
-                      Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
-                  ) {
-                    if (!showLocal && !isGuest) {
-                      artistPage?.artist?.radioEndpoint?.let { radioEndpoint ->
-                        ToggleButton(
-                          checked = false,
-                          onCheckedChange = {
-                            playerConnection.playQueue(YouTubeQueue(radioEndpoint))
-                          },
-                          modifier =
-                            Modifier.weight(1f).height(52.dp).semantics { role = Role.Button },
-                          shapes = ButtonGroupDefaults.connectedLeadingButtonShapes()
-                        ) {
-                          Icon(
-                            painter = painterResource(R.drawable.radio),
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                          )
-                          Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
-                          Text(
-                            text = stringResource(R.string.radio),
-                            style = MaterialTheme.typography.labelMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                          )
-                        }
-                      }
-                    }
-
-                    if (!showLocal && !isGuest) {
-                      artistPage?.artist?.shuffleEndpoint?.let { shuffleEndpoint ->
-                        ToggleButton(
-                          checked = false,
-                          onCheckedChange = {
-                            playerConnection.playQueue(YouTubeQueue(shuffleEndpoint))
-                          },
-                          modifier =
-                            Modifier.weight(1f).height(52.dp).semantics { role = Role.Button },
-                          shapes = ButtonGroupDefaults.connectedMiddleButtonShapes()
-                        ) {
-                          Icon(
-                            painter = painterResource(R.drawable.shuffle),
-                            contentDescription = stringResource(R.string.shuffle),
-                            modifier = Modifier.size(20.dp)
-                          )
-                          Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
-                          Text(
-                            text = stringResource(R.string.shuffle),
-                            style = MaterialTheme.typography.labelMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                          )
-                        }
-                      }
-                    } else if (librarySongs.isNotEmpty() && !isGuest) {
-                      ToggleButton(
-                        checked = false,
-                        onCheckedChange = {
-                          val shuffledSongs = librarySongs.shuffled()
-                          if (shuffledSongs.isNotEmpty()) {
-                            playerConnection.playQueue(
-                              ListQueue(
-                                title = libraryArtist?.artist?.name ?: "Unknown Artist",
-                                items = shuffledSongs.map { it.toMediaItem() }
-                              )
-                            )
-                          }
+                    ExpandableText(
+                      text = description.orEmpty(),
+                      runs =
+                        descriptionRuns?.map {
+                          LinkSegment(text = it.text, url = it.navigationEndpoint?.urlEndpoint?.url)
                         },
-                        modifier =
-                          Modifier.weight(1f).height(52.dp).semantics { role = Role.Button },
-                        shapes = ButtonGroupDefaults.connectedMiddleButtonShapes()
-                      ) {
-                        Icon(
-                          painter = painterResource(R.drawable.shuffle),
-                          contentDescription = stringResource(R.string.shuffle),
-                          modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
-                        Text(
-                          text = stringResource(R.string.shuffle),
-                          style = MaterialTheme.typography.labelMedium,
-                          maxLines = 1,
-                          overflow = TextOverflow.Ellipsis
-                        )
-                      }
-                    }
-
-                    val context = LocalContext.current
-                    val coroutineScope = rememberCoroutineScope()
-                    val blockedArtists by
-                      context.dataStore.data
-                        .map { it[BlockedArtistsKey] ?: emptySet() }
-                        .collectAsState(initial = emptySet())
-                    val blockedEntry =
-                      blockedArtists.find { it.startsWith("${viewModel.artistId}||") }
-                    val isBlocked =
-                      blockedEntry != null || blockedArtists.contains(viewModel.artistId)
-
-                    ToggleButton(
-                      checked = isBlocked,
-                      onCheckedChange = {
-                        coroutineScope.launch {
-                          context.dataStore.edit { prefs ->
-                            val current = prefs[BlockedArtistsKey] ?: emptySet()
-                            if (isBlocked) {
-                              val toRemove =
-                                current.filter {
-                                  it == viewModel.artistId ||
-                                    it.startsWith("${viewModel.artistId}||")
-                                }
-                              prefs[BlockedArtistsKey] = current - toRemove.toSet()
-                            } else {
-                              val name = artistPage?.artist?.title ?: "Unknown Artist"
-                              prefs[BlockedArtistsKey] = current + "${viewModel.artistId}||${name}"
-                            }
-                          }
-                        }
-                      },
-                      modifier = Modifier.weight(1f).height(52.dp).semantics { role = Role.Button },
-                      shapes = ButtonGroupDefaults.connectedTrailingButtonShapes()
-                    ) {
-                      Icon(
-                        imageVector = Icons.Default.Block,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                      )
-                      Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
-                      Text(
-                        text = if (isBlocked) "Blocked" else "Block",
-                        style = MaterialTheme.typography.labelMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                      )
-                    }
+                      collapsedMaxLines = 3
+                    )
                   }
                 }
               }
-              Spacer(modifier = Modifier.height(16.dp))
             }
-          }
+          )
         }
 
         if (showLocal) {
@@ -962,115 +791,6 @@ fun ArtistScreen(
               }
             }
           }
-        }
-      }
-    }
-
-    val isScrollingUp = lazyListState.isScrollingUp()
-    val showLocalFab = librarySongs.isNotEmpty() && libraryArtist?.artist?.isLocal != true
-
-    HideOnScrollFAB(
-      visible = showLocalFab,
-      lazyListState = lazyListState,
-      icon = if (showLocal) R.drawable.language else R.drawable.library_music,
-      onClick = {
-        showLocal = showLocal.not()
-        if (!showLocal && artistPage == null) viewModel.fetchArtistsFromYTM()
-      }
-    )
-
-    val canPlayAll =
-      !isGuest &&
-        ((showLocal && librarySongs.isNotEmpty()) ||
-          (!showLocal &&
-            artistPage?.sections?.any { (it.items.firstOrNull() as? SongItem)?.album != null } ==
-              true))
-
-    if (canPlayAll) {
-      androidx.compose.animation.AnimatedVisibility(
-        visible = isScrollingUp,
-        enter = androidx.compose.animation.slideInVertically { it * 2 },
-        exit = androidx.compose.animation.slideOutVertically { it * 2 },
-        modifier =
-          Modifier.align(Alignment.BottomEnd)
-            .windowInsetsPadding(
-              LocalPlayerAwareWindowInsets.current.only(
-                WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal
-              ),
-            )
-            .padding(bottom = if (showLocalFab) 120.dp else 0.dp)
-      ) {
-        val onPlayAllClick: () -> Unit = {
-          if (showLocal) {
-            if (librarySongs.isNotEmpty()) {
-              playerConnection.playQueue(
-                ListQueue(
-                  title = libraryArtist?.artist?.name ?: "Unknown Artist",
-                  items = librarySongs.map { it.toMediaItem() }
-                )
-              )
-            }
-          } else if (artistPage != null) {
-            val songSection =
-              artistPage.sections.find { section ->
-                (section.items.firstOrNull() as? SongItem)?.album != null
-              }
-
-            val moreEndpoint = songSection?.moreEndpoint
-            if (moreEndpoint != null) {
-              coroutineScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-                val result = YouTube.artistItems(moreEndpoint).getOrNull()
-                withContext(kotlinx.coroutines.Dispatchers.Main) {
-                  if (result != null && result.items.isNotEmpty()) {
-                    val songs = result.items.filterIsInstance<SongItem>().map { it.toMediaItem() }
-                    playerConnection.playQueue(
-                      ListQueue(title = artistPage.artist.title, items = songs)
-                    )
-                  } else {
-
-                    val songs =
-                      songSection.items.filterIsInstance<SongItem>().map { it.toMediaItem() }
-                    if (songs.isNotEmpty()) {
-                      playerConnection.playQueue(
-                        ListQueue(title = artistPage.artist.title, items = songs)
-                      )
-                    }
-                  }
-                }
-              }
-            } else if (songSection != null) {
-
-              val songs = songSection.items.filterIsInstance<SongItem>().map { it.toMediaItem() }
-              playerConnection.playQueue(ListQueue(title = artistPage.artist.title, items = songs))
-            } else {
-
-              val shuffleEndpoint = artistPage.artist.shuffleEndpoint
-              if (shuffleEndpoint != null) {
-                val endpoint =
-                  if (shuffleEndpoint.playlistId != null) {
-                    WatchEndpoint(
-                      playlistId = shuffleEndpoint.playlistId,
-                      params = null,
-                      videoId = null
-                    )
-                  } else {
-                    shuffleEndpoint
-                  }
-                playerConnection.playQueue(YouTubeQueue(endpoint))
-              }
-            }
-          }
-        }
-
-        androidx.compose.material3.FloatingActionButton(
-          modifier = Modifier.padding(16.dp),
-          onClick = onPlayAllClick
-        ) {
-          Icon(
-            painter = painterResource(R.drawable.play),
-            contentDescription = "Play All",
-            modifier = Modifier.size(32.dp)
-          )
         }
       }
     }

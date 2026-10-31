@@ -3,35 +3,28 @@ package echo.music.iad1tya.ui.screens.playlist
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.union
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -55,12 +48,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -70,8 +61,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachReversed
 import androidx.compose.ui.util.fastSumBy
@@ -81,7 +70,6 @@ import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.navigation.NavController
-import coil3.compose.AsyncImage
 import echo.music.iad1tya.LocalDownloadUtil
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.LocalPlayerConnection
@@ -107,10 +95,19 @@ import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.SongListItem
 import echo.music.iad1tya.ui.component.SortHeader
+import echo.music.iad1tya.ui.component.StageHero
+import echo.music.iad1tya.ui.component.StageHeroArtwork
+import echo.music.iad1tya.ui.component.StageHeroDownloadButton
+import echo.music.iad1tya.ui.component.StageHeroPlayButton
+import echo.music.iad1tya.ui.component.StageHeroShuffleButton
+import echo.music.iad1tya.ui.component.rememberStageHeroUnderBar
+import echo.music.iad1tya.ui.component.stageBarButton
+import echo.music.iad1tya.ui.component.stageHeroBarColors
 import echo.music.iad1tya.ui.menu.AutoPlaylistMenu
 import echo.music.iad1tya.ui.menu.SelectionSongMenu
 import echo.music.iad1tya.ui.menu.SongMenu
 import echo.music.iad1tya.ui.utils.backToMain
+import echo.music.iad1tya.ui.utils.resize
 import echo.music.iad1tya.utils.listItemShape
 import echo.music.iad1tya.utils.makeTimeString
 import echo.music.iad1tya.utils.rememberEnumPreference
@@ -304,6 +301,49 @@ fun AutoPlaylistScreen(
   }
 
   val state = rememberLazyListState()
+  val heroUnderBar by rememberStageHeroUnderBar(state)
+
+  val downloadAllSongs: () -> Unit = {
+    val allSongs = songs.orEmpty()
+    when (downloadState) {
+      Download.STATE_COMPLETED -> showRemoveDownloadDialog = true
+      Download.STATE_DOWNLOADING -> {
+        allSongs.forEach { song ->
+          DownloadService.sendRemoveDownload(
+            context,
+            ExoDownloadService::class.java,
+            song.song.id,
+            false,
+          )
+        }
+      }
+      else -> {
+        allSongs.forEach { song ->
+          val downloadRequest =
+            DownloadRequest.Builder(song.song.id, song.song.id.toUri())
+              .setCustomCacheKey(song.song.id)
+              .setData(song.song.title.toByteArray())
+              .build()
+          DownloadService.sendAddDownload(
+            context,
+            ExoDownloadService::class.java,
+            downloadRequest,
+            false,
+          )
+        }
+      }
+    }
+  }
+  val showPlaylistMenu: () -> Unit = {
+    menuState.show {
+      AutoPlaylistMenu(
+        downloadState = downloadState,
+        onQueue = { playerConnection?.addToQueue(songs.orEmpty().map { it.toMediaItem() }) },
+        onDownload = downloadAllSongs,
+        onDismiss = { menuState.dismiss() }
+      )
+    }
+  }
 
   val isRefreshing by viewModel.isRefreshing.collectAsState()
   val pullRefreshState = rememberPullToRefreshState()
@@ -344,8 +384,7 @@ fun AutoPlaylistScreen(
                 songs = songs!!,
                 likeLength = likeLength,
                 downloadState = downloadState,
-                onShowRemoveDownloadDialog = { showRemoveDownloadDialog = true },
-                menuState = menuState,
+                onDownload = downloadAllSongs,
                 playerConnection = playerConnection,
                 modifier = Modifier.animateItem()
               )
@@ -506,12 +545,13 @@ fun AutoPlaylistScreen(
             )
           }
           else -> {
-            // Title is removed from the top bar
+            if (!heroUnderBar || songs.isNullOrEmpty()) Text(text = playlist)
           }
         }
       },
       navigationIcon = {
         IconButton(
+          modifier = Modifier.stageBarButton(),
           onClick = {
             when {
               isSearching -> {
@@ -568,19 +608,23 @@ fun AutoPlaylistScreen(
             Icon(painter = painterResource(R.drawable.more_vert), contentDescription = null)
           }
         } else if (!isSearching) {
-          IconButton(onClick = { isSearching = true }) {
-            Icon(painter = painterResource(R.drawable.search), contentDescription = null)
+          IconButton(onClick = { isSearching = true }, modifier = Modifier.stageBarButton()) {
+            Icon(
+              painter = painterResource(R.drawable.search),
+              contentDescription = stringResource(R.string.search)
+            )
+          }
+          if (!songs.isNullOrEmpty()) {
+            IconButton(onClick = showPlaylistMenu, modifier = Modifier.stageBarButton()) {
+              Icon(
+                painter = painterResource(R.drawable.more_vert),
+                contentDescription = stringResource(R.string.more_options)
+              )
+            }
           }
         }
       },
-      colors =
-        if (!isSearching && !inSelectMode) {
-          androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent
-          )
-        } else {
-          androidx.compose.material3.TopAppBarDefaults.topAppBarColors()
-        }
+      colors = stageHeroBarColors(heroUnderBar && !isSearching && !inSelectMode)
     )
   }
 }
@@ -591,75 +635,29 @@ private fun AutoPlaylistHeader(
   songs: List<Song>,
   likeLength: Int,
   downloadState: Int,
-  onShowRemoveDownloadDialog: () -> Unit,
-  menuState: echo.music.iad1tya.ui.component.MenuState,
+  onDownload: () -> Unit,
   playerConnection: PlayerConnection?,
   modifier: Modifier = Modifier
 ) {
   val context = LocalContext.current
 
-  val density = androidx.compose.ui.platform.LocalDensity.current
-  val systemBarsTopPadding =
-    androidx.compose.foundation.layout.WindowInsets.systemBars
-      .asPaddingValues()
-      .calculateTopPadding()
-  val headerOffset = with(density) { -(systemBarsTopPadding + 64.dp).roundToPx() }
-
-  Box(modifier = modifier.fillMaxWidth()) {
-    if (songs.isNotEmpty()) {
-      echo.music.iad1tya.ui.component.OnlineBlur(
-        thumbnailUrl = songs.getOrNull(0)?.thumbnailUrl ?: "",
-        modifier = Modifier.matchParentSize().offset { IntOffset(0, headerOffset) }
-      )
-    }
-
-    Column(
-      modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-      horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-      Spacer(Modifier.height(50.dp))
-
-      Box(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 48.dp),
-        contentAlignment = Alignment.Center
-      ) {
-        AsyncImage(
-          model = songs[0].thumbnailUrl,
-          contentDescription = null,
-          modifier =
-            Modifier.then(
-                if (LocalConfiguration.current.screenWidthDp > 600) Modifier.size(300.dp)
-                else Modifier.fillMaxWidth().aspectRatio(1f)
-              )
-              .clip(RoundedCornerShape(8.dp)),
-          contentScale = androidx.compose.ui.layout.ContentScale.Crop
-        )
-      }
-
-      Spacer(Modifier.height(32.dp))
-
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(horizontal = 32.dp)
-      ) {
-        Text(
-          text = name,
-          style = MaterialTheme.typography.headlineMedium,
-          fontWeight = FontWeight.Bold,
-          color = MaterialTheme.colorScheme.onSurface,
-          maxLines = 2,
-          overflow = TextOverflow.Ellipsis
-        )
-      }
-
-      Spacer(Modifier.height(24.dp))
-
-      Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically
-      ) {
-        androidx.compose.material3.Button(
+  Column(modifier = modifier.fillMaxWidth()) {
+    StageHero(
+      title = name,
+      subtitle =
+        buildString {
+          append(pluralStringResource(R.plurals.n_song, songs.size, songs.size))
+          if (likeLength > 0) {
+            append(" • ")
+            append(makeTimeString(likeLength * 1000L))
+          }
+        },
+      artwork = { StageHeroArtwork(songs[0].thumbnailUrl?.resize(1200, 1200)) },
+      leadingActions = {
+        StageHeroDownloadButton(downloadState = downloadState, onClick = onDownload)
+      },
+      trailingActions = {
+        StageHeroShuffleButton(
           onClick = {
             playerConnection?.playQueue(
               ListQueue(
@@ -667,37 +665,9 @@ private fun AutoPlaylistHeader(
                 items = songs.shuffled().map { it.toMediaItem() },
               ),
             )
-          },
-          shape = androidx.compose.material3.ButtonDefaults.shape,
-          colors =
-            androidx.compose.material3.ButtonDefaults.buttonColors(
-              containerColor = MaterialTheme.colorScheme.surfaceVariant,
-              contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-            ),
-          contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 12.dp),
-          modifier = Modifier.weight(1f)
-        ) {
-          Row(
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-          ) {
-            Icon(
-              painter = painterResource(R.drawable.shuffle),
-              contentDescription = null,
-              modifier = Modifier.size(20.dp),
-              tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-              text = stringResource(R.string.shuffle),
-              style = MaterialTheme.typography.labelLarge,
-              maxLines = 1,
-              overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-            )
           }
-        }
-
-        androidx.compose.material3.Button(
+        )
+        StageHeroPlayButton(
           onClick = {
             playerConnection?.playQueue(
               ListQueue(
@@ -705,123 +675,30 @@ private fun AutoPlaylistHeader(
                 items = songs.map { it.toMediaItem() },
               ),
             )
-          },
-          shape = androidx.compose.material3.ButtonDefaults.shape,
-          colors =
-            androidx.compose.material3.ButtonDefaults.buttonColors(
-              containerColor = MaterialTheme.colorScheme.primary,
-              contentColor = MaterialTheme.colorScheme.onPrimary
-            ),
-          contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 12.dp),
-          modifier = Modifier.weight(1f)
-        ) {
-          Row(
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-          ) {
-            Icon(
-              painter = painterResource(R.drawable.play),
-              contentDescription = null,
-              modifier = Modifier.size(20.dp),
-              tint = MaterialTheme.colorScheme.onPrimary
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(text = stringResource(R.string.play), style = MaterialTheme.typography.labelLarge)
           }
-        }
-
-        Surface(
-          onClick = {
-            menuState.show {
-              AutoPlaylistMenu(
-                downloadState = downloadState,
-                onQueue = { playerConnection?.addToQueue(songs.map { it.toMediaItem() }) },
-                onDownload = {
-                  when (downloadState) {
-                    Download.STATE_COMPLETED -> onShowRemoveDownloadDialog()
-                    Download.STATE_DOWNLOADING -> {
-                      songs.forEach { song ->
-                        DownloadService.sendRemoveDownload(
-                          context,
-                          ExoDownloadService::class.java,
-                          song.song.id,
-                          false,
-                        )
-                      }
-                    }
-                    else -> {
-                      songs.forEach { song ->
-                        val downloadRequest =
-                          DownloadRequest.Builder(song.song.id, song.song.id.toUri())
-                            .setCustomCacheKey(song.song.id)
-                            .setData(song.song.title.toByteArray())
-                            .build()
-                        DownloadService.sendAddDownload(
-                          context,
-                          ExoDownloadService::class.java,
-                          downloadRequest,
-                          false,
-                        )
-                      }
-                    }
-                  }
-                },
-                onDismiss = { menuState.dismiss() }
-              )
-            }
-          },
-          shape = androidx.compose.foundation.shape.CircleShape,
-          color = MaterialTheme.colorScheme.surfaceVariant,
-          modifier = Modifier.size(48.dp)
-        ) {
-          Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Icon(
-              painter = painterResource(R.drawable.more_vert),
-              contentDescription = null,
-              modifier = Modifier.size(20.dp),
-              tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-          }
-        }
+        )
       }
+    )
 
-      Spacer(Modifier.height(16.dp))
-
-      Text(
-        text =
-          buildString {
-            append(pluralStringResource(R.plurals.n_song, songs.size, songs.size))
-            if (likeLength > 0) {
-              append(" • ")
-              append(makeTimeString(likeLength * 1000L))
-            }
-          },
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-      )
-
-      Spacer(Modifier.height(16.dp))
-
-      val staticDescription =
-        remember(name, songs.size, likeLength) {
-          val trackCountText =
-            context.resources.getQuantityString(R.plurals.n_song, songs.size, songs.size)
-          "$name is a personalized collection featuring $trackCountText.${
+    val staticDescription =
+      remember(name, songs.size, likeLength) {
+        val trackCountText =
+          context.resources.getQuantityString(R.plurals.n_song, songs.size, songs.size)
+        "$name is a personalized collection featuring $trackCountText.${
                 if (likeLength > 0) " Total listening time is ${makeTimeString(likeLength * 1000L)}." else ""
             } This playlist is automatically curated for your musical enjoyment."
-        }
-
-      Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
-        Text(
-          text = stringResource(R.string.about_album),
-          style = MaterialTheme.typography.titleMedium,
-          fontWeight = FontWeight.Bold,
-          color = MaterialTheme.colorScheme.onSurface,
-          modifier = Modifier.padding(bottom = 8.dp)
-        )
-
-        ExpandableText(text = staticDescription, runs = null, collapsedMaxLines = 3)
       }
+
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp).padding(bottom = 16.dp)) {
+      Text(
+        text = stringResource(R.string.about_album),
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier.padding(bottom = 8.dp)
+      )
+
+      ExpandableText(text = staticDescription, runs = null, collapsedMaxLines = 3)
     }
   }
 }

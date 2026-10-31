@@ -16,18 +16,17 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import echo.music.iad1tya.R
 
 @Composable
@@ -47,7 +46,7 @@ fun NavigationTitle(
         .fillMaxWidth()
         .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
         .clickable(enabled = onClick != null) { onClick?.invoke() }
-        .padding(horizontal = 12.dp, vertical = 12.dp)
+        .padding(horizontal = 18.dp, vertical = 12.dp)
   ) {
     thumbnail?.invoke()
 
@@ -61,10 +60,11 @@ fun NavigationTitle(
       }
 
       Text(
-        text = title.uppercase(),
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        text = title,
+        fontSize = 19.sp,
+        lineHeight = 24.sp,
+        fontWeight = FontWeight.ExtraBold,
+        color = MaterialTheme.colorScheme.onSurface,
         overflow = TextOverflow.Ellipsis,
         maxLines = 1,
       )
@@ -87,10 +87,11 @@ fun NavigationTitle(
     }
 
     if (onClick != null) {
-      Icon(
-        painter = painterResource(R.drawable.arrow_forward),
-        contentDescription = null,
-        tint = MaterialTheme.colorScheme.onSurfaceVariant
+      Text(
+        text = stringResource(R.string.more_label),
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
       )
     }
   }

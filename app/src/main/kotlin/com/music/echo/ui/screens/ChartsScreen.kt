@@ -37,7 +37,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -66,6 +65,7 @@ import echo.music.iad1tya.playback.queues.YouTubeQueue
 import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.NavigationTitle
+import echo.music.iad1tya.ui.component.StageBarTitle
 import echo.music.iad1tya.ui.component.YouTubeGridItem
 import echo.music.iad1tya.ui.component.YouTubeListItem
 import echo.music.iad1tya.ui.component.shimmer.GridItemPlaceHolder
@@ -104,7 +104,7 @@ fun ChartsScreen(
   Scaffold(
     topBar = {
       TopAppBar(
-        title = { Text(stringResource(R.string.charts)) },
+        title = { StageBarTitle(stringResource(R.string.charts)) },
         navigationIcon = {
           IconButton(
             onClick = { navController.navigateUp() },
@@ -149,7 +149,7 @@ fun ChartsScreen(
                     Box(
                       modifier =
                         Modifier.size(ListItemHeight - 16.dp)
-                          .clip(RoundedCornerShape(4.dp))
+                          .clip(RoundedCornerShape(12.dp))
                           .background(MaterialTheme.colorScheme.onSurface),
                     )
                     Spacer(modifier = Modifier.width(8.dp))

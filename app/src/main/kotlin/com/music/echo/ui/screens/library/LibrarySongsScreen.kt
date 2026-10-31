@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -44,6 +44,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -161,7 +162,7 @@ fun LibrarySongsScreen(
                   containerColor = MaterialTheme.colorScheme.surface
                 ),
               onClick = onDeselect,
-              shape = RoundedCornerShape(16.dp),
+              shape = CircleShape,
               leadingIcon = {
                 Icon(painter = painterResource(R.drawable.close), contentDescription = "")
               },
@@ -191,6 +192,15 @@ fun LibrarySongsScreen(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(horizontal = 16.dp),
           ) {
+            Text(
+              text = pluralStringResource(R.plurals.n_song, filteredSongs.size, filteredSongs.size),
+              style = MaterialTheme.typography.titleMedium,
+              fontWeight = FontWeight.ExtraBold,
+              color = MaterialTheme.colorScheme.onSurface,
+            )
+
+            Spacer(Modifier.weight(1f))
+
             SortHeader(
               sortType = sortType,
               sortDescending = sortDescending,
@@ -204,14 +214,6 @@ fun LibrarySongsScreen(
                   SongSortType.PLAY_TIME -> R.string.sort_by_play_time
                 }
               },
-            )
-
-            Spacer(Modifier.weight(1f))
-
-            Text(
-              text = pluralStringResource(R.plurals.n_song, filteredSongs.size, filteredSongs.size),
-              style = MaterialTheme.typography.titleSmall,
-              color = MaterialTheme.colorScheme.secondary,
             )
           }
         }

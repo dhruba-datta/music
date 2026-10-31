@@ -73,6 +73,7 @@ import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.NavigationTitle
 import echo.music.iad1tya.ui.component.SongListItem
+import echo.music.iad1tya.ui.component.StageBarTitle
 import echo.music.iad1tya.ui.component.YouTubeListItem
 import echo.music.iad1tya.ui.menu.SelectionMediaMetadataMenu
 import echo.music.iad1tya.ui.menu.SongMenu
@@ -439,7 +440,7 @@ fun HistoryScreen(
           modifier = Modifier.fillMaxWidth().focusRequester(focusRequester)
         )
       } else {
-        Text(stringResource(R.string.history))
+        StageBarTitle(stringResource(R.string.history))
       }
     },
     navigationIcon = {

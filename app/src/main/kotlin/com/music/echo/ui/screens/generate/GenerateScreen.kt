@@ -8,14 +8,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -49,6 +46,7 @@ import androidx.navigation.NavController
 import echo.music.iad1tya.LocalDatabase
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.R
+import echo.music.iad1tya.ui.component.StageBarTitle
 import echo.music.iad1tya.viewmodels.GenerateUiState
 import echo.music.iad1tya.viewmodels.GenerateViewModel
 import kotlinx.coroutines.Dispatchers
@@ -69,11 +67,7 @@ fun GenerateScreen(
     topBar = {
       TopAppBar(
         title = {
-          Text(
-            text = "Local Taste Engine",
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-          )
+          StageBarTitle("Local Taste Engine")
         },
         navigationIcon = {
           IconButton(onClick = { navController.navigateUp() }) {
@@ -102,7 +96,7 @@ fun GenerateScreen(
       Box(
         modifier = Modifier
           .fillMaxWidth()
-          .clip(RoundedCornerShape(24.dp))
+          .clip(RoundedCornerShape(18.dp))
           .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
           .padding(20.dp),
       ) {
@@ -110,7 +104,7 @@ fun GenerateScreen(
           Text(
             text = "Smart Taste Mix",
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.ExtraBold,
             color = MaterialTheme.colorScheme.onSurface,
           )
           Spacer(modifier = Modifier.height(6.dp))
@@ -132,7 +126,7 @@ fun GenerateScreen(
         Box(
           modifier = Modifier
             .weight(1f)
-            .clip(RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(18.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
             .padding(16.dp),
         ) {
@@ -146,7 +140,7 @@ fun GenerateScreen(
             Text(
               text = if (stats.isNotEmpty()) "Active" else "Building",
               style = MaterialTheme.typography.titleMedium,
-              fontWeight = FontWeight.Bold,
+              fontWeight = FontWeight.ExtraBold,
               color = MaterialTheme.colorScheme.onSurface,
             )
           }
@@ -155,7 +149,7 @@ fun GenerateScreen(
         Box(
           modifier = Modifier
             .weight(1f)
-            .clip(RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(18.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
             .padding(16.dp),
         ) {
@@ -169,7 +163,7 @@ fun GenerateScreen(
             Text(
               text = "${exclusions.size} hidden",
               style = MaterialTheme.typography.titleMedium,
-              fontWeight = FontWeight.Bold,
+              fontWeight = FontWeight.ExtraBold,
               color = MaterialTheme.colorScheme.onSurface,
             )
           }
@@ -184,7 +178,7 @@ fun GenerateScreen(
           Box(
             modifier = Modifier
               .fillMaxWidth()
-              .clip(RoundedCornerShape(24.dp))
+              .clip(RoundedCornerShape(18.dp))
               .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f))
               .padding(20.dp),
           ) {
@@ -192,7 +186,7 @@ fun GenerateScreen(
               Text(
                 text = "How it works",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onSurface,
               )
               Text(
@@ -220,7 +214,7 @@ fun GenerateScreen(
             modifier = Modifier
               .fillMaxWidth()
               .height(54.dp),
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(25.dp),
             colors = ButtonDefaults.buttonColors(
               containerColor = MaterialTheme.colorScheme.primary,
               contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -238,7 +232,7 @@ fun GenerateScreen(
           Box(
             modifier = Modifier
               .fillMaxWidth()
-              .clip(RoundedCornerShape(24.dp))
+              .clip(RoundedCornerShape(18.dp))
               .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
               .padding(32.dp),
             contentAlignment = Alignment.Center,
@@ -260,7 +254,7 @@ fun GenerateScreen(
               Spacer(modifier = Modifier.height(24.dp))
               OutlinedButton(
                 onClick = { viewModel.cancelGeneration() },
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(25.dp),
               ) {
                 Text("Cancel")
               }
@@ -272,7 +266,7 @@ fun GenerateScreen(
           Box(
             modifier = Modifier
               .fillMaxWidth()
-              .clip(RoundedCornerShape(24.dp))
+              .clip(RoundedCornerShape(18.dp))
               .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
               .padding(28.dp),
             contentAlignment = Alignment.Center,
@@ -296,7 +290,7 @@ fun GenerateScreen(
               Text(
                 text = "Taste Mix Ready!",
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onSurface,
               )
               Spacer(modifier = Modifier.height(6.dp))
@@ -314,7 +308,7 @@ fun GenerateScreen(
                 modifier = Modifier
                   .fillMaxWidth()
                   .height(50.dp),
-                shape = RoundedCornerShape(24.dp),
+                shape = RoundedCornerShape(18.dp),
               ) {
                 Text(
                   text = "Open Playlist",
@@ -327,7 +321,7 @@ fun GenerateScreen(
                 modifier = Modifier
                   .fillMaxWidth()
                   .height(50.dp),
-                shape = RoundedCornerShape(24.dp),
+                shape = RoundedCornerShape(25.dp),
               ) {
                 Text("Generate Another")
               }
@@ -339,7 +333,7 @@ fun GenerateScreen(
           Box(
             modifier = Modifier
               .fillMaxWidth()
-              .clip(RoundedCornerShape(24.dp))
+              .clip(RoundedCornerShape(18.dp))
               .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
               .padding(28.dp),
             contentAlignment = Alignment.Center,
@@ -355,7 +349,7 @@ fun GenerateScreen(
               Text(
                 text = "Not Enough History",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onSurface,
               )
               Spacer(modifier = Modifier.height(6.dp))
@@ -368,7 +362,7 @@ fun GenerateScreen(
               Spacer(modifier = Modifier.height(20.dp))
               Button(
                 onClick = { navController.navigate("home") },
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(25.dp),
               ) {
                 Text("Explore Music")
               }
@@ -380,7 +374,7 @@ fun GenerateScreen(
           Box(
             modifier = Modifier
               .fillMaxWidth()
-              .clip(RoundedCornerShape(24.dp))
+              .clip(RoundedCornerShape(18.dp))
               .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
               .padding(28.dp),
             contentAlignment = Alignment.Center,
@@ -396,7 +390,7 @@ fun GenerateScreen(
               Text(
                 text = "All Candidates Excluded",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onSurface,
               )
               Spacer(modifier = Modifier.height(6.dp))
@@ -414,7 +408,7 @@ fun GenerateScreen(
                     viewModel.generate()
                   }
                 },
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(18.dp),
               ) {
                 Text("Reset Exclusions & Retry")
               }
@@ -426,7 +420,7 @@ fun GenerateScreen(
           Box(
             modifier = Modifier
               .fillMaxWidth()
-              .clip(RoundedCornerShape(24.dp))
+              .clip(RoundedCornerShape(18.dp))
               .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
               .padding(28.dp),
             contentAlignment = Alignment.Center,
@@ -435,7 +429,7 @@ fun GenerateScreen(
               Text(
                 text = "Generation Error",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.error,
               )
               Spacer(modifier = Modifier.height(8.dp))
@@ -448,7 +442,7 @@ fun GenerateScreen(
               Spacer(modifier = Modifier.height(20.dp))
               Button(
                 onClick = { viewModel.generate() },
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(25.dp),
               ) {
                 Text("Retry")
               }

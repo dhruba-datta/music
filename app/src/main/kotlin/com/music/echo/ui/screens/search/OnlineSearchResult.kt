@@ -299,21 +299,21 @@ fun OnlineSearchResult(
       keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
       keyboardActions = KeyboardActions(onSearch = { onSearch(query.text) }),
       singleLine = true,
-      shape = RoundedCornerShape(28.dp),
+      shape = RoundedCornerShape(24.dp),
       colors =
         OutlinedTextFieldDefaults.colors(
           focusedContainerColor =
             if (pureBlack) MaterialTheme.colorScheme.surface
-            else MaterialTheme.colorScheme.surfaceContainerHigh,
+            else MaterialTheme.colorScheme.surfaceContainerHighest,
           unfocusedContainerColor =
             if (pureBlack) MaterialTheme.colorScheme.surface
-            else MaterialTheme.colorScheme.surfaceContainerHigh,
+            else MaterialTheme.colorScheme.surfaceContainerHighest,
           focusedBorderColor = Color.Transparent,
           unfocusedBorderColor = Color.Transparent
         ),
       modifier =
         Modifier.fillMaxWidth()
-          .padding(horizontal = 16.dp, vertical = 8.dp)
+          .padding(horizontal = 18.dp, vertical = 8.dp)
           .focusRequester(focusRequester)
           .onFocusChanged { focusState ->
             if (focusState.isFocused) {

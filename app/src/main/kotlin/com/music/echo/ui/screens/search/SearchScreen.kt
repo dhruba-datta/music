@@ -1,12 +1,9 @@
 package echo.music.iad1tya.ui.screens.search
 
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -19,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -36,8 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SearchBar
-import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -64,6 +59,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
@@ -132,19 +128,6 @@ fun SearchScreen(navController: NavController, pureBlack: Boolean) {
     }
   }
 
-  val searchBarHorizontalPadding by
-    animateDpAsState(
-      targetValue = 16.dp,
-      animationSpec = tween(durationMillis = 245, easing = FastOutSlowInEasing),
-      label = "SearchBarHorizontalPadding"
-    )
-  val searchBarTopPadding by
-    animateDpAsState(
-      targetValue = 8.dp,
-      animationSpec = tween(durationMillis = 245, easing = FastOutSlowInEasing),
-      label = "SearchBarTopPadding"
-    )
-
   val onSearch: (String) -> Unit = remember {
     { searchQuery ->
       if (searchQuery.isNotEmpty()) {
@@ -210,14 +193,24 @@ fun SearchScreen(navController: NavController, pureBlack: Boolean) {
           Modifier.background(if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface)
             .windowInsetsPadding(WindowInsets.statusBars)
       ) {
-        SearchBar(
-          inputField = {
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(6.dp),
+          modifier = Modifier.fillMaxWidth().padding(start = 18.dp, end = 12.dp, top = 8.dp)
+        ) {
+          Surface(
+            shape = RoundedCornerShape(24.dp),
+            color =
+              if (pureBlack) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+              else MaterialTheme.colorScheme.surfaceContainerHighest,
+            modifier = Modifier.weight(1f)
+          ) {
             BasicTextField(
               value = query,
               onValueChange = { query = it },
               modifier =
                 Modifier.fillMaxWidth()
-                  .height(56.dp)
+                  .height(48.dp)
                   .focusRequester(focusRequester)
                   .onFocusChanged { if (it.isFocused) searchActive = true },
               singleLine = true,
@@ -234,7 +227,7 @@ fun SearchScreen(navController: NavController, pureBlack: Boolean) {
               decorationBox = { innerTextField ->
                 Row(
                   verticalAlignment = Alignment.CenterVertically,
-                  modifier = Modifier.padding(horizontal = 16.dp)
+                  modifier = Modifier.padding(horizontal = 4.dp)
                 ) {
                   IconButton(
                     onClick = {
@@ -275,31 +268,10 @@ fun SearchScreen(navController: NavController, pureBlack: Boolean) {
                     }
                     innerTextField()
                   }
-                  Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (query.text.isNotEmpty()) {
-                      IconButton(onClick = { query = TextFieldValue("") }) {
-                        Icon(
-                          painter = painterResource(R.drawable.close),
-                          contentDescription = null,
-                          tint = MaterialTheme.colorScheme.onSurface
-                        )
-                      }
-                    }
-                    IconButton(
-                      onClick = {
-                        searchSource =
-                          if (searchSource == SearchSource.ONLINE) SearchSource.LOCAL
-                          else SearchSource.ONLINE
-                      }
-                    ) {
+                  if (query.text.isNotEmpty()) {
+                    IconButton(onClick = { query = TextFieldValue("") }) {
                       Icon(
-                        painter =
-                          painterResource(
-                            when (searchSource) {
-                              SearchSource.LOCAL -> R.drawable.library_music
-                              SearchSource.ONLINE -> R.drawable.globe_search
-                            }
-                          ),
+                        painter = painterResource(R.drawable.close),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurface
                       )
@@ -308,20 +280,28 @@ fun SearchScreen(navController: NavController, pureBlack: Boolean) {
                 }
               }
             )
-          },
-          expanded = false,
-          onExpandedChange = { searchActive = it },
-          colors =
-            SearchBarDefaults.colors(
-              containerColor =
-                if (pureBlack) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                else MaterialTheme.colorScheme.surfaceVariant
-            ),
-          modifier =
-            Modifier.fillMaxWidth()
-              .padding(horizontal = searchBarHorizontalPadding)
-              .padding(top = searchBarTopPadding)
-        ) {}
+          }
+
+          IconButton(
+            onClick = {
+              searchSource =
+                if (searchSource == SearchSource.ONLINE) SearchSource.LOCAL
+                else SearchSource.ONLINE
+            }
+          ) {
+            Icon(
+              painter =
+                painterResource(
+                  when (searchSource) {
+                    SearchSource.LOCAL -> R.drawable.library_music
+                    SearchSource.ONLINE -> R.drawable.globe_search
+                  }
+                ),
+              contentDescription = null,
+              tint = MaterialTheme.colorScheme.onSurface
+            )
+          }
+        }
         androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(16.dp))
       }
     },
@@ -410,14 +390,9 @@ fun ExploreTabContent(
               modifier =
                 Modifier.weight(1f)
                   .padding(6.dp)
-                  .height(64.dp)
-                  .clip(RoundedCornerShape(12.dp))
-                  .background(MaterialTheme.colorScheme.surfaceContainerLow)
-                  .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(12.dp)
-                  )
+                  .height(72.dp)
+                  .clip(RoundedCornerShape(18.dp))
+                  .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                   .clickable {
                     navController.navigate(
                       "youtube_browse/${item.endpoint.browseId}?params=${item.endpoint.params}"
@@ -426,7 +401,8 @@ fun ExploreTabContent(
             ) {
               Text(
                 text = item.title,
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.ExtraBold,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
               )

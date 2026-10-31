@@ -37,7 +37,9 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
@@ -155,7 +157,8 @@ fun LocalSearchScreen(
                     LocalFilter.ALL -> error("")
                   }
                 ),
-              style = MaterialTheme.typography.titleLarge,
+              fontSize = 19.sp,
+              fontWeight = FontWeight.ExtraBold,
               modifier = Modifier.weight(1f),
             )
 

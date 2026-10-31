@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,7 +28,6 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.union
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -64,7 +62,6 @@ import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -78,14 +75,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
@@ -95,8 +90,6 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEachIndexed
@@ -119,7 +112,6 @@ import echo.music.iad1tya.LocalDatabase
 import echo.music.iad1tya.LocalDownloadUtil
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.LocalPlayerConnection
-import echo.music.iad1tya.LocalSyncUtils
 import echo.music.iad1tya.R
 import echo.music.iad1tya.constants.DarkModeKey
 import echo.music.iad1tya.constants.PlaylistEditLockKey
@@ -142,16 +134,25 @@ import echo.music.iad1tya.ui.component.EmptyPlaceholder
 import echo.music.iad1tya.ui.component.ExpandableText
 import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.LocalMenuState
-import echo.music.iad1tya.ui.component.OverlayEditButton
 import echo.music.iad1tya.ui.component.SongListItem
 import echo.music.iad1tya.ui.component.SortHeader
+import echo.music.iad1tya.ui.component.StageHero
+import echo.music.iad1tya.ui.component.StageHeroArtwork
+import echo.music.iad1tya.ui.component.StageHeroDownloadButton
+import echo.music.iad1tya.ui.component.StageHeroIconButton
+import echo.music.iad1tya.ui.component.StageHeroPlayButton
+import echo.music.iad1tya.ui.component.StageHeroShuffleButton
 import echo.music.iad1tya.ui.component.TextFieldDialog
+import echo.music.iad1tya.ui.component.rememberStageHeroUnderBar
+import echo.music.iad1tya.ui.component.stageBarButton
+import echo.music.iad1tya.ui.component.stageHeroBarColors
 import echo.music.iad1tya.ui.menu.CustomThumbnailMenu
 import echo.music.iad1tya.ui.menu.LocalPlaylistMenu
 import echo.music.iad1tya.ui.menu.SelectionSongMenu
 import echo.music.iad1tya.ui.menu.SongMenu
 import echo.music.iad1tya.ui.screens.settings.DarkMode
 import echo.music.iad1tya.ui.utils.backToMain
+import echo.music.iad1tya.ui.utils.resize
 import echo.music.iad1tya.utils.launchSafely
 import echo.music.iad1tya.utils.listItemShape
 import echo.music.iad1tya.utils.makeTimeString
@@ -467,7 +468,96 @@ fun LocalPlaylistScreen(
     }
   }
 
-  val showTopBarTitle by remember { derivedStateOf { lazyListState.firstVisibleItemIndex > 0 } }
+  val heroUnderBar by rememberStageHeroUnderBar(lazyListState)
+
+  var showAiModifyDialog by rememberSaveable { mutableStateOf(false) }
+  val playlistSyncedMsg = stringResource(R.string.playlist_synced)
+
+  val downloadAllSongs: () -> Unit = {
+    when (downloadState) {
+      Download.STATE_COMPLETED -> showRemoveDownloadDialog = true
+      Download.STATE_DOWNLOADING -> {
+        songs.forEach { song ->
+          DownloadService.sendRemoveDownload(
+            context,
+            ExoDownloadService::class.java,
+            song.song.id,
+            false
+          )
+        }
+      }
+      else -> {
+        songs.forEach { song ->
+          val downloadRequest =
+            DownloadRequest.Builder(song.song.id, song.song.id.toUri())
+              .setCustomCacheKey(song.song.id)
+              .setData(song.song.song.title.toByteArray())
+              .build()
+          DownloadService.sendAddDownload(
+            context,
+            ExoDownloadService::class.java,
+            downloadRequest,
+            false
+          )
+        }
+      }
+    }
+  }
+
+  val showPlaylistMenu: () -> Unit = showMenu@{
+    val playlist = playlist ?: return@showMenu
+    menuState.show {
+      LocalPlaylistMenu(
+        playlist = playlist,
+        songs = songs,
+        context = context,
+        downloadState = downloadState,
+        onEdit = { showEditDialog = true },
+        onSync = {
+          coroutineScope.launch(Dispatchers.IO) {
+            val playlistPage =
+              YouTube.playlist(playlist.playlist.browseId!!).completed().getOrNull()
+                ?: return@launch
+            database.transaction {
+              clearPlaylist(playlist.id)
+              playlistPage.songs
+                .map(SongItem::toMediaMetadata)
+                .onEach(::insert)
+                .mapIndexed { position, song ->
+                  PlaylistSongMap(
+                    songId = song.id,
+                    playlistId = playlist.id,
+                    position = position,
+                    setVideoId = song.setVideoId
+                  )
+                }
+                .forEach(::insert)
+            }
+          }
+          coroutineScope.launch(Dispatchers.Main) {
+            snackbarHostState.showSnackbar(playlistSyncedMsg)
+          }
+        },
+        onDelete = { showDeletePlaylistDialog = true },
+        onModifyWithAi = { showAiModifyDialog = true },
+        onDownload = downloadAllSongs,
+        onExport = {
+          exportCsvLauncher.launchSafely("${playlist.playlist.name}_export.csv", context)
+        },
+        onQueue = { playerConnection.addToQueue(items = songs.map { it.song.toMediaItem() }) },
+        onDismiss = { menuState.dismiss() }
+      )
+    }
+  }
+
+  val currentPlaylist = playlist
+  if (showAiModifyDialog && currentPlaylist != null) {
+    AiModifyPlaylistDialog(
+      playlistId = currentPlaylist.id,
+      currentSongs = songs,
+      onDismiss = { showAiModifyDialog = false }
+    )
+  }
 
   Box(
     modifier = Modifier.fillMaxSize(),
@@ -492,13 +582,8 @@ fun LocalPlaylistScreen(
               LocalPlaylistHeader(
                 playlist = playlist,
                 songs = songs,
-                onShowEditDialog = { showEditDialog = true },
-                onShowRemoveDownloadDialog = { showRemoveDownloadDialog = true },
-                onshowDeletePlaylistDialog = { showDeletePlaylistDialog = true },
-                onStartSearch = { isSearching = true },
-                onExport = {
-                  exportCsvLauncher.launchSafely("${playlist.playlist.name}_export.csv", context)
-                },
+                downloadState = downloadState,
+                onDownload = downloadAllSongs,
                 snackbarHostState = snackbarHostState,
                 modifier = Modifier.animateItem()
               )
@@ -745,7 +830,7 @@ fun LocalPlaylistScreen(
               ),
             modifier = Modifier.fillMaxWidth().focusRequester(focusRequester)
           )
-        } else if (showTopBarTitle) {
+        } else if (!heroUnderBar) {
           Text(playlist?.playlist?.name.orEmpty())
         }
       },
@@ -759,6 +844,7 @@ fun LocalPlaylistScreen(
           }
         } else {
           IconButton(
+            modifier = Modifier.stageBarButton(),
             onClick = {
               if (isSearching) {
                 isSearching = false
@@ -866,8 +952,21 @@ fun LocalPlaylistScreen(
           ) {
             Icon(painter = painterResource(R.drawable.search), contentDescription = null)
           }
+          if (
+            currentPlaylist != null &&
+              !(currentPlaylist.songCount == 0 &&
+                (currentPlaylist.playlist.remoteSongCount ?: 0) == 0)
+          ) {
+            IconButton(onClick = showPlaylistMenu, modifier = Modifier.stageBarButton()) {
+              Icon(
+                painter = painterResource(R.drawable.more_vert),
+                contentDescription = stringResource(R.string.more_options)
+              )
+            }
+          }
         }
-      }
+      },
+      colors = stageHeroBarColors(heroUnderBar && !isSearching && !inSelectMode)
     )
 
     SnackbarHost(
@@ -883,11 +982,8 @@ fun LocalPlaylistScreen(
 fun LocalPlaylistHeader(
   playlist: Playlist,
   songs: List<PlaylistSong>,
-  onShowEditDialog: () -> Unit,
-  onShowRemoveDownloadDialog: () -> Unit,
-  onshowDeletePlaylistDialog: () -> Unit,
-  onStartSearch: () -> Unit,
-  onExport: () -> Unit,
+  downloadState: Int,
+  onDownload: () -> Unit,
   snackbarHostState: SnackbarHostState,
   modifier: Modifier,
 ) {
@@ -895,16 +991,10 @@ fun LocalPlaylistHeader(
   val context = LocalContext.current
   val database = LocalDatabase.current
   val menuState = LocalMenuState.current
-  val syncUtils = LocalSyncUtils.current
   val scope = rememberCoroutineScope()
-  var showAiModifyDialog by rememberSaveable { mutableStateOf(false) }
 
   val playlistLength = remember(songs) { songs.fastSumBy { it.song.song.duration } }
 
-  val downloadUtil = LocalDownloadUtil.current
-  var downloadState by remember { mutableIntStateOf(Download.STATE_STOPPED) }
-
-  val liked = playlist.playlist.bookmarkedAt != null
   val editable: Boolean = playlist.playlist.isEditable
 
   val overrideThumbnail = remember { mutableStateOf<String?>(null) }
@@ -931,7 +1021,6 @@ fun LocalPlaylistHeader(
   val darkTheme = darkMode == DarkMode.ON || (darkMode == DarkMode.AUTO && isSystemInDarkTheme())
 
   val editCoverTitle = stringResource(R.string.edit_playlist_cover)
-  val playlistSyncedMsg = stringResource(R.string.playlist_synced)
   val pickLauncher =
     rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
       uri?.let { sourceUri ->
@@ -1003,30 +1092,49 @@ fun LocalPlaylistHeader(
     }
   }
 
-  LaunchedEffect(songs) {
-    if (songs.isEmpty()) return@LaunchedEffect
-    downloadUtil.downloads.collect { downloads ->
-      downloadState =
-        if (songs.all { downloads[it.song.id]?.state == Download.STATE_COMPLETED }) {
-          Download.STATE_COMPLETED
-        } else if (
-          songs.all {
-            downloads[it.song.id]?.state == Download.STATE_QUEUED ||
-              downloads[it.song.id]?.state == Download.STATE_DOWNLOADING ||
-              downloads[it.song.id]?.state == Download.STATE_COMPLETED
-          }
-        ) {
-          Download.STATE_DOWNLOADING
-        } else {
-          Download.STATE_STOPPED
-        }
+  val onChangeCover: () -> Unit = {
+    if (isCustomThumbnail) {
+      menuState.show({
+        CustomThumbnailMenu(
+          onEdit = {
+            pickLauncher.launchSafely(
+              PickVisualMediaRequest(mediaType = ActivityResultContracts.PickVisualMedia.ImageOnly),
+              context
+            )
+          },
+          onRemove = {
+            when {
+              playlist.playlist.browseId == null -> {
+                overrideThumbnail.value = null
+                database.query { update(playlist.playlist.copy(thumbnailUrl = null)) }
+              }
+              else -> {
+                scope.launch(Dispatchers.IO) {
+                  YouTube.removeThumbnailPlaylist(playlist.playlist.browseId!!)
+                    .onSuccess { newThumbnailUrl ->
+                      overrideThumbnail.value = newThumbnailUrl
+                      database.query {
+                        update(playlist.playlist.copy(thumbnailUrl = newThumbnailUrl))
+                      }
+                    }
+                    .onFailure {
+                      overrideThumbnail.value = null
+                      database.query { update(playlist.playlist.copy(thumbnailUrl = null)) }
+                    }
+                }
+              }
+            }
+            isCustomThumbnail = false
+          },
+          onDismiss = menuState::dismiss
+        )
+      })
+    } else {
+      showEditNoteDialog = true
     }
   }
 
-  Column(
-    modifier = modifier.fillMaxWidth().padding(top = 8.dp, bottom = 20.dp),
-    horizontalAlignment = Alignment.CenterHorizontally
-  ) {
+  Column(modifier = modifier.fillMaxWidth().padding(bottom = 20.dp)) {
     if (showEditNoteDialog) {
       ActionPromptDialog(
         title = stringResource(R.string.edit_playlist_cover),
@@ -1055,94 +1163,38 @@ fun LocalPlaylistHeader(
       }
     }
 
-    Box(
-      modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
-      contentAlignment = Alignment.Center
-    ) {
-      Box(
-        modifier =
-          Modifier.then(
-              if (LocalConfiguration.current.screenWidthDp > 600) Modifier.size(300.dp)
-              else Modifier.fillMaxWidth().padding(horizontal = 48.dp).aspectRatio(1f)
-            )
-            .clip(RoundedCornerShape(8.dp))
-      ) {
-        when (playlist.thumbnails.size) {
-          0 ->
-            Surface(
-              modifier = Modifier.fillMaxSize(),
-              color = MaterialTheme.colorScheme.surfaceVariant
-            ) {
-              Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Icon(
-                  painter = painterResource(R.drawable.queue_music),
-                  contentDescription = null,
-                  modifier = Modifier.size(80.dp),
-                  tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-              }
-            }
-          1 -> {
-            AsyncImage(
-              model = overrideThumbnail.value ?: playlist.thumbnails[0],
-              contentDescription = null,
-              contentScale = ContentScale.Crop,
-              modifier = Modifier.fillMaxSize()
-            )
-            if (editable) {
-              OverlayEditButton(
-                visible = true,
-                alignment = Alignment.BottomEnd,
-                onClick = {
-                  if (isCustomThumbnail) {
-                    menuState.show({
-                      CustomThumbnailMenu(
-                        onEdit = {
-                          pickLauncher.launchSafely(
-                            PickVisualMediaRequest(
-                              mediaType = ActivityResultContracts.PickVisualMedia.ImageOnly
-                            ),
-                            context
-                          )
-                        },
-                        onRemove = {
-                          when {
-                            playlist.playlist.browseId == null -> {
-                              overrideThumbnail.value = null
-                              database.query { update(playlist.playlist.copy(thumbnailUrl = null)) }
-                            }
-                            else -> {
-                              scope.launch(Dispatchers.IO) {
-                                YouTube.removeThumbnailPlaylist(playlist.playlist.browseId!!)
-                                  .onSuccess { newThumbnailUrl ->
-                                    overrideThumbnail.value = newThumbnailUrl
-                                    database.query {
-                                      update(playlist.playlist.copy(thumbnailUrl = newThumbnailUrl))
-                                    }
-                                  }
-                                  .onFailure {
-                                    overrideThumbnail.value = null
-                                    database.query {
-                                      update(playlist.playlist.copy(thumbnailUrl = null))
-                                    }
-                                  }
-                              }
-                            }
-                          }
-                          isCustomThumbnail = false
-                        },
-                        onDismiss = menuState::dismiss
-                      )
-                    })
-                  } else {
-                    showEditNoteDialog = true
-                  }
-                }
-              )
-            }
+    val songCount =
+      if (playlist.songCount == 0 && (playlist.playlist.remoteSongCount ?: 0) != null) {
+        (playlist.playlist.remoteSongCount ?: 0)
+      } else {
+        playlist.songCount
+      }
+
+    StageHero(
+      title = playlist.playlist.name,
+      subtitle =
+        buildString {
+          append(pluralStringResource(R.plurals.n_song, songCount, songCount))
+          if (playlistLength > 0) {
+            append(" • ")
+            append(makeTimeString(playlistLength * 1000L))
           }
+        },
+      artwork = {
+        when (playlist.thumbnails.size) {
+          0 -> {
+            StageHeroArtwork(null)
+            Icon(
+              painter = painterResource(R.drawable.queue_music),
+              contentDescription = null,
+              modifier = Modifier.align(Alignment.Center).size(80.dp),
+              tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+          }
+          1 ->
+            StageHeroArtwork((overrideThumbnail.value ?: playlist.thumbnails[0]).resize(1200, 1200))
           else -> {
-            Box(modifier = Modifier.fillMaxSize()) {
+            Box(modifier = Modifier.matchParentSize()) {
               listOf(
                   Alignment.TopStart,
                   Alignment.TopEnd,
@@ -1158,250 +1210,42 @@ fun LocalPlaylistHeader(
                   )
                 }
             }
-            if (editable) {
-              OverlayEditButton(
-                visible = true,
-                alignment = Alignment.BottomEnd,
-                onClick = {
-                  if (isCustomThumbnail) {
-                    menuState.show({
-                      CustomThumbnailMenu(
-                        onEdit = {
-                          pickLauncher.launchSafely(
-                            PickVisualMediaRequest(
-                              mediaType = ActivityResultContracts.PickVisualMedia.ImageOnly
-                            ),
-                            context
-                          )
-                        },
-                        onRemove = {
-                          when {
-                            playlist.playlist.browseId == null -> {
-                              overrideThumbnail.value = null
-                              database.query { update(playlist.playlist.copy(thumbnailUrl = null)) }
-                            }
-                            else -> {
-                              scope.launch(Dispatchers.IO) {
-                                YouTube.removeThumbnailPlaylist(playlist.playlist.browseId!!)
-                                  .onSuccess { newThumbnailUrl ->
-                                    overrideThumbnail.value = newThumbnailUrl
-                                    database.query {
-                                      update(playlist.playlist.copy(thumbnailUrl = newThumbnailUrl))
-                                    }
-                                  }
-                                  .onFailure {
-                                    overrideThumbnail.value = null
-                                    database.query {
-                                      update(playlist.playlist.copy(thumbnailUrl = null))
-                                    }
-                                  }
-                              }
-                            }
-                          }
-                          isCustomThumbnail = false
-                        },
-                        onDismiss = menuState::dismiss
-                      )
-                    })
-                  } else {
-                    showEditNoteDialog = true
-                  }
-                }
+          }
+        }
+      },
+      leadingActions = {
+        StageHeroDownloadButton(downloadState = downloadState, onClick = onDownload)
+        if (editable && playlist.thumbnails.isNotEmpty()) {
+          StageHeroIconButton(
+            icon = R.drawable.edit,
+            contentDescription = stringResource(R.string.edit_playlist_cover),
+            onClick = onChangeCover
+          )
+        }
+      },
+      trailingActions = {
+        StageHeroShuffleButton(
+          onClick = {
+            playerConnection.playQueue(
+              ListQueue(
+                title = playlist.playlist.name,
+                items = songs.shuffled().map { it.song.toMediaItem() },
               )
-            }
+            )
           }
-        }
+        )
+        StageHeroPlayButton(
+          onClick = {
+            playerConnection.playQueue(
+              ListQueue(
+                title = playlist.playlist.name,
+                items = songs.map { it.song.toMediaItem() },
+              )
+            )
+          }
+        )
       }
-    }
-
-    Text(
-      text = playlist.playlist.name,
-      style = MaterialTheme.typography.headlineSmall,
-      fontWeight = FontWeight.Bold,
-      textAlign = TextAlign.Center,
-      maxLines = 2,
-      overflow = TextOverflow.Ellipsis,
-      modifier = Modifier.padding(horizontal = 32.dp)
     )
-
-    Spacer(modifier = Modifier.height(12.dp))
-
-    val songCount =
-      if (playlist.songCount == 0 && (playlist.playlist.remoteSongCount ?: 0) != null) {
-        (playlist.playlist.remoteSongCount ?: 0)
-      } else {
-        playlist.songCount
-      }
-    Text(
-      text =
-        buildString {
-          append(pluralStringResource(R.plurals.n_song, songCount, songCount))
-          if (playlistLength > 0) {
-            append(" • ")
-            append(makeTimeString(playlistLength * 1000L))
-          }
-        },
-      style = MaterialTheme.typography.bodyMedium,
-      color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-    )
-
-    Spacer(modifier = Modifier.height(24.dp))
-
-    Row(
-      modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-      horizontalArrangement = Arrangement.spacedBy(12.dp),
-      verticalAlignment = Alignment.CenterVertically
-    ) {
-      TextButton(
-        onClick = {
-          playerConnection.playQueue(
-            ListQueue(
-              title = playlist.playlist.name,
-              items = songs.map { it.song.toMediaItem() },
-            )
-          )
-        },
-        modifier = Modifier.weight(1f).height(48.dp),
-        shape = CircleShape,
-        colors =
-          androidx.compose.material3.ButtonDefaults.textButtonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary
-          )
-      ) {
-        Icon(
-          painter = painterResource(R.drawable.play),
-          contentDescription = null,
-          modifier = Modifier.size(20.dp)
-        )
-        Spacer(Modifier.width(8.dp))
-        Text(
-          text = stringResource(R.string.play),
-          style = MaterialTheme.typography.labelLarge,
-          fontWeight = FontWeight.Bold
-        )
-      }
-
-      TextButton(
-        onClick = {
-          playerConnection.playQueue(
-            ListQueue(
-              title = playlist.playlist.name,
-              items = songs.shuffled().map { it.song.toMediaItem() },
-            )
-          )
-        },
-        modifier = Modifier.weight(1f).height(48.dp),
-        shape = CircleShape,
-        colors =
-          androidx.compose.material3.ButtonDefaults.textButtonColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-          )
-      ) {
-        Icon(
-          painter = painterResource(R.drawable.shuffle),
-          contentDescription = null,
-          modifier = Modifier.size(20.dp)
-        )
-        Spacer(Modifier.width(8.dp))
-        Text(
-          text = stringResource(R.string.shuffle),
-          style = MaterialTheme.typography.labelLarge,
-          fontWeight = FontWeight.Bold,
-          maxLines = 1,
-          overflow = TextOverflow.Ellipsis
-        )
-      }
-
-      Surface(
-        onClick = {
-          menuState.show {
-            LocalPlaylistMenu(
-              playlist = playlist,
-              songs = songs,
-              context = context,
-              downloadState = downloadState,
-              onEdit = onShowEditDialog,
-              onSync = {
-                scope.launch(Dispatchers.IO) {
-                  val playlistPage =
-                    YouTube.playlist(playlist.playlist.browseId!!).completed().getOrNull()
-                      ?: return@launch
-                  database.transaction {
-                    clearPlaylist(playlist.id)
-                    playlistPage.songs
-                      .map(SongItem::toMediaMetadata)
-                      .onEach(::insert)
-                      .mapIndexed { position, song ->
-                        PlaylistSongMap(
-                          songId = song.id,
-                          playlistId = playlist.id,
-                          position = position,
-                          setVideoId = song.setVideoId
-                        )
-                      }
-                      .forEach(::insert)
-                  }
-                }
-                scope.launch(Dispatchers.Main) { snackbarHostState.showSnackbar(playlistSyncedMsg) }
-              },
-              onDelete = onshowDeletePlaylistDialog,
-              onModifyWithAi = { showAiModifyDialog = true },
-              onDownload = {
-                when (downloadState) {
-                  Download.STATE_COMPLETED -> onShowRemoveDownloadDialog()
-                  Download.STATE_DOWNLOADING -> {
-                    songs.forEach { song ->
-                      DownloadService.sendRemoveDownload(
-                        context,
-                        ExoDownloadService::class.java,
-                        song.song.id,
-                        false
-                      )
-                    }
-                  }
-                  else -> {
-                    songs.forEach { song ->
-                      val downloadRequest =
-                        DownloadRequest.Builder(song.song.id, song.song.id.toUri())
-                          .setCustomCacheKey(song.song.id)
-                          .setData(song.song.song.title.toByteArray())
-                          .build()
-                      DownloadService.sendAddDownload(
-                        context,
-                        ExoDownloadService::class.java,
-                        downloadRequest,
-                        false
-                      )
-                    }
-                  }
-                }
-              },
-              onExport = { onExport() },
-              onQueue = {
-                playerConnection.addToQueue(items = songs.map { it.song.toMediaItem() })
-              },
-              onDismiss = { menuState.dismiss() }
-            )
-          }
-        },
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        modifier = Modifier.size(48.dp)
-      ) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-          Icon(
-            painter = painterResource(R.drawable.more_vert),
-            contentDescription = null,
-            modifier = Modifier.size(20.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-          )
-        }
-      }
-    }
-
-    Spacer(Modifier.height(24.dp))
 
     val staticDescription =
       remember(songCount, playlistLength) {
@@ -1413,7 +1257,7 @@ fun LocalPlaylistHeader(
             }"
       }
 
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp)) {
       Text(
         text = stringResource(R.string.about_playlist),
         style = MaterialTheme.typography.titleMedium,
@@ -1424,14 +1268,6 @@ fun LocalPlaylistHeader(
 
       ExpandableText(text = staticDescription, runs = null, collapsedMaxLines = 3)
     }
-  }
-
-  if (showAiModifyDialog) {
-    AiModifyPlaylistDialog(
-      playlistId = playlist.id,
-      currentSongs = songs,
-      onDismiss = { showAiModifyDialog = false }
-    )
   }
 }
 
