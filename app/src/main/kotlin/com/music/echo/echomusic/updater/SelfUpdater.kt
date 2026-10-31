@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
 import android.content.pm.PackageManager
+import android.content.pm.ServiceInfo
 import android.media.AudioManager
 import android.net.Uri
 import android.os.Build
@@ -21,11 +22,13 @@ import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
+import androidx.work.ForegroundInfo
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import androidx.work.workDataOf
 import echo.music.iad1tya.BuildConfig
 import echo.music.iad1tya.R
 import java.io.File
@@ -49,6 +52,7 @@ object SelfUpdater {
   private const val CHANNEL_ID = "updates"
   private const val NOTIFICATION_ID = 1002
   private const val CHECK_INTERVAL_HOURS = 6L
+  const val KEY_MANUAL_CHECK = "manual_check"
 
   private val constraints =
     Constraints.Builder().setRequiredNetworkType(NetworkType.UNMETERED).build()
@@ -79,6 +83,7 @@ object SelfUpdater {
           .setConstraints(
             Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
           )
+          .setInputData(workDataOf(KEY_MANUAL_CHECK to true))
           .build()
       )
   }
@@ -86,33 +91,52 @@ object SelfUpdater {
   fun isPlaybackActive(context: Context): Boolean =
     context.getSystemService(AudioManager::class.java).isMusicActive
 
-  fun notify(context: Context, title: String, text: String, target: PendingIntent) {
+  private fun builder(context: Context, title: String, text: String): NotificationCompat.Builder {
     val manager = context.getSystemService(NotificationManager::class.java)
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       manager.createNotificationChannel(
         NotificationChannel(
           CHANNEL_ID,
           context.getString(R.string.app_updates_title),
-          NotificationManager.IMPORTANCE_DEFAULT
+          NotificationManager.IMPORTANCE_LOW
         )
       )
     }
+    return NotificationCompat.Builder(context, CHANNEL_ID)
+      .setSmallIcon(R.drawable.ic_launcher_nobg)
+      .setContentTitle(title)
+      .setContentText(text)
+  }
+
+  private fun post(context: Context, builder: NotificationCompat.Builder) {
     val canPost =
       Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
         ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
           PackageManager.PERMISSION_GRANTED
-    if (!canPost) return
-    NotificationManagerCompat.from(context)
-      .notify(
-        NOTIFICATION_ID,
-        NotificationCompat.Builder(context, CHANNEL_ID)
-          .setSmallIcon(R.drawable.ic_launcher_nobg)
-          .setContentTitle(title)
-          .setContentText(text)
-          .setContentIntent(target)
-          .setAutoCancel(true)
-          .build()
-      )
+    if (canPost) NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, builder.build())
+  }
+
+  fun notify(context: Context, title: String, text: String, target: PendingIntent? = null) {
+    post(context, builder(context, title, text).setContentIntent(target).setAutoCancel(true))
+  }
+
+  private fun progressBuilder(context: Context, percent: Int): NotificationCompat.Builder =
+    builder(context, "Downloading update", "$percent%")
+      .setOngoing(true)
+      .setOnlyAlertOnce(true)
+      .setProgress(100, percent, percent == 0)
+
+  fun showProgress(context: Context, percent: Int) {
+    post(context, progressBuilder(context, percent))
+  }
+
+  fun foregroundInfo(context: Context): ForegroundInfo {
+    val notification = progressBuilder(context, 0).build()
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      ForegroundInfo(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+    } else {
+      ForegroundInfo(NOTIFICATION_ID, notification)
+    }
   }
 
   internal data class Release(val tag: String, val apkUrl: String, val sha256: String?)
@@ -148,10 +172,21 @@ object SelfUpdater {
     }
   }
 
-  internal fun download(url: String, target: File, expectedSha256: String?): Boolean {
+  internal fun download(
+    url: String,
+    target: File,
+    expectedSha256: String?,
+    onProgress: (Int) -> Unit,
+  ): Boolean {
     val digest = MessageDigest.getInstance("SHA-256")
     target.parentFile?.mkdirs()
-    URL(url).openStream().use { input ->
+    val connection = URL(url).openConnection()
+    connection.connectTimeout = 15_000
+    connection.readTimeout = 30_000
+    val total = connection.contentLengthLong
+    var received = 0L
+    var reported = -1
+    connection.getInputStream().use { input ->
       target.outputStream().use { output ->
         val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
         while (true) {
@@ -159,6 +194,12 @@ object SelfUpdater {
           if (read < 0) break
           digest.update(buffer, 0, read)
           output.write(buffer, 0, read)
+          received += read
+          val percent = if (total > 0) (received * 100 / total).toInt() else 0
+          if (percent != reported) {
+            reported = percent
+            onProgress(percent)
+          }
         }
       }
     }
@@ -201,13 +242,20 @@ class SelfUpdateWorker(context: Context, params: WorkerParameters) :
 
   override suspend fun doWork(): Result =
     withContext(Dispatchers.IO) {
-      if (!getAutoUpdateCheckSetting(applicationContext)) return@withContext Result.success()
+      val manual = inputData.getBoolean(SelfUpdater.KEY_MANUAL_CHECK, false)
+      if (!manual && !getAutoUpdateCheckSetting(applicationContext)) {
+        return@withContext Result.success()
+      }
       try {
-        val release = SelfUpdater.fetchLatestRelease() ?: return@withContext Result.success()
-        val isAvailable = isNewerVersion(release.tag, BuildConfig.VERSION_NAME)
+        val release = SelfUpdater.fetchLatestRelease()
+        val isAvailable =
+          release != null && isNewerVersion(release.tag, BuildConfig.VERSION_NAME)
         saveUpdateAvailableState(applicationContext, isAvailable)
-        if (!isAvailable) return@withContext Result.success()
-        if (SelfUpdater.isPlaybackActive(applicationContext)) return@withContext Result.retry()
+        if (release == null || !isAvailable) {
+          if (manual) SelfUpdater.notify(applicationContext, "You're up to date", versionText())
+          return@withContext Result.success()
+        }
+        if (SelfUpdater.isPlaybackActive(applicationContext)) return@withContext waitForSilence(release)
 
         if (
           Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
@@ -217,21 +265,46 @@ class SelfUpdateWorker(context: Context, params: WorkerParameters) :
           return@withContext Result.success()
         }
 
+        // Keeps a slow download alive past WorkManager's time limit where Android allows it.
+        try {
+          setForeground(SelfUpdater.foregroundInfo(applicationContext))
+        } catch (e: IllegalStateException) {
+          Log.w("SelfUpdater", "Downloading without a foreground service: ${e.message}")
+        }
+
         val apk = File(applicationContext.cacheDir, "self_update/${release.tag}.apk")
-        if (!SelfUpdater.download(release.apkUrl, apk, release.sha256)) {
+        val verified =
+          SelfUpdater.download(release.apkUrl, apk, release.sha256) { percent ->
+            SelfUpdater.showProgress(applicationContext, percent)
+          }
+        if (!verified) {
           Log.e("SelfUpdater", "Checksum mismatch for ${release.tag}")
           apk.delete()
+          SelfUpdater.notify(applicationContext, "Update failed", "Download was corrupted, retrying")
           return@withContext Result.retry()
         }
         // Downloading takes a while, so the user may have started listening since the first check.
-        if (SelfUpdater.isPlaybackActive(applicationContext)) return@withContext Result.retry()
+        if (SelfUpdater.isPlaybackActive(applicationContext)) return@withContext waitForSilence(release)
+        SelfUpdater.notify(applicationContext, "Installing update", release.tag)
         SelfUpdater.install(applicationContext, apk)
         Result.success()
       } catch (e: Exception) {
         Log.e("SelfUpdater", "Update failed: ${e.message}", e)
+        SelfUpdater.notify(applicationContext, "Update failed", "Will try again: ${e.message}")
         Result.retry()
       }
     }
+
+  private fun versionText() = "Version ${BuildConfig.VERSION_NAME}"
+
+  private fun waitForSilence(release: SelfUpdater.Release): Result {
+    SelfUpdater.notify(
+      applicationContext,
+      "Update ${release.tag} is waiting",
+      "It will install once playback stops",
+    )
+    return Result.retry()
+  }
 
   private fun askForInstallPermission() {
     val settings =
@@ -269,11 +342,11 @@ class SelfUpdateResultReceiver : BroadcastReceiver() {
         )
       }
       PackageInstaller.STATUS_SUCCESS -> Unit
-      else ->
-        Log.e(
-          "SelfUpdater",
-          "Install failed: ${intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)}",
-        )
+      else -> {
+        val message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
+        Log.e("SelfUpdater", "Install failed: $message")
+        SelfUpdater.notify(context, "Update failed", "Could not install: $message")
+      }
     }
   }
 }
