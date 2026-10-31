@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -70,6 +71,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEachIndexed
 import androidx.compose.ui.zIndex
 import androidx.media3.common.MediaItem
@@ -159,10 +161,10 @@ inline fun ListItem(
             }
         )
         .then(modifier)
-        .height(ListItemHeight)
+        .heightIn(min = ListItemHeight)
   ) {
     Box(
-      modifier = Modifier.padding(start = 12.dp, top = 6.dp, end = 6.dp, bottom = 6.dp),
+      modifier = Modifier.padding(start = 6.dp, top = 6.dp, end = 7.dp, bottom = 6.dp),
       contentAlignment = Alignment.Center
     ) {
       thumbnailContent()
@@ -191,9 +193,9 @@ inline fun ListItem(
     Column(modifier = Modifier.weight(1f).padding(horizontal = 6.dp)) {
       Text(
         text = title,
-        style = MaterialTheme.typography.bodyMedium,
+        style = MaterialTheme.typography.bodyLarge,
         fontWeight = FontWeight.Bold,
-        maxLines = 1,
+        maxLines = 2,
         overflow = TextOverflow.Ellipsis
       )
 
@@ -272,7 +274,7 @@ fun ListItem(
         Text(
           text = subtitle,
           color = MaterialTheme.colorScheme.secondary,
-          style = MaterialTheme.typography.bodySmall,
+          style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
           maxLines = 1,
           overflow = TextOverflow.Ellipsis
         )

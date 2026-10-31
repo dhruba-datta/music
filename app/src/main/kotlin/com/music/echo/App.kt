@@ -29,6 +29,11 @@ import echo.music.iad1tya.extensions.toInetSocketAddress
 import echo.music.iad1tya.utils.AppContextHolder
 import echo.music.iad1tya.utils.CrashHandler
 import echo.music.iad1tya.utils.YouTubeThumbnailFallbackInterceptor
+import echo.music.iad1tya.constants.DarkModeKey
+import echo.music.iad1tya.constants.DynamicThemeKey
+import echo.music.iad1tya.constants.PureBlackKey
+import echo.music.iad1tya.constants.StageThemeResetKey
+import echo.music.iad1tya.ui.screens.settings.DarkMode
 import echo.music.iad1tya.utils.dataStore
 import echo.music.iad1tya.utils.reportException
 import java.net.Authenticator
@@ -100,6 +105,17 @@ class App : Application(), SingletonImageLoader.Factory {
 
     if (BuildConfig.DEBUG) {
       Timber.plant(Timber.DebugTree())
+    }
+
+    applicationScope.launch(Dispatchers.IO) {
+      dataStore.edit { settings ->
+        if (settings[StageThemeResetKey] != true) {
+          settings[StageThemeResetKey] = true
+          settings[DynamicThemeKey] = false
+          settings[PureBlackKey] = false
+          settings[DarkModeKey] = DarkMode.ON.name
+        }
+      }
     }
 
     applicationScope.launch(Dispatchers.IO) {

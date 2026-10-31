@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -63,38 +64,20 @@ fun Material3SettingsGroup(
       )
     }
 
-    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-      items.forEachIndexed { index, item ->
-        val shape =
-          when {
-            items.size == 1 -> RoundedCornerShape(18.dp)
-            index == 0 ->
-              RoundedCornerShape(
-                topStart = 18.dp,
-                topEnd = 18.dp,
-                bottomStart = 4.dp,
-                bottomEnd = 4.dp
-              )
-            index == items.size - 1 ->
-              RoundedCornerShape(
-                topStart = 4.dp,
-                topEnd = 4.dp,
-                bottomStart = 18.dp,
-                bottomEnd = 18.dp
-              )
-            else -> RoundedCornerShape(4.dp)
-          }
-
-        Card(
-          modifier = Modifier.fillMaxWidth().animateContentSize(),
-          shape = shape,
-          colors =
-            CardDefaults.cardColors(
-              containerColor =
-                if (item.isHighlighted) MaterialTheme.colorScheme.surfaceVariant
-                else MaterialTheme.colorScheme.surfaceContainer
-            ),
-          elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    Card(
+      modifier = Modifier.fillMaxWidth().animateContentSize(),
+      shape = RoundedCornerShape(18.dp),
+      colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+      elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+      items.forEach { item ->
+        Box(
+          modifier =
+            if (item.isHighlighted) {
+              Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
+            } else {
+              Modifier
+            }
         ) {
           Material3SettingsItemRow(item = item, compact = compact, scrollState = scrollState)
         }
@@ -120,10 +103,8 @@ private fun Material3SettingsItemRow(
           if (scrollState != null) Modifier.scrollToOnHighlight(scrollState, item.isHighlighted)
           else Modifier
         )
-        .padding(
-          horizontal = if (compact) 14.dp else 20.dp,
-          vertical = if (compact) 10.dp else 16.dp
-        ),
+        .heightIn(min = 54.dp)
+        .padding(horizontal = 14.dp, vertical = 6.dp),
     verticalAlignment = Alignment.CenterVertically
   ) {
     if (item.customIcon != null) {
@@ -135,7 +116,7 @@ private fun Material3SettingsItemRow(
       ) {
         item.customIcon.invoke()
       }
-      Spacer(modifier = Modifier.width(if (compact) 14.dp else 20.dp))
+      Spacer(modifier = Modifier.width(13.dp))
     } else
       item.icon?.let { icon ->
         Box(

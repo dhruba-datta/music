@@ -85,7 +85,7 @@ fun echomusicTheme(
   val colorScheme =
     remember(baseColorScheme, pureBlack, darkTheme) {
       when {
-        darkTheme && pureBlack -> baseColorScheme.pureBlack(true)
+        darkTheme && pureBlack -> baseColorScheme.stage().pureBlack(true)
         darkTheme -> baseColorScheme.stage()
         else -> baseColorScheme
       }
@@ -110,13 +110,28 @@ private fun ColorScheme.stage(): ColorScheme =
   copy(
     primary = Color.White,
     onPrimary = Color(0xFF111116),
+    primaryContainer = Color(0xFF2A2A32),
+    onPrimaryContainer = Color.White,
+    inversePrimary = Color(0xFF111116),
+    secondary = Color(0xFFC9C9D0),
+    onSecondary = Color(0xFF111116),
     secondaryContainer = Color(0xFF2A2A32),
     onSecondaryContainer = Color.White,
+    tertiary = Color(0xFFD9486A),
+    onTertiary = Color.White,
+    tertiaryContainer = Color(0xFF2A2A32),
+    onTertiaryContainer = Color.White,
     background = Color(0xFF0B0B0E),
     onBackground = Color.White,
     surface = Color(0xFF0B0B0E),
     onSurface = Color.White,
+    surfaceVariant = Color(0xFF2A2A32),
     onSurfaceVariant = Color(0xFFC9C9D0),
+    surfaceTint = Color.White,
+    inverseSurface = Color.White,
+    inverseOnSurface = Color(0xFF111116),
+    outline = Color(0xFF55555F),
+    outlineVariant = Color(0xFF2A2A32),
     surfaceDim = Color(0xFF0B0B0E),
     surfaceBright = Color(0xFF2A2A32),
     surfaceContainerLowest = Color(0xFF0B0B0E),

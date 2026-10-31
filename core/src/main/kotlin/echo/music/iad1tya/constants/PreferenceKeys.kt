@@ -41,6 +41,7 @@ enum class HapticIntensity(val label: String, val scaleFactor: Float) {
 }
 
 val DynamicThemeKey = booleanPreferencesKey("dynamicTheme")
+val StageThemeResetKey = booleanPreferencesKey("stageThemeReset")
 val SelectedThemeColorKey = intPreferencesKey("selectedThemeColor")
 val DarkModeKey = stringPreferencesKey("darkMode")
 val PureBlackKey = booleanPreferencesKey("pureBlack")

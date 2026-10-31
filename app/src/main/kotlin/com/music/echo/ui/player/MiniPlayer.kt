@@ -220,7 +220,7 @@ fun MiniPlayer(
       else if (pureBlack) Color.White else MaterialTheme.colorScheme.onSurface
     val bgTint =
       if (useGlass) Color.Transparent
-      else if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainerHigh
+      else if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainerHighest
     android.util.Log.d(
       "COLOR_MATCH",
       "MiniPlayer - isFollowTheme: $isFollowTheme, globalPureBlack: $globalPureBlack, pureBlackMini: $pureBlackMini, pureBlack final: $pureBlack, bgTint: $bgTint"
@@ -294,7 +294,7 @@ private fun NewMiniPlayer(progressState: ProgressState, modifier: Modifier = Mod
       glassConfig.isEnabledFor(GlassComponent.MINI_PLAYER)) && isGlassSupported()
   val bgTint =
     if (useGlass) Color.Transparent
-    else if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainerHigh
+    else if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainerHighest
 
   val playbackState by playerConnection.playbackState.collectAsState()
   val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
@@ -394,10 +394,10 @@ private fun NewMiniPlayer(progressState: ProgressState, modifier: Modifier = Mod
       modifier
         .fillMaxWidth()
         .wrapContentWidth(Alignment.CenterHorizontally)
-        .widthIn(max = 340.dp)
+        .widthIn(max = 512.dp)
         .height(MiniPlayerHeight)
         .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
-        .padding(horizontal = 12.dp)
+        .padding(horizontal = 16.dp)
         .let { baseModifier ->
           if (swipeThumbnail) {
             baseModifier.pointerInput(Unit) {
@@ -465,13 +465,16 @@ private fun NewMiniPlayer(progressState: ProgressState, modifier: Modifier = Mod
           .height(MiniPlayerHeight)
           .offset { IntOffset(offsetXAnimatable.value.roundToInt(), 0) }
           .let { m ->
-            val shape = RoundedCornerShape(percent = 50)
+            val shape = RoundedCornerShape(18.dp)
             if (useGlass) {
                 m.clip(shape).liquidGlass(config = glassConfig, shape = shape)
               } else {
                 m.clip(shape).background(bgTint)
               }
-              .border(1.dp, outlineColor.copy(alpha = 0.3f), shape)
+              .then(
+                if (pureBlack) Modifier.border(1.dp, outlineColor.copy(alpha = 0.3f), shape)
+                else Modifier
+              )
           }
     ) {
       MiniPlayerBackgroundLayer(
@@ -482,7 +485,7 @@ private fun NewMiniPlayer(progressState: ProgressState, modifier: Modifier = Mod
 
       Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 8.dp),
+        modifier = Modifier.fillMaxSize().padding(start = 8.dp, end = 2.dp),
       ) {
         NewMiniPlayerThumbnail(
           progressState = progressState,
@@ -491,7 +494,7 @@ private fun NewMiniPlayer(progressState: ProgressState, modifier: Modifier = Mod
           outlineColor = outlineColor,
         )
 
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(8.dp))
 
         NewMiniPlayerSongInfo(
           mediaMetadata = mediaMetadata,
@@ -559,58 +562,17 @@ private fun NewMiniPlayerThumbnail(
   primaryColor: Color,
   outlineColor: Color,
 ) {
-  val trackColor = outlineColor.copy(alpha = 0.2f)
-  val strokeWidth = 3.dp
-
   Box(
     contentAlignment = Alignment.Center,
-    modifier =
-      Modifier.size(48.dp).drawWithContent {
-        drawContent()
-
-        val progress = progressState.progress
-        val stroke = Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Round)
-        val startAngle = -90f
-        val sweepAngle = 360f * progress
-        val diameter = size.minDimension
-        val topLeft = Offset((size.width - diameter) / 2, (size.height - diameter) / 2)
-
-        drawArc(
-          color = trackColor,
-          startAngle = 0f,
-          sweepAngle = 360f,
-          useCenter = false,
-          topLeft = topLeft,
-          size = Size(diameter, diameter),
-          style = stroke
-        )
-
-        drawArc(
-          color = primaryColor,
-          startAngle = startAngle,
-          sweepAngle = sweepAngle,
-          useCenter = false,
-          topLeft = topLeft,
-          size = Size(diameter, diameter),
-          style = stroke
-        )
-      }
+    modifier = Modifier.size(44.dp).clip(RoundedCornerShape(12.dp))
   ) {
-    Box(
-      contentAlignment = Alignment.Center,
-      modifier =
-        Modifier.size(40.dp)
-          .clip(CircleShape)
-          .border(1.dp, outlineColor.copy(alpha = 0.3f), CircleShape)
-    ) {
-      mediaMetadata?.let { metadata ->
-        AsyncImage(
-          model = ImageRequest.Builder(LocalContext.current).data(metadata.thumbnailUrl).build(),
-          contentDescription = null,
-          contentScale = ContentScale.Crop,
-          modifier = Modifier.fillMaxSize().clip(CircleShape)
-        )
-      }
+    mediaMetadata?.let { metadata ->
+      AsyncImage(
+        model = ImageRequest.Builder(LocalContext.current).data(metadata.thumbnailUrl).build(),
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        modifier = Modifier.fillMaxSize()
+      )
     }
   }
 }
@@ -630,8 +592,8 @@ private fun NewMiniPlayerSongInfo(
       Text(
         text = metadata.title,
         color = onSurfaceColor,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.Medium,
+        fontSize = 15.sp,
+        fontWeight = FontWeight.Bold,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
         modifier =
@@ -696,7 +658,7 @@ private fun LegacyMiniPlayer(progressState: ProgressState, modifier: Modifier = 
       glassConfig.isEnabledFor(GlassComponent.MINI_PLAYER)) && isGlassSupported()
   val bgTint =
     if (useGlass) Color.Transparent
-    else if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainerHigh
+    else if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainerHighest
 
   val playbackState by playerConnection.playbackState.collectAsState()
   val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
@@ -1272,58 +1234,26 @@ private fun MiniPlayerControls(
     castHandler?.castIsPlaying?.collectAsState() ?: remember { mutableStateOf(false) }
   val effectiveIsPlaying = if (isCasting) castIsPlaying else isPlaying
   val isMuted by playerConnection.isMuted.collectAsState()
-  val wavyPlayPause by echo.music.iad1tya.utils.rememberPreference(echo.music.iad1tya.constants.WavyPlayPauseKey, defaultValue = true)
   Row(verticalAlignment = Alignment.CenterVertically) {
     IconButton(
       enabled = canSkipPrevious && !isListenTogetherGuest,
       onClick =
         if (isListenTogetherGuest) ({})
         else ({ playerConnection.player.seekToPreviousMediaItem() }),
-      modifier = Modifier.size(32.dp)
+      modifier = Modifier.size(44.dp)
     ) {
       Icon(
-        painter = painterResource(R.drawable.skip_previous),
+        painter = painterResource(R.drawable.stage_skip_previous),
         contentDescription = null,
         tint = onSurfaceColor,
-        modifier = Modifier.size(20.dp)
+        modifier = Modifier.size(24.dp)
       )
     }
-
-    Spacer(modifier = Modifier.width(12.dp))
-
-    val cookieIndent by
-      androidx.compose.animation.core.animateFloatAsState(
-        targetValue = if (effectiveIsPlaying) 0.08f else 0f,
-        animationSpec =
-          androidx.compose.animation.core.tween(
-            durationMillis = 300,
-            easing = androidx.compose.animation.core.LinearEasing
-          ),
-        label = "cookieIndent",
-      )
-
-    val infiniteTransition =
-      androidx.compose.animation.core.rememberInfiniteTransition(label = "rotation")
-    val rotation by
-      infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec =
-          androidx.compose.animation.core.infiniteRepeatable(
-            animation =
-              androidx.compose.animation.core.tween(
-                8000,
-                easing = androidx.compose.animation.core.LinearEasing
-              ),
-            repeatMode = androidx.compose.animation.core.RepeatMode.Restart
-          ),
-        label = "rotation"
-      )
 
     Box(
       contentAlignment = Alignment.Center,
       modifier =
-        Modifier.size(48.dp).clip(CircleShape).clickable {
+        Modifier.size(44.dp).clip(CircleShape).clickable {
           if (isListenTogetherGuest) {
             playerConnection.toggleMute()
             return@clickable
@@ -1338,45 +1268,32 @@ private fun MiniPlayerControls(
           }
         }
     ) {
-      Box(
-        modifier =
-          Modifier.matchParentSize()
-            .graphicsLayer {
-              rotationZ = rotation
-              clip = true
-              shape = if (wavyPlayPause) PolygonCookieShape(sides = 9, indent = cookieIndent) else androidx.compose.foundation.shape.CircleShape
-            }
-            .background(primaryColor)
-      )
-
       Icon(
         painter =
           painterResource(
             when {
               isListenTogetherGuest -> if (isMuted) R.drawable.volume_off else R.drawable.volume_up
               playbackState == Player.STATE_ENDED -> R.drawable.replay
-              effectiveIsPlaying -> R.drawable.pause
-              else -> R.drawable.play
+              effectiveIsPlaying -> R.drawable.stage_pause
+              else -> R.drawable.stage_play
             }
           ),
         contentDescription = null,
-        tint = onPrimaryColor,
+        tint = onSurfaceColor,
         modifier = Modifier.size(24.dp)
       )
     }
 
-    Spacer(modifier = Modifier.width(12.dp))
-
     IconButton(
       enabled = canSkipNext && !isListenTogetherGuest,
       onClick = if (isListenTogetherGuest) ({}) else ({ playerConnection.player.seekToNext() }),
-      modifier = Modifier.size(32.dp)
+      modifier = Modifier.size(44.dp)
     ) {
       Icon(
-        painter = painterResource(R.drawable.skip_next),
+        painter = painterResource(R.drawable.stage_skip_next),
         contentDescription = null,
         tint = onSurfaceColor,
-        modifier = Modifier.size(20.dp)
+        modifier = Modifier.size(24.dp)
       )
     }
   }

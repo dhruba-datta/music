@@ -185,8 +185,8 @@ fun getTypography(brandFont: FontFamily, plainFont: FontFamily = FontFamily.Defa
     titleLarge =
       TextStyle(
         fontFamily = brandFont,
-        fontWeight = FontWeight.Normal,
-        fontSize = 22.sp,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 24.sp,
         lineHeight = 28.sp,
         letterSpacing = 0.sp
       ),

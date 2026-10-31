@@ -147,7 +147,7 @@ fun AppearanceSettings(
 
   val (selectedFontValue) = rememberPreference(SelectedFontKey, defaultValue = AppFont.MANROPE.value)
   val (dynamicTheme, onDynamicThemeChange) =
-    rememberPreference(DynamicThemeKey, defaultValue = true)
+    rememberPreference(DynamicThemeKey, defaultValue = false)
   val (enableLegacyIcon, onEnableLegacyIconChange) =
     rememberPreference(echo.music.iad1tya.constants.EnableLegacyIconKey, defaultValue = false)
 

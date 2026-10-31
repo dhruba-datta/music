@@ -369,7 +369,7 @@ fun StageSectionTitle(text: String, modifier: Modifier = Modifier) {
 fun StageSectionHeader(title: String, modifier: Modifier = Modifier, onMore: (() -> Unit)? = null) {
   Row(
     verticalAlignment = Alignment.CenterVertically,
-    modifier = modifier.fillMaxWidth().padding(horizontal = 18.dp),
+    modifier = modifier.fillMaxWidth().padding(start = 22.dp, end = 22.dp, top = 18.dp, bottom = 8.dp),
   ) {
     StageSectionTitle(text = title, modifier = Modifier.weight(1f))
     if (onMore != null) {

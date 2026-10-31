@@ -12,26 +12,27 @@ const val CONTENT_TYPE_ARTIST = 3
 const val CONTENT_TYPE_ALBUM = 4
 const val CONTENT_TYPE_PLAYLIST = 5
 
-val FloatingToolbarHeight = 72.dp
+val FloatingToolbarHeight = 64.dp
 val FloatingToolbarHorizontalPadding = 16.dp
-val FloatingToolbarBottomPadding = 12.dp
+val FloatingToolbarBottomPadding = 14.dp
 val NavigationBarHeight = FloatingToolbarHeight
 val SlimNavBarHeight = 64.dp
-val MiniPlayerHeight = 64.dp
+val MiniPlayerHeight = 60.dp
 val MinMiniPlayerHeight = 16.dp
-val MiniPlayerBottomSpacing = 8.dp
+val MiniPlayerBottomSpacing = 14.dp
 val QueuePeekHeight = 64.dp
 val AppBarHeight = 64.dp
 
 val ListItemHeight = 64.dp
 val SuggestionItemHeight = 56.dp
 val SearchFilterHeight = 48.dp
-val ListThumbnailSize = 48.dp
+val ListThumbnailSize = 52.dp
 val SmallGridThumbnailHeight = 104.dp
 val GridThumbnailHeight = 128.dp
 val AlbumThumbnailSize = 144.dp
 
-val ThumbnailCornerRadius = 6.dp
+val ThumbnailCornerRadius = 12.dp
+val GridThumbnailCornerRadius = 18.dp
 
 val PlayerHorizontalPadding = 32.dp
 

@@ -58,7 +58,7 @@ fun HapticsSettings(
   val scrollState = rememberScrollState()
 
   val (enableHaptics, onEnableHapticsChange) =
-    rememberPreference(echo.music.iad1tya.constants.EnableHapticsKey, defaultValue = false)
+    rememberPreference(echo.music.iad1tya.constants.EnableHapticsKey, defaultValue = true)
   val (hapticIntensityName, onHapticIntensityChange) =
     rememberPreference(HapticIntensityKey, defaultValue = HapticIntensity.MEDIUM.name)
   val (enableClickHaptics, onEnableClickHapticsChange) =

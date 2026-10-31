@@ -82,7 +82,7 @@ import echo.music.iad1tya.utils.rememberPreference
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ThemeScreen(navController: NavController, highlightKey: String? = null) {
-  val (darkMode, onDarkModeChange) = rememberEnumPreference(DarkModeKey, DarkMode.AUTO)
+  val (darkMode, onDarkModeChange) = rememberEnumPreference(DarkModeKey, DarkMode.ON)
   val (pureBlack, onPureBlackChangeRaw) = rememberPreference(PureBlackKey, defaultValue = false)
   val (_, onPureBlackMiniPlayerChange) =
     rememberPreference(PureBlackMiniPlayerKey, defaultValue = false)
@@ -93,7 +93,7 @@ fun ThemeScreen(navController: NavController, highlightKey: String? = null) {
   }
   val (selectedThemeColorInt, onSelectedThemeColorChange) =
     rememberPreference(SelectedThemeColorKey, DefaultThemeColor.toArgb())
-  val (_, onDynamicThemeChange) = rememberPreference(DynamicThemeKey, defaultValue = true)
+  val (_, onDynamicThemeChange) = rememberPreference(DynamicThemeKey, defaultValue = false)
 
   val selectedThemeColor = Color(selectedThemeColorInt)
 

@@ -98,7 +98,7 @@ class HapticHelper(
 fun rememberHapticHelper(): HapticHelper {
   val context = LocalContext.current
   val view = LocalView.current
-  val (masterEnabled) = rememberPreference(EnableHapticsKey, defaultValue = false)
+  val (masterEnabled) = rememberPreference(EnableHapticsKey, defaultValue = true)
   val (intensityName) =
     rememberPreference(HapticIntensityKey, defaultValue = HapticIntensity.MEDIUM.name)
   val (clickEnabled) = rememberPreference(EnableClickHapticsKey, defaultValue = true)

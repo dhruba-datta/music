@@ -64,11 +64,11 @@ fun <E> ChipsRow(
     modifier =
       modifier
         .fillMaxWidth()
-        .padding(top = 8.dp, bottom = 4.dp)
+        .padding(top = 12.dp)
         .horizontalScroll(rememberScrollState())
         .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal)),
   ) {
-    Spacer(Modifier.width(12.dp))
+    Spacer(Modifier.width(22.dp))
 
     chips.forEach { (value, label) ->
       val isSelected = currentValue == value
@@ -98,7 +98,7 @@ fun <E> ChipsRow(
         shape = RoundedCornerShape(cornerRadius),
         border = null,
         modifier =
-          Modifier.animateContentSize(
+          Modifier.height(44.dp).animateContentSize(
             animationSpec =
               spring(
                 dampingRatio = Spring.DampingRatioMediumBouncy,
@@ -141,7 +141,7 @@ fun <Int> ChoiceChipsRow(
           .horizontalScroll(rememberScrollState())
           .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal)),
     ) {
-      Spacer(Modifier.width(12.dp))
+      Spacer(Modifier.width(22.dp))
       Box(contentAlignment = Alignment.Center) {
         FilterChip(
           selected = false,

@@ -15,24 +15,24 @@ sealed class Screens(
   object Home :
     Screens(
       titleId = R.string.home,
-      iconIdInactive = R.drawable.home_outlined,
-      iconIdActive = R.drawable.home_filled,
+      iconIdInactive = R.drawable.stage_home,
+      iconIdActive = R.drawable.stage_home,
       route = "home"
     )
 
   object Search :
     Screens(
       titleId = R.string.search,
-      iconIdInactive = R.drawable.search,
-      iconIdActive = R.drawable.search,
+      iconIdInactive = R.drawable.stage_search,
+      iconIdActive = R.drawable.stage_search,
       route = "search_input"
     )
 
   object Recognize :
     Screens(
       titleId = R.string.recognition,
-      iconIdInactive = R.drawable.mic,
-      iconIdActive = R.drawable.mic,
+      iconIdInactive = R.drawable.stage_mic,
+      iconIdActive = R.drawable.stage_mic,
       route = "recognition"
     )
 
@@ -47,8 +47,8 @@ sealed class Screens(
   object Library :
     Screens(
       titleId = R.string.filter_library,
-      iconIdInactive = R.drawable.library_music_outlined,
-      iconIdActive = R.drawable.library_music_filled,
+      iconIdInactive = R.drawable.stage_library,
+      iconIdActive = R.drawable.stage_library,
       route = "library"
     )
 

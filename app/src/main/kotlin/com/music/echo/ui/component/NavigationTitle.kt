@@ -46,7 +46,7 @@ fun NavigationTitle(
         .fillMaxWidth()
         .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
         .clickable(enabled = onClick != null) { onClick?.invoke() }
-        .padding(horizontal = 18.dp, vertical = 12.dp)
+        .padding(start = 22.dp, end = 22.dp, top = 18.dp, bottom = 8.dp)
   ) {
     thumbnail?.invoke()
 

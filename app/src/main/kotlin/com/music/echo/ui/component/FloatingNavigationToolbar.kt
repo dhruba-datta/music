@@ -25,6 +25,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -111,11 +113,6 @@ fun FloatingNavigationToolbar(
     "COLOR_MATCH",
     "NavBar - pureBlack parameter: $pureBlack, toolbarContainerColor: $toolbarContainerColor"
   )
-  val toolbarColors =
-    FloatingToolbarDefaults.standardFloatingToolbarColors(
-      toolbarContainerColor = androidx.compose.ui.graphics.Color.Transparent,
-    )
-
   val outlineColor = androidx.compose.material3.MaterialTheme.colorScheme.outline
   val glassConfig = LocalGlassEffectConfig.current
   val useGlass = glassConfig.isEnabledFor(GlassComponent.NAV_BAR)
@@ -135,10 +132,16 @@ fun FloatingNavigationToolbar(
           )
           .background(toolbarContainerColor)
       }
-      .border(
-        1.dp,
-        outlineColor.copy(alpha = 0.3f),
-        androidx.compose.foundation.shape.RoundedCornerShape(percent = 50)
+      .then(
+        if (pureBlack) {
+          Modifier.border(
+            1.dp,
+            outlineColor.copy(alpha = 0.3f),
+            androidx.compose.foundation.shape.RoundedCornerShape(percent = 50)
+          )
+        } else {
+          Modifier
+        }
       )
 
   val hasOverflowMenu =
@@ -151,12 +154,7 @@ fun FloatingNavigationToolbar(
   ) {
     val showSelectedLabels = false
 
-    HorizontalFloatingToolbar(
-      expanded = true,
-      modifier = Modifier.widthIn(max = 480.dp).then(toolbarModifier),
-      colors = toolbarColors,
-      scrollBehavior = scrollBehavior,
-    ) {
+    Box(modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth().height(64.dp).then(toolbarModifier)) {
       ToolbarItemsContainer(
         items = items,
         pureBlack = pureBlack,
@@ -210,54 +208,51 @@ private fun ToolbarItemsContainer(
   fabContentDescription: String = "",
   onSearchLongClick: (() -> Unit)? = null
 ) {
-  val density = LocalDensity.current
-  val itemWidths = remember { mutableStateMapOf<Screens, Dp>() }
-  val itemPositions = remember { mutableStateMapOf<Screens, Dp>() }
-
+  val slotCount =
+    items.size +
+      (if (onMusicRecognitionClick != null) 1 else 0) +
+      (if (hasOverflowMenu || (hasFabAction && fabIconRes != null && onFabClick != null)) 1 else 0)
   val activeScreen = items.find { isSelected(it) }
-  val targetWidth = itemWidths[activeScreen] ?: 0.dp
-  val targetPosition = itemPositions[activeScreen] ?: 0.dp
-
-  val slidingPillWidth by
-    animateDpAsState(
-      targetValue = targetWidth,
-      animationSpec =
-        spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow),
-      label = "pillWidth"
-    )
-
-  val slidingPillOffset by
-    animateDpAsState(
-      targetValue = targetPosition,
-      animationSpec =
-        spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow),
-      label = "pillOffset"
-    )
-
-  Box(modifier = Modifier.height(IntrinsicSize.Min)) {
-    Box(modifier = Modifier.matchParentSize()) {
-      if (targetWidth > 0.dp) {
-        Box(
-          modifier =
-            Modifier.offset(x = slidingPillOffset)
-              .width(slidingPillWidth)
-              .fillMaxHeight()
-              .background(
-                color = floatingToolbarSelectedItemContainerColor(pureBlack),
-                shape = RoundedCornerShape(24.dp)
-              )
-        )
-      }
+  val activeSlot =
+    activeScreen?.let { screen ->
+      items.indexOf(screen) +
+        (if (screen == Screens.Library && onMusicRecognitionClick != null) 1 else 0)
     }
 
-    Row(verticalAlignment = Alignment.CenterVertically) {
+  BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+    val slotWidth = maxWidth / slotCount
+    val slidingPillOffset by
+      animateDpAsState(
+        targetValue = slotWidth * (activeSlot ?: 0) + (slotWidth - 56.dp) / 2,
+        animationSpec =
+          spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow),
+        label = "pillOffset"
+      )
+
+    if (activeSlot != null) {
+      Box(
+        modifier =
+          Modifier.align(Alignment.CenterStart)
+            .offset(x = slidingPillOffset)
+            .size(width = 56.dp, height = 44.dp)
+            .background(
+              color = floatingToolbarSelectedItemContainerColor(pureBlack),
+              shape = RoundedCornerShape(22.dp)
+            )
+      )
+    }
+
+    val slotModifier = Modifier.width(slotWidth).fillMaxHeight()
+
+    Row(modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
       items.forEach { screen ->
         if (screen == Screens.Library && onMusicRecognitionClick != null) {
           FloatingNavigationToolbarActionItem(
             iconRes = R.drawable.mic,
             contentDescription = musicRecognitionContentDescription,
             pureBlack = pureBlack,
-            onClick = onMusicRecognitionClick
+            onClick = onMusicRecognitionClick,
+            modifier = slotModifier
           )
         }
 
@@ -269,16 +264,13 @@ private fun ToolbarItemsContainer(
           pureBlack = pureBlack,
           onClick = { onItemClick(screen, selected) },
           onLongClick = if (screen == Screens.Search) onSearchLongClick else null,
-          modifier =
-            Modifier.onGloballyPositioned { coordinates ->
-              itemWidths[screen] = with(density) { coordinates.size.width.toDp() }
-              itemPositions[screen] = with(density) { coordinates.positionInParent().x.toDp() }
-            }
+          modifier = slotModifier
         )
       }
 
       if (hasOverflowMenu) {
         FloatingToolbarOverflowMenuButton(
+          modifier = slotModifier,
           pureBlack = pureBlack,
           onMusicFlowClick = onMusicFlowClick,
           musicFlowIconRes = musicFlowIconRes,
@@ -295,7 +287,8 @@ private fun ToolbarItemsContainer(
           pureBlack = pureBlack,
           onClick = onFabClick,
           iconRes = fabIconRes,
-          contentDescription = fabContentDescription
+          contentDescription = fabContentDescription,
+          modifier = slotModifier
         )
       }
     }
@@ -306,6 +299,7 @@ private fun ToolbarItemsContainer(
 @Composable
 fun FloatingToolbarOverflowMenuButton(
   pureBlack: Boolean,
+  modifier: Modifier = Modifier,
   onMusicFlowClick: (() -> Unit)? = null,
   musicFlowIconRes: Int? = null,
   musicFlowContentDescription: String = "",
@@ -320,12 +314,13 @@ fun FloatingToolbarOverflowMenuButton(
   val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
   val scope = rememberCoroutineScope()
 
-  Box {
+  Box(modifier = modifier) {
     FloatingNavigationToolbarActionItem(
-      iconRes = R.drawable.more_horiz,
+      iconRes = R.drawable.stage_more,
       contentDescription = stringResource(R.string.more_label),
       pureBlack = pureBlack,
       onClick = { showSheet = true },
+      modifier = Modifier.fillMaxSize(),
     )
 
     if (showSheet) {
@@ -431,6 +426,7 @@ private fun FloatingToolbarFabAction(
   onClick: (() -> Unit)?,
   iconRes: Int?,
   contentDescription: String,
+  modifier: Modifier = Modifier,
 ) {
   if (onClick == null || iconRes == null) return
 
@@ -438,6 +434,7 @@ private fun FloatingToolbarFabAction(
     iconRes = iconRes,
     contentDescription = contentDescription.ifEmpty { stringResource(R.string.create_playlist) },
     pureBlack = pureBlack,
+    modifier = modifier,
     onClick = onClick
   )
 }
