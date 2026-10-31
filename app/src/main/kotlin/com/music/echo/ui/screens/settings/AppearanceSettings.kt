@@ -268,8 +268,9 @@ fun AppearanceSettings(
     showRestartDialog = true
   }
 
-  val (listenTogetherInTopBar, onListenTogetherInTopBarChange) =
-    rememberPreference(ListenTogetherInTopBarKey, defaultValue = true)
+  // The Listen Together row is hidden here because that button is always in the top bar.
+  // The preference itself is kept.
+  rememberPreference(ListenTogetherInTopBarKey, defaultValue = true)
 
   val (swipeToSong, onSwipeToSongChange) = rememberPreference(SwipeToSongKey, defaultValue = true)
 
@@ -1774,29 +1775,6 @@ fun AppearanceSettings(
               )
             },
             onClick = { onSwipeToRemoveSongChange(!swipeToRemoveSong) }
-          ),
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == stringResource(R.string.listen_together_in_top_bar)),
-            icon = painterResource(R.drawable.group_outlined),
-            title = { Text(stringResource(R.string.listen_together_in_top_bar)) },
-            description = { Text(stringResource(R.string.listen_together_in_top_bar_desc)) },
-            trailingContent = {
-              Switch(
-                checked = listenTogetherInTopBar,
-                onCheckedChange = onListenTogetherInTopBarChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (listenTogetherInTopBar) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
-            },
-            onClick = { onListenTogetherInTopBarChange(!listenTogetherInTopBar) }
           ),
           Material3SettingsItem(
             isHighlighted = (highlightKey == stringResource(R.string.grid_cell_size)),

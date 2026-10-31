@@ -40,7 +40,7 @@
     <string name="install">Install</string>
     <string name="check_for_update">Check for update</string>
     <string name="no_changelog_available">No changelog available</string>
-    <string name="system_update">System update</string>
+    <string name="system_update">Check for updates</string>
     <string name="app_updates_title">App Updates</string>
     <string name="update_settings_title">Update Settings</string>
     <string name="app_updates_subtitle">App updates</string>

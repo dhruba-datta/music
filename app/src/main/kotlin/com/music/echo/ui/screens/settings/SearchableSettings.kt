@@ -868,12 +868,6 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
       "settings/privacy"
     ),
     SearchableSetting(
-      stringResource(R.string.listen_together_in_top_bar),
-      stringResource(R.string.listen_together_in_top_bar_desc),
-      "Appearance",
-      "settings/appearance"
-    ),
-    SearchableSetting(
       stringResource(R.string.live_mesh),
       stringResource(R.string.live_mesh_desc),
       "Appearance",

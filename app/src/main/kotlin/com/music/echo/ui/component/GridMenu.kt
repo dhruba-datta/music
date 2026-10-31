@@ -2,6 +2,7 @@ package echo.music.iad1tya.ui.component
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -18,7 +20,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ShapeDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -78,7 +79,8 @@ fun LazyGridScope.GridMenuItem(
     Column(
       modifier =
         modifier
-          .clip(ShapeDefaults.Large)
+          .clip(RoundedCornerShape(18.dp))
+          .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(18.dp))
           .height(GridMenuItemHeight)
           .clickable(enabled = enabled, onClick = onClick)
           .alpha(if (enabled) 1f else 0.5f)
@@ -147,7 +149,8 @@ fun LazyGridScope.SleepTimerGridMenu(
     Column(
       modifier =
         modifier
-          .clip(ShapeDefaults.Large)
+          .clip(RoundedCornerShape(18.dp))
+          .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(18.dp))
           .height(GridMenuItemHeight)
           .clickable(onClick = onClick)
           .padding(12.dp)

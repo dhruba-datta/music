@@ -40,6 +40,7 @@ import echo.music.iad1tya.R
 import echo.music.iad1tya.echomusic.updater.getUpdateAvailableState
 import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.Material3SettingsGroup
+import echo.music.iad1tya.ui.component.withIconTiles
 import echo.music.iad1tya.ui.component.Material3SettingsItem
 import echo.music.iad1tya.ui.screens.Screens
 import echo.music.iad1tya.ui.utils.backToMain
@@ -427,11 +428,12 @@ fun SettingsScreen(
       Spacer(modifier = Modifier.height(16.dp))
 
       // Let's just create groups manually using itemsList which preserves order
-      val accountGroup = itemsList.take(2) // Account, AI
-      val listeningSummaryGroup = itemsList.drop(2).take(1) // Listening Summary
-      val playerGroup = itemsList.drop(3).take(4) // Appearance, Player, Music Flow, Listen Together
-      val dataGroup = itemsList.drop(7).take(4) // Content, Privacy, Storage, Backup
-      val systemGroup = itemsList.drop(11) // Update, Links, About
+      val tiledItems = itemsList.withIconTiles()
+      val accountGroup = tiledItems.take(2) // Account, AI
+      val listeningSummaryGroup = tiledItems.drop(2).take(1) // Listening Summary
+      val playerGroup = tiledItems.drop(3).take(4) // Appearance, Player, Music Flow, Listen Together
+      val dataGroup = tiledItems.drop(7).take(4) // Content, Privacy, Storage, Backup
+      val systemGroup = tiledItems.drop(11) // Update, Links, About
 
       if (accountGroup.isNotEmpty()) {
         Material3SettingsGroup(scrollState = scrollState, items = accountGroup)

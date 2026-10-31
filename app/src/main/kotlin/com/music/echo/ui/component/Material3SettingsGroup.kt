@@ -3,6 +3,7 @@ package echo.music.iad1tya.ui.component
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,10 +28,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import echo.music.iad1tya.ui.utils.scrollToOnHighlight
 
 @Composable
@@ -43,12 +47,13 @@ fun Material3SettingsGroup(
   Column(modifier = Modifier.fillMaxWidth()) {
     title?.let {
       Text(
-        text = it.uppercase(),
+        text = it,
         style =
-          MaterialTheme.typography.labelLarge.copy(
-            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+          MaterialTheme.typography.titleLarge.copy(
+            fontWeight = FontWeight.Bold,
+            fontSize = 19.sp
           ),
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = MaterialTheme.colorScheme.onSurface,
         modifier =
           Modifier.padding(
             bottom = if (compact) 4.dp else 8.dp,
@@ -62,11 +67,11 @@ fun Material3SettingsGroup(
       items.forEachIndexed { index, item ->
         val shape =
           when {
-            items.size == 1 -> RoundedCornerShape(24.dp)
+            items.size == 1 -> RoundedCornerShape(18.dp)
             index == 0 ->
               RoundedCornerShape(
-                topStart = 24.dp,
-                topEnd = 24.dp,
+                topStart = 18.dp,
+                topEnd = 18.dp,
                 bottomStart = 4.dp,
                 bottomEnd = 4.dp
               )
@@ -74,8 +79,8 @@ fun Material3SettingsGroup(
               RoundedCornerShape(
                 topStart = 4.dp,
                 topEnd = 4.dp,
-                bottomStart = 24.dp,
-                bottomEnd = 24.dp
+                bottomStart = 18.dp,
+                bottomEnd = 18.dp
               )
             else -> RoundedCornerShape(4.dp)
           }
@@ -87,7 +92,7 @@ fun Material3SettingsGroup(
             CardDefaults.cardColors(
               containerColor =
                 if (item.isHighlighted) MaterialTheme.colorScheme.surfaceVariant
-                else MaterialTheme.colorScheme.surfaceContainerHigh
+                else MaterialTheme.colorScheme.surfaceContainer
             ),
           elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
@@ -124,7 +129,7 @@ private fun Material3SettingsItemRow(
     if (item.customIcon != null) {
       Box(
         modifier =
-          Modifier.size(if (compact) 34.dp else 40.dp)
+          Modifier.size(if (compact) 34.dp else 36.dp)
             .clip(item.iconShape ?: RoundedCornerShape(12.dp)),
         contentAlignment = Alignment.Center
       ) {
@@ -135,8 +140,16 @@ private fun Material3SettingsItemRow(
       item.icon?.let { icon ->
         Box(
           modifier =
-            Modifier.size(if (compact) 34.dp else 40.dp)
-              .clip(item.iconShape ?: RoundedCornerShape(12.dp)),
+            Modifier.size(if (compact) 34.dp else 36.dp)
+              .clip(item.iconShape ?: RoundedCornerShape(12.dp))
+              .then(
+                if (item.tintIcon)
+                  Modifier.background(
+                    item.iconBackground ?: MaterialTheme.colorScheme.surfaceContainerHighest,
+                    item.iconShape ?: RoundedCornerShape(12.dp)
+                  )
+                else Modifier
+              ),
           contentAlignment = Alignment.Center
         ) {
           if (item.showBadge) {
@@ -155,7 +168,7 @@ private fun Material3SettingsItemRow(
                 Image(
                   painter = icon,
                   contentDescription = null,
-                  modifier = Modifier.size(if (compact) 34.dp else 40.dp),
+                  modifier = Modifier.size(if (compact) 34.dp else 36.dp),
                   contentScale = ContentScale.Crop
                 )
               }
@@ -175,7 +188,7 @@ private fun Material3SettingsItemRow(
               Image(
                 painter = icon,
                 contentDescription = null,
-                modifier = Modifier.size(if (compact) 34.dp else 40.dp),
+                modifier = Modifier.size(if (compact) 34.dp else 36.dp),
                 contentScale = ContentScale.Crop
               )
             }
@@ -227,6 +240,23 @@ data class Material3SettingsItem(
   val isHighlighted: Boolean = false,
   val tintIcon: Boolean = true,
   val iconShape: Shape? = null,
+  val iconBackground: Color? = null,
   val enabled: Boolean = true,
   val onClick: (() -> Unit)? = null
 )
+
+private val SettingsIconTiles =
+  listOf(
+    Color(0xFF2A6F97),
+    Color(0xFF6A4C93),
+    Color(0xFF2E8B57),
+    Color(0xFFD9486A),
+    Color(0xFF8B63D9),
+    Color(0xFF3F9BD9),
+    Color(0xFF386641)
+  )
+
+fun List<Material3SettingsItem>.withIconTiles(): List<Material3SettingsItem> = mapIndexed { index, item ->
+  if (item.iconBackground != null) item
+  else item.copy(iconBackground = SettingsIconTiles[index % SettingsIconTiles.size])
+}

@@ -27,11 +27,11 @@ fun Material3MenuGroup(items: List<Material3MenuItemData>, modifier: Modifier = 
     items.forEachIndexed { index, item ->
       val shape =
         when {
-          items.size == 1 -> RoundedCornerShape(24.dp)
+          items.size == 1 -> RoundedCornerShape(18.dp)
           index == 0 ->
             RoundedCornerShape(
-              topStart = 24.dp,
-              topEnd = 24.dp,
+              topStart = 18.dp,
+              topEnd = 18.dp,
               bottomStart = 6.dp,
               bottomEnd = 6.dp
             )
@@ -39,8 +39,8 @@ fun Material3MenuGroup(items: List<Material3MenuItemData>, modifier: Modifier = 
             RoundedCornerShape(
               topStart = 6.dp,
               topEnd = 6.dp,
-              bottomStart = 24.dp,
-              bottomEnd = 24.dp
+              bottomStart = 18.dp,
+              bottomEnd = 18.dp
             )
           else -> RoundedCornerShape(6.dp)
         }
