@@ -49,7 +49,7 @@ class BottomSheetPageState(
 fun BottomSheetPage(
   modifier: Modifier = Modifier,
   state: BottomSheetPageState,
-  background: Color = MaterialTheme.colorScheme.surfaceContainer,
+  background: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
 ) {
   val focusManager = LocalFocusManager.current
   val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
@@ -61,15 +61,16 @@ fun BottomSheetPage(
       state.isVisible = false
     },
     sheetState = sheetState,
+    shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
     containerColor = background,
     contentColor = MaterialTheme.colorScheme.onSurface,
     dragHandle = {
       Box(
         modifier =
-          Modifier.padding(vertical = 12.dp)
-            .size(width = 32.dp, height = 4.dp)
-            .clip(RoundedCornerShape(2.dp))
-            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+          Modifier.padding(top = 10.dp)
+            .size(width = 44.dp, height = 5.dp)
+            .clip(RoundedCornerShape(3.dp))
+            .background(MaterialTheme.colorScheme.outline)
       )
     },
     modifier = modifier.fillMaxHeight()

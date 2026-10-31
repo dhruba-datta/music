@@ -1,6 +1,7 @@
 /** vivimusic Project (C) 2026 Licensed under GPL-3.0 | See git history for contributors */
 package echo.music.iad1tya.ui.screens
 
+import echo.music.iad1tya.ui.component.StageTopBar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -52,14 +53,14 @@ fun DetailedListeningHistoryScreen(
 
   Scaffold(
     topBar = {
-      TopAppBar(
+      StageTopBar(
         title = { StageBarTitle(dateStr) },
         navigationIcon = {
           IconButton(onClick = { navController.navigateUp() }) {
             Icon(painterResource(R.drawable.arrow_back), contentDescription = "Back")
           }
         }
-      )
+)
     }
   ) { paddingValues ->
     LazyColumn(contentPadding = paddingValues, modifier = Modifier.fillMaxSize()) {

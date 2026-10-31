@@ -1,5 +1,9 @@
 package echo.music.iad1tya.ui.screens.settings
 
+import echo.music.iad1tya.ui.component.StageAlertDialog
+import echo.music.iad1tya.ui.component.StagePillButton
+import echo.music.iad1tya.ui.component.StageSwitch
+import echo.music.iad1tya.ui.component.StageTopBar
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -10,16 +14,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -224,10 +225,10 @@ fun AiSettings(
   var showCustomModelInput by rememberSaveable { mutableStateOf(false) }
 
   if (showProviderHelpDialog) {
-    AlertDialog(
+    StageAlertDialog(
       onDismissRequest = { showProviderHelpDialog = false },
       confirmButton = {
-        TextButton(onClick = { showProviderHelpDialog = false }) {
+        StagePillButton(onClick = { showProviderHelpDialog = false }) {
           Text(stringResource(android.R.string.ok))
         }
       },
@@ -246,14 +247,14 @@ fun AiSettings(
           }
         }
       }
-    )
+)
   }
 
   if (showTranslateModeHelpDialog) {
-    AlertDialog(
+    StageAlertDialog(
       onDismissRequest = { showTranslateModeHelpDialog = false },
       confirmButton = {
-        TextButton(onClick = { showTranslateModeHelpDialog = false }) {
+        StagePillButton(onClick = { showTranslateModeHelpDialog = false }) {
           Text(stringResource(android.R.string.ok))
         }
       },
@@ -282,7 +283,7 @@ fun AiSettings(
           )
         }
       }
-    )
+)
   }
 
   if (showProviderDialog) {
@@ -502,7 +503,7 @@ fun AiSettings(
         ) 
       },
       buttons = {
-        TextButton(onClick = { showTestDialog = false }) {
+        StagePillButton(onClick = { showTestDialog = false }) {
           Text(stringResource(android.R.string.ok))
         }
       }
@@ -521,13 +522,12 @@ fun AiSettings(
         LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal)
       )
       .verticalScroll(scrollState)
-      .padding(horizontal = 16.dp)
+      .padding(horizontal = 18.dp)
   ) {
     Spacer(
       Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Top))
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
 
     Material3SettingsGroup(
       scrollState = scrollState,
@@ -567,7 +567,6 @@ fun AiSettings(
           .filterNotNull()
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
 
     Material3SettingsGroup(
       scrollState = scrollState,
@@ -612,7 +611,7 @@ fun AiSettings(
                 isHighlighted = (highlightKey == stringResource(R.string.ai_deepl_formality)),
                 icon = painterResource(R.drawable.tune),
                 title = { Text(stringResource(R.string.ai_deepl_formality)) },
-                description = {
+                value = {
                   Text(
                     when (deeplFormality) {
                       "default" -> stringResource(R.string.ai_deepl_formality_default)
@@ -786,7 +785,6 @@ fun AiSettings(
         }
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
 
     Material3SettingsGroup(
       scrollState = scrollState,
@@ -798,14 +796,13 @@ fun AiSettings(
               isHighlighted = (highlightKey == stringResource(R.string.ai_target_language)),
               icon = painterResource(R.drawable.language),
               title = { Text(stringResource(R.string.ai_target_language)) },
-              description = { Text(LanguageCodeToName[translateLanguage] ?: translateLanguage) },
+              value = { Text(LanguageCodeToName[translateLanguage] ?: translateLanguage) },
               onClick = { showLanguageDialog = true }
             )
           )
         }
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
 
     Material3SettingsGroup(
       title = stringResource(R.string.ai_recommendations),
@@ -820,7 +817,7 @@ fun AiSettings(
               title = { Text(stringResource(R.string.ai_recommendations)) },
               description = { Text(stringResource(R.string.ai_recommendations_desc)) },
               trailingContent = {
-                Switch(checked = aiRecommendations, onCheckedChange = { aiRecommendations = it })
+                StageSwitch(checked = aiRecommendations, onCheckedChange = { aiRecommendations = it })
               },
               onClick = { aiRecommendations = !aiRecommendations }
             )
@@ -833,7 +830,7 @@ fun AiSettings(
               title = { Text("Create from Taste") },
               description = { Text("Daily update of a playlist from your taste history") },
               trailingContent = {
-                Switch(checked = createFromTasteDaily, onCheckedChange = { createFromTasteDaily = it })
+                StageSwitch(checked = createFromTasteDaily, onCheckedChange = { createFromTasteDaily = it })
               },
               onClick = { createFromTasteDaily = !createFromTasteDaily }
             )
@@ -863,12 +860,12 @@ fun AiSettings(
     )
   }
 
-  TopAppBar(
+  StageTopBar(
     title = { Text(stringResource(R.string.ai_lyrics_translation)) },
     navigationIcon = {
       IconButton(onClick = { navController.navigateUp() }) {
         Icon(painterResource(R.drawable.arrow_back), contentDescription = null)
       }
     }
-  )
+)
 }

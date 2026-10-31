@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.menu
 
+import echo.music.iad1tya.ui.component.StageSheetTitle
 import android.content.Intent
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.PaddingValues
@@ -53,14 +54,7 @@ fun YouTubeArtistMenu(
   val isPinned by database.speedDialDao.isPinned(artist.id).collectAsState(initial = false)
   val coroutineScope = rememberCoroutineScope()
 
-  YouTubeListItem(
-    item = artist,
-    shape = MaterialTheme.shapes.large,
-    color = androidx.compose.ui.graphics.Color.Transparent,
-    trailingContent = {},
-  )
-
-  Spacer(modifier = Modifier.height(12.dp))
+  StageSheetTitle(title = artist.title)
 
   val configuration = LocalConfiguration.current
   val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
@@ -86,7 +80,7 @@ fun YouTubeArtistMenu(
                       Icon(
                         painter = painterResource(R.drawable.radio),
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(22.dp),
                       )
                     },
                     title = { MenuTileLabel(text = stringResource(R.string.start_an_radio)) },
@@ -105,7 +99,7 @@ fun YouTubeArtistMenu(
                   Icon(
                     painter = painterResource(if (isPinned) R.drawable.remove else R.drawable.add),
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(22.dp),
                   )
                 },
                 title = { MenuTileLabel(text = if (isPinned) "Unpin" else "Pin") },
@@ -128,7 +122,7 @@ fun YouTubeArtistMenu(
                   Icon(
                     painter = painterResource(R.drawable.share),
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(22.dp),
                   )
                 },
                 title = { MenuTileLabel(text = stringResource(R.string.share)) },

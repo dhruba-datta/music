@@ -1,5 +1,6 @@
 package echo.music.iad1tya.echomusic.updater
 
+import echo.music.iad1tya.ui.component.StagePillButton
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -879,7 +880,9 @@ fun WhatsNewDialog(
   DefaultDialog(
     onDismiss = onDismiss,
     title = { Text(stringResource(R.string.whats_new_title, version)) },
-    buttons = { TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) } }
+    buttons = {
+        StagePillButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
+      }
   ) {
     val (effectiveDescription, effectiveSections) =
       remember(info) {

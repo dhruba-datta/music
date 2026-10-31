@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.screens.settings
 
+import echo.music.iad1tya.ui.component.StageTopBar
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
@@ -18,7 +19,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -112,13 +112,12 @@ fun UpdateSettings(
         LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal)
       )
       .verticalScroll(scrollState)
-      .padding(horizontal = 16.dp),
+      .padding(horizontal = 18.dp),
   ) {
     Spacer(
       Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Top))
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
 
     Material3SettingsGroup(
       scrollState = scrollState,
@@ -238,12 +237,12 @@ fun UpdateSettings(
     )
   }
 
-  TopAppBar(
+  StageTopBar(
     title = { Text(stringResource(R.string.update_settings_title)) },
     navigationIcon = {
       IconButton(onClick = navController::navigateUp, onLongClick = navController::backToMain) {
         Icon(painterResource(R.drawable.arrow_back), contentDescription = null)
       }
     }
-  )
+)
 }

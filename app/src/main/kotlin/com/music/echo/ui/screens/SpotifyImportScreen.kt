@@ -2,6 +2,9 @@
 
 package echo.music.iad1tya.ui.screens
 
+import echo.music.iad1tya.ui.component.StageTile
+import echo.music.iad1tya.ui.component.StagePillButton
+import echo.music.iad1tya.ui.component.StageTopBar
 import android.net.Uri
 import android.webkit.CookieManager
 import android.webkit.WebResourceRequest
@@ -59,15 +62,14 @@ fun SpotifyImportScreen(
   Scaffold(
     modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
     topBar = {
-      TopAppBar(
+      StageTopBar(
         title = { Text(stringResource(R.string.spotify_import_title)) },
         navigationIcon = {
           IconButton(onClick = navController::navigateUp, onLongClick = navController::backToMain) {
             Icon(painterResource(R.drawable.arrow_back), null)
           }
-        },
-        scrollBehavior = scrollBehavior
-      )
+        }
+)
     }
   ) { innerPadding ->
     LazyColumn(
@@ -138,6 +140,7 @@ private fun spotifyImportItems(
         title = { Text(stringResource(R.string.spotify_import_by_link)) },
         description = { Text(stringResource(R.string.spotify_import_by_link_desc)) },
         icon = painterResource(R.drawable.link),
+                  iconBackground = StageTile.Slate,
         enabled = state.progress == null && !state.isLoading,
         onClick = onAddByLink,
       ),
@@ -171,6 +174,7 @@ private fun spotifyImportItems(
         )
       },
       icon = painterResource(R.drawable.playlist_play),
+                  iconBackground = StageTile.Slate,
       enabled = state.hasSources && state.progress == null,
       onClick = onSelectSources,
     ),
@@ -178,6 +182,7 @@ private fun spotifyImportItems(
       title = { Text(stringResource(R.string.spotify_import_by_link)) },
       description = { Text(stringResource(R.string.spotify_import_by_link_desc)) },
       icon = painterResource(R.drawable.link),
+                  iconBackground = StageTile.Slate,
       enabled = idle,
       onClick = onAddByLink,
     ),
@@ -283,7 +288,9 @@ private fun SpotifyImportProgressDialog(
   DefaultDialog(
     onDismiss = onCancel,
     title = { Text(stringResource(R.string.spotify_import_in_progress)) },
-    buttons = { TextButton(onClick = onCancel) { Text(stringResource(android.R.string.cancel)) } },
+    buttons = {
+        StagePillButton(onClick = onCancel) { Text(stringResource(android.R.string.cancel)) }
+      },
   ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
       Text(
@@ -838,7 +845,9 @@ private fun SpotifyErrorDialog(
   DefaultDialog(
     onDismiss = onDismiss,
     title = { Text("Import failed") },
-    buttons = { TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) } },
+    buttons = {
+        StagePillButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
+      },
   ) {
     Text(
       text = message,
@@ -856,7 +865,9 @@ private fun SpotifyImportSummaryDialog(
   DefaultDialog(
     onDismiss = onDismiss,
     title = { Text(stringResource(R.string.spotify_import_complete)) },
-    buttons = { TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) } },
+    buttons = {
+        StagePillButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
+      },
   ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
       Text(

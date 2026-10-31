@@ -1,5 +1,8 @@
 package echo.music.iad1tya.ui.screens.equalizer.axion
 
+import echo.music.iad1tya.ui.component.StagePillButton
+import echo.music.iad1tya.ui.component.StageSwitch
+import echo.music.iad1tya.ui.component.StageTopBar
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -49,8 +52,8 @@ fun AxionEqScreen(onBackClick: () -> Unit, viewModel: AxionEqViewModel = hiltVie
 
   Scaffold(
     topBar = {
-      TopAppBar(
-        title = { Text(stringResource(R.string.echo_equalizer)) },
+      StageTopBar(
+        title = { Text(stringResource(R.string.equalizer)) },
         navigationIcon = {
           echo.music.iad1tya.ui.component.IconButton(onClick = onBackClick, onLongClick = {}) {
             Icon(
@@ -59,7 +62,7 @@ fun AxionEqScreen(onBackClick: () -> Unit, viewModel: AxionEqViewModel = hiltVie
             )
           }
         }
-      )
+)
     }
   ) { innerPadding ->
     Column(
@@ -78,20 +81,7 @@ fun AxionEqScreen(onBackClick: () -> Unit, viewModel: AxionEqViewModel = hiltVie
               title = { Text(stringResource(R.string.eq_enable_title)) },
               description = { Text(stringResource(R.string.eq_enable_summary)) },
               trailingContent = {
-                Switch(
-                  checked = enabled,
-                  onCheckedChange = { viewModel.setEnabled(it) },
-                  thumbContent = {
-                    Icon(
-                      painter =
-                        androidx.compose.ui.res.painterResource(
-                          id = if (enabled) R.drawable.check else R.drawable.close
-                        ),
-                      contentDescription = null,
-                      modifier = Modifier.size(SwitchDefaults.IconSize)
-                    )
-                  }
-                )
+                StageSwitch(checked = enabled, onCheckedChange = { viewModel.setEnabled(it) })
               },
               onClick = { viewModel.setEnabled(!enabled) }
             )
@@ -528,25 +518,14 @@ private fun SavePresetDialog(onDismiss: () -> Unit, onSave: (String) -> Unit) {
           }
         }
 
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-        ) {
-          TextButton(
-            onClick = onDismiss,
-            shape = actionShape,
-          ) {
-            Text(text = stringResource(R.string.cancel))
-          }
-
-          OutlinedButton(
-            onClick = { if (name.isNotBlank()) onSave(name) },
-            enabled = name.isNotBlank(),
-            shape = actionShape,
-          ) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        StagePillButton(onClick = { if (name.isNotBlank()) onSave(name) }, enabled = name.isNotBlank()) {
             Text(text = stringResource(R.string.eq_save))
           }
-        }
+        StagePillButton(onClick = onDismiss, primary = false) {
+            Text(text = stringResource(R.string.cancel))
+          }
+      }
       }
     }
   }
@@ -584,16 +563,13 @@ private fun AdvancedEqMode(
       }
     }
 
-    Row(
-      modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.Center,
-    ) {
-      FilledTonalButton(onClick = onReset, shape = CircleShape) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        StagePillButton(onClick = onReset) {
         Icon(Icons.Rounded.Replay, contentDescription = null)
-        Spacer(modifier = Modifier.width(8.dp))
+        
         Text(stringResource(R.string.eq_reset))
       }
-    }
+      }
   }
 }
 

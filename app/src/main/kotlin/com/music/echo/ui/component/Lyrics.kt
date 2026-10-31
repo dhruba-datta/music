@@ -201,7 +201,9 @@ fun Lyrics(
   sliderPositionProvider: () -> Long?,
   modifier: Modifier = Modifier,
   showLyrics: Boolean,
-  compact: Boolean = false
+  compact: Boolean = false,
+  defaultTextSize: Float = 24f,
+  defaultLineSpacing: Float = 1.3f,
 ) {
   val playerConnection = LocalPlayerConnection.current ?: return
   val database = LocalDatabase.current
@@ -233,8 +235,9 @@ fun Lyrics(
   val lyricsGlowEffect by rememberPreference(LyricsGlowEffectKey, false)
   val lyricsAnimationStyle by
     rememberEnumPreference(LyricsAnimationStyleKey, LyricsAnimationStyle.echomusic_1)
-  val lyricsTextSize by rememberPreference(LyricsTextSizeKey, 24f)
-  val lyricsLineSpacing by rememberPreference(LyricsLineSpacingKey, 1.3f)
+  val lyricsTextSize by rememberPreference(LyricsTextSizeKey, defaultTextSize)
+  val lyricsLineSpacing by rememberPreference(LyricsLineSpacingKey, defaultLineSpacing)
+  val cappedLineSpacing = lyricsLineSpacing.coerceAtMost(maxOf(1.3f, defaultLineSpacing))
   val lyricsStandardBlur by rememberPreference(LyricsStandardBlurKey, false)
 
   val openRouterApiKey by rememberPreference(OpenRouterApiKey, "")
@@ -1366,7 +1369,7 @@ fun Lyrics(
                   text = styledText,
                   fontSize = lyricsTextSize.sp,
                   textAlign = alignment,
-                  lineHeight = (lyricsTextSize * lyricsLineSpacing.coerceAtMost(1.3f)).sp
+                  lineHeight = (lyricsTextSize * cappedLineSpacing).sp
                 )
               } else if (hasWordTimings && lyricsAnimationStyle == LyricsAnimationStyle.FADE) {
                 val styledText = buildAnnotatedString {
@@ -1436,7 +1439,7 @@ fun Lyrics(
                   text = styledText,
                   fontSize = lyricsTextSize.sp,
                   textAlign = alignment,
-                  lineHeight = (lyricsTextSize * lyricsLineSpacing.coerceAtMost(1.3f)).sp
+                  lineHeight = (lyricsTextSize * cappedLineSpacing).sp
                 )
               } else if (hasWordTimings && lyricsAnimationStyle == LyricsAnimationStyle.GLOW) {
                 val styledText = buildAnnotatedString {
@@ -1501,7 +1504,7 @@ fun Lyrics(
                   text = styledText,
                   fontSize = lyricsTextSize.sp,
                   textAlign = alignment,
-                  lineHeight = (lyricsTextSize * lyricsLineSpacing.coerceAtMost(1.3f)).sp
+                  lineHeight = (lyricsTextSize * cappedLineSpacing).sp
                 )
               } else if (hasWordTimings && lyricsAnimationStyle == LyricsAnimationStyle.SLIDE) {
                 val styledText = buildAnnotatedString {
@@ -1684,7 +1687,7 @@ fun Lyrics(
                   text = styledText,
                   fontSize = lyricsTextSize.sp,
                   textAlign = alignment,
-                  lineHeight = (lyricsTextSize * lyricsLineSpacing.coerceAtMost(1.3f)).sp
+                  lineHeight = (lyricsTextSize * cappedLineSpacing).sp
                 )
               } else if (hasWordTimings && lyricsAnimationStyle == LyricsAnimationStyle.APPLE) {
                 val styledText = buildAnnotatedString {
@@ -1756,7 +1759,7 @@ fun Lyrics(
                   text = styledText,
                   fontSize = lyricsTextSize.sp,
                   textAlign = alignment,
-                  lineHeight = (lyricsTextSize * lyricsLineSpacing.coerceAtMost(1.3f)).sp
+                  lineHeight = (lyricsTextSize * cappedLineSpacing).sp
                 )
               } else if (lyricsAnimationStyle == LyricsAnimationStyle.APPLE_V2) {
                 val nextEntryTime = lines.getOrNull(index + 1)?.time
@@ -1818,7 +1821,7 @@ fun Lyrics(
                   verticalArrangement =
                     Arrangement.spacedBy(
                       with(LocalDensity.current) {
-                        (lyricsTextSize * (lyricsLineSpacing.coerceAtMost(1.3f) - 1f)).sp.toDp()
+                        (lyricsTextSize * (cappedLineSpacing - 1f)).sp.toDp()
                       }
                     )
                 ) {
@@ -1889,7 +1892,7 @@ fun Lyrics(
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(top = 4.dp).fillMaxWidth(),
                         lineHeight =
-                          (lyricsTextSize * 0.7f * lyricsLineSpacing.coerceAtMost(1.3f)).sp
+                          (lyricsTextSize * 0.7f * cappedLineSpacing).sp
                       )
                     }
                   }
@@ -1903,7 +1906,7 @@ fun Lyrics(
                   expressiveAccent = expressiveAccent,
                   inactiveAlpha = 0.35f,
                   baseFontSize = lyricsTextSize,
-                  lineHeight = lyricsTextSize * lyricsLineSpacing.coerceAtMost(1.3f),
+                  lineHeight = lyricsTextSize * cappedLineSpacing,
                   showTranslated = hasActiveTranslations,
                   agentAlignment = agentAlignment,
                   agentTextAlign = agentTextAlign
@@ -1979,7 +1982,7 @@ fun Lyrics(
                   fontSize = lyricsTextSize.sp,
                   textAlign = alignment,
                   fontWeight = FontWeight.ExtraBold,
-                  lineHeight = (lyricsTextSize * lyricsLineSpacing.coerceAtMost(1.3f)).sp,
+                  lineHeight = (lyricsTextSize * cappedLineSpacing).sp,
                   modifier =
                     Modifier.graphicsLayer {
                       scaleX = bounceScale
@@ -1994,7 +1997,7 @@ fun Lyrics(
                   color = expressiveAccent,
                   textAlign = alignment,
                   fontWeight = FontWeight.ExtraBold,
-                  lineHeight = (lyricsTextSize * lyricsLineSpacing.coerceAtMost(1.3f)).sp
+                  lineHeight = (lyricsTextSize * cappedLineSpacing).sp
                 )
               } else {
 
@@ -2004,7 +2007,7 @@ fun Lyrics(
                   color = lineColor,
                   textAlign = alignment,
                   fontWeight = FontWeight.Bold,
-                  lineHeight = (lyricsTextSize * lyricsLineSpacing.coerceAtMost(1.3f)).sp
+                  lineHeight = (lyricsTextSize * cappedLineSpacing).sp
                 )
               }
               if (true) {
@@ -2045,7 +2048,7 @@ fun Lyrics(
                       },
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.padding(top = 4.dp).fillMaxWidth(),
-                    lineHeight = (lyricsTextSize * 0.7f * lyricsLineSpacing.coerceAtMost(1.3f)).sp
+                    lineHeight = (lyricsTextSize * 0.7f * cappedLineSpacing).sp
                   )
                 }
               }

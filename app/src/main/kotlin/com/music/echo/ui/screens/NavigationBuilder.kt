@@ -573,7 +573,14 @@ fun NavGraphBuilder.navigationBuilder(
 
   composable("login") { LoginScreen(navController) }
 
-  dialog("equalizer") { EqScreen(navController = navController) }
+  dialog("equalizer") {
+    androidx.compose.material3.Surface(
+      shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+      color = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
+    ) {
+      EqScreen(navController = navController)
+    }
+  }
 
   composable("recognition") { RecognitionScreen(navController) }
 

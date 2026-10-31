@@ -1,5 +1,7 @@
 package echo.music.iad1tya.ui.screens.settings
 
+import echo.music.iad1tya.ui.component.StageSwitch
+import echo.music.iad1tya.ui.component.StageTopBar
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -11,9 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -60,9 +60,8 @@ fun MusicFlowSettings(
       icon = painterResource(icon),
       title = { Text(stringResource(title)) },
       description = { Text(stringResource(description)) },
-      trailingContent = { Switch(checked = checked, onCheckedChange = onCheckedChange) },
-      onClick = { onCheckedChange(!checked) },
-    )
+      trailingContent = { StageSwitch(checked = checked, onCheckedChange = onCheckedChange) },
+      onClick = { onCheckedChange(!checked) })
   }
 
   val general =
@@ -82,24 +81,25 @@ fun MusicFlowSettings(
   Column(
     Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal))
       .verticalScroll(scrollState)
-      .padding(horizontal = 16.dp)
+      .padding(horizontal = 18.dp)
   ) {
     Spacer(Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Top)))
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(12.dp))
+
     Material3SettingsGroup(scrollState = scrollState, title = stringResource(R.string.music_flow), items = general)
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(12.dp))
+
     Material3SettingsGroup(scrollState = scrollState, title = stringResource(R.string.appearance), items = visuals)
     Spacer(modifier = Modifier.height(16.dp))
     Spacer(Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Bottom)))
   }
 
-  TopAppBar(
+  StageTopBar(
     title = { Text(stringResource(R.string.music_flow)) },
     navigationIcon = {
       IconButton(onClick = navController::navigateUp, onLongClick = navController::backToMain) {
         Icon(painterResource(R.drawable.arrow_back), contentDescription = stringResource(R.string.back_button_desc))
       }
-    },
-    scrollBehavior = scrollBehavior,
-  )
+    }
+)
 }

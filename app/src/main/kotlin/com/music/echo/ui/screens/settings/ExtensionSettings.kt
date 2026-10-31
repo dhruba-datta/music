@@ -1,5 +1,7 @@
 package com.music.echo.ui.screens.settings
 
+import echo.music.iad1tya.ui.component.StageSwitch
+import echo.music.iad1tya.ui.component.StageTopBar
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -100,7 +102,7 @@ fun ExtensionSettingsScreen(
         Modifier
             .windowInsetsPadding(echo.music.iad1tya.LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal))
             .verticalScroll(scrollState)
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 18.dp)
     ) {
         Spacer(Modifier.windowInsetsPadding(echo.music.iad1tya.LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Top)))
         Spacer(Modifier.height(16.dp))
@@ -113,11 +115,7 @@ fun ExtensionSettingsScreen(
                     description = { Text("Always search extensions first before YouTube Music (Lossless/High Quality)") },
                     icon = painterResource(R.drawable.ic_apple_lossless),
                     trailingContent = {
-                        Switch(
-                            checked = preferExtensionAudio,
-                            onCheckedChange = onPreferExtensionAudioChange,
-                            modifier = Modifier.scale(0.8f)
-                        )
+                        StageSwitch(checked = preferExtensionAudio, onCheckedChange = onPreferExtensionAudioChange, modifier = Modifier.scale(0.8f))
                     },
                     onClick = { onPreferExtensionAudioChange(!preferExtensionAudio) }
                 )
@@ -159,11 +157,7 @@ fun ExtensionSettingsScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                Switch(
-                                    checked = addon.enabled,
-                                    onCheckedChange = { viewModel.toggleAddon(addon.id, it) },
-                                    modifier = Modifier.scale(0.8f)
-                                )
+                                StageSwitch(checked = addon.enabled, onCheckedChange = { viewModel.toggleAddon(addon.id, it) }, modifier = Modifier.scale(0.8f))
                                 androidx.compose.material3.IconButton(
                                     onClick = { viewModel.removeAddon(addon.id) },
                                     modifier = Modifier.size(36.dp)
@@ -222,7 +216,7 @@ fun ExtensionSettingsScreen(
             )
         }
     }
-    TopAppBar(
+    StageTopBar(
         title = { Text("Extension Sources") },
         navigationIcon = {
             if (navController != null) {
@@ -236,7 +230,6 @@ fun ExtensionSettingsScreen(
                     )
                 }
             }
-        },
-        scrollBehavior = scrollBehavior
-    )
+        }
+)
 }

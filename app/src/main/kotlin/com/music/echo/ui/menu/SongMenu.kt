@@ -1,5 +1,8 @@
 package echo.music.iad1tya.ui.menu
 
+import echo.music.iad1tya.ui.component.StageSheetTitle
+import echo.music.iad1tya.ui.component.StageAlertDialog
+import echo.music.iad1tya.ui.component.StagePillButton
 import android.content.Intent
 import android.content.res.Configuration
 import androidx.compose.animation.core.animateFloatAsState
@@ -141,13 +144,12 @@ fun SongMenu(
   var showReExportDialog by
     androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
   if (showReExportDialog) {
-    androidx.compose.material3.AlertDialog(
+    StageAlertDialog(
       onDismissRequest = { showReExportDialog = false },
       title = { androidx.compose.material3.Text("Re-export") },
       text = { androidx.compose.material3.Text("Wanna re-export it again?") },
       confirmButton = {
-        androidx.compose.material3.Button(
-          onClick = {
+        StagePillButton(onClick = {
             showReExportDialog = false
             if (exportDirectoryUri.isBlank()) {
               android.widget.Toast.makeText(
@@ -169,17 +171,16 @@ fun SongMenu(
                 targetDirectoryUri = exportDirectoryUri
               )
             }
-          }
-        ) {
+          }) {
           androidx.compose.material3.Text("Yes")
         }
       },
       dismissButton = {
-        androidx.compose.material3.OutlinedButton(onClick = { showReExportDialog = false }) {
+        StagePillButton(onClick = { showReExportDialog = false }, primary = false) {
           androidx.compose.material3.Text("No")
         }
       }
-    )
+)
   }
   val exportProgress =
     remember(exportProgressRaw, song.id) {
@@ -348,12 +349,9 @@ fun SongMenu(
     }
   }
 
-  SongListItem(
-    song = song,
-    badges = {},
-    shape = MaterialTheme.shapes.large,
-    color = androidx.compose.ui.graphics.Color.Transparent,
-    trailingContent = {
+  StageSheetTitle(
+    title = song.song.title,
+    trailing = {
       IconButton(
         onClick = {
           val s = song.song.toggleLike()
@@ -365,8 +363,6 @@ fun SongMenu(
       }
     },
   )
-
-  Spacer(modifier = Modifier.height(12.dp))
 
   val bottomSheetPageState = LocalBottomSheetPageState.current
   val configuration = LocalConfiguration.current
@@ -395,7 +391,7 @@ fun SongMenu(
                       Icon(
                         painter = painterResource(R.drawable.radio),
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(22.dp),
                       )
                     },
                     title = { MenuTileLabel(text = stringResource(R.string.start_radio)) },
@@ -410,7 +406,7 @@ fun SongMenu(
                     Icon(
                       painter = painterResource(R.drawable.playlist_add),
                       contentDescription = null,
-                      modifier = Modifier.size(24.dp),
+                      modifier = Modifier.size(22.dp),
                     )
                   },
                   title = { MenuTileLabel(text = stringResource(R.string.add_to_an_playlist)) },
@@ -850,7 +846,7 @@ fun SongMenu(
                     Icon(
                       painter = painterResource(R.drawable.notification),
                       contentDescription = null,
-                      modifier = Modifier.size(24.dp)
+                      modifier = Modifier.size(22.dp)
                     )
                   },
                   onClick = {

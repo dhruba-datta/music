@@ -1,5 +1,8 @@
 package echo.music.iad1tya.ui.screens.settings
 
+import echo.music.iad1tya.ui.component.StagePillButton
+import echo.music.iad1tya.ui.component.StageSwitch
+import echo.music.iad1tya.ui.component.StageTopBar
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -15,11 +18,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -130,13 +130,12 @@ fun GlassEffectSettings(
         LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal)
       )
       .verticalScroll(rememberScrollState())
-      .padding(horizontal = 16.dp),
+      .padding(horizontal = 18.dp),
   ) {
     Spacer(
       Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Top))
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
 
     Material3SettingsGroup(
       title = stringResource(R.string.liquid_glass),
@@ -147,28 +146,13 @@ fun GlassEffectSettings(
             title = { Text(stringResource(R.string.liquid_glass_global_enabled)) },
             description = { Text(stringResource(R.string.liquid_glass_performance_warning)) },
             trailingContent = {
-              Switch(
-                checked = globalEnabled,
-                onCheckedChange = onGlobalEnabledChange,
-                enabled = true,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (globalEnabled) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = globalEnabled, onCheckedChange = onGlobalEnabledChange, enabled = true)
             },
             onClick = { onGlobalEnabledChange(!globalEnabled) }
           )
         )
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
 
     Material3SettingsGroup(
       title = stringResource(R.string.nav_bar_style),
@@ -179,27 +163,13 @@ fun GlassEffectSettings(
             title = { Text(stringResource(R.string.floating_nav_bar)) },
             description = { Text(stringResource(R.string.floating_nav_bar_desc)) },
             trailingContent = {
-              Switch(
-                checked = useFloatingNavBar,
-                onCheckedChange = onUseFloatingNavBarChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (useFloatingNavBar) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = useFloatingNavBar, onCheckedChange = onUseFloatingNavBarChange)
             },
             onClick = { onUseFloatingNavBarChange(!useFloatingNavBar) }
           ),
         )
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
 
     Material3SettingsGroup(
       title = stringResource(R.string.liquid_glass_effects),
@@ -234,20 +204,7 @@ fun GlassEffectSettings(
             title = { Text(stringResource(R.string.liquid_glass_chromatic_aberration)) },
             description = { Text(stringResource(R.string.liquid_glass_chromatic_aberration_desc)) },
             trailingContent = {
-              Switch(
-                checked = chromaticAberration,
-                onCheckedChange = onChromaticAberrationChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (chromaticAberration) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = chromaticAberration, onCheckedChange = onChromaticAberrationChange)
             },
             onClick = { onChromaticAberrationChange(!chromaticAberration) }
           ),
@@ -256,25 +213,13 @@ fun GlassEffectSettings(
             title = { Text(stringResource(R.string.liquid_glass_depth_effect)) },
             description = { Text(stringResource(R.string.liquid_glass_depth_effect_desc)) },
             trailingContent = {
-              Switch(
-                checked = depthEffect,
-                onCheckedChange = onDepthEffectChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(id = if (depthEffect) R.drawable.check else R.drawable.close),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = depthEffect, onCheckedChange = onDepthEffectChange)
             },
             onClick = { onDepthEffectChange(!depthEffect) }
           ),
         )
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
 
     Material3SettingsGroup(
       title = stringResource(R.string.liquid_glass_appearance),
@@ -301,7 +246,6 @@ fun GlassEffectSettings(
         )
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
 
     Material3SettingsGroup(
       title = stringResource(R.string.liquid_glass_per_component),
@@ -312,20 +256,7 @@ fun GlassEffectSettings(
             title = { Text(stringResource(R.string.liquid_glass_player)) },
             description = { Text(stringResource(R.string.liquid_glass_player_desc)) },
             trailingContent = {
-              Switch(
-                checked = playerEnabled,
-                onCheckedChange = onPlayerEnabledChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (playerEnabled) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = playerEnabled, onCheckedChange = onPlayerEnabledChange)
             },
             onClick = { onPlayerEnabledChange(!playerEnabled) }
           ),
@@ -334,20 +265,7 @@ fun GlassEffectSettings(
             title = { Text(stringResource(R.string.liquid_glass_mini_player)) },
             description = { Text(stringResource(R.string.liquid_glass_mini_player_desc)) },
             trailingContent = {
-              Switch(
-                checked = miniPlayerEnabled,
-                onCheckedChange = onMiniPlayerEnabledChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (miniPlayerEnabled) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = miniPlayerEnabled, onCheckedChange = onMiniPlayerEnabledChange)
             },
             onClick = { onMiniPlayerEnabledChange(!miniPlayerEnabled) }
           ),
@@ -356,20 +274,7 @@ fun GlassEffectSettings(
             title = { Text(stringResource(R.string.liquid_glass_nav_bar)) },
             description = { Text(stringResource(R.string.liquid_glass_nav_bar_desc)) },
             trailingContent = {
-              Switch(
-                checked = navBarEnabled,
-                onCheckedChange = onNavBarEnabledChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (navBarEnabled) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = navBarEnabled, onCheckedChange = onNavBarEnabledChange)
             },
             onClick = { onNavBarEnabledChange(!navBarEnabled) }
           ),
@@ -392,24 +297,19 @@ fun GlassEffectSettings(
         showVibrancyDialog = false
       },
       buttons = {
-        TextButton(onClick = { tempValue = 1f }) { Text(stringResource(R.string.reset)) }
-        Spacer(modifier = Modifier.weight(1f))
-        TextButton(
-          onClick = {
-            tempValue = vibrancy
-            showVibrancyDialog = false
-          }
-        ) {
-          Text(stringResource(android.R.string.cancel))
-        }
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             onVibrancyChange(tempValue)
             showVibrancyDialog = false
-          }
-        ) {
+          }) {
           Text(stringResource(android.R.string.ok))
         }
+        StagePillButton(onClick = {
+            tempValue = vibrancy
+            showVibrancyDialog = false
+          }, primary = false) {
+          Text(stringResource(android.R.string.cancel))
+        }
+        StagePillButton(onClick = { tempValue = 1f }, primary = false) { Text(stringResource(R.string.reset)) }
       }
     ) {
       Column(
@@ -444,24 +344,19 @@ fun GlassEffectSettings(
         showBlurRadiusDialog = false
       },
       buttons = {
-        TextButton(onClick = { tempValue = 8f }) { Text(stringResource(R.string.reset)) }
-        Spacer(modifier = Modifier.weight(1f))
-        TextButton(
-          onClick = {
-            tempValue = blurRadius
-            showBlurRadiusDialog = false
-          }
-        ) {
-          Text(stringResource(android.R.string.cancel))
-        }
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             onBlurRadiusChange(tempValue)
             showBlurRadiusDialog = false
-          }
-        ) {
+          }) {
           Text(stringResource(android.R.string.ok))
         }
+        StagePillButton(onClick = {
+            tempValue = blurRadius
+            showBlurRadiusDialog = false
+          }, primary = false) {
+          Text(stringResource(android.R.string.cancel))
+        }
+        StagePillButton(onClick = { tempValue = 8f }, primary = false) { Text(stringResource(R.string.reset)) }
       }
     ) {
       Column(
@@ -496,24 +391,19 @@ fun GlassEffectSettings(
         showLensHeightDialog = false
       },
       buttons = {
-        TextButton(onClick = { tempValue = 0.5f }) { Text(stringResource(R.string.reset)) }
-        Spacer(modifier = Modifier.weight(1f))
-        TextButton(
-          onClick = {
-            tempValue = lensHeight
-            showLensHeightDialog = false
-          }
-        ) {
-          Text(stringResource(android.R.string.cancel))
-        }
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             onLensHeightChange(tempValue)
             showLensHeightDialog = false
-          }
-        ) {
+          }) {
           Text(stringResource(android.R.string.ok))
         }
+        StagePillButton(onClick = {
+            tempValue = lensHeight
+            showLensHeightDialog = false
+          }, primary = false) {
+          Text(stringResource(android.R.string.cancel))
+        }
+        StagePillButton(onClick = { tempValue = 0.5f }, primary = false) { Text(stringResource(R.string.reset)) }
       }
     ) {
       Column(
@@ -548,24 +438,19 @@ fun GlassEffectSettings(
         showLensAmountDialog = false
       },
       buttons = {
-        TextButton(onClick = { tempValue = 0.5f }) { Text(stringResource(R.string.reset)) }
-        Spacer(modifier = Modifier.weight(1f))
-        TextButton(
-          onClick = {
-            tempValue = lensAmount
-            showLensAmountDialog = false
-          }
-        ) {
-          Text(stringResource(android.R.string.cancel))
-        }
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             onLensAmountChange(tempValue)
             showLensAmountDialog = false
-          }
-        ) {
+          }) {
           Text(stringResource(android.R.string.ok))
         }
+        StagePillButton(onClick = {
+            tempValue = lensAmount
+            showLensAmountDialog = false
+          }, primary = false) {
+          Text(stringResource(android.R.string.cancel))
+        }
+        StagePillButton(onClick = { tempValue = 0.5f }, primary = false) { Text(stringResource(R.string.reset)) }
       }
     ) {
       Column(
@@ -600,24 +485,19 @@ fun GlassEffectSettings(
         showSurfaceOpacityDialog = false
       },
       buttons = {
-        TextButton(onClick = { tempValue = 0.4f }) { Text(stringResource(R.string.reset)) }
-        Spacer(modifier = Modifier.weight(1f))
-        TextButton(
-          onClick = {
-            tempValue = surfaceOpacity
-            showSurfaceOpacityDialog = false
-          }
-        ) {
-          Text(stringResource(android.R.string.cancel))
-        }
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             onSurfaceOpacityChange(tempValue)
             showSurfaceOpacityDialog = false
-          }
-        ) {
+          }) {
           Text(stringResource(android.R.string.ok))
         }
+        StagePillButton(onClick = {
+            tempValue = surfaceOpacity
+            showSurfaceOpacityDialog = false
+          }, primary = false) {
+          Text(stringResource(android.R.string.cancel))
+        }
+        StagePillButton(onClick = { tempValue = 0.4f }, primary = false) { Text(stringResource(R.string.reset)) }
       }
     ) {
       Column(
@@ -677,7 +557,7 @@ fun GlassEffectSettings(
     )
   }
 
-  TopAppBar(
+  StageTopBar(
     title = { Text(stringResource(R.string.liquid_glass_settings)) },
     navigationIcon = {
       AppIconButton(
@@ -690,5 +570,5 @@ fun GlassEffectSettings(
         )
       }
     }
-  )
+)
 }

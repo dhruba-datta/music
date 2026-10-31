@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.menu
 
+import echo.music.iad1tya.ui.component.StageSheetTitle
 import android.content.Intent
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.PaddingValues
@@ -55,15 +56,7 @@ fun ArtistMenu(
   val artist = artistState.value ?: originalArtist
   val isPinned by database.speedDialDao.isPinned(artist.id).collectAsState(initial = false)
 
-  ArtistListItem(
-    artist = artist,
-    shape = MaterialTheme.shapes.large,
-    color = androidx.compose.ui.graphics.Color.Transparent,
-    badges = {},
-    trailingContent = {},
-  )
-
-  Spacer(modifier = Modifier.height(12.dp))
+  StageSheetTitle(title = artist.artist.name)
 
   val configuration = LocalConfiguration.current
   val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
@@ -89,7 +82,7 @@ fun ArtistMenu(
                       Icon(
                         painter = painterResource(R.drawable.play),
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(22.dp),
                       )
                     },
                     title = { MenuTileLabel(text = stringResource(R.string.play)) },
@@ -120,7 +113,7 @@ fun ArtistMenu(
                       Icon(
                         painter = painterResource(R.drawable.shuffle),
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(22.dp),
                       )
                     },
                     title = { MenuTileLabel(text = stringResource(R.string.shuffle)) },
@@ -154,7 +147,7 @@ fun ArtistMenu(
                   Icon(
                     painter = painterResource(if (isPinned) R.drawable.remove else R.drawable.add),
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(22.dp),
                   )
                 },
                 title = { MenuTileLabel(text = if (isPinned) "Unpin" else "Pin") },
@@ -186,7 +179,7 @@ fun ArtistMenu(
                     Icon(
                       painter = painterResource(R.drawable.share),
                       contentDescription = null,
-                      modifier = Modifier.size(24.dp),
+                      modifier = Modifier.size(22.dp),
                     )
                   },
                   title = { MenuTileLabel(text = stringResource(R.string.share)) },

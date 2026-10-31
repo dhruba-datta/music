@@ -1,5 +1,7 @@
 package echo.music.iad1tya.ui.component
 
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,8 +20,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -61,29 +61,35 @@ fun PreferenceEntry(
           onClick = onClick ?: {},
         )
         .alpha(if (isEnabled) 1f else 0.5f)
-        .padding(horizontal = 16.dp, vertical = 16.dp),
+        .heightIn(min = 54.dp)
+        .padding(horizontal = 14.dp, vertical = 6.dp),
   ) {
     if (icon != null) {
-      Box(
-        modifier = Modifier.padding(horizontal = 4.dp),
-      ) {
-        icon()
-      }
+      Box(modifier = Modifier.size(22.dp), contentAlignment = Alignment.Center) { icon() }
 
-      Spacer(Modifier.width(12.dp))
+      Spacer(Modifier.width(13.dp))
     }
 
     Column(
       verticalArrangement = Arrangement.Center,
       modifier = Modifier.weight(1f),
     ) {
-      ProvideTextStyle(MaterialTheme.typography.titleMedium) { title() }
+      ProvideTextStyle(
+        MaterialTheme.typography.titleMedium.copy(
+          fontSize = 16.sp,
+          lineHeight = 20.sp,
+          fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+        )
+      ) {
+        title()
+      }
 
       if (description != null) {
         Text(
           text = description,
-          style = MaterialTheme.typography.titleSmall,
-          color = MaterialTheme.colorScheme.secondary,
+          fontSize = 13.sp,
+          lineHeight = 17.sp,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
       }
 
@@ -91,7 +97,7 @@ fun PreferenceEntry(
     }
 
     if (trailingContent != null) {
-      Spacer(Modifier.width(12.dp))
+      Spacer(Modifier.width(13.dp))
 
       trailingContent()
     }
@@ -188,25 +194,7 @@ fun SwitchPreference(
     description = description,
     icon = icon,
     trailingContent = {
-      Switch(
-        checked = checked,
-        onCheckedChange = onCheckedChange,
-        enabled = isEnabled,
-        thumbContent = {
-          Icon(
-            painter = painterResource(id = if (checked) R.drawable.check else R.drawable.close),
-            contentDescription = null,
-            modifier = Modifier.size(SwitchDefaults.IconSize),
-          )
-        },
-        colors =
-          SwitchDefaults.colors(
-            checkedThumbColor = MaterialTheme.colorScheme.surface,
-            checkedTrackColor = MaterialTheme.colorScheme.onSurface,
-            uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-            uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest
-          )
-      )
+      StageSwitch(checked = checked, onCheckedChange = onCheckedChange, enabled = isEnabled)
     },
     onClick = { onCheckedChange(!checked) },
     isEnabled = isEnabled
@@ -326,13 +314,5 @@ fun PreferenceGroupTitle(
   title: String,
   modifier: Modifier = Modifier,
 ) {
-  Text(
-    text = title.uppercase(),
-    style =
-      MaterialTheme.typography.labelLarge.copy(
-        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-      ),
-    color = MaterialTheme.colorScheme.onSurfaceVariant,
-    modifier = modifier.padding(bottom = 8.dp, top = 8.dp, start = 8.dp),
-  )
+  StageSettingsHeading(text = title, modifier = modifier)
 }

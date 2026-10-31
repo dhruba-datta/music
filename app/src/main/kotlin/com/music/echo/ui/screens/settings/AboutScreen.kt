@@ -2,6 +2,7 @@
 
 package echo.music.iad1tya.ui.screens.settings
 
+import echo.music.iad1tya.ui.component.StageTopBar
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -91,11 +92,10 @@ fun AboutScreen(
     containerColor = MaterialTheme.colorScheme.surface,
     contentWindowInsets = WindowInsets(0, 0, 0, 0),
     topBar = {
-      TopAppBar(
+      StageTopBar(
         title = {
           Text(
             text = stringResource(R.string.about),
-            fontWeight = FontWeight.Bold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
           )
@@ -108,14 +108,8 @@ fun AboutScreen(
             Icon(painterResource(R.drawable.arrow_back), contentDescription = null)
           }
         },
-        windowInsets = TopAppBarDefaults.windowInsets,
-        colors =
-          TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-          ),
-        scrollBehavior = scrollBehavior,
-      )
+        windowInsets = TopAppBarDefaults.windowInsets
+)
     },
   ) { innerPadding ->
     LazyColumn(
@@ -299,7 +293,7 @@ private fun AboutAppCard() {
 
     Box(
       modifier =
-        Modifier.size(100.dp)
+        Modifier.size(84.dp)
           .graphicsLayer {
             rotationY = rotation
             scaleX = scale

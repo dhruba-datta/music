@@ -52,8 +52,9 @@ fun PlaybackLogsDialog(logs: List<PlaybackLogEntry>, onClear: () -> Unit, onDism
     icon = { Icon(painterResource(R.drawable.bug_report), contentDescription = null) },
     title = { Text(stringResource(R.string.playback_logs_title)) },
     buttons = {
-      TextButton(
-        onClick = {
+        StagePillButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
+        StagePillButton(onClick = onClear, primary = false) { Text(stringResource(R.string.clear)) }
+        StagePillButton(onClick = {
           val textToCopy =
             logs.joinToString("\n") { log ->
               buildString {
@@ -71,15 +72,10 @@ fun PlaybackLogsDialog(logs: List<PlaybackLogEntry>, onClear: () -> Unit, onDism
           val clip = android.content.ClipData.newPlainText("PlaybackLogs", textToCopy)
           cm.setPrimaryClip(clip)
           Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
-        },
-        enabled = logs.isNotEmpty()
-      ) {
+        }, enabled = logs.isNotEmpty(), primary = false) {
         Text(stringResource(R.string.copy))
       }
-      TextButton(onClick = onClear) { Text(stringResource(R.string.clear)) }
-      Spacer(modifier = Modifier.width(8.dp))
-      Button(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
-    }
+      }
   ) {
     Box(modifier = Modifier.fillMaxWidth().height(400.dp)) {
       if (logs.isEmpty()) {

@@ -1,5 +1,6 @@
 package com.music.echo.ui.screens
 
+import echo.music.iad1tya.ui.component.StageTopBar
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
@@ -88,14 +89,14 @@ fun ListeningSummaryScreen(
 
   Scaffold(
     topBar = {
-      TopAppBar(
+      StageTopBar(
         title = { StageBarTitle("Listening Summary") },
         navigationIcon = {
           IconButton(onClick = { navController.navigateUp() }) {
             Icon(painter = painterResource(id = R.drawable.arrow_back), contentDescription = "Back")
           }
         }
-      )
+)
     }
   ) { paddingValues ->
     LazyColumn(

@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.screens.settings
 
+import echo.music.iad1tya.ui.component.StageTopBar
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -9,7 +10,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -137,15 +137,14 @@ fun UptimeScreen(
 
   Scaffold(
     topBar = {
-      TopAppBar(
+      StageTopBar(
         title = { Text(stringResource(R.string.service_uptime)) },
         navigationIcon = {
           IconButton(onClick = navController::navigateUp) {
             Icon(painter = painterResource(R.drawable.arrow_back), contentDescription = null)
           }
-        },
-        scrollBehavior = scrollBehavior
-      )
+        }
+)
     },
     modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     contentWindowInsets = WindowInsets.systemBars

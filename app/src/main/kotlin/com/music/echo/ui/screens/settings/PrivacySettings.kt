@@ -1,5 +1,8 @@
 package echo.music.iad1tya.ui.screens.settings
 
+import echo.music.iad1tya.ui.component.StagePillButton
+import echo.music.iad1tya.ui.component.StageSwitch
+import echo.music.iad1tya.ui.component.StageTopBar
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -13,10 +16,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -71,19 +72,14 @@ fun PrivacySettings(
         )
       },
       buttons = {
-        TextButton(
-          onClick = { showClearListenHistoryDialog = false },
-        ) {
-          Text(text = stringResource(android.R.string.cancel))
-        }
-
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             showClearListenHistoryDialog = false
             database.query { clearListenHistory() }
-          },
-        ) {
+          }) {
           Text(text = stringResource(android.R.string.ok))
+        }
+        StagePillButton(onClick = { showClearListenHistoryDialog = false }, primary = false) {
+          Text(text = stringResource(android.R.string.cancel))
         }
       },
     )
@@ -102,19 +98,14 @@ fun PrivacySettings(
         )
       },
       buttons = {
-        TextButton(
-          onClick = { showClearSearchHistoryDialog = false },
-        ) {
-          Text(text = stringResource(android.R.string.cancel))
-        }
-
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             showClearSearchHistoryDialog = false
             database.query { clearSearchHistory() }
-          },
-        ) {
+          }) {
           Text(text = stringResource(android.R.string.ok))
+        }
+        StagePillButton(onClick = { showClearSearchHistoryDialog = false }, primary = false) {
+          Text(text = stringResource(android.R.string.cancel))
         }
       },
     )
@@ -125,13 +116,12 @@ fun PrivacySettings(
         LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal)
       )
       .verticalScroll(scrollState)
-      .padding(horizontal = 16.dp)
+      .padding(horizontal = 18.dp)
   ) {
     Spacer(
       Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Top))
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
 
     Material3SettingsGroup(
       scrollState = scrollState,
@@ -144,20 +134,7 @@ fun PrivacySettings(
             title = { Text(stringResource(R.string.pause_listen_history)) },
             description = { Text(stringResource(R.string.pause_listen_history_desc)) },
             trailingContent = {
-              Switch(
-                checked = pauseListenHistory,
-                onCheckedChange = onPauseListenHistoryChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (pauseListenHistory) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(androidx.compose.material3.SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = pauseListenHistory, onCheckedChange = onPauseListenHistoryChange)
             },
             onClick = { onPauseListenHistoryChange(!pauseListenHistory) }
           ),
@@ -171,7 +148,6 @@ fun PrivacySettings(
         )
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
 
     Material3SettingsGroup(
       scrollState = scrollState,
@@ -184,20 +160,7 @@ fun PrivacySettings(
             title = { Text(stringResource(R.string.pause_search_history)) },
             description = { Text(stringResource(R.string.pause_search_history_desc)) },
             trailingContent = {
-              Switch(
-                checked = pauseSearchHistory,
-                onCheckedChange = onPauseSearchHistoryChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (pauseSearchHistory) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(androidx.compose.material3.SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = pauseSearchHistory, onCheckedChange = onPauseSearchHistoryChange)
             },
             onClick = { onPauseSearchHistoryChange(!pauseSearchHistory) }
           ),
@@ -211,7 +174,6 @@ fun PrivacySettings(
         )
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
 
     Material3SettingsGroup(
       scrollState = scrollState,
@@ -224,20 +186,7 @@ fun PrivacySettings(
             title = { Text(stringResource(R.string.disable_screenshot)) },
             description = { Text(stringResource(R.string.disable_screenshot_desc)) },
             trailingContent = {
-              Switch(
-                checked = disableScreenshot,
-                onCheckedChange = onDisableScreenshotChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (disableScreenshot) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(androidx.compose.material3.SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = disableScreenshot, onCheckedChange = onDisableScreenshotChange)
             },
             onClick = { onDisableScreenshotChange(!disableScreenshot) }
           )
@@ -252,7 +201,7 @@ fun PrivacySettings(
     )
   }
 
-  TopAppBar(
+  StageTopBar(
     title = { Text(stringResource(R.string.privacy)) },
     navigationIcon = {
       IconButton(
@@ -265,5 +214,5 @@ fun PrivacySettings(
         )
       }
     }
-  )
+)
 }

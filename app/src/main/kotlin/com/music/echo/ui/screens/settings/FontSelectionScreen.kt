@@ -1,6 +1,7 @@
 /** vivimusic Project (C) 2026 Licensed under GPL-3.0 | See git history for contributors */
 package com.music.echo.ui.screens.settings
 
+import echo.music.iad1tya.ui.component.StageTopBar
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
@@ -20,7 +21,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -124,7 +124,7 @@ fun FontSelectionScreen(
         )
       )
       .fillMaxSize()
-      .padding(horizontal = 16.dp)
+      .padding(horizontal = 18.dp)
   ) {
     Spacer(
       Modifier.windowInsetsPadding(
@@ -137,7 +137,7 @@ fun FontSelectionScreen(
 
     // Typography Preview Card
     Card(
-      shape = MaterialTheme.shapes.large,
+      shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
       colors =
         CardDefaults.cardColors(
           containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -327,7 +327,7 @@ fun FontSelectionScreen(
     }
   }
 
-  TopAppBar(
+  StageTopBar(
     title = { Text(stringResource(R.string.app_font)) },
     navigationIcon = {
       IconButton(
@@ -340,5 +340,5 @@ fun FontSelectionScreen(
         )
       }
     }
-  )
+)
 }

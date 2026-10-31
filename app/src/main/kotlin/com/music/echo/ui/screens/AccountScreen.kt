@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.screens
 
+import echo.music.iad1tya.ui.component.StageTopBar
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.asPaddingValues
@@ -10,7 +11,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -162,7 +162,7 @@ fun AccountScreen(
     }
   }
 
-  TopAppBar(
+  StageTopBar(
     title = { Text(stringResource(R.string.account)) },
     navigationIcon = {
       IconButton(
@@ -174,6 +174,6 @@ fun AccountScreen(
           contentDescription = null,
         )
       }
-    },
-  )
+    }
+)
 }

@@ -17,9 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
@@ -30,59 +28,44 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+/**
+ * The Stage sheet list: one 18dp group of 52dp rows, 18dp from the sheet's edges. The group has no
+ * fill of its own, so the rows sit straight on the sheet.
+ */
 @Composable
 fun Material3MenuGroup(items: List<Material3MenuItemData>, modifier: Modifier = Modifier) {
-  Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-    items.forEachIndexed { index, item ->
-      val shape =
-        when {
-          items.size == 1 -> RoundedCornerShape(18.dp)
-          index == 0 ->
-            RoundedCornerShape(
-              topStart = 18.dp,
-              topEnd = 18.dp,
-              bottomStart = 6.dp,
-              bottomEnd = 6.dp
-            )
-          index == items.size - 1 ->
-            RoundedCornerShape(
-              topStart = 6.dp,
-              topEnd = 6.dp,
-              bottomStart = 18.dp,
-              bottomEnd = 18.dp
-            )
-          else -> RoundedCornerShape(6.dp)
-        }
-
-      val content =
-        @Composable {
+  Column(
+    modifier =
+      modifier
+        .fillMaxWidth()
+        .padding(start = 18.dp, top = 4.dp, end = 18.dp)
+        .clip(RoundedCornerShape(18.dp))
+        .animateContentSize()
+  ) {
+    items.forEach { item ->
+      val background = item.cardColors?.containerColor ?: Color.Transparent
+      val contentColor = item.cardColors?.contentColor ?: MaterialTheme.colorScheme.onSurface
+      CompositionLocalProvider(LocalContentColor provides contentColor) {
+        Box(
+          modifier =
+            Modifier.fillMaxWidth().background(background).let { mod ->
+              val onClick = item.onClick
+              if (onClick != null) mod.clickable(onClick = onClick) else mod
+            }
+        ) {
           if (item.customComposable != null) {
             item.customComposable.invoke()
           } else {
             Material3MenuItemRow(item = item)
           }
         }
-
-      Card(
-        modifier =
-          Modifier.fillMaxWidth().animateContentSize().let { mod ->
-            if (item.onClick != null) mod.clickable(onClick = item.onClick) else mod
-          },
-        shape = shape,
-        colors =
-          item.cardColors
-            ?: CardDefaults.cardColors(
-              containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-            ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-      ) {
-        content()
       }
     }
   }
@@ -91,32 +74,40 @@ fun Material3MenuGroup(items: List<Material3MenuItemData>, modifier: Modifier = 
 @Composable
 private fun Material3MenuItemRow(item: Material3MenuItemData) {
   Row(
-    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-    verticalAlignment = Alignment.CenterVertically
+    modifier =
+      Modifier.fillMaxWidth().heightIn(min = 52.dp).padding(horizontal = 14.dp, vertical = 6.dp),
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(13.dp),
   ) {
     item.icon?.let { icon ->
-      icon()
-      Spacer(modifier = Modifier.width(16.dp))
+      Box(modifier = Modifier.size(22.dp), contentAlignment = Alignment.Center) { icon() }
     }
 
-    Column(modifier = Modifier.weight(1f)) {
-      ProvideTextStyle(MaterialTheme.typography.titleMedium) { item.title?.invoke() }
+    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+      ProvideTextStyle(
+        TextStyle(
+          fontSize = 16.sp,
+          lineHeight = 20.sp,
+          fontWeight = FontWeight.Bold,
+          color = LocalContentColor.current,
+        )
+      ) {
+        item.title?.invoke()
+      }
 
       item.description?.let { desc ->
-        Spacer(modifier = Modifier.height(2.dp))
         ProvideTextStyle(
-          MaterialTheme.typography.bodyMedium.copy(
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+          TextStyle(
+            fontSize = 13.sp,
+            lineHeight = 17.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
         ) {
           desc()
         }
       }
     }
-    item.trailingContent?.let { trailing ->
-      Spacer(modifier = Modifier.width(8.dp))
-      trailing()
-    }
+    item.trailingContent?.let { trailing -> trailing() }
   }
 }
 
@@ -127,7 +118,11 @@ fun MenuActionGrid(
   modifier: Modifier = Modifier,
   columns: Int = 3,
 ) {
-  Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+  Column(
+    modifier =
+      modifier.fillMaxWidth().padding(start = 18.dp, top = 10.dp, end = 18.dp, bottom = 18.dp),
+    verticalArrangement = Arrangement.spacedBy(8.dp),
+  ) {
     items.chunked(columns).forEach { rowItems ->
       Row(
         modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
@@ -166,6 +161,44 @@ private fun MenuActionTile(item: Material3MenuItemData, modifier: Modifier = Mod
         Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) { icon() }
       }
       item.title?.invoke()
+    }
+  }
+}
+
+/**
+ * The title of a Stage sheet: 22sp ExtraBold, with room for one action in the sheet's top corner.
+ */
+@Composable
+fun StageSheetTitle(
+  title: String,
+  modifier: Modifier = Modifier,
+  trailing: (@Composable () -> Unit)? = null,
+) {
+  Box(modifier = modifier.fillMaxWidth()) {
+    Text(
+      text = title,
+      fontSize = 22.sp,
+      lineHeight = 28.sp,
+      fontWeight = FontWeight.ExtraBold,
+      color = MaterialTheme.colorScheme.onSurface,
+      maxLines = 1,
+      overflow = TextOverflow.Ellipsis,
+      modifier =
+        Modifier.fillMaxWidth()
+          .padding(
+            start = 22.dp,
+            top = 12.dp,
+            end = if (trailing != null) 60.dp else 22.dp,
+            bottom = 4.dp,
+          ),
+    )
+    if (trailing != null) {
+      Box(
+        modifier = Modifier.align(Alignment.TopEnd).padding(top = 1.dp, end = 12.dp).size(44.dp),
+        contentAlignment = Alignment.Center,
+      ) {
+        trailing()
+      }
     }
   }
 }

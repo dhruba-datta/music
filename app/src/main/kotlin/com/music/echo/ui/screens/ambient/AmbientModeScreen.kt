@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -71,7 +72,7 @@ fun AmbientModeScreen(navController: NavController) {
   val playerConnection = LocalPlayerConnection.current ?: return
   val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
 
-  val artScale by rememberPreference(AmbientArtScaleKey, 0.85f)
+  val artScale by rememberPreference(AmbientArtScaleKey, AmbientArtScaleDefault)
   val showArt by rememberPreference(AmbientShowArtKey, true)
   val fullScreenArt by rememberPreference(AmbientFullScreenArtKey, false)
 
@@ -79,7 +80,7 @@ fun AmbientModeScreen(navController: NavController) {
   val showTitle by rememberPreference(AmbientShowTitleKey, false)
   val showArtist by rememberPreference(AmbientShowArtistKey, false)
   val showLyrics by rememberPreference(AmbientShowLyricsKey, true)
-  val spacing by rememberPreference(AmbientSpacingKey, 32f)
+  val spacing by rememberPreference(AmbientSpacingKey, AmbientSpacingDefault)
 
 
   DisposableEffect(Unit) {
@@ -174,8 +175,8 @@ fun AmbientModeScreen(navController: NavController) {
               .padding(
                 start = if (showLyrics) spacing.dp else 0.dp,
                 end = if (showLyrics) (spacing / 2).dp else 0.dp,
-                top = 32.dp,
-                bottom = 32.dp
+                top = 14.dp,
+                bottom = 14.dp
               ),
           contentAlignment = if (showLyrics) Alignment.CenterEnd else Alignment.Center
         ) {
@@ -184,7 +185,7 @@ fun AmbientModeScreen(navController: NavController) {
               modifier =
                 Modifier.fillMaxHeight(artScale)
                   .aspectRatio(1f)
-                  .clip(RoundedCornerShape(16.dp))
+                  .clip(RoundedCornerShape(18.dp))
                   .pointerInput(Unit) {
                     detectTapGestures(onDoubleTap = { playerConnection.togglePlayPause() })
                   }
@@ -233,8 +234,8 @@ fun AmbientModeScreen(navController: NavController) {
               .padding(
                 start = if (showArt) (spacing / 2).dp else 32.dp,
                 end = if (showArt) spacing.dp else 32.dp,
-                top = 32.dp,
-                bottom = 32.dp
+                top = 14.dp,
+                bottom = 14.dp
               ),
           contentAlignment = if (showArt) Alignment.CenterStart else Alignment.Center
         ) {
@@ -242,7 +243,9 @@ fun AmbientModeScreen(navController: NavController) {
             mediaMetadata = mediaMetadata,
             showLyrics = true,
             modifier = if (showArt) Modifier else Modifier.fillMaxWidth(0.6f),
-            positionProvider = { playerConnection.player.currentPosition }
+            positionProvider = { playerConnection.player.currentPosition },
+            defaultTextSize = AmbientLyricsTextSizeDefault,
+            defaultLineSpacing = AmbientLyricsLineSpacingDefault,
           )
         }
       }
@@ -250,14 +253,14 @@ fun AmbientModeScreen(navController: NavController) {
 
     // Top Left Controls
     Box(
-      modifier = Modifier.align(Alignment.TopStart).safeDrawingPadding().padding(16.dp)
+      modifier = Modifier.align(Alignment.TopStart).safeDrawingPadding()
     ) {
       var expandedMenu by remember { mutableStateOf(false) }
-      IconButton(onClick = { expandedMenu = true }) {
+      IconButton(onClick = { expandedMenu = true }, modifier = Modifier.size(44.dp)) {
         Icon(
           imageVector = androidx.compose.material.icons.Icons.Rounded.MoreVert,
           contentDescription = "Menu",
-          tint = Color.White.copy(alpha = 0.5f)
+          tint = Color.White
         )
       }
 
@@ -307,8 +310,8 @@ fun AmbientModeScreen(navController: NavController) {
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
               ) {}, // consume clicks so they don't dismiss
-            shape = RoundedCornerShape(24.dp),
-            tonalElevation = 3.dp
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surface,
           ) {
             echo.music.iad1tya.ui.screens.settings.AmbientSettingsContent(
               modifier = Modifier.padding(8.dp)

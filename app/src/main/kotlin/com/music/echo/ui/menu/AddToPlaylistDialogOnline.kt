@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.menu
 
+import echo.music.iad1tya.ui.component.StagePillButton
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -419,8 +420,23 @@ fun AddToPlaylistDialogOnline(
     DefaultDialog(
       title = { Text(stringResource(R.string.duplicates)) },
       buttons = {
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = { showDuplicateDialog = false }) {
+          Text(stringResource(android.R.string.cancel))
+        }
+        StagePillButton(onClick = {
+            showDuplicateDialog = false
+            onDismiss()
+            database.transaction { addSongToPlaylist(selectedPlaylist!!, songIds!!) }
+            Toast.makeText(
+                context,
+                context.getString(R.string.added_to_playlist, selectedPlaylist!!.playlist.name),
+                Toast.LENGTH_SHORT
+              )
+              .show()
+          }, primary = false) {
+          Text(stringResource(R.string.add_anyway))
+        }
+        StagePillButton(onClick = {
             showDuplicateDialog = false
             onDismiss()
             database.transaction {
@@ -432,29 +448,8 @@ fun AddToPlaylistDialogOnline(
                 Toast.LENGTH_SHORT
               )
               .show()
-          }
-        ) {
+          }, primary = false) {
           Text(stringResource(R.string.skip_duplicates))
-        }
-
-        TextButton(
-          onClick = {
-            showDuplicateDialog = false
-            onDismiss()
-            database.transaction { addSongToPlaylist(selectedPlaylist!!, songIds!!) }
-            Toast.makeText(
-                context,
-                context.getString(R.string.added_to_playlist, selectedPlaylist!!.playlist.name),
-                Toast.LENGTH_SHORT
-              )
-              .show()
-          }
-        ) {
-          Text(stringResource(R.string.add_anyway))
-        }
-
-        TextButton(onClick = { showDuplicateDialog = false }) {
-          Text(stringResource(android.R.string.cancel))
         }
       },
       onDismiss = { showDuplicateDialog = false }

@@ -1,5 +1,8 @@
 package echo.music.iad1tya.ui.screens.settings
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.heightIn
+import echo.music.iad1tya.ui.component.StageTopBar
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,7 +20,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -41,14 +43,14 @@ fun BlockedArtistsScreen(navController: NavController) {
 
   Scaffold(
     topBar = {
-      TopAppBar(
+      StageTopBar(
         title = { Text("Blocked Artists") },
         navigationIcon = {
           IconButton(onClick = navController::navigateUp) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
           }
         }
-      )
+)
     }
   ) { padding ->
     if (blockedArtists.isEmpty()) {
@@ -96,7 +98,7 @@ fun BlockedArtistsScreen(navController: NavController) {
               headlineContent = { Text(name, style = MaterialTheme.typography.titleMedium) },
               supportingContent = { Text("ID: $id", style = MaterialTheme.typography.bodySmall) },
               trailingContent = {
-                OutlinedButton(
+                androidx.compose.material3.Button(
                   onClick = {
                     coroutineScope.launch {
                       context.dataStore.edit { prefs ->
@@ -104,7 +106,15 @@ fun BlockedArtistsScreen(navController: NavController) {
                         prefs[BlockedArtistsKey] = current - entry
                       }
                     }
-                  }
+                  },
+                  modifier = Modifier.heightIn(min = 44.dp),
+                  shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp),
+                  contentPadding = PaddingValues(horizontal = 16.dp),
+                  colors =
+                    androidx.compose.material3.ButtonDefaults.buttonColors(
+                      containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                      contentColor = MaterialTheme.colorScheme.onSurface,
+                    ),
                 ) {
                   Text("Unblock")
                 }

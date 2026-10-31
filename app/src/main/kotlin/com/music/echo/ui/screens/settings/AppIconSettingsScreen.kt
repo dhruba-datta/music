@@ -2,6 +2,14 @@
 
 package echo.music.iad1tya.ui.screens.settings
 
+import echo.music.iad1tya.ui.component.StageSettingsHeading
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.border
+import echo.music.iad1tya.ui.component.StageTopBar
 import android.app.Activity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -33,7 +41,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -93,16 +100,14 @@ fun AppIconSettingsScreen(
   Scaffold(
     containerColor = MaterialTheme.colorScheme.surface,
     topBar = {
-      TopAppBar(
-        title = { Text("App Icon", fontWeight = FontWeight.Bold) },
+      StageTopBar(
+        title = { Text("App Icon") },
         navigationIcon = {
           IconButton(onClick = { navController.navigateUp() }) {
             Icon(painter = painterResource(R.drawable.arrow_back), contentDescription = "Back")
           }
-        },
-        colors =
-          TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
-      )
+        }
+)
     }
   ) { innerPadding ->
     val icons =
@@ -165,61 +170,28 @@ fun AppIconSettingsScreen(
             LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal)
           )
           .padding(innerPadding)
-          .padding(horizontal = 16.dp)
+          .padding(horizontal = 18.dp)
     ) {
-      Spacer(modifier = Modifier.height(8.dp))
+      StageSettingsHeading(text = "Choose your launcher icon")
 
-      Text(
-        text = "Choose your launcher icon",
-        style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.primary,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(bottom = 12.dp, start = 4.dp)
-      )
-
-      Column(modifier = Modifier.fillMaxWidth()) {
-        icons.forEachIndexed { index, option ->
-          val shape =
-            when {
-              icons.size == 1 -> RoundedCornerShape(24.dp)
-              index == 0 ->
-                RoundedCornerShape(
-                  topStart = 24.dp,
-                  topEnd = 24.dp,
-                  bottomStart = 4.dp,
-                  bottomEnd = 4.dp
-                )
-              index == icons.size - 1 ->
-                RoundedCornerShape(
-                  topStart = 4.dp,
-                  topEnd = 4.dp,
-                  bottomStart = 24.dp,
-                  bottomEnd = 24.dp
-                )
-              else -> RoundedCornerShape(4.dp)
-            }
-
-          Card(
+      Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+      ) {
+        icons.chunked(3).forEach { row ->
+          Row(
             modifier = Modifier.fillMaxWidth(),
-            shape = shape,
-            colors =
-              CardDefaults.cardColors(
-                containerColor =
-                  if (appIconType == option.type)
-                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                  else MaterialTheme.colorScheme.surfaceContainerHigh
-              ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
           ) {
-            AppIconRow(
-              option = option,
-              isSelected = (appIconType == option.type),
-              onClick = { handleIconChange(option.type) }
-            )
-          }
-
-          if (index < icons.size - 1) {
-            Spacer(modifier = Modifier.height(2.dp))
+            row.forEach { option ->
+              AppIconTile(
+                option = option,
+                isSelected = (appIconType == option.type),
+                onClick = { handleIconChange(option.type) },
+                modifier = Modifier.weight(1f),
+              )
+            }
+            repeat(3 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
           }
         }
       }
@@ -242,52 +214,55 @@ data class AppIconOption(
   val iconRes: Int
 )
 
+/** A 72dp launcher icon over its name; the current icon has a white ring. */
 @Composable
-fun AppIconRow(option: AppIconOption, isSelected: Boolean, onClick: () -> Unit) {
-  Row(
-    modifier =
-      Modifier.fillMaxWidth()
-        .clickable(onClick = onClick)
-        .padding(horizontal = 20.dp, vertical = 16.dp),
-    verticalAlignment = Alignment.CenterVertically
-  ) {
-    val context = LocalContext.current
-    val bitmap =
-      remember(option.iconRes) {
-        val drawable = ContextCompat.getDrawable(context, option.iconRes)
-        drawable?.toBitmap(width = 192, height = 192)?.asImageBitmap()
-      }
+fun AppIconTile(
+  option: AppIconOption,
+  isSelected: Boolean,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  val context = LocalContext.current
+  val bitmap =
+    remember(option.iconRes) {
+      val drawable = ContextCompat.getDrawable(context, option.iconRes)
+      drawable?.toBitmap(width = 192, height = 192)?.asImageBitmap()
+    }
+  val shape = RoundedCornerShape(20.dp)
 
+  Column(
+    horizontalAlignment = Alignment.CenterHorizontally,
+    verticalArrangement = Arrangement.spacedBy(8.dp),
+    modifier =
+      modifier
+        .semantics(mergeDescendants = true) { contentDescription = option.description }
+        .clickable(onClick = onClick),
+  ) {
     Box(
-      modifier = Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)),
-      contentAlignment = Alignment.Center
+      modifier =
+        Modifier.size(78.dp)
+          .then(
+            if (isSelected) Modifier.border(3.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(23.dp))
+            else Modifier
+          )
+          .padding(3.dp),
+      contentAlignment = Alignment.Center,
     ) {
       if (bitmap != null) {
         Image(
           bitmap = bitmap,
           contentDescription = null,
-          modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp))
+          modifier = Modifier.size(72.dp).clip(shape),
         )
       }
     }
-
-    Spacer(modifier = Modifier.width(20.dp))
-
-    Column(modifier = Modifier.weight(1f)) {
-      Text(
-        text = option.title,
-        style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.onSurface
-      )
-      Spacer(modifier = Modifier.height(2.dp))
-      Text(
-        text = option.description,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-      )
-    }
-
-    Spacer(modifier = Modifier.width(8.dp))
-    RadioButton(selected = isSelected, onClick = onClick)
+    Text(
+      text = option.title,
+      fontSize = 13.sp,
+      fontWeight = FontWeight.Bold,
+      textAlign = TextAlign.Center,
+      color = MaterialTheme.colorScheme.onSurface,
+      maxLines = 2,
+    )
   }
 }

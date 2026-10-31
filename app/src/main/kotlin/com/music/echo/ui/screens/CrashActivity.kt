@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.screens
 
+import echo.music.iad1tya.ui.component.StageTopBar
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -25,7 +26,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -120,11 +120,10 @@ fun CrashScreen(crashLog: String, onClose: () -> Unit, onShare: () -> Unit, onCo
 
   Scaffold(
     topBar = {
-      TopAppBar(
+      StageTopBar(
         title = {
           Text(
-            text = stringResource(R.string.crash_title),
-            style = MaterialTheme.typography.headlineSmall
+            text = stringResource(R.string.crash_title)
           )
         },
         actions = {
@@ -140,10 +139,8 @@ fun CrashScreen(crashLog: String, onClose: () -> Unit, onShare: () -> Unit, onCo
               contentDescription = stringResource(R.string.crash_close)
             )
           }
-        },
-        colors =
-          TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
-      )
+        }
+)
     },
     floatingActionButton = {
       FloatingActionButton(

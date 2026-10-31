@@ -1,5 +1,10 @@
 package echo.music.iad1tya.ui.screens.settings
 
+import androidx.compose.runtime.LaunchedEffect
+import androidx.activity.compose.BackHandler
+import echo.music.iad1tya.ui.component.StagePillButton
+import echo.music.iad1tya.ui.component.StageSwitch
+import echo.music.iad1tya.ui.component.StageTopBar
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -28,11 +33,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -144,6 +146,12 @@ fun AppearanceSettings(
   highlightKey: String? = null
 ) {
   val scrollState = androidx.compose.foundation.rememberScrollState()
+
+  var openSection by rememberSaveable { mutableStateOf<String?>(null) }
+  // A search result lands on the full page so its row can be scrolled to and highlighted.
+  val inSection = { key: String? -> highlightKey != null || openSection == key }
+  BackHandler(enabled = openSection != null) { openSection = null }
+  LaunchedEffect(openSection) { scrollState.scrollTo(0) }
 
   val (selectedFontValue) = rememberPreference(SelectedFontKey, defaultValue = AppFont.MANROPE.value)
   val (dynamicTheme, onDynamicThemeChange) =
@@ -377,26 +385,19 @@ fun AppearanceSettings(
         showLyricsTextSizeDialog = false
       },
       buttons = {
-        TextButton(onClick = { tempTextSize = 24f }) { Text(stringResource(R.string.reset)) }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        TextButton(
-          onClick = {
-            tempTextSize = lyricsTextSize
-            showLyricsTextSizeDialog = false
-          }
-        ) {
-          Text(stringResource(android.R.string.cancel))
-        }
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             onLyricsTextSizeChange(tempTextSize)
             showLyricsTextSizeDialog = false
-          }
-        ) {
+          }) {
           Text(stringResource(android.R.string.ok))
         }
+        StagePillButton(onClick = {
+            tempTextSize = lyricsTextSize
+            showLyricsTextSizeDialog = false
+          }, primary = false) {
+          Text(stringResource(android.R.string.cancel))
+        }
+        StagePillButton(onClick = { tempTextSize = 24f }, primary = false) { Text(stringResource(R.string.reset)) }
       }
     ) {
       Column(
@@ -435,26 +436,19 @@ fun AppearanceSettings(
         showLyricsLineSpacingDialog = false
       },
       buttons = {
-        TextButton(onClick = { tempLineSpacing = 1.3f }) { Text(stringResource(R.string.reset)) }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        TextButton(
-          onClick = {
-            tempLineSpacing = lyricsLineSpacing
-            showLyricsLineSpacingDialog = false
-          }
-        ) {
-          Text(stringResource(android.R.string.cancel))
-        }
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             onLyricsLineSpacingChange(tempLineSpacing)
             showLyricsLineSpacingDialog = false
-          }
-        ) {
+          }) {
           Text(stringResource(android.R.string.ok))
         }
+        StagePillButton(onClick = {
+            tempLineSpacing = lyricsLineSpacing
+            showLyricsLineSpacingDialog = false
+          }, primary = false) {
+          Text(stringResource(android.R.string.cancel))
+        }
+        StagePillButton(onClick = { tempLineSpacing = 1.3f }, primary = false) { Text(stringResource(R.string.reset)) }
       }
     ) {
       Column(
@@ -628,11 +622,7 @@ fun AppearanceSettings(
     DefaultDialog(
       onDismiss = { showRestartDialog = false },
       buttons = {
-        TextButton(onClick = { showRestartDialog = false }) {
-          Text(text = stringResource(android.R.string.cancel))
-        }
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             showRestartDialog = false
             val intent =
               context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
@@ -640,9 +630,11 @@ fun AppearanceSettings(
               }
             context.startActivity(intent)
             Runtime.getRuntime().exit(0)
-          }
-        ) {
+          }) {
           Text(text = stringResource(R.string.restart))
+        }
+        StagePillButton(onClick = { showRestartDialog = false }, primary = false) {
+          Text(text = stringResource(android.R.string.cancel))
         }
       }
     ) {
@@ -663,7 +655,7 @@ fun AppearanceSettings(
     DefaultDialog(
       onDismiss = { showDensityScaleDialog = false },
       buttons = {
-        TextButton(onClick = { showDensityScaleDialog = false }) {
+        StagePillButton(onClick = { showDensityScaleDialog = false }) {
           Text(text = stringResource(android.R.string.cancel))
         }
       }
@@ -702,7 +694,7 @@ fun AppearanceSettings(
 
     DefaultDialog(
       buttons = {
-        TextButton(onClick = { showSliderOptionDialog = false }) {
+        StagePillButton(onClick = { showSliderOptionDialog = false }) {
           Text(text = stringResource(android.R.string.cancel))
         }
       },
@@ -915,14 +907,14 @@ fun AppearanceSettings(
         LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal)
       )
       .verticalScroll(scrollState)
-      .padding(horizontal = 16.dp)
+      .padding(horizontal = 18.dp)
   ) {
     Spacer(
       Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Top))
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
 
+    if (inSection(null)) {
     Material3SettingsGroup(
       scrollState = scrollState,
       title = stringResource(R.string.theme),
@@ -941,7 +933,7 @@ fun AppearanceSettings(
             Material3SettingsItem(
               icon = painterResource(echo.music.iad1tya.R.drawable.alphabet_cyrillic),
               title = { Text(stringResource(echo.music.iad1tya.R.string.app_font)) },
-              trailingContent = {
+              value = {
                 val fontLabel =
                   when (AppFont.fromValue(selectedFontValue)) {
                     AppFont.SYSTEM -> stringResource(echo.music.iad1tya.R.string.font_system)
@@ -985,29 +977,49 @@ fun AppearanceSettings(
               title = { Text(stringResource(R.string.enable_high_refresh_rate)) },
               description = { Text(stringResource(R.string.enable_high_refresh_rate_desc)) },
               trailingContent = {
-                Switch(
-                  checked = enableHighRefreshRate,
-                  onCheckedChange = onEnableHighRefreshRateChange,
-                  thumbContent = {
-                    Icon(
-                      painter =
-                        painterResource(
-                          id = if (enableHighRefreshRate) R.drawable.check else R.drawable.close
-                        ),
-                      contentDescription = null,
-                      modifier = Modifier.size(SwitchDefaults.IconSize)
-                    )
-                  }
-                )
+                StageSwitch(checked = enableHighRefreshRate, onCheckedChange = onEnableHighRefreshRateChange)
               },
               onClick = { onEnableHighRefreshRateChange(!enableHighRefreshRate) }
             )
           )
         }
     )
+    }
 
-    Spacer(modifier = Modifier.height(16.dp))
 
+    if (highlightKey == null && openSection == null) {
+      Material3SettingsGroup(
+        title = stringResource(R.string.stage_more),
+        items =
+          listOf(
+          Material3SettingsItem(
+            title = { Text(stringResource(R.string.mini_player)) },
+            onClick = { openSection = "mini" },
+          ),
+          Material3SettingsItem(
+            title = { Text(stringResource(R.string.player)) },
+            description = { Text(stringResource(R.string.stage_appearance_player_desc)) },
+            onClick = { openSection = "player" },
+          ),
+          Material3SettingsItem(
+            title = { Text(stringResource(R.string.lyrics)) },
+            description = { Text(stringResource(R.string.stage_appearance_lyrics_desc)) },
+            onClick = { openSection = "lyrics" },
+          ),
+          Material3SettingsItem(
+            title = { Text(stringResource(R.string.misc)) },
+            description = { Text(stringResource(R.string.stage_appearance_misc_desc)) },
+            onClick = { openSection = "misc" },
+          ),
+          Material3SettingsItem(
+            title = { Text(stringResource(R.string.auto_playlists)) },
+            onClick = { openSection = "auto" },
+          )
+          ),
+      )
+    }
+
+    if (inSection("mini")) {
     Material3SettingsGroup(
       scrollState = scrollState,
       title = stringResource(id = R.string.mini_player),
@@ -1019,7 +1031,7 @@ fun AppearanceSettings(
                 (highlightKey == stringResource(R.string.miniplayer_background_style)),
               icon = painterResource(R.drawable.dock_to_top),
               title = { Text(stringResource(R.string.miniplayer_background_style)) },
-              description = {
+              value = {
                 Text(
                   when (miniPlayerBackground) {
                     PlayerBackgroundStyle.DEFAULT -> stringResource(R.string.follow_theme)
@@ -1038,6 +1050,7 @@ fun AppearanceSettings(
           )
         }
     )
+    }
 
     Spacer(modifier = Modifier.height(16.dp))
 
@@ -1047,8 +1060,8 @@ fun AppearanceSettings(
     var showSensitivityDialog by rememberSaveable { mutableStateOf(false) }
     var showThumbnailCornerRadiusDialog by rememberSaveable { mutableStateOf(false) }
 
-    Spacer(modifier = Modifier.height(16.dp))
 
+    if (inSection("player")) {
     Material3SettingsGroup(
       scrollState = scrollState,
       title = stringResource(R.string.player),
@@ -1059,25 +1072,12 @@ fun AppearanceSettings(
             icon = painterResource(R.drawable.apple_music_me),
             title = { Text("Apple Music Inspired") },
             trailingContent = {
-              Switch(
-                checked = !useNewPlayerDesign,
-                onCheckedChange = { isChecked ->
+              StageSwitch(checked = !useNewPlayerDesign, onCheckedChange = { isChecked ->
                   onUseNewPlayerDesignChange(!isChecked)
                   if (isChecked) {
                     onPlayerBackgroundChange(PlayerBackgroundStyle.APPLE_MUSIC)
                   }
-                },
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (!useNewPlayerDesign) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+                })
             },
             onClick = {
               val newAppleMusicInspired = useNewPlayerDesign
@@ -1094,20 +1094,7 @@ fun AppearanceSettings(
               title = { Text("Hide volume slider") },
               description = { Text("Hide the volume slider on the Apple Music player") },
               trailingContent = {
-                Switch(
-                  checked = hidePlayerSlider,
-                  onCheckedChange = onHidePlayerSliderChange,
-                  thumbContent = {
-                    Icon(
-                      painter =
-                        painterResource(
-                          id = if (hidePlayerSlider) R.drawable.check else R.drawable.close
-                        ),
-                      contentDescription = null,
-                      modifier = Modifier.size(SwitchDefaults.IconSize)
-                    )
-                  }
-                )
+                StageSwitch(checked = hidePlayerSlider, onCheckedChange = onHidePlayerSliderChange)
               },
               onClick = { onHidePlayerSliderChange(!hidePlayerSlider) }
             )
@@ -1116,7 +1103,7 @@ fun AppearanceSettings(
             isHighlighted = (highlightKey == stringResource(R.string.player_background_style)),
             icon = painterResource(R.drawable.gradient),
             title = { Text(stringResource(R.string.player_background_style)) },
-            description = {
+            value = {
               Text(
                 when (playerBackground) {
                   PlayerBackgroundStyle.DEFAULT -> stringResource(R.string.follow_theme)
@@ -1139,20 +1126,7 @@ fun AppearanceSettings(
               title = { Text(stringResource(R.string.hide_player_thumbnail)) },
               description = { Text(stringResource(R.string.hide_player_thumbnail_desc)) },
               trailingContent = {
-                Switch(
-                  checked = hidePlayerThumbnail,
-                  onCheckedChange = onHidePlayerThumbnailChange,
-                  thumbContent = {
-                    Icon(
-                      painter =
-                        painterResource(
-                          id = if (hidePlayerThumbnail) R.drawable.check else R.drawable.close
-                        ),
-                      contentDescription = null,
-                      modifier = Modifier.size(SwitchDefaults.IconSize)
-                    )
-                  }
-                )
+                StageSwitch(checked = hidePlayerThumbnail, onCheckedChange = onHidePlayerThumbnailChange)
               },
               onClick = { onHidePlayerThumbnailChange(!hidePlayerThumbnail) }
             )
@@ -1180,20 +1154,7 @@ fun AppearanceSettings(
               title = { Text(stringResource(R.string.crop_album_art)) },
               description = { Text(stringResource(R.string.crop_album_art_desc)) },
               trailingContent = {
-                Switch(
-                  checked = cropAlbumArt,
-                  onCheckedChange = onCropAlbumArtChange,
-                  thumbContent = {
-                    Icon(
-                      painter =
-                        painterResource(
-                          id = if (cropAlbumArt) R.drawable.check else R.drawable.close
-                        ),
-                      contentDescription = null,
-                      modifier = Modifier.size(SwitchDefaults.IconSize)
-                    )
-                  }
-                )
+                StageSwitch(checked = cropAlbumArt, onCheckedChange = onCropAlbumArtChange)
               },
               onClick = { onCropAlbumArtChange(!cropAlbumArt) }
             )
@@ -1202,7 +1163,7 @@ fun AppearanceSettings(
             isHighlighted = (highlightKey == stringResource(R.string.player_buttons_style)),
             icon = painterResource(R.drawable.palette),
             title = { Text(stringResource(R.string.player_buttons_style)) },
-            description = {
+            value = {
               Text(
                 when (playerButtonsStyle) {
                   PlayerButtonsStyle.DEFAULT -> stringResource(R.string.default_style)
@@ -1217,7 +1178,7 @@ fun AppearanceSettings(
             isHighlighted = (highlightKey == stringResource(R.string.player_slider_style)),
             icon = painterResource(R.drawable.sliders),
             title = { Text(stringResource(R.string.player_slider_style)) },
-            description = {
+            value = {
               Text(
                 when (sliderStyle) {
                   SliderStyle.DEFAULT -> "Bar"
@@ -1236,20 +1197,7 @@ fun AppearanceSettings(
             title = { Text(stringResource(R.string.wavy_play_pause)) },
             description = { Text(stringResource(R.string.wavy_play_pause_desc)) },
             trailingContent = {
-              Switch(
-                checked = wavyPlayPause,
-                onCheckedChange = onWavyPlayPauseChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        if (wavyPlayPause) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = wavyPlayPause, onCheckedChange = onWavyPlayPauseChange)
             },
             onClick = { onWavyPlayPauseChange(!wavyPlayPause) }
           ),
@@ -1259,20 +1207,7 @@ fun AppearanceSettings(
             title = { Text(stringResource(R.string.enable_swipe_thumbnail)) },
             description = { Text(stringResource(R.string.enable_swipe_thumbnail_desc)) },
             trailingContent = {
-              Switch(
-                checked = swipeThumbnail,
-                onCheckedChange = onSwipeThumbnailChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (swipeThumbnail) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = swipeThumbnail, onCheckedChange = onSwipeThumbnailChange)
             },
             onClick = { onSwipeThumbnailChange(!swipeThumbnail) }
           ),
@@ -1282,20 +1217,7 @@ fun AppearanceSettings(
             title = { Text(stringResource(R.string.echomusic_canvas)) },
             description = { Text(stringResource(R.string.echomusic_canvas_desc)) },
             trailingContent = {
-              Switch(
-                checked = canvasThumbnailAnimation,
-                onCheckedChange = onCanvasThumbnailAnimationChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (canvasThumbnailAnimation) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = canvasThumbnailAnimation, onCheckedChange = onCanvasThumbnailAnimationChange)
             },
             onClick = { onCanvasThumbnailAnimationChange(!canvasThumbnailAnimation) }
           ),
@@ -1305,20 +1227,7 @@ fun AppearanceSettings(
             title = { Text(stringResource(R.string.rotating_thumbnail)) },
             description = { Text(stringResource(R.string.rotating_thumbnail_desc)) },
             trailingContent = {
-              Switch(
-                checked = rotatingThumbnail,
-                onCheckedChange = onRotatingThumbnailChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (rotatingThumbnail) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = rotatingThumbnail, onCheckedChange = onRotatingThumbnailChange)
             },
             onClick = { onRotatingThumbnailChange(!rotatingThumbnail) }
           ),
@@ -1329,20 +1238,7 @@ fun AppearanceSettings(
             title = { Text(stringResource(R.string.show_comment_button)) },
             description = { Text(stringResource(R.string.show_comment_button_description)) },
             trailingContent = {
-              Switch(
-                checked = showCommentButton,
-                onCheckedChange = onShowCommentButtonChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (showCommentButton) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = showCommentButton, onCheckedChange = onShowCommentButtonChange)
             },
             onClick = { onShowCommentButtonChange(!showCommentButton) }
           ),
@@ -1352,20 +1248,7 @@ fun AppearanceSettings(
             title = { Text("Show codec on player") },
             description = { Text("Display audio codec information below the timeline") },
             trailingContent = {
-              Switch(
-                checked = showCodecOnPlayer,
-                onCheckedChange = onShowCodecOnPlayerChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (showCodecOnPlayer) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = showCodecOnPlayer, onCheckedChange = onShowCodecOnPlayerChange)
             }
           ),
           if (swipeThumbnail)
@@ -1373,7 +1256,7 @@ fun AppearanceSettings(
               isHighlighted = (highlightKey == stringResource(R.string.swipe_sensitivity)),
               icon = painterResource(R.drawable.tune),
               title = { Text(stringResource(R.string.swipe_sensitivity)) },
-              description = {
+              value = {
                 Text(
                   stringResource(
                     R.string.sensitivity_percentage,
@@ -1386,6 +1269,7 @@ fun AppearanceSettings(
           else null
         )
     )
+    }
 
     if (showSensitivityDialog) {
       var tempSensitivity by remember { mutableFloatStateOf(swipeSensitivity) }
@@ -1396,27 +1280,20 @@ fun AppearanceSettings(
           showSensitivityDialog = false
         },
         buttons = {
-          TextButton(onClick = { tempSensitivity = 0.73f }) { Text(stringResource(R.string.reset)) }
-
-          Spacer(modifier = Modifier.weight(1f))
-
-          TextButton(
-            onClick = {
-              tempSensitivity = swipeSensitivity
-              showSensitivityDialog = false
-            }
-          ) {
-            Text(stringResource(android.R.string.cancel))
-          }
-          TextButton(
-            onClick = {
+        StagePillButton(onClick = {
               onSwipeSensitivityChange(tempSensitivity)
               showSensitivityDialog = false
-            }
-          ) {
+            }) {
             Text(stringResource(android.R.string.ok))
           }
-        }
+        StagePillButton(onClick = {
+              tempSensitivity = swipeSensitivity
+              showSensitivityDialog = false
+            }, primary = false) {
+            Text(stringResource(android.R.string.cancel))
+          }
+        StagePillButton(onClick = { tempSensitivity = 0.73f }, primary = false) { Text(stringResource(R.string.reset)) }
+      }
       ) {
         Column(
           horizontalAlignment = Alignment.CenterHorizontally,
@@ -1456,8 +1333,8 @@ fun AppearanceSettings(
       )
     }
 
-    Spacer(modifier = Modifier.height(16.dp))
 
+    if (inSection("lyrics")) {
     Material3SettingsGroup(
       scrollState = scrollState,
       title = stringResource(R.string.lyrics),
@@ -1467,7 +1344,7 @@ fun AppearanceSettings(
             isHighlighted = (highlightKey == stringResource(R.string.lyrics_text_position)),
             icon = painterResource(R.drawable.lyrics),
             title = { Text(stringResource(R.string.lyrics_text_position)) },
-            description = {
+            value = {
               Text(
                 when (lyricsPosition) {
                   LyricsPosition.LEFT -> stringResource(R.string.left)
@@ -1482,7 +1359,7 @@ fun AppearanceSettings(
             isHighlighted = (highlightKey == stringResource(R.string.lyrics_animation_style)),
             icon = painterResource(R.drawable.lyrics),
             title = { Text(stringResource(R.string.lyrics_animation_style)) },
-            description = {
+            value = {
               Text(
                 when (lyricsAnimationStyle) {
                   LyricsAnimationStyle.NONE -> stringResource(R.string.none)
@@ -1508,20 +1385,7 @@ fun AppearanceSettings(
               title = { Text(stringResource(R.string.apple_music_lyrics_blur)) },
               description = { Text(stringResource(R.string.apple_music_lyrics_blur_desc)) },
               trailingContent = {
-                Switch(
-                  checked = appleMusicLyricsBlur,
-                  onCheckedChange = onAppleMusicLyricsBlurChange,
-                  thumbContent = {
-                    Icon(
-                      painter =
-                        painterResource(
-                          id = if (appleMusicLyricsBlur) R.drawable.check else R.drawable.close
-                        ),
-                      contentDescription = null,
-                      modifier = Modifier.size(SwitchDefaults.IconSize)
-                    )
-                  }
-                )
+                StageSwitch(checked = appleMusicLyricsBlur, onCheckedChange = onAppleMusicLyricsBlurChange)
               },
               onClick = { onAppleMusicLyricsBlurChange(!appleMusicLyricsBlur) }
             )
@@ -1532,20 +1396,7 @@ fun AppearanceSettings(
             title = { Text(stringResource(R.string.standard_lyrics_blur)) },
             description = { Text(stringResource(R.string.apple_music_lyrics_blur_desc)) },
             trailingContent = {
-              Switch(
-                checked = lyricsStandardBlur,
-                onCheckedChange = onLyricsStandardBlurChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (lyricsStandardBlur) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = lyricsStandardBlur, onCheckedChange = onLyricsStandardBlurChange)
             },
             onClick = { onLyricsStandardBlurChange(!lyricsStandardBlur) }
           ),
@@ -1553,14 +1404,14 @@ fun AppearanceSettings(
             isHighlighted = (highlightKey == stringResource(R.string.lyrics_text_size)),
             icon = painterResource(R.drawable.lyrics),
             title = { Text(stringResource(R.string.lyrics_text_size)) },
-            description = { Text("${lyricsTextSize.roundToInt()} sp") },
+            value = { Text("${lyricsTextSize.roundToInt()} sp") },
             onClick = { showLyricsTextSizeDialog = true }
           ),
           Material3SettingsItem(
             isHighlighted = (highlightKey == stringResource(R.string.lyrics_line_spacing)),
             icon = painterResource(R.drawable.lyrics),
             title = { Text(stringResource(R.string.lyrics_line_spacing)) },
-            description = { Text("${String.format("%.1f", lyricsLineSpacing)}x") },
+            value = { Text("${String.format("%.1f", lyricsLineSpacing)}x") },
             onClick = { showLyricsLineSpacingDialog = true }
           ),
           Material3SettingsItem(
@@ -1569,18 +1420,7 @@ fun AppearanceSettings(
             title = { Text(stringResource(R.string.lyrics_click_change)) },
             description = { Text(stringResource(R.string.lyrics_click_change_desc)) },
             trailingContent = {
-              Switch(
-                checked = lyricsClick,
-                onCheckedChange = onLyricsClickChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(id = if (lyricsClick) R.drawable.check else R.drawable.close),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = lyricsClick, onCheckedChange = onLyricsClickChange)
             },
             onClick = { onLyricsClickChange(!lyricsClick) }
           ),
@@ -1590,20 +1430,7 @@ fun AppearanceSettings(
             title = { Text(stringResource(R.string.lyrics_auto_scroll)) },
             description = { Text(stringResource(R.string.lyrics_auto_scroll_desc)) },
             trailingContent = {
-              Switch(
-                checked = lyricsScroll,
-                onCheckedChange = onLyricsScrollChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (lyricsScroll) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = lyricsScroll, onCheckedChange = onLyricsScrollChange)
             },
             onClick = { onLyricsScrollChange(!lyricsScroll) }
           ),
@@ -1613,18 +1440,7 @@ fun AppearanceSettings(
             title = { Text(stringResource(R.string.lyrics_swipe_to_change_song)) },
             description = { Text(stringResource(R.string.lyrics_swipe_to_change_song_desc)) },
             trailingContent = {
-              Switch(
-                checked = swipeLyrics,
-                onCheckedChange = onSwipeLyricsChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(id = if (swipeLyrics) R.drawable.check else R.drawable.close),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = swipeLyrics, onCheckedChange = onSwipeLyricsChange)
             },
             onClick = { onSwipeLyricsChange(!swipeLyrics) }
           ),
@@ -1634,21 +1450,7 @@ fun AppearanceSettings(
             title = { Text(stringResource(R.string.lyrics_thumbnail_play_pause)) },
             description = { Text(stringResource(R.string.lyrics_thumbnail_play_pause_desc)) },
             trailingContent = {
-              Switch(
-                checked = enableLyricsThumbnailPlayPause,
-                onCheckedChange = onEnableLyricsThumbnailPlayPauseChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id =
-                          if (enableLyricsThumbnailPlayPause) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = enableLyricsThumbnailPlayPause, onCheckedChange = onEnableLyricsThumbnailPlayPauseChange)
             },
             onClick = { onEnableLyricsThumbnailPlayPauseChange(!enableLyricsThumbnailPlayPause) }
           ),
@@ -1659,29 +1461,18 @@ fun AppearanceSettings(
             title = { Text(stringResource(R.string.hide_status_bar_on_fullscreen)) },
             description = { Text(stringResource(R.string.hide_status_bar_on_fullscreen_desc)) },
             trailingContent = {
-              Switch(
-                checked = hideStatusBarOnFullscreen,
-                onCheckedChange = onHideStatusBarOnFullscreenChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (hideStatusBarOnFullscreen) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = hideStatusBarOnFullscreen, onCheckedChange = onHideStatusBarOnFullscreenChange)
             },
             onClick = { onHideStatusBarOnFullscreenChange(!hideStatusBarOnFullscreen) }
           )
         )
     )
+    }
 
     Spacer(modifier = Modifier.height(16.dp))
 
 
+    if (inSection("misc")) {
     Material3SettingsGroup(
       scrollState = scrollState,
       title = stringResource(R.string.misc),
@@ -1691,7 +1482,7 @@ fun AppearanceSettings(
             isHighlighted = (highlightKey == stringResource(R.string.default_open_tab)),
             icon = painterResource(R.drawable.nav_bar),
             title = { Text(stringResource(R.string.default_open_tab)) },
-            description = {
+            value = {
               Text(
                 when (defaultOpenTab) {
                   NavigationTab.HOME -> stringResource(R.string.home)
@@ -1706,7 +1497,7 @@ fun AppearanceSettings(
             isHighlighted = (highlightKey == stringResource(R.string.default_lib_chips)),
             icon = painterResource(R.drawable.tab),
             title = { Text(stringResource(R.string.default_lib_chips)) },
-            description = {
+            value = {
               Text(
                 when (defaultChip) {
                   LibraryFilter.SONGS -> stringResource(R.string.songs)
@@ -1727,18 +1518,7 @@ fun AppearanceSettings(
             title = { Text(stringResource(R.string.swipe_song_to_add)) },
             description = { Text(stringResource(R.string.swipe_song_to_add_desc)) },
             trailingContent = {
-              Switch(
-                checked = swipeToSong,
-                onCheckedChange = onSwipeToSongChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(id = if (swipeToSong) R.drawable.check else R.drawable.close),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = swipeToSong, onCheckedChange = onSwipeToSongChange)
             },
             onClick = { onSwipeToSongChange(!swipeToSong) }
           ),
@@ -1759,20 +1539,7 @@ fun AppearanceSettings(
             title = { Text(stringResource(R.string.swipe_song_to_remove)) },
             description = { Text(stringResource(R.string.swipe_song_to_remove_desc)) },
             trailingContent = {
-              Switch(
-                checked = swipeToRemoveSong,
-                onCheckedChange = onSwipeToRemoveSongChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (swipeToRemoveSong) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = swipeToRemoveSong, onCheckedChange = onSwipeToRemoveSongChange)
             },
             onClick = { onSwipeToRemoveSongChange(!swipeToRemoveSong) }
           ),
@@ -1780,7 +1547,7 @@ fun AppearanceSettings(
             isHighlighted = (highlightKey == stringResource(R.string.grid_cell_size)),
             icon = painterResource(R.drawable.grid_view),
             title = { Text(stringResource(R.string.grid_cell_size)) },
-            description = {
+            value = {
               Text(
                 when (gridItemSize) {
                   GridItemSize.BIG -> stringResource(R.string.big)
@@ -1794,14 +1561,15 @@ fun AppearanceSettings(
             isHighlighted = (highlightKey == stringResource(R.string.display_density)),
             icon = painterResource(R.drawable.grid_view),
             title = { Text(stringResource(R.string.display_density)) },
-            description = { Text(DensityScale.fromValue(densityScale).label) },
+            value = { Text(DensityScale.fromValue(densityScale).label) },
             onClick = { showDensityScaleDialog = true }
           )
         )
     )
+    }
 
-    Spacer(modifier = Modifier.height(16.dp))
 
+    if (inSection("auto")) {
     Material3SettingsGroup(
       scrollState = scrollState,
       title = stringResource(R.string.auto_playlists),
@@ -1813,20 +1581,7 @@ fun AppearanceSettings(
             title = { Text(stringResource(R.string.show_liked_playlist)) },
             description = { Text(stringResource(R.string.show_liked_playlist_desc)) },
             trailingContent = {
-              Switch(
-                checked = showLikedPlaylist,
-                onCheckedChange = onShowLikedPlaylistChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (showLikedPlaylist) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = showLikedPlaylist, onCheckedChange = onShowLikedPlaylistChange)
             },
             onClick = { onShowLikedPlaylistChange(!showLikedPlaylist) }
           ),
@@ -1836,20 +1591,7 @@ fun AppearanceSettings(
             title = { Text(stringResource(R.string.show_downloaded_playlist)) },
             description = { Text(stringResource(R.string.show_downloaded_playlist_desc)) },
             trailingContent = {
-              Switch(
-                checked = showDownloadedPlaylist,
-                onCheckedChange = onShowDownloadedPlaylistChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (showDownloadedPlaylist) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = showDownloadedPlaylist, onCheckedChange = onShowDownloadedPlaylistChange)
             },
             onClick = { onShowDownloadedPlaylistChange(!showDownloadedPlaylist) }
           ),
@@ -1859,20 +1601,7 @@ fun AppearanceSettings(
             title = { Text(stringResource(R.string.action_exported)) },
             description = { Text(stringResource(R.string.action_exported_desc)) },
             trailingContent = {
-              Switch(
-                checked = showExportedPlaylist,
-                onCheckedChange = onShowExportedPlaylistChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (showExportedPlaylist) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = showExportedPlaylist, onCheckedChange = onShowExportedPlaylistChange)
             },
             onClick = { onShowExportedPlaylistChange(!showExportedPlaylist) }
           ),
@@ -1882,20 +1611,7 @@ fun AppearanceSettings(
             title = { Text(stringResource(R.string.show_top_playlist)) },
             description = { Text(stringResource(R.string.show_top_playlist_desc)) },
             trailingContent = {
-              Switch(
-                checked = showTopPlaylist,
-                onCheckedChange = onShowTopPlaylistChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (showTopPlaylist) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = showTopPlaylist, onCheckedChange = onShowTopPlaylistChange)
             },
             onClick = { onShowTopPlaylistChange(!showTopPlaylist) }
           ),
@@ -1905,20 +1621,7 @@ fun AppearanceSettings(
             title = { Text(stringResource(R.string.show_bottom_playlist)) },
             description = { Text(stringResource(R.string.show_bottom_playlist_desc)) },
             trailingContent = {
-              Switch(
-                checked = showBottomPlaylist,
-                onCheckedChange = onShowBottomPlaylistChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (showBottomPlaylist) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = showBottomPlaylist, onCheckedChange = onShowBottomPlaylistChange)
             },
             onClick = { onShowBottomPlaylistChange(!showBottomPlaylist) }
           ),
@@ -1928,25 +1631,13 @@ fun AppearanceSettings(
             title = { Text(stringResource(R.string.show_cached_playlist)) },
             description = { Text(stringResource(R.string.show_cached_playlist_desc)) },
             trailingContent = {
-              Switch(
-                checked = showCachedPlaylist,
-                onCheckedChange = onShowCachedPlaylistChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (showCachedPlaylist) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = showCachedPlaylist, onCheckedChange = onShowCachedPlaylistChange)
             },
             onClick = { onShowCachedPlaylistChange(!showCachedPlaylist) }
           )
         )
     )
+    }
     Spacer(modifier = Modifier.height(16.dp))
 
     Spacer(
@@ -1956,14 +1647,14 @@ fun AppearanceSettings(
     )
   }
 
-  TopAppBar(
+  StageTopBar(
     title = { Text(stringResource(R.string.appearance)) },
     navigationIcon = {
-      IconButton(onClick = navController::navigateUp, onLongClick = navController::backToMain) {
+      IconButton(onClick = { if (openSection != null) openSection = null else navController.navigateUp() }, onLongClick = navController::backToMain) {
         Icon(painterResource(R.drawable.arrow_back), contentDescription = null)
       }
     }
-  )
+)
 }
 
 enum class DarkMode {

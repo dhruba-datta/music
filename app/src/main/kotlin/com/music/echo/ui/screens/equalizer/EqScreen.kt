@@ -1,5 +1,7 @@
 package echo.music.iad1tya.ui.screens.equalizer
 
+import echo.music.iad1tya.ui.component.StageAlertDialog
+import echo.music.iad1tya.ui.component.StagePillButton
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.media.audiofx.AudioEffect
@@ -7,7 +9,12 @@ import android.media.session.PlaybackState
 import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.clickable
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.sp
+import echo.music.iad1tya.ui.component.StageButton
+import echo.music.iad1tya.ui.component.StageRadio
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,16 +28,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -42,7 +42,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -60,7 +59,8 @@ import timber.log.Timber
 fun EqScreen(
   navController: NavController? = null,
   viewModel: EQViewModel = hiltViewModel(),
-  playbackState: PlaybackState? = null
+  playbackState: PlaybackState? = null,
+  onOpenFullEqualizer: (() -> Unit)? = null,
 ) {
   val state by viewModel.state.collectAsStateWithLifecycle()
   val context = LocalContext.current
@@ -129,36 +129,43 @@ fun EqScreen(
         }
       }
     },
-    onNavigateToAxion = { navController?.navigate("settings/equalizer") },
+    onNavigateToAxion = {
+      onOpenFullEqualizer?.invoke() ?: navController?.navigate("settings/equalizer")
+    },
     onDeleteProfile = { viewModel.deleteProfile(it) }
   )
 
   if (showError != null) {
-    AlertDialog(
+    StageAlertDialog(
       onDismissRequest = { showError = null },
       title = { Text(stringResource(R.string.import_error_title)) },
       text = { Text(showError ?: "") },
       confirmButton = {
-        TextButton(onClick = { showError = null }) { Text(stringResource(android.R.string.ok)) }
+        StagePillButton(onClick = { showError = null }) { Text(stringResource(android.R.string.ok)) }
       }
-    )
+)
   }
 
   if (state.error != null) {
-    AlertDialog(
+    StageAlertDialog(
       onDismissRequest = { viewModel.clearError() },
       title = { Text(stringResource(R.string.error_title)) },
       text = { Text(stringResource(R.string.error_eq_apply_failed, state.error ?: "")) },
       confirmButton = {
-        TextButton(onClick = { viewModel.clearError() }) {
+        StagePillButton(onClick = { viewModel.clearError() }) {
           Text(stringResource(android.R.string.ok))
         }
       }
-    )
+)
   }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** The Equalizer sheet opened from the player menu: presets here, every band on the full page. */
+@Composable
+fun StageQuickEqualizer(onOpenFullEqualizer: () -> Unit) {
+  EqScreen(onOpenFullEqualizer = onOpenFullEqualizer)
+}
+
 @Composable
 private fun EqScreenContent(
   profiles: List<SavedEQProfile>,
@@ -169,111 +176,67 @@ private fun EqScreenContent(
   onNavigateToAxion: () -> Unit,
   onDeleteProfile: (String) -> Unit
 ) {
-  androidx.compose.material3.Card(
-    modifier = Modifier.fillMaxWidth().heightIn(max = 600.dp).padding(24.dp),
-    shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
-    colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 8.dp)
-  ) {
-    Column {
-      Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-      ) {
-        Column {
-          Text(
-            text = stringResource(R.string.equalizer_header),
-            style = MaterialTheme.typography.headlineSmall
-          )
-          Text(
-            text =
-              pluralStringResource(
-                id = R.plurals.profiles_count,
-                count = profiles.size,
-                profiles.size
-              ),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-          )
-        }
-        Row {
-          IconButton(onClick = onNavigateToAxion) {
-            Icon(
-              painter = painterResource(R.drawable.tune),
-              contentDescription = stringResource(R.string.echo_equalizer)
-            )
-          }
-          IconButton(onClick = onImportCustomEQ) {
-            Icon(
-              painter = painterResource(R.drawable.add),
-              contentDescription = stringResource(R.string.import_profile)
-            )
-          }
-          IconButton(onClick = onOpenSystemEqualizer) {
-            Icon(
-              painter = painterResource(R.drawable.equalizer),
-              contentDescription = stringResource(R.string.system_equalizer)
-            )
-          }
-        }
+  Column(modifier = Modifier.fillMaxWidth().heightIn(max = 600.dp)) {
+    Box(modifier = Modifier.fillMaxWidth()) {
+      Text(
+        text = stringResource(R.string.equalizer),
+        fontSize = 22.sp,
+        lineHeight = 28.sp,
+        fontWeight = FontWeight.ExtraBold,
+        modifier = Modifier.padding(start = 22.dp, top = 12.dp, end = 150.dp, bottom = 4.dp),
+      )
+      Row(modifier = Modifier.align(Alignment.TopEnd).padding(top = 1.dp, end = 10.dp)) {
+        StageEqAction(R.drawable.tune, stringResource(R.string.echo_equalizer), onNavigateToAxion)
+        StageEqAction(R.drawable.add, stringResource(R.string.import_profile), onImportCustomEQ)
+        StageEqAction(
+          R.drawable.equalizer,
+          stringResource(R.string.system_equalizer),
+          onOpenSystemEqualizer,
+        )
+      }
+    }
+
+    LazyColumn(
+      modifier = Modifier.fillMaxWidth().padding(start = 18.dp, top = 6.dp, end = 18.dp),
+      contentPadding = PaddingValues(bottom = 18.dp),
+    ) {
+      item {
+        StageEqRow(
+          title = stringResource(R.string.eq_disabled),
+          selected = activeProfileId == null,
+          onSelected = { onProfileSelected(null) },
+        )
       }
 
-      LazyColumn(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(bottom = 16.dp)
-      ) {
+      val customProfiles = profiles.filter { it.isCustom }
+
+      items(customProfiles) { profile ->
+        EQProfileItem(
+          profile = profile,
+          isSelected = activeProfileId == profile.id,
+          onSelected = { onProfileSelected(profile.id) },
+          onDelete = { onDeleteProfile(profile.id) },
+        )
+      }
+
+      if (customProfiles.isEmpty()) {
         item {
-          StageEqRow(selected = activeProfileId == null) {
-            NoEqualizationItem(
-              isSelected = activeProfileId == null,
-              onSelected = { onProfileSelected(null) }
+          Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth().padding(24.dp),
+          ) {
+            Text(
+              text = stringResource(R.string.no_profiles),
+              style = MaterialTheme.typography.titleMedium,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-          }
-        }
-
-        val customProfiles = profiles.filter { it.isCustom }
-
-        if (customProfiles.isNotEmpty()) {
-          items(customProfiles) { profile ->
-            StageEqRow(selected = activeProfileId == profile.id) {
-              EQProfileItem(
-                profile = profile,
-                isSelected = activeProfileId == profile.id,
-                onSelected = { onProfileSelected(profile.id) },
-                onDelete = { onDeleteProfile(profile.id) }
-              )
-            }
-          }
-        }
-
-        if (customProfiles.isEmpty()) {
-          item {
-            Box(
-              modifier = Modifier.fillMaxWidth().padding(32.dp),
-              contentAlignment = Alignment.Center
-            ) {
-              Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(
-                  painter = painterResource(R.drawable.equalizer),
-                  contentDescription = null,
-                  modifier = Modifier.size(48.dp),
-                  tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                  text = stringResource(R.string.no_profiles),
-                  style = MaterialTheme.typography.titleMedium,
-                  color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = onImportCustomEQ) { Text(stringResource(R.string.import_profile)) }
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedButton(onClick = onOpenSystemEqualizer) {
-                  Text(stringResource(R.string.system_equalizer))
-                }
-              }
-            }
+            StageButton(text = stringResource(R.string.import_profile), onClick = onImportCustomEQ)
+            StageButton(
+              text = stringResource(R.string.system_equalizer),
+              onClick = onOpenSystemEqualizer,
+              primary = false,
+            )
           }
         }
       }
@@ -281,58 +244,34 @@ private fun EqScreenContent(
   }
 }
 
-/** A rounded row that turns white while selected, with its content following in dark. */
 @Composable
-private fun StageEqRow(selected: Boolean, content: @Composable () -> Unit) {
-  androidx.compose.material3.Card(
-    shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
-    colors =
-      androidx.compose.material3.CardDefaults.cardColors(
-        containerColor =
-          if (selected) MaterialTheme.colorScheme.primary
-          else MaterialTheme.colorScheme.surfaceContainerHigh,
-        contentColor =
-          if (selected) MaterialTheme.colorScheme.onPrimary
-          else MaterialTheme.colorScheme.onSurface
-      ),
-    elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 0.dp),
-    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-  ) {
-    content()
+private fun StageEqAction(@DrawableRes icon: Int, description: String, onClick: () -> Unit) {
+  IconButton(onClick = onClick, modifier = Modifier.size(44.dp)) {
+    Icon(painter = painterResource(icon), contentDescription = description)
   }
 }
 
+/** One preset row: a radio, its name, and room for a delete button. */
 @Composable
-private fun stageEqListColors(isSelected: Boolean) =
-  androidx.compose.material3.ListItemDefaults.colors(
-    containerColor = androidx.compose.ui.graphics.Color.Transparent,
-    headlineColor =
-      if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-    supportingColor =
-      if (isSelected) MaterialTheme.colorScheme.onPrimary
-      else MaterialTheme.colorScheme.onSurfaceVariant
-  )
-
-@Composable
-private fun stageEqRadioColors() =
-  androidx.compose.material3.RadioButtonDefaults.colors(
-    selectedColor = MaterialTheme.colorScheme.onPrimary
-  )
-
-@Composable
-private fun NoEqualizationItem(isSelected: Boolean, onSelected: () -> Unit) {
-  ListItem(colors = stageEqListColors(isSelected),
-    headlineContent = {
-      Text(
-        stringResource(R.string.eq_disabled),
-        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
-      )
-    },
-    leadingContent = {
-      RadioButton(selected = isSelected, onClick = onSelected, colors = stageEqRadioColors())
-    },
-    modifier = Modifier.clickable(onClick = onSelected)
-  )
+private fun StageEqRow(
+  title: String,
+  selected: Boolean,
+  onSelected: () -> Unit,
+  trailing: (@Composable () -> Unit)? = null,
+) {
+  Row(
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(13.dp),
+    modifier =
+      Modifier.fillMaxWidth()
+        .selectable(selected = selected, role = Role.RadioButton, onClick = onSelected)
+        .heightIn(min = 54.dp)
+        .padding(horizontal = 14.dp, vertical = 6.dp),
+  ) {
+    StageRadio(selected = selected)
+    Text(text = title, fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+    trailing?.invoke()
+  }
 }
 
 @Composable
@@ -344,59 +283,41 @@ private fun EQProfileItem(
 ) {
   var showDeleteDialog by remember { mutableStateOf(false) }
 
-  ListItem(colors = stageEqListColors(isSelected),
-    headlineContent = {
-      Text(
-        text = profile.deviceModel,
-        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
-      )
-    },
-    supportingContent = {
-      Text(
-        pluralStringResource(
-          id = R.plurals.band_count,
-          count = profile.bands.size,
-          profile.bands.size
-        )
-      )
-    },
-    leadingContent = {
-      RadioButton(selected = isSelected, onClick = onSelected, colors = stageEqRadioColors())
-    },
-    trailingContent = {
-      IconButton(onClick = { showDeleteDialog = true }) {
+  StageEqRow(
+    title = profile.deviceModel,
+    selected = isSelected,
+    onSelected = onSelected,
+    trailing = {
+      IconButton(onClick = { showDeleteDialog = true }, modifier = Modifier.size(44.dp)) {
         Icon(
           painter = painterResource(R.drawable.delete),
           contentDescription = stringResource(R.string.delete_profile_desc),
-          tint =
-            if (isSelected) MaterialTheme.colorScheme.onPrimary
-            else MaterialTheme.colorScheme.error
         )
       }
     },
-    modifier = Modifier.clickable(onClick = onSelected)
   )
 
   if (showDeleteDialog) {
-    AlertDialog(
+    StageAlertDialog(
       onDismissRequest = { showDeleteDialog = false },
       title = { Text(stringResource(R.string.delete_profile_desc)) },
       text = { Text(stringResource(R.string.delete_profile_confirmation, profile.name)) },
       confirmButton = {
-        TextButton(
+        StageButton(
+          text = stringResource(android.R.string.ok),
           onClick = {
             onDelete()
             showDeleteDialog = false
-          }
-        ) {
-          Text(stringResource(android.R.string.ok))
-        }
+          },
+        )
       },
       dismissButton = {
-        TextButton(onClick = { showDeleteDialog = false }) {
-          Text(stringResource(android.R.string.cancel))
-        }
-      }
+        StageButton(
+          text = stringResource(android.R.string.cancel),
+          onClick = { showDeleteDialog = false },
+          primary = false,
+        )
+      },
     )
   }
 }

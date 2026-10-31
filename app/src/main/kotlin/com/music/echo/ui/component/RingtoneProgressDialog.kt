@@ -22,7 +22,7 @@ fun RingtoneProgressDialog(
 ) {
   if (!isVisible) return
 
-  AlertDialog(
+  StageAlertDialog(
     onDismissRequest = { if (isComplete) onDismiss() },
     title = {
       Text(
@@ -63,17 +63,15 @@ fun RingtoneProgressDialog(
     },
     confirmButton = {
       if (isComplete) {
-        Button(
-          onClick = { if (isSuccess) onOpenSettings() else onDismiss() },
-        ) {
+        StagePillButton(onClick = { if (isSuccess) onOpenSettings() else onDismiss() }) {
           Text(if (isSuccess) "Open Settings" else stringResource(R.string.close))
         }
       }
     },
     dismissButton = {
       if (isComplete && isSuccess) {
-        TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) }
+        StagePillButton(onClick = onDismiss, primary = false) { Text(stringResource(R.string.close)) }
       }
     }
-  )
+)
 }

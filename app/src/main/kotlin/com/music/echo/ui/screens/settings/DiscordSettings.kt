@@ -2,6 +2,10 @@
 
 package echo.music.iad1tya.ui.screens.settings
 
+import echo.music.iad1tya.ui.component.StageAlertDialog
+import echo.music.iad1tya.ui.component.StagePillButton
+import echo.music.iad1tya.ui.component.StageSwitch
+import echo.music.iad1tya.ui.component.StageTopBar
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
@@ -347,7 +351,7 @@ fun DiscordSettings(
     contentWindowInsets = WindowInsets(0, 0, 0, 0),
     snackbarHost = { SnackbarHost(snackbarHostState) },
     topBar = {
-      TopAppBar(
+      StageTopBar(
         title = { Text(text = stringResource(R.string.discord_integration)) },
         navigationIcon = {
           IconButton(
@@ -388,14 +392,8 @@ fun DiscordSettings(
               },
             )
           }
-        },
-        colors =
-          TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-          ),
-        scrollBehavior = scrollBehavior,
-      )
+        }
+)
     },
   ) { innerPadding ->
     LazyColumn(
@@ -406,7 +404,7 @@ fun DiscordSettings(
               WindowInsetsSides.Horizontal,
             ),
           )
-          .padding(horizontal = 16.dp),
+          .padding(horizontal = 18.dp),
       contentPadding =
         PaddingValues(
           top = innerPadding.calculateTopPadding() + 16.dp,
@@ -640,13 +638,12 @@ fun DiscordSettings(
     }
 
     if (showLogoutConfirm) {
-      AlertDialog(
+      StageAlertDialog(
         onDismissRequest = { showLogoutConfirm = false },
         title = { Text(stringResource(R.string.logout_confirm_title)) },
         text = { Text(stringResource(R.string.logout_confirm_message)) },
         confirmButton = {
-          TextButton(
-            onClick = {
+        StagePillButton(onClick = {
               coroutineScope.launch { DiscordOAuthRepository.clearSession(context) }
               authorizedToken = ""
               authorizedUsername = ""
@@ -658,21 +655,16 @@ fun DiscordSettings(
               authorizationMessage = null
               authorizationSession = DiscordOAuthRepository.createAuthorizationSession()
               showLogoutConfirm = false
-            },
-            shape = androidx.compose.foundation.shape.CircleShape,
-          ) {
+            }) {
             Text(stringResource(R.string.logout_confirm_yes))
           }
-        },
+      },
         dismissButton = {
-          TextButton(
-            onClick = { showLogoutConfirm = false },
-            shape = androidx.compose.foundation.shape.CircleShape,
-          ) {
+        StagePillButton(onClick = { showLogoutConfirm = false }, primary = false) {
             Text(stringResource(R.string.logout_confirm_no))
           }
-        },
-      )
+      }
+)
     }
 
     if (authorizationUiMode == DiscordAuthorizationUiMode.Waiting) {
@@ -944,24 +936,12 @@ private fun DiscordAccountGroupCard(
               )
             }
 
-            Switch(
-              checked = discordRpcEnabled,
-              onCheckedChange = { isChecked ->
+            StageSwitch(checked = discordRpcEnabled, onCheckedChange = { isChecked ->
                 onDiscordRpcEnabledChange(isChecked)
                 if (isChecked && !isLoggedIn) {
                   onPrimaryAction()
                 }
-              },
-              modifier = Modifier.scale(0.8f),
-              enabled = true,
-              colors =
-                SwitchDefaults.colors(
-                  checkedThumbColor = MaterialTheme.colorScheme.surface,
-                  checkedTrackColor = MaterialTheme.colorScheme.onSurface,
-                  uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-                  uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                )
-            )
+              }, modifier = Modifier.scale(0.8f), enabled = true)
           }
         }
 
@@ -1120,26 +1100,23 @@ fun EditablePreference(
     description = description ?: if (value.isEmpty()) defaultValue else value,
     icon = { Icon(painterResource(iconRes), null) },
     trailingContent = {
-      TextButton(onClick = { showDialog = true }, shapes = ButtonDefaults.shapes()) { Text("Edit") }
+      TextButton(onClick = { showDialog = true }) { Text("Edit") }
     },
   )
   if (showDialog) {
     var text by remember { mutableStateOf(value) }
-    AlertDialog(
+    StageAlertDialog(
       onDismissRequest = { showDialog = false },
       confirmButton = {
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             onValueChange(if (text.isBlank()) "" else text)
             showDialog = false
-          },
-          shapes = ButtonDefaults.shapes()
-        ) {
+          }) {
           Text("Save")
         }
       },
       dismissButton = {
-        TextButton(onClick = { showDialog = false }, shapes = ButtonDefaults.shapes()) {
+        StagePillButton(onClick = { showDialog = false }, primary = false) {
           Text("Cancel")
         }
       },
@@ -1152,8 +1129,8 @@ fun EditablePreference(
           singleLine = true,
           modifier = Modifier.padding(horizontal = 16.dp),
         )
-      },
-    )
+      }
+)
   }
 }
 
@@ -1479,53 +1456,14 @@ fun PreferenceGroup(
 
   androidx.compose.foundation.layout.Column(modifier = modifier.fillMaxWidth()) {
     if (title != null) {
-      androidx.compose.material3.Text(
-        text = title.uppercase(),
-        style =
-          androidx.compose.material3.MaterialTheme.typography.labelLarge.copy(
-            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-          ),
-        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = androidx.compose.ui.Modifier.padding(bottom = 8.dp, top = 8.dp, start = 8.dp)
-      )
+      echo.music.iad1tya.ui.component.StageSettingsHeading(text = title)
     }
-    androidx.compose.foundation.layout.Column(
-      modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
-      verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(2.dp)
+    androidx.compose.material3.Surface(
+      shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
+      color = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainer,
     ) {
-      scope.items.forEachIndexed { index, item ->
-        val shape =
-          when {
-            scope.items.size == 1 -> androidx.compose.foundation.shape.RoundedCornerShape(24.dp)
-            index == 0 ->
-              androidx.compose.foundation.shape.RoundedCornerShape(
-                topStart = 24.dp,
-                topEnd = 24.dp,
-                bottomStart = 4.dp,
-                bottomEnd = 4.dp
-              )
-            index == scope.items.size - 1 ->
-              androidx.compose.foundation.shape.RoundedCornerShape(
-                topStart = 4.dp,
-                topEnd = 4.dp,
-                bottomStart = 24.dp,
-                bottomEnd = 24.dp
-              )
-            else -> androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
-          }
-
-        androidx.compose.material3.Card(
-          modifier = androidx.compose.ui.Modifier.fillMaxWidth().animateContentSize(),
-          shape = shape,
-          colors =
-            androidx.compose.material3.CardDefaults.cardColors(
-              containerColor =
-                androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh
-            ),
-          elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 0.dp)
-        ) {
-          item()
-        }
+      androidx.compose.foundation.layout.Column {
+        scope.items.forEach { item -> item() }
       }
     }
   }

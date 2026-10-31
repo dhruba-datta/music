@@ -1,15 +1,13 @@
 package echo.music.iad1tya.ui.component
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,7 +16,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialogDefaults
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -28,7 +25,6 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -38,13 +34,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import echo.music.iad1tya.R
@@ -56,8 +56,8 @@ fun DefaultDialog(
   modifier: Modifier = Modifier,
   icon: (@Composable () -> Unit)? = null,
   title: (@Composable () -> Unit)? = null,
-  buttons: (@Composable RowScope.() -> Unit)? = null,
-  horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
+  buttons: (@Composable ColumnScope.() -> Unit)? = null,
+  horizontalAlignment: Alignment.Horizontal = Alignment.Start,
   content: @Composable ColumnScope.() -> Unit,
 ) {
   Dialog(
@@ -65,26 +65,27 @@ fun DefaultDialog(
     properties = DialogProperties(usePlatformDefaultWidth = false)
   ) {
     Surface(
-      modifier = Modifier.padding(24.dp),
-      shape = AlertDialogDefaults.shape,
-      color = AlertDialogDefaults.containerColor,
-      tonalElevation = AlertDialogDefaults.TonalElevation
+      modifier = Modifier.padding(18.dp),
+      shape = StageDialogShape,
+      color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
-      Column(horizontalAlignment = horizontalAlignment, modifier = modifier.padding(24.dp)) {
+      Column(
+        horizontalAlignment = horizontalAlignment,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = modifier.padding(22.dp),
+      ) {
         if (icon != null) {
           CompositionLocalProvider(
             LocalContentColor provides AlertDialogDefaults.iconContentColor
           ) {
             Box(Modifier.align(Alignment.CenterHorizontally)) { icon() }
           }
-
-          Spacer(Modifier.height(16.dp))
         }
         if (title != null) {
           CompositionLocalProvider(
-            LocalContentColor provides AlertDialogDefaults.titleContentColor
+            LocalContentColor provides MaterialTheme.colorScheme.onSurface
           ) {
-            ProvideTextStyle(MaterialTheme.typography.headlineSmall) {
+            ProvideTextStyle(StageDialogTitleStyle) {
               Box(
                 Modifier.align(if (icon == null) Alignment.Start else Alignment.CenterHorizontally)
               ) {
@@ -92,25 +93,62 @@ fun DefaultDialog(
               }
             }
           }
-
-          Spacer(Modifier.height(16.dp))
         }
 
         content()
 
         if (buttons != null) {
-          Spacer(Modifier.height(24.dp))
-
-          FlowRow(modifier = Modifier.align(Alignment.End)) {
-            CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.primary) {
-              ProvideTextStyle(value = MaterialTheme.typography.labelLarge) { buttons() }
-            }
+          Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+          ) {
+            buttons()
           }
         }
       }
     }
   }
 }
+
+/** A short message dialog in the Stage card, with its buttons stacked as pills. */
+@Composable
+fun StageAlertDialog(
+  onDismissRequest: () -> Unit,
+  confirmButton: @Composable () -> Unit,
+  modifier: Modifier = Modifier,
+  dismissButton: (@Composable () -> Unit)? = null,
+  icon: (@Composable () -> Unit)? = null,
+  title: (@Composable () -> Unit)? = null,
+  text: (@Composable () -> Unit)? = null,
+) {
+  DefaultDialog(
+    onDismiss = onDismissRequest,
+    modifier = modifier,
+    icon = icon,
+    title = title,
+    buttons = {
+      confirmButton()
+      dismissButton?.invoke()
+    },
+  ) {
+    text?.let { message ->
+      ProvideTextStyle(
+        TextStyle(
+          fontSize = 14.sp,
+          lineHeight = 20.sp,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      ) {
+        message()
+      }
+    }
+  }
+}
+
+private val StageDialogShape = RoundedCornerShape(28.dp)
+
+private val StageDialogTitleStyle =
+  TextStyle(fontSize = 22.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -134,26 +172,23 @@ fun ActionPromptDialog(
             text = title,
             overflow = TextOverflow.Ellipsis,
             maxLines = 1,
-            style = MaterialTheme.typography.headlineSmall,
           )
         }
       } else null,
     buttons = {
-      if (onReset != null) {
-        Row(modifier = Modifier.weight(1f)) {
-          TextButton(
-            onClick = { onReset() },
-          ) {
-            Text(stringResource(R.string.reset))
-          }
-        }
-      }
+      StageButton(text = stringResource(android.R.string.ok), onClick = { onConfirm() })
 
       if (onCancel != null) {
-        TextButton(onClick = { onCancel() }) { Text(stringResource(android.R.string.cancel)) }
+        StageButton(
+          text = stringResource(android.R.string.cancel),
+          onClick = { onCancel() },
+          primary = false,
+        )
       }
 
-      Button(onClick = { onConfirm() }) { Text(stringResource(android.R.string.ok)) }
+      if (onReset != null) {
+        StageButton(text = stringResource(R.string.reset), onClick = { onReset() }, primary = false)
+      }
     }
   ) {
     content()
@@ -164,7 +199,7 @@ fun ActionPromptDialog(
 fun ListDialog(
   onDismiss: () -> Unit,
   modifier: Modifier = Modifier,
-  color: androidx.compose.ui.graphics.Color = AlertDialogDefaults.containerColor,
+  color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.surfaceContainerHigh,
   title: (@Composable () -> Unit)? = null,
   content: LazyListScope.() -> Unit,
 ) {
@@ -173,10 +208,9 @@ fun ListDialog(
     properties = DialogProperties(usePlatformDefaultWidth = false),
   ) {
     Surface(
-      modifier = Modifier.padding(24.dp),
-      shape = AlertDialogDefaults.shape,
+      modifier = Modifier.padding(18.dp),
+      shape = StageDialogShape,
       color = color,
-      tonalElevation = AlertDialogDefaults.TonalElevation,
     ) {
       Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -186,13 +220,13 @@ fun ListDialog(
           Box(
             modifier =
               Modifier.fillMaxWidth()
-                .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 8.dp)
+                .padding(start = 22.dp, end = 22.dp, top = 22.dp, bottom = 8.dp)
           ) {
-            title()
+            ProvideTextStyle(StageDialogTitleStyle) { title() }
           }
         }
         LazyColumn(
-          contentPadding = PaddingValues(top = if (title != null) 0.dp else 24.dp, bottom = 24.dp),
+          contentPadding = PaddingValues(top = if (title != null) 0.dp else 22.dp, bottom = 22.dp),
           content = content
         )
       }
@@ -218,6 +252,19 @@ fun InfoLabel(text: String) =
       modifier = Modifier.padding(horizontal = 4.dp)
     )
   }
+
+/** The filled, borderless look of a Stage text field on a dialog. */
+@Composable
+fun stageFieldColors() =
+  OutlinedTextFieldDefaults.colors(
+    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+    errorContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+    focusedBorderColor = Color.Transparent,
+    unfocusedBorderColor = Color.Transparent,
+    disabledBorderColor = Color.Transparent,
+  )
 
 @Composable
 fun TextFieldDialog(
@@ -258,24 +305,11 @@ fun TextFieldDialog(
     icon = icon,
     title = title,
     buttons = {
-      if (onReset != null) {
-        TextButton(
-          onClick = {
-            if (autoDismiss) onDismiss()
-            onReset()
-          }
-        ) {
-          Text(text = resetText ?: stringResource(R.string.clear))
-        }
-      }
-
-      TextButton(onClick = onDismiss) { Text(text = stringResource(android.R.string.cancel)) }
-
       val isValid =
         textFields?.all { isInputValid(it.second.text) }
           ?: isInputValid(legacyFieldState.value.text)
 
-      Button(
+      StagePillButton(
         enabled = isValid,
         onClick = {
           if (autoDismiss) onDismiss()
@@ -288,6 +322,23 @@ fun TextFieldDialog(
       ) {
         Text(text = stringResource(android.R.string.ok))
       }
+
+      StageButton(
+        text = stringResource(android.R.string.cancel),
+        onClick = onDismiss,
+        primary = false,
+      )
+
+      if (onReset != null) {
+        StageButton(
+          text = resetText ?: stringResource(R.string.clear),
+          onClick = {
+            if (autoDismiss) onDismiss()
+            onReset()
+          },
+          primary = false,
+        )
+      }
     }
   ) {
     Column(modifier = Modifier.weight(weight = 1f, fill = false)) {
@@ -299,7 +350,7 @@ fun TextFieldDialog(
             placeholder = { Text(label) },
             singleLine = singleLine,
             maxLines = maxLines,
-            colors = OutlinedTextFieldDefaults.colors(),
+            colors = stageFieldColors(),
             shape = RoundedCornerShape(24.dp),
             keyboardOptions =
               KeyboardOptions(
@@ -328,7 +379,7 @@ fun TextFieldDialog(
           placeholder = placeholder,
           singleLine = singleLine,
           maxLines = maxLines,
-          colors = OutlinedTextFieldDefaults.colors(),
+          colors = stageFieldColors(),
           shape = RoundedCornerShape(24.dp),
           keyboardOptions =
             KeyboardOptions(

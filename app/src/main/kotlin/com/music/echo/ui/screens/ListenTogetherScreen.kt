@@ -1,5 +1,8 @@
 package echo.music.iad1tya.ui.screens
 
+import echo.music.iad1tya.ui.component.StagePillButton
+import echo.music.iad1tya.ui.component.StageSwitch
+import echo.music.iad1tya.ui.component.StageTopBar
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -52,10 +55,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -452,7 +453,7 @@ fun ListenTogetherScreen(navController: NavController, showTopBar: Boolean = fal
   }
 
   if (shouldShowTopBar) {
-    TopAppBar(
+    StageTopBar(
       title = { StageBarTitle(stringResource(R.string.listen_together)) },
       navigationIcon = {
         IconButton(onClick = navController::navigateUp, onLongClick = navController::backToMain) {
@@ -479,7 +480,7 @@ fun ListenTogetherScreen(navController: NavController, showTopBar: Boolean = fal
           )
         }
       }
-    )
+)
   }
 }
 
@@ -1297,10 +1298,7 @@ private fun ParticipantControlCard(
             Text(stringResource(R.string.listen_together_allow_participant_control_desc))
           },
           trailingContent = {
-            Switch(
-              checked = allowParticipantControl,
-              onCheckedChange = onAllowParticipantControlChange
-            )
+            StageSwitch(checked = allowParticipantControl, onCheckedChange = onAllowParticipantControlChange)
           },
           onClick = { onAllowParticipantControlChange(!allowParticipantControl) }
         )
@@ -1335,7 +1333,9 @@ private fun UserActionDialog(
         )
       }
     },
-    buttons = { TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) } }
+    buttons = {
+        StagePillButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+      }
   ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
       Surface(

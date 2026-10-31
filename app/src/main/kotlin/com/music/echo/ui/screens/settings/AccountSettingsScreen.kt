@@ -89,15 +89,14 @@ fun AccountSettingsScreen(
   Scaffold(
     modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     topBar = {
-      TopAppBar(
+      StageTopBar(
         title = { Text(stringResource(R.string.account)) },
         navigationIcon = {
           IconButton(onClick = navController::navigateUp, onLongClick = navController::backToMain) {
             Icon(painterResource(R.drawable.arrow_back), contentDescription = null)
           }
-        },
-        scrollBehavior = scrollBehavior
-      )
+        }
+)
     }
   ) { padding ->
     Column(
@@ -107,7 +106,7 @@ fun AccountSettingsScreen(
             LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal)
           )
           .verticalScroll(scrollState)
-          .padding(horizontal = 16.dp)
+          .padding(horizontal = 18.dp)
     ) {
       Spacer(modifier = Modifier.height(16.dp))
 
@@ -323,9 +322,8 @@ fun AccountSettingsScreen(
 
       if (isLoggedIn) {
 
-        Spacer(modifier = Modifier.height(16.dp))
 
-        Material3SettingsGroup(
+    Material3SettingsGroup(
           scrollState = scrollState,
           title = stringResource(R.string.settings_section_player_content),
           items =
@@ -336,23 +334,10 @@ fun AccountSettingsScreen(
                 title = { Text(stringResource(R.string.more_content)) },
                 description = { Text(stringResource(R.string.more_content_desc)) },
                 trailingContent = {
-                  Switch(
-                    checked = useLoginForBrowse,
-                    onCheckedChange = {
+                  StageSwitch(checked = useLoginForBrowse, onCheckedChange = {
                       YouTube.useLoginForBrowse = it
                       onUseLoginForBrowseChange(it)
-                    },
-                    thumbContent = {
-                      Icon(
-                        painter =
-                          painterResource(
-                            id = if (useLoginForBrowse) R.drawable.check else R.drawable.close
-                          ),
-                        contentDescription = null,
-                        modifier = Modifier.size(SwitchDefaults.IconSize),
-                      )
-                    }
-                  )
+                    })
                 },
                 onClick = {
                   val newValue = !useLoginForBrowse
@@ -366,18 +351,7 @@ fun AccountSettingsScreen(
                 title = { Text(stringResource(R.string.yt_sync)) },
                 description = { Text(stringResource(R.string.yt_sync_desc)) },
                 trailingContent = {
-                  Switch(
-                    checked = ytmSync,
-                    onCheckedChange = onYtmSyncChange,
-                    thumbContent = {
-                      Icon(
-                        painter =
-                          painterResource(id = if (ytmSync) R.drawable.check else R.drawable.close),
-                        contentDescription = null,
-                        modifier = Modifier.size(SwitchDefaults.IconSize),
-                      )
-                    }
-                  )
+                  StageSwitch(checked = ytmSync, onCheckedChange = onYtmSyncChange)
                 },
                 onClick = { onYtmSyncChange(!ytmSync) }
               )
@@ -480,35 +454,25 @@ fun AccountSettingsScreen(
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
           ) {
-            Button(
-              onClick = {
+            StagePillButton(onClick = {
                 accountSettingsViewModel.logoutKeepData(context, onInnerTubeCookieChange)
                 showLogoutDialog = false
                 navController.navigateUp()
-              },
-              modifier = Modifier.fillMaxWidth()
-            ) {
+              }, primary = false) {
               Text(stringResource(R.string.logout_keep_data))
             }
 
-            FilledTonalButton(
-              onClick = {
+            StagePillButton(onClick = {
                 accountSettingsViewModel.logoutAndClearSyncedContent(
                   context,
                   onInnerTubeCookieChange
                 )
                 showLogoutDialog = false
-              },
-              modifier = Modifier.fillMaxWidth(),
-              colors =
-                ButtonDefaults.filledTonalButtonColors(
-                  contentColor = MaterialTheme.colorScheme.error
-                )
-            ) {
+              }, primary = false) {
               Text(stringResource(R.string.logout_clear_data))
             }
 
-            TextButton(onClick = { showLogoutDialog = false }, modifier = Modifier.fillMaxWidth()) {
+            StagePillButton(onClick = { showLogoutDialog = false }) {
               Text(stringResource(android.R.string.cancel))
             }
           }

@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.menu
 
+import echo.music.iad1tya.ui.component.StagePillButton
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -172,14 +173,7 @@ fun YouTubeSelectionSongMenu(
         )
       },
       buttons = {
-        TextButton(
-          onClick = { showRemoveDownloadDialog = false },
-        ) {
-          Text(text = stringResource(android.R.string.cancel))
-        }
-
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             showRemoveDownloadDialog = false
             songSelection.forEach { song ->
               DownloadService.sendRemoveDownload(
@@ -189,9 +183,11 @@ fun YouTubeSelectionSongMenu(
                 false,
               )
             }
-          },
-        ) {
+          }) {
           Text(text = stringResource(android.R.string.ok))
+        }
+        StagePillButton(onClick = { showRemoveDownloadDialog = false }, primary = false) {
+          Text(text = stringResource(android.R.string.cancel))
         }
       },
     )

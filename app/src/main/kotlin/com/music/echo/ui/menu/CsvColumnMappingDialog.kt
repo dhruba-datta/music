@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.menu
 
+import echo.music.iad1tya.ui.component.StagePillButton
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -167,13 +168,8 @@ fun CsvColumnMappingDialog(
         onSelected = { urlColumnIndex = it },
       )
 
-      Row(
-        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-      ) {
-        OutlinedButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
-        Button(
-          onClick = {
+      Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        StagePillButton(onClick = {
             onConfirm(
               CsvImportState(
                 previewRows = csvState.previewRows,
@@ -183,10 +179,10 @@ fun CsvColumnMappingDialog(
                 hasHeader = hasHeader,
               )
             )
-          },
-        ) {
+          }) {
           Text(stringResource(R.string.continue_action))
         }
+        StagePillButton(onClick = onDismiss, primary = false) { Text(stringResource(R.string.cancel)) }
       }
     }
   }

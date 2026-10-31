@@ -1,5 +1,7 @@
 package echo.music.iad1tya.ui.screens.settings
 
+import echo.music.iad1tya.ui.component.StageSwitch
+import echo.music.iad1tya.ui.component.StageTopBar
 import android.app.Activity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -16,10 +18,7 @@ import androidx.compose.material3.Icon
 import echo.music.iad1tya.ui.component.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -100,12 +99,11 @@ fun HapticsSettings(
         LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal)
       )
       .verticalScroll(scrollState)
-      .padding(horizontal = 16.dp)
+      .padding(horizontal = 18.dp)
   ) {
     Spacer(
       Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Top))
     )
-    Spacer(modifier = Modifier.height(16.dp))
 
     Material3SettingsGroup(
       scrollState = scrollState,
@@ -117,17 +115,7 @@ fun HapticsSettings(
           title = { Text(stringResource(R.string.enable_haptics)) },
           description = { Text(stringResource(R.string.enable_haptics_desc)) },
           trailingContent = {
-            Switch(
-              checked = enableHaptics,
-              onCheckedChange = onEnableHapticsChange,
-              thumbContent = {
-                Icon(
-                  painter = painterResource(id = if (enableHaptics) R.drawable.check else R.drawable.close),
-                  contentDescription = null,
-                  modifier = Modifier.size(SwitchDefaults.IconSize)
-                )
-              }
-            )
+            StageSwitch(checked = enableHaptics, onCheckedChange = onEnableHapticsChange)
           },
           onClick = { onEnableHapticsChange(!enableHaptics) }
         ),
@@ -158,17 +146,7 @@ fun HapticsSettings(
             title = { Text(stringResource(R.string.haptic_click_feedback)) },
             description = { Text(stringResource(R.string.haptic_click_feedback_desc)) },
             trailingContent = {
-              Switch(
-                checked = enableClickHaptics,
-                onCheckedChange = onEnableClickHapticsChange,
-                thumbContent = {
-                  Icon(
-                    painter = painterResource(id = if (enableClickHaptics) R.drawable.check else R.drawable.close),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = enableClickHaptics, onCheckedChange = onEnableClickHapticsChange)
             },
             onClick = { onEnableClickHapticsChange(!enableClickHaptics) }
           )
@@ -180,17 +158,7 @@ fun HapticsSettings(
             title = { Text(stringResource(R.string.haptic_long_press_feedback)) },
             description = { Text(stringResource(R.string.haptic_long_press_feedback_desc)) },
             trailingContent = {
-              Switch(
-                checked = enableLongPressHaptics,
-                onCheckedChange = onEnableLongPressHapticsChange,
-                thumbContent = {
-                  Icon(
-                    painter = painterResource(id = if (enableLongPressHaptics) R.drawable.check else R.drawable.close),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = enableLongPressHaptics, onCheckedChange = onEnableLongPressHapticsChange)
             },
             onClick = { onEnableLongPressHapticsChange(!enableLongPressHaptics) }
           )
@@ -202,17 +170,7 @@ fun HapticsSettings(
             title = { Text(stringResource(R.string.haptic_scroll_edge_feedback)) },
             description = { Text(stringResource(R.string.haptic_scroll_edge_feedback_desc)) },
             trailingContent = {
-              Switch(
-                checked = enableScrollEdgeHaptics,
-                onCheckedChange = onEnableScrollEdgeHapticsChange,
-                thumbContent = {
-                  Icon(
-                    painter = painterResource(id = if (enableScrollEdgeHaptics) R.drawable.check else R.drawable.close),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = enableScrollEdgeHaptics, onCheckedChange = onEnableScrollEdgeHapticsChange)
             },
             onClick = { onEnableScrollEdgeHapticsChange(!enableScrollEdgeHaptics) }
           )
@@ -224,17 +182,7 @@ fun HapticsSettings(
             title = { Text(stringResource(R.string.haptic_slider_feedback)) },
             description = { Text(stringResource(R.string.haptic_slider_feedback_desc)) },
             trailingContent = {
-              Switch(
-                checked = enableSliderHaptics,
-                onCheckedChange = onEnableSliderHapticsChange,
-                thumbContent = {
-                  Icon(
-                    painter = painterResource(id = if (enableSliderHaptics) R.drawable.check else R.drawable.close),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = enableSliderHaptics, onCheckedChange = onEnableSliderHapticsChange)
             },
             onClick = { onEnableSliderHapticsChange(!enableSliderHaptics) }
           )
@@ -245,13 +193,12 @@ fun HapticsSettings(
     Spacer(Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Bottom)))
   }
 
-  TopAppBar(
+  StageTopBar(
     title = { Text(stringResource(R.string.haptics)) },
     navigationIcon = {
       IconButton(onClick = navController::navigateUp, onLongClick = navController::backToMain) {
         Icon(painterResource(R.drawable.arrow_back), contentDescription = null)
       }
-    },
-    scrollBehavior = scrollBehavior
-  )
+    }
+)
 }

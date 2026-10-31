@@ -850,6 +850,15 @@ val UseFloatingNavBarKey = booleanPreferencesKey("useFloatingNavBar")
 val SavedAccountsKey = stringPreferencesKey("savedAccounts")
 val LiveBlurDensityKey = floatPreferencesKey("live_blur_density")
 
+// Stage defaults, used until the user picks their own values. The two lyrics preferences are
+// shared by every lyrics view, so each view passes its own default.
+const val AmbientArtScaleDefault = 1f
+const val AmbientSpacingDefault = 24f
+const val AmbientLyricsTextSizeDefault = 30f
+const val AmbientLyricsLineSpacingDefault = 1.4f
+const val StageLyricsTextSizeDefault = 29f
+const val StageLyricsLineSpacingDefault = 1.15f
+
 // Ambient Mode
 val AmbientArtScaleKey = floatPreferencesKey("ambient_art_scale")
 val AmbientShowTitleKey = booleanPreferencesKey("ambient_show_title")

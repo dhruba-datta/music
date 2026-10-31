@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.screens.playlist
 
+import echo.music.iad1tya.ui.component.StagePillButton
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
@@ -362,14 +363,7 @@ fun LocalPlaylistScreen(
         )
       },
       buttons = {
-        TextButton(
-          onClick = { showRemoveDownloadDialog = false },
-        ) {
-          Text(text = stringResource(android.R.string.cancel))
-        }
-
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             showRemoveDownloadDialog = false
             if (!editable) {
               database.transaction { playlist?.id?.let { clearPlaylist(it) } }
@@ -382,9 +376,11 @@ fun LocalPlaylistScreen(
                 false
               )
             }
-          }
-        ) {
+          }) {
           Text(text = stringResource(android.R.string.ok))
+        }
+        StagePillButton(onClick = { showRemoveDownloadDialog = false }, primary = false) {
+          Text(text = stringResource(android.R.string.cancel))
         }
       },
     )
@@ -402,20 +398,18 @@ fun LocalPlaylistScreen(
         )
       },
       buttons = {
-        TextButton(onClick = { showDeletePlaylistDialog = false }) {
-          Text(text = stringResource(android.R.string.cancel))
-        }
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             showDeletePlaylistDialog = false
             database.query { playlist?.let { delete(it.playlist) } }
             viewModel.viewModelScope.launch(Dispatchers.IO) {
               playlist?.playlist?.browseId?.let { YouTube.deletePlaylist(it) }
             }
             navController.popBackStack()
-          }
-        ) {
+          }) {
           Text(text = stringResource(android.R.string.ok))
+        }
+        StagePillButton(onClick = { showDeletePlaylistDialog = false }, primary = false) {
+          Text(text = stringResource(android.R.string.cancel))
         }
       }
     )

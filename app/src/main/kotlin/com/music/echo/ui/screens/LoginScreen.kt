@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.screens
 
+import echo.music.iad1tya.ui.component.StageTopBar
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.webkit.CookieManager
@@ -12,7 +13,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -177,14 +177,14 @@ fun LoginScreen(
     }
   )
 
-  TopAppBar(
+  StageTopBar(
     title = { Text(stringResource(R.string.login)) },
     navigationIcon = {
       IconButton(onClick = navController::navigateUp, onLongClick = navController::backToMain) {
         Icon(painterResource(R.drawable.arrow_back), contentDescription = null)
       }
     }
-  )
+)
 
   BackHandler(enabled = webView?.canGoBack() == true) { webView?.goBack() }
 }

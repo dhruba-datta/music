@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.menu
 
+import echo.music.iad1tya.ui.component.StagePillButton
 import android.annotation.SuppressLint
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.PaddingValues
@@ -142,14 +143,7 @@ fun SelectionSongMenu(
         )
       },
       buttons = {
-        TextButton(
-          onClick = { showRemoveDownloadDialog = false },
-        ) {
-          Text(text = stringResource(android.R.string.cancel))
-        }
-
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             showRemoveDownloadDialog = false
             songSelection.forEach { song ->
               DownloadService.sendRemoveDownload(
@@ -159,9 +153,11 @@ fun SelectionSongMenu(
                 false,
               )
             }
-          },
-        ) {
+          }) {
           Text(text = stringResource(android.R.string.ok))
+        }
+        StagePillButton(onClick = { showRemoveDownloadDialog = false }, primary = false) {
+          Text(text = stringResource(android.R.string.cancel))
         }
       },
     )
@@ -191,7 +187,7 @@ fun SelectionSongMenu(
                       Icon(
                         painter = painterResource(R.drawable.play),
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(22.dp),
                       )
                     },
                     title = { MenuTileLabel(text = stringResource(R.string.play)) },
@@ -213,7 +209,7 @@ fun SelectionSongMenu(
                       Icon(
                         painter = painterResource(R.drawable.shuffle),
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(22.dp),
                       )
                     },
                     title = { MenuTileLabel(text = stringResource(R.string.shuffle)) },
@@ -234,7 +230,7 @@ fun SelectionSongMenu(
                     Icon(
                       painter = painterResource(R.drawable.playlist_add),
                       contentDescription = null,
-                      modifier = Modifier.size(24.dp),
+                      modifier = Modifier.size(22.dp),
                     )
                   },
                   title = { MenuTileLabel(text = stringResource(R.string.add_to_playlist)) },
@@ -532,14 +528,7 @@ fun SelectionMediaMetadataMenu(
         )
       },
       buttons = {
-        TextButton(
-          onClick = { showRemoveDownloadDialog = false },
-        ) {
-          Text(text = stringResource(android.R.string.cancel))
-        }
-
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             showRemoveDownloadDialog = false
             songSelection.forEach { song ->
               DownloadService.sendRemoveDownload(
@@ -549,9 +538,11 @@ fun SelectionMediaMetadataMenu(
                 false,
               )
             }
-          },
-        ) {
+          }) {
           Text(text = stringResource(android.R.string.ok))
+        }
+        StagePillButton(onClick = { showRemoveDownloadDialog = false }, primary = false) {
+          Text(text = stringResource(android.R.string.cancel))
         }
       },
     )

@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.screens.recognition
 
+import echo.music.iad1tya.ui.component.StagePillButton
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -114,15 +115,13 @@ fun RecognitionHistoryScreen(navController: NavController) {
       icon = { Icon(painter = painterResource(R.drawable.delete), contentDescription = null) },
       title = { Text(stringResource(R.string.clear_recognition_history)) },
       buttons = {
-        TextButton(onClick = { showClearDialog = false }) { Text(stringResource(R.string.cancel)) }
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             coroutineScope.launch(Dispatchers.IO) { database.query { clearRecognitionHistory() } }
             showClearDialog = false
-          }
-        ) {
+          }) {
           Text(stringResource(R.string.clear))
         }
+        StagePillButton(onClick = { showClearDialog = false }, primary = false) { Text(stringResource(R.string.cancel)) }
       }
     ) {
       Text(
@@ -138,17 +137,15 @@ fun RecognitionHistoryScreen(navController: NavController) {
       icon = { Icon(painter = painterResource(R.drawable.delete), contentDescription = null) },
       title = { Text(stringResource(R.string.delete)) },
       buttons = {
-        TextButton(onClick = { itemToDelete = null }) { Text(stringResource(R.string.cancel)) }
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             coroutineScope.launch(Dispatchers.IO) {
               database.query { deleteRecognitionHistoryById(item.id) }
             }
             itemToDelete = null
-          }
-        ) {
+          }) {
           Text(stringResource(R.string.delete))
         }
+        StagePillButton(onClick = { itemToDelete = null }, primary = false) { Text(stringResource(R.string.cancel)) }
       }
     ) {
       Text(

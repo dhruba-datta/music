@@ -1,5 +1,8 @@
 package echo.music.iad1tya.ui.screens.settings.integrations
 
+import echo.music.iad1tya.ui.component.StagePillButton
+import echo.music.iad1tya.ui.component.StageSwitch
+import echo.music.iad1tya.ui.component.StageTopBar
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -32,11 +35,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -168,22 +168,17 @@ fun ListenTogetherSettings(
       icon = { Icon(painterResource(R.drawable.person), contentDescription = null) },
       title = { Text(stringResource(R.string.listen_together_username)) },
       buttons = {
-        TextButton(
-          onClick = {
-            username = ""
-            showUsernameDialog = false
-          }
-        ) {
-          Text(stringResource(R.string.reset))
-        }
-        Spacer(modifier = Modifier.width(8.dp))
-        Button(
-          onClick = {
+        StagePillButton(onClick = {
             username = tempUsername.trim()
             showUsernameDialog = false
-          }
-        ) {
+          }) {
           Text(stringResource(android.R.string.ok))
+        }
+        StagePillButton(onClick = {
+            username = ""
+            showUsernameDialog = false
+          }, primary = false) {
+          Text(stringResource(R.string.reset))
         }
       }
     ) {
@@ -213,12 +208,7 @@ fun ListenTogetherSettings(
       icon = { Icon(painterResource(R.drawable.add), contentDescription = null) },
       title = { Text(stringResource(R.string.listen_together_create_room)) },
       buttons = {
-        TextButton(onClick = { showCreateRoomDialog = false }) {
-          Text(stringResource(android.R.string.cancel))
-        }
-        Spacer(modifier = Modifier.width(8.dp))
-        Button(
-          onClick = {
+        StagePillButton(onClick = {
             val finalUsername = createUsername.trim()
             if (finalUsername.isNotBlank()) {
               username = finalUsername
@@ -227,10 +217,11 @@ fun ListenTogetherSettings(
             } else {
               Toast.makeText(context, R.string.error_username_empty, Toast.LENGTH_SHORT).show()
             }
-          },
-          enabled = createUsername.trim().isNotBlank()
-        ) {
+          }, enabled = createUsername.trim().isNotBlank()) {
           Text(stringResource(R.string.create))
+        }
+        StagePillButton(onClick = { showCreateRoomDialog = false }, primary = false) {
+          Text(stringResource(android.R.string.cancel))
         }
       }
     ) {
@@ -260,12 +251,7 @@ fun ListenTogetherSettings(
       icon = { Icon(painterResource(R.drawable.group_add), contentDescription = null) },
       title = { Text(stringResource(R.string.listen_together_join_room)) },
       buttons = {
-        TextButton(onClick = { showJoinRoomDialog = false }) {
-          Text(stringResource(android.R.string.cancel))
-        }
-        Spacer(modifier = Modifier.width(8.dp))
-        Button(
-          onClick = {
+        StagePillButton(onClick = {
             val finalUsername = joinUsername.trim()
             if (finalUsername.isNotBlank() && roomCodeInput.length == 8) {
               username = finalUsername
@@ -275,10 +261,11 @@ fun ListenTogetherSettings(
             } else {
               Toast.makeText(context, R.string.error_username_empty, Toast.LENGTH_SHORT).show()
             }
-          },
-          enabled = joinUsername.trim().isNotBlank() && roomCodeInput.length == 8
-        ) {
+          }, enabled = joinUsername.trim().isNotBlank() && roomCodeInput.length == 8) {
           Text(stringResource(R.string.join))
+        }
+        StagePillButton(onClick = { showJoinRoomDialog = false }, primary = false) {
+          Text(stringResource(android.R.string.cancel))
         }
       }
     ) {
@@ -360,7 +347,7 @@ fun ListenTogetherSettings(
             Material3SettingsItem(
               icon = painterResource(R.drawable.person),
               title = { Text(stringResource(R.string.listen_together_username)) },
-              description = { Text(username.ifEmpty { stringResource(R.string.not_set) }) },
+              value = { Text(username.ifEmpty { stringResource(R.string.not_set) }) },
               onClick =
                 if (roomState == null) {
                   { showUsernameDialog = true }
@@ -380,21 +367,7 @@ fun ListenTogetherSettings(
               title = { Text(stringResource(R.string.listen_together_auto_approval)) },
               description = { Text(stringResource(R.string.listen_together_auto_approval_desc)) },
               trailingContent = {
-                Switch(
-                  checked = autoApproval,
-                  onCheckedChange = { autoApproval = it },
-                  enabled = roomState == null || role != RoomRole.GUEST,
-                  thumbContent = {
-                    Icon(
-                      painter =
-                        painterResource(
-                          id = if (autoApproval) R.drawable.check else R.drawable.close
-                        ),
-                      contentDescription = null,
-                      modifier = Modifier.size(SwitchDefaults.IconSize),
-                    )
-                  }
-                )
+                StageSwitch(checked = autoApproval, onCheckedChange = { autoApproval = it }, enabled = roomState == null || role != RoomRole.GUEST)
               },
               onClick = {
                 if (roomState == null || role != RoomRole.GUEST) autoApproval = !autoApproval
@@ -413,7 +386,7 @@ fun ListenTogetherSettings(
     )
   }
 
-  TopAppBar(
+  StageTopBar(
     title = { Text(stringResource(R.string.listen_together)) },
     navigationIcon = {
       IconButton(
@@ -426,7 +399,7 @@ fun ListenTogetherSettings(
         )
       }
     }
-  )
+)
 }
 
 @Composable
@@ -446,8 +419,9 @@ fun LogsDialog(logs: List<LogEntry>, onClear: () -> Unit, onDismiss: () -> Unit)
     icon = { Icon(painterResource(R.drawable.bug_report), contentDescription = null) },
     title = { Text(stringResource(R.string.listen_together_logs)) },
     buttons = {
-      TextButton(
-        onClick = {
+        StagePillButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
+        StagePillButton(onClick = onClear, primary = false) { Text(stringResource(R.string.clear)) }
+        StagePillButton(onClick = {
           val textToCopy =
             logs.joinToString("\n") { log ->
               buildString {
@@ -465,15 +439,10 @@ fun LogsDialog(logs: List<LogEntry>, onClear: () -> Unit, onDismiss: () -> Unit)
           val clip = android.content.ClipData.newPlainText("ListenTogetherLogs", textToCopy)
           cm.setPrimaryClip(clip)
           Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
-        },
-        enabled = logs.isNotEmpty()
-      ) {
+        }, enabled = logs.isNotEmpty(), primary = false) {
         Text(stringResource(R.string.copy))
       }
-      TextButton(onClick = onClear) { Text(stringResource(R.string.clear)) }
-      Spacer(modifier = Modifier.width(8.dp))
-      Button(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
-    }
+      }
   ) {
     Box(modifier = Modifier.fillMaxWidth().height(350.dp)) {
       if (logs.isEmpty()) {
@@ -507,7 +476,9 @@ private fun ServerChooserDialog(
     onDismiss = onDismiss,
     icon = { Icon(painterResource(R.drawable.cloud), contentDescription = null) },
     title = { Text(stringResource(R.string.listen_together_choose_server)) },
-    buttons = { TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) } }
+    buttons = {
+        StagePillButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+      }
   ) {
     Column(
       modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
@@ -657,7 +628,9 @@ fun BlockedUsersDialog(
     onDismiss = onDismiss,
     icon = { Icon(painterResource(R.drawable.person), contentDescription = null) },
     title = { Text(stringResource(R.string.listen_together_blocked_users)) },
-    buttons = { Button(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) } }
+    buttons = {
+        StagePillButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
+      }
   ) {
     Box(modifier = Modifier.fillMaxWidth().height(280.dp)) {
       if (blockedUsernames.isEmpty()) {

@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.menu
 
+import echo.music.iad1tya.ui.component.StagePillButton
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -244,11 +245,61 @@ fun AddToPlaylistDialog(
     DefaultDialog(
       title = { Text(stringResource(R.string.duplicates)) },
       buttons = {
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = { showDuplicateDialog = false }) {
+          Text(stringResource(android.R.string.cancel))
+        }
+        StagePillButton(onClick = {
             showDuplicateDialog = false
             onDismiss()
-            val targetPlaylist = selectedPlaylist ?: return@TextButton
+            val targetPlaylist = selectedPlaylist ?: return@StagePillButton
+            val allIds = songIds.orEmpty()
+            coroutineScope.launch(Dispatchers.IO) {
+              database.transaction { addSongToPlaylist(targetPlaylist, allIds) }
+              targetPlaylist.playlist.browseId?.let { plist ->
+                allIds.forEach { YouTube.addToPlaylist(plist, it) }
+              }
+              withContext(Dispatchers.Main) {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.added_to_playlist, targetPlaylist.playlist.name),
+                    Toast.LENGTH_SHORT
+                  )
+                  .show()
+              }
+            }
+          }, primary = false) {
+          Text(stringResource(R.string.add_anyway))
+        }
+        StagePillButton(onClick = {
+            showDuplicateDialog = false
+            onDismiss()
+            val targetPlaylist = selectedPlaylist ?: return@StagePillButton
+            val nonDuplicates = songIds.orEmpty().filter { !duplicates.contains(it) }
+            coroutineScope.launch(Dispatchers.IO) {
+              if (nonDuplicates.isNotEmpty()) {
+                database.transaction {
+                  addSongToPlaylist(targetPlaylist, nonDuplicates)
+                }
+                targetPlaylist.playlist.browseId?.let { plist ->
+                  nonDuplicates.forEach { YouTube.addToPlaylist(plist, it) }
+                }
+              }
+              withContext(Dispatchers.Main) {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.added_to_playlist, targetPlaylist.playlist.name),
+                    Toast.LENGTH_SHORT
+                  )
+                  .show()
+              }
+            }
+          }, primary = false) {
+          Text(stringResource(R.string.skip_duplicates))
+        }
+        StagePillButton(onClick = {
+            showDuplicateDialog = false
+            onDismiss()
+            val targetPlaylist = selectedPlaylist ?: return@StagePillButton
             val toRemoveSongIds = duplicates.toSet()
             coroutineScope.launch(Dispatchers.IO) {
               val maps = database.playlistSongMaps(targetPlaylist.id, 0)
@@ -278,70 +329,11 @@ fun AddToPlaylistDialog(
                   .show()
               }
             }
-          }
-        ) {
+          }, primary = false) {
           Text(
             text = stringResource(R.string.remove_from_playlist),
             color = MaterialTheme.colorScheme.error
           )
-        }
-
-        TextButton(
-          onClick = {
-            showDuplicateDialog = false
-            onDismiss()
-            val targetPlaylist = selectedPlaylist ?: return@TextButton
-            val nonDuplicates = songIds.orEmpty().filter { !duplicates.contains(it) }
-            coroutineScope.launch(Dispatchers.IO) {
-              if (nonDuplicates.isNotEmpty()) {
-                database.transaction {
-                  addSongToPlaylist(targetPlaylist, nonDuplicates)
-                }
-                targetPlaylist.playlist.browseId?.let { plist ->
-                  nonDuplicates.forEach { YouTube.addToPlaylist(plist, it) }
-                }
-              }
-              withContext(Dispatchers.Main) {
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.added_to_playlist, targetPlaylist.playlist.name),
-                    Toast.LENGTH_SHORT
-                  )
-                  .show()
-              }
-            }
-          }
-        ) {
-          Text(stringResource(R.string.skip_duplicates))
-        }
-
-        TextButton(
-          onClick = {
-            showDuplicateDialog = false
-            onDismiss()
-            val targetPlaylist = selectedPlaylist ?: return@TextButton
-            val allIds = songIds.orEmpty()
-            coroutineScope.launch(Dispatchers.IO) {
-              database.transaction { addSongToPlaylist(targetPlaylist, allIds) }
-              targetPlaylist.playlist.browseId?.let { plist ->
-                allIds.forEach { YouTube.addToPlaylist(plist, it) }
-              }
-              withContext(Dispatchers.Main) {
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.added_to_playlist, targetPlaylist.playlist.name),
-                    Toast.LENGTH_SHORT
-                  )
-                  .show()
-              }
-            }
-          }
-        ) {
-          Text(stringResource(R.string.add_anyway))
-        }
-
-        TextButton(onClick = { showDuplicateDialog = false }) {
-          Text(stringResource(android.R.string.cancel))
         }
       },
       onDismiss = { showDuplicateDialog = false }

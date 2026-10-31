@@ -1,5 +1,8 @@
 package echo.music.iad1tya.ui.screens.settings
 
+import echo.music.iad1tya.ui.component.StageAlertDialog
+import echo.music.iad1tya.ui.component.StagePillButton
+import echo.music.iad1tya.ui.component.StageTopBar
 import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -14,13 +17,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -268,7 +269,7 @@ fun StorageSettings(
   }
 
   if (showCacheWarningDialog) {
-    AlertDialog(
+    StageAlertDialog(
       onDismissRequest = { showCacheWarningDialog = false },
       title = { Text(stringResource(R.string.cache_size_warning_title)) },
       text = {
@@ -277,12 +278,10 @@ fun StorageSettings(
         )
       },
       confirmButton = {
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             onConfirmAction()
             showCacheWarningDialog = false
-          }
-        ) {
+          }) {
           Text(
             stringResource(R.string.cache_size_warning_confirm),
             color = MaterialTheme.colorScheme.error
@@ -290,11 +289,11 @@ fun StorageSettings(
         }
       },
       dismissButton = {
-        TextButton(onClick = { showCacheWarningDialog = false }) {
+        StagePillButton(onClick = { showCacheWarningDialog = false }, primary = false) {
           Text(stringResource(id = android.R.string.cancel))
         }
       }
-    )
+)
   }
 
   Column(
@@ -302,13 +301,12 @@ fun StorageSettings(
         LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal)
       )
       .verticalScroll(scrollState)
-      .padding(horizontal = 16.dp)
+      .padding(horizontal = 18.dp)
   ) {
     Spacer(
       Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Top))
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
 
     Material3SettingsGroup(
       scrollState = scrollState,
@@ -319,7 +317,7 @@ fun StorageSettings(
             isHighlighted = (highlightKey == stringResource(R.string.downloaded_songs)),
             icon = painterResource(R.drawable.storage),
             title = { Text(stringResource(R.string.downloaded_songs)) },
-            description = { Text(text = formatFileSize(downloadCacheSize)) }
+            value = { Text(text = formatFileSize(downloadCacheSize)) }
           ),
           Material3SettingsItem(
             isHighlighted = (highlightKey == stringResource(R.string.clear_all_downloads)),
@@ -348,19 +346,18 @@ fun StorageSettings(
     )
 
     if (exportingSongIds.isNotBlank()) {
-      Spacer(modifier = Modifier.height(16.dp))
-      Material3SettingsGroup(
+    Spacer(modifier = Modifier.height(12.dp))
+
+    Material3SettingsGroup(
         scrollState = scrollState,
         items = listOf(Material3SettingsItem(
           icon = painterResource(R.drawable.close),
           title = { Text(stringResource(R.string.cancel_exports)) },
           description = { Text(stringResource(R.string.exporting)) },
-          onClick = { AudioExportService.cancelAll(context) },
-        )),
+          onClick = { AudioExportService.cancelAll(context) })),
       )
     }
 
-    Spacer(modifier = Modifier.height(16.dp))
 
     Material3SettingsGroup(
       scrollState = scrollState,
@@ -371,13 +368,12 @@ fun StorageSettings(
             isHighlighted = (highlightKey == stringResource(R.string.clear_song_cache)),
             icon = painterResource(R.drawable.cached),
             title = { Text(stringResource(R.string.clear_song_cache)) },
-            description = { Text("${formatFileSize(playerCacheSize)} used") },
+            value = { Text("${formatFileSize(playerCacheSize)} used") },
             onClick = { clearCacheDialog = true }
           )
         )
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
 
     Material3SettingsGroup(
       scrollState = scrollState,
@@ -388,7 +384,7 @@ fun StorageSettings(
             isHighlighted = (highlightKey == stringResource(R.string.clear_image_cache)),
             icon = painterResource(R.drawable.image),
             title = { Text(stringResource(R.string.clear_image_cache)) },
-            description = { Text("${formatFileSize(imageCacheSize)} used") },
+            value = { Text("${formatFileSize(imageCacheSize)} used") },
             onClick = { clearImageCacheDialog = true }
           )
         )
@@ -402,7 +398,7 @@ fun StorageSettings(
     )
   }
 
-  TopAppBar(
+  StageTopBar(
     title = { Text(stringResource(R.string.storage)) },
     navigationIcon = {
       IconButton(
@@ -415,5 +411,5 @@ fun StorageSettings(
         )
       }
     }
-  )
+)
 }
