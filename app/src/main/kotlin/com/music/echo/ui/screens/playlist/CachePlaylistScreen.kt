@@ -3,14 +3,12 @@ package echo.music.iad1tya.ui.screens.playlist
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,20 +16,16 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.union
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
@@ -49,12 +43,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -64,7 +56,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachReversed
 import androidx.compose.ui.util.fastSumBy
@@ -74,7 +65,6 @@ import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.navigation.NavController
-import coil3.compose.AsyncImage
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.LocalPlayerConnection
 import echo.music.iad1tya.R
@@ -93,10 +83,19 @@ import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.SongListItem
 import echo.music.iad1tya.ui.component.SortHeader
+import echo.music.iad1tya.ui.component.StageHero
+import echo.music.iad1tya.ui.component.StageHeroArtwork
+import echo.music.iad1tya.ui.component.StageHeroDownloadButton
+import echo.music.iad1tya.ui.component.StageHeroPlayButton
+import echo.music.iad1tya.ui.component.StageHeroShuffleButton
+import echo.music.iad1tya.ui.component.rememberStageHeroUnderBar
+import echo.music.iad1tya.ui.component.stageBarButton
+import echo.music.iad1tya.ui.component.stageHeroBarColors
 import echo.music.iad1tya.ui.menu.CachePlaylistMenu
 import echo.music.iad1tya.ui.menu.SelectionSongMenu
 import echo.music.iad1tya.ui.menu.SongMenu
 import echo.music.iad1tya.ui.utils.backToMain
+import echo.music.iad1tya.ui.utils.resize
 import echo.music.iad1tya.utils.listItemShape
 import echo.music.iad1tya.utils.makeTimeString
 import echo.music.iad1tya.utils.rememberEnumPreference
@@ -194,6 +193,34 @@ fun CachePlaylistScreen(
     }
   }
 
+  val heroUnderBar by rememberStageHeroUnderBar(lazyListState)
+
+  val downloadAllSongs: () -> Unit = {
+    filteredSongs.forEach { song ->
+      val downloadRequest =
+        DownloadRequest.Builder(song.id, song.id.toUri())
+          .setCustomCacheKey(song.id)
+          .setData(song.title.toByteArray())
+          .build()
+      DownloadService.sendAddDownload(
+        context,
+        ExoDownloadService::class.java,
+        downloadRequest,
+        false,
+      )
+    }
+  }
+  val showPlaylistMenu: () -> Unit = {
+    menuState.show {
+      CachePlaylistMenu(
+        downloadState = Download.STATE_STOPPED,
+        onQueue = { playerConnection.addToQueue(filteredSongs.map { it.toMediaItem() }) },
+        onDownload = downloadAllSongs,
+        onDismiss = { menuState.dismiss() }
+      )
+    }
+  }
+
   Box(
     modifier = Modifier.fillMaxSize(),
   ) {
@@ -225,7 +252,7 @@ fun CachePlaylistScreen(
             CachePlaylistHeader(
               songs = filteredSongs,
               context = context,
-              menuState = menuState,
+              onDownload = downloadAllSongs,
               modifier = Modifier.animateItem()
             )
           }
@@ -370,15 +397,18 @@ fun CachePlaylistScreen(
             )
           }
           else -> {
-            Text(
-              stringResource(R.string.cached_playlist),
-              style = MaterialTheme.typography.titleLarge
-            )
+            if (!heroUnderBar || filteredSongs.isEmpty()) {
+              Text(
+                stringResource(R.string.cached_playlist),
+                style = MaterialTheme.typography.titleLarge
+              )
+            }
           }
         }
       },
       navigationIcon = {
         IconButton(
+          modifier = Modifier.stageBarButton(),
           onClick = {
             when {
               isSearching -> {
@@ -435,11 +465,23 @@ fun CachePlaylistScreen(
             Icon(painter = painterResource(R.drawable.more_vert), contentDescription = null)
           }
         } else if (!isSearching) {
-          IconButton(onClick = { isSearching = true }) {
-            Icon(painter = painterResource(R.drawable.search), contentDescription = null)
+          IconButton(onClick = { isSearching = true }, modifier = Modifier.stageBarButton()) {
+            Icon(
+              painter = painterResource(R.drawable.search),
+              contentDescription = stringResource(R.string.search)
+            )
+          }
+          if (filteredSongs.isNotEmpty()) {
+            IconButton(onClick = showPlaylistMenu, modifier = Modifier.stageBarButton()) {
+              Icon(
+                painter = painterResource(R.drawable.more_vert),
+                contentDescription = stringResource(R.string.more_options)
+              )
+            }
           }
         }
-      }
+      },
+      colors = stageHeroBarColors(heroUnderBar && !isSearching && !inSelectMode)
     )
   }
 }
@@ -448,62 +490,16 @@ fun CachePlaylistScreen(
 private fun CachePlaylistHeader(
   songs: List<Song>,
   context: android.content.Context,
-  menuState: echo.music.iad1tya.ui.component.MenuState,
+  onDownload: () -> Unit,
   modifier: Modifier = Modifier
 ) {
   val playerConnection = LocalPlayerConnection.current ?: return
   val cacheLength = remember(songs) { songs.fastSumBy { it.song.duration ?: 0 } }
 
-  Column(
-    modifier = modifier.fillMaxWidth().padding(top = 16.dp, bottom = 24.dp),
-    horizontalAlignment = Alignment.CenterHorizontally
-  ) {
-    Box(
-      modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
-      contentAlignment = Alignment.Center
-    ) {
-      Box(
-        modifier =
-          Modifier.then(
-              if (LocalConfiguration.current.screenWidthDp > 600) Modifier.size(300.dp)
-              else Modifier.fillMaxWidth().padding(horizontal = 48.dp).aspectRatio(1f)
-            )
-            .clip(RoundedCornerShape(8.dp))
-      ) {
-        AsyncImage(
-          model = songs.firstOrNull()?.thumbnailUrl,
-          contentDescription = null,
-          contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-          modifier = Modifier.fillMaxSize()
-        )
-      }
-    }
-
-    Row(
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.Center,
-      modifier = Modifier.padding(horizontal = 24.dp)
-    ) {
-      Icon(
-        painter = painterResource(R.drawable.cached),
-        contentDescription = null,
-        modifier = Modifier.size(28.dp),
-        tint = MaterialTheme.colorScheme.primary
-      )
-      Spacer(Modifier.width(8.dp))
-      Text(
-        text = stringResource(R.string.cached_playlist),
-        style = MaterialTheme.typography.headlineMedium,
-        fontWeight = FontWeight.Bold,
-        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-        color = MaterialTheme.colorScheme.onSurface
-      )
-    }
-
-    Spacer(Modifier.height(8.dp))
-
-    Text(
-      text =
+  Column(modifier = modifier.fillMaxWidth().padding(bottom = 24.dp)) {
+    StageHero(
+      title = stringResource(R.string.cached_playlist),
+      subtitle =
         buildString {
           append(pluralStringResource(R.plurals.n_song, songs.size, songs.size))
           if (cacheLength > 0) {
@@ -511,120 +507,33 @@ private fun CachePlaylistHeader(
             append(makeTimeString(cacheLength * 1000L))
           }
         },
-      style = MaterialTheme.typography.bodyMedium,
-      color = MaterialTheme.colorScheme.onSurfaceVariant
-    )
-
-    Spacer(Modifier.height(24.dp))
-
-    Row(
-      modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-      horizontalArrangement = Arrangement.spacedBy(12.dp),
-      verticalAlignment = Alignment.CenterVertically
-    ) {
-      TextButton(
-        onClick = {
-          playerConnection.playQueue(
-            ListQueue(
-              title = context.getString(R.string.cached_playlist),
-              items = songs.map { it.toMediaItem() },
-            )
-          )
-        },
-        modifier = Modifier.weight(1f).height(48.dp),
-        shape = androidx.compose.foundation.shape.CircleShape,
-        colors =
-          androidx.compose.material3.ButtonDefaults.textButtonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary
-          )
-      ) {
-        Icon(
-          painter = painterResource(R.drawable.play),
-          contentDescription = null,
-          modifier = Modifier.size(20.dp)
-        )
-        Spacer(Modifier.width(8.dp))
-        Text(
-          text = stringResource(R.string.play),
-          style = MaterialTheme.typography.labelLarge,
-          fontWeight = FontWeight.Bold
-        )
-      }
-
-      TextButton(
-        onClick = {
-          playerConnection.playQueue(
-            ListQueue(
-              title = context.getString(R.string.cached_playlist),
-              items = songs.shuffled().map { it.toMediaItem() },
-            )
-          )
-        },
-        modifier = Modifier.weight(1f).height(48.dp),
-        shape = androidx.compose.foundation.shape.CircleShape,
-        colors =
-          androidx.compose.material3.ButtonDefaults.textButtonColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-          )
-      ) {
-        Icon(
-          painter = painterResource(R.drawable.shuffle),
-          contentDescription = null,
-          modifier = Modifier.size(20.dp)
-        )
-        Spacer(Modifier.width(8.dp))
-        Text(
-          text = stringResource(R.string.shuffle),
-          style = MaterialTheme.typography.labelLarge,
-          fontWeight = FontWeight.Bold,
-          maxLines = 1,
-          overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-        )
-      }
-
-      Surface(
-        onClick = {
-          menuState.show {
-            CachePlaylistMenu(
-              downloadState = Download.STATE_STOPPED,
-              onQueue = { playerConnection.addToQueue(songs.map { it.toMediaItem() }) },
-              onDownload = {
-                songs.forEach { song ->
-                  val downloadRequest =
-                    DownloadRequest.Builder(song.id, song.id.toUri())
-                      .setCustomCacheKey(song.id)
-                      .setData(song.title.toByteArray())
-                      .build()
-                  DownloadService.sendAddDownload(
-                    context,
-                    ExoDownloadService::class.java,
-                    downloadRequest,
-                    false,
-                  )
-                }
-              },
-              onDismiss = { menuState.dismiss() }
+      artwork = { StageHeroArtwork(songs.firstOrNull()?.thumbnailUrl?.resize(1200, 1200)) },
+      leadingActions = {
+        StageHeroDownloadButton(downloadState = Download.STATE_STOPPED, onClick = onDownload)
+      },
+      trailingActions = {
+        StageHeroShuffleButton(
+          onClick = {
+            playerConnection.playQueue(
+              ListQueue(
+                title = context.getString(R.string.cached_playlist),
+                items = songs.shuffled().map { it.toMediaItem() },
+              )
             )
           }
-        },
-        shape = androidx.compose.foundation.shape.CircleShape,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        modifier = Modifier.size(48.dp)
-      ) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-          Icon(
-            painter = painterResource(R.drawable.more_vert),
-            contentDescription = null,
-            modifier = Modifier.size(20.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-          )
-        }
+        )
+        StageHeroPlayButton(
+          onClick = {
+            playerConnection.playQueue(
+              ListQueue(
+                title = context.getString(R.string.cached_playlist),
+                items = songs.map { it.toMediaItem() },
+              )
+            )
+          }
+        )
       }
-    }
-
-    Spacer(Modifier.height(24.dp))
+    )
 
     val staticDescription =
       remember(songs.size, cacheLength) {
@@ -636,7 +545,7 @@ private fun CachePlaylistHeader(
             } These songs are stored on your device for quick access."
       }
 
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp)) {
       Text(
         text = stringResource(R.string.about_album),
         style = MaterialTheme.typography.titleMedium,
