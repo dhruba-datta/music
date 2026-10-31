@@ -7,14 +7,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -34,10 +31,9 @@ import echo.music.iad1tya.db.entities.SpeedDialItem
 import echo.music.iad1tya.extensions.toMediaItem
 import echo.music.iad1tya.playback.queues.ListQueue
 import echo.music.iad1tya.ui.component.ArtistListItem
-import echo.music.iad1tya.ui.component.Material3MenuGroup
 import echo.music.iad1tya.ui.component.Material3MenuItemData
-import echo.music.iad1tya.ui.component.NewAction
-import echo.music.iad1tya.ui.component.NewActionGrid
+import echo.music.iad1tya.ui.component.MenuActionGrid
+import echo.music.iad1tya.ui.component.MenuTileLabel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -67,8 +63,6 @@ fun ArtistMenu(
     trailingContent = {},
   )
 
-  HorizontalDivider()
-
   Spacer(modifier = Modifier.height(12.dp))
 
   val configuration = LocalConfiguration.current
@@ -84,22 +78,21 @@ fun ArtistMenu(
       ),
   ) {
     item {
-      NewActionGrid(
-        actions =
+      MenuActionGrid(
+        items =
           buildList {
             if (!isGuest) {
               if (artist.songCount > 0) {
                 add(
-                  NewAction(
+                  Material3MenuItemData(
                     icon = {
                       Icon(
                         painter = painterResource(R.drawable.play),
                         contentDescription = null,
-                        modifier = Modifier.size(28.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        modifier = Modifier.size(24.dp),
                       )
                     },
-                    text = stringResource(R.string.play),
+                    title = { MenuTileLabel(text = stringResource(R.string.play)) },
                     onClick = {
                       coroutineScope.launch {
                         val songs =
@@ -122,16 +115,15 @@ fun ArtistMenu(
                 )
 
                 add(
-                  NewAction(
+                  Material3MenuItemData(
                     icon = {
                       Icon(
                         painter = painterResource(R.drawable.shuffle),
                         contentDescription = null,
-                        modifier = Modifier.size(28.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        modifier = Modifier.size(24.dp),
                       )
                     },
-                    text = stringResource(R.string.shuffle),
+                    title = { MenuTileLabel(text = stringResource(R.string.shuffle)) },
                     onClick = {
                       coroutineScope.launch {
                         val songs =
@@ -157,16 +149,15 @@ fun ArtistMenu(
             }
 
             add(
-              NewAction(
+              Material3MenuItemData(
                 icon = {
                   Icon(
                     painter = painterResource(if (isPinned) R.drawable.remove else R.drawable.add),
                     contentDescription = null,
-                    modifier = Modifier.size(28.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    modifier = Modifier.size(24.dp),
                   )
                 },
-                text = if (isPinned) "Unpin" else "Pin",
+                title = { MenuTileLabel(text = if (isPinned) "Unpin" else "Pin") },
                 onClick = {
                   coroutineScope.launch(Dispatchers.IO) {
                     if (isPinned) {
@@ -190,16 +181,15 @@ fun ArtistMenu(
 
             if (artist.artist.isYouTubeArtist) {
               add(
-                NewAction(
+                Material3MenuItemData(
                   icon = {
                     Icon(
                       painter = painterResource(R.drawable.share),
                       contentDescription = null,
-                      modifier = Modifier.size(28.dp),
-                      tint = MaterialTheme.colorScheme.onSurfaceVariant
+                      modifier = Modifier.size(24.dp),
                     )
                   },
-                  text = stringResource(R.string.share),
+                  title = { MenuTileLabel(text = stringResource(R.string.share)) },
                   onClick = {
                     onDismiss()
                     val intent =
@@ -216,37 +206,31 @@ fun ArtistMenu(
                 )
               )
             }
-          },
-        modifier = Modifier.padding(horizontal = 4.dp, vertical = 16.dp),
-        columns = if (isGuest) 1 else 3
-      )
-    }
-
-    item {
-      Material3MenuGroup(
-        items =
-          listOf(
-            Material3MenuItemData(
-              title = {
-                Text(
-                  text =
-                    if (artist.artist.bookmarkedAt != null) stringResource(R.string.subscribed)
-                    else stringResource(R.string.subscribe)
+            addAll(
+              listOf(
+                Material3MenuItemData(
+                  title = {
+                    MenuTileLabel(
+                      text =
+                        if (artist.artist.bookmarkedAt != null) stringResource(R.string.subscribed)
+                        else stringResource(R.string.subscribe)
+                    )
+                  },
+                  icon = {
+                    Icon(
+                      painter =
+                        painterResource(
+                          if (artist.artist.bookmarkedAt != null) R.drawable.subscribed
+                          else R.drawable.subscribe
+                        ),
+                      contentDescription = null,
+                    )
+                  },
+                  onClick = { database.transaction { update(artist.artist.toggleLike()) } }
                 )
-              },
-              icon = {
-                Icon(
-                  painter =
-                    painterResource(
-                      if (artist.artist.bookmarkedAt != null) R.drawable.subscribed
-                      else R.drawable.subscribe
-                    ),
-                  contentDescription = null,
-                )
-              },
-              onClick = { database.transaction { update(artist.artist.toggleLike()) } }
+              )
             )
-          )
+          }
       )
     }
   }

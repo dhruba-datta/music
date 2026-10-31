@@ -3,10 +3,8 @@ package echo.music.iad1tya.ui.menu
 import android.annotation.SuppressLint
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
@@ -53,10 +51,9 @@ import echo.music.iad1tya.models.toSongEntity
 import echo.music.iad1tya.playback.ExoDownloadService
 import echo.music.iad1tya.playback.queues.ListQueue
 import echo.music.iad1tya.ui.component.DefaultDialog
-import echo.music.iad1tya.ui.component.Material3MenuGroup
 import echo.music.iad1tya.ui.component.Material3MenuItemData
-import echo.music.iad1tya.ui.component.NewAction
-import echo.music.iad1tya.ui.component.NewActionGrid
+import echo.music.iad1tya.ui.component.MenuActionGrid
+import echo.music.iad1tya.ui.component.MenuTileLabel
 import java.time.LocalDateTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -183,80 +180,72 @@ fun SelectionSongMenu(
       ),
   ) {
     item {
-      NewActionGrid(
-        actions =
-          listOfNotNull(
-            if (!isGuest)
-              NewAction(
-                icon = {
-                  Icon(
-                    painter = painterResource(R.drawable.play),
-                    contentDescription = null,
-                    modifier = Modifier.size(28.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                  )
-                },
-                text = stringResource(R.string.play),
-                onClick = {
-                  onDismiss()
-                  playerConnection.playQueue(
-                    ListQueue(
-                      title = "Selection",
-                      items = songSelection.map { it.toMediaItem() },
-                    ),
-                  )
-                  clearAction()
-                }
-              )
-            else null,
-            if (!isGuest)
-              NewAction(
-                icon = {
-                  Icon(
-                    painter = painterResource(R.drawable.shuffle),
-                    contentDescription = null,
-                    modifier = Modifier.size(28.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                  )
-                },
-                text = stringResource(R.string.shuffle),
-                onClick = {
-                  onDismiss()
-                  playerConnection.playQueue(
-                    ListQueue(
-                      title = "Selection",
-                      items = songSelection.shuffled().map { it.toMediaItem() },
-                    ),
-                  )
-                  clearAction()
-                }
-              )
-            else null,
-            NewAction(
-              icon = {
-                Icon(
-                  painter = painterResource(R.drawable.playlist_add),
-                  contentDescription = null,
-                  modifier = Modifier.size(28.dp),
-                  tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-              },
-              text = stringResource(R.string.add_to_playlist),
-              onClick = { showChoosePlaylistDialog = true }
-            )
-          ),
-        modifier = Modifier.padding(horizontal = 4.dp, vertical = 16.dp)
-      )
-    }
-    item {
-      Material3MenuGroup(
+      MenuActionGrid(
         items =
           buildList {
+            addAll(
+              listOfNotNull(
+                if (!isGuest)
+                  Material3MenuItemData(
+                    icon = {
+                      Icon(
+                        painter = painterResource(R.drawable.play),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                      )
+                    },
+                    title = { MenuTileLabel(text = stringResource(R.string.play)) },
+                    onClick = {
+                      onDismiss()
+                      playerConnection.playQueue(
+                        ListQueue(
+                          title = "Selection",
+                          items = songSelection.map { it.toMediaItem() },
+                        ),
+                      )
+                      clearAction()
+                    }
+                  )
+                else null,
+                if (!isGuest)
+                  Material3MenuItemData(
+                    icon = {
+                      Icon(
+                        painter = painterResource(R.drawable.shuffle),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                      )
+                    },
+                    title = { MenuTileLabel(text = stringResource(R.string.shuffle)) },
+                    onClick = {
+                      onDismiss()
+                      playerConnection.playQueue(
+                        ListQueue(
+                          title = "Selection",
+                          items = songSelection.shuffled().map { it.toMediaItem() },
+                        ),
+                      )
+                      clearAction()
+                    }
+                  )
+                else null,
+                Material3MenuItemData(
+                  icon = {
+                    Icon(
+                      painter = painterResource(R.drawable.playlist_add),
+                      contentDescription = null,
+                      modifier = Modifier.size(24.dp),
+                    )
+                  },
+                  title = { MenuTileLabel(text = stringResource(R.string.add_to_playlist)) },
+                  onClick = { showChoosePlaylistDialog = true }
+                )
+              )
+            )
             if (!isGuest) {
               add(
                 Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.play_next)) },
-                  description = { Text(text = stringResource(R.string.play_next_desc)) },
+                  title = { MenuTileLabel(text = stringResource(R.string.play_next)) },
                   icon = {
                     Icon(
                       painter = painterResource(R.drawable.playlist_play),
@@ -272,8 +261,7 @@ fun SelectionSongMenu(
               )
               add(
                 Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.shuffle)) },
-                  description = { Text(text = stringResource(R.string.add_to_queue_desc)) },
+                  title = { MenuTileLabel(text = stringResource(R.string.shuffle)) },
                   icon = {
                     Icon(
                       painter = painterResource(R.drawable.shuffle),
@@ -294,8 +282,7 @@ fun SelectionSongMenu(
               )
               add(
                 Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.add_to_queue)) },
-                  description = { Text(text = stringResource(R.string.add_to_queue_desc)) },
+                  title = { MenuTileLabel(text = stringResource(R.string.add_to_queue)) },
                   icon = {
                     Icon(
                       painter = painterResource(R.drawable.queue_music),
@@ -312,8 +299,7 @@ fun SelectionSongMenu(
             }
             add(
               Material3MenuItemData(
-                title = { Text(text = stringResource(R.string.add_to_playlist)) },
-                description = { Text(text = stringResource(R.string.add_to_playlist_desc)) },
+                title = { MenuTileLabel(text = stringResource(R.string.add_to_playlist)) },
                 icon = {
                   Icon(
                     painter = painterResource(R.drawable.playlist_add),
@@ -326,7 +312,7 @@ fun SelectionSongMenu(
             add(
               Material3MenuItemData(
                 title = {
-                  Text(
+                  MenuTileLabel(
                     text =
                       stringResource(
                         if (allInLibrary) R.string.remove_from_library else R.string.add_to_library
@@ -364,21 +350,11 @@ fun SelectionSongMenu(
                 }
               )
             )
-          }
-      )
-    }
-
-    item { Spacer(modifier = Modifier.height(12.dp)) }
-
-    item {
-      Material3MenuGroup(
-        items =
-          buildList {
             add(
               when (downloadState) {
                 Download.STATE_COMPLETED -> {
                   Material3MenuItemData(
-                    title = { Text(text = stringResource(R.string.remove_download)) },
+                    title = { MenuTileLabel(text = stringResource(R.string.remove_download)) },
                     icon = {
                       Icon(painter = painterResource(R.drawable.offline), contentDescription = null)
                     },
@@ -388,7 +364,7 @@ fun SelectionSongMenu(
                 Download.STATE_QUEUED,
                 Download.STATE_DOWNLOADING -> {
                   Material3MenuItemData(
-                    title = { Text(text = stringResource(R.string.downloading)) },
+                    title = { MenuTileLabel(text = stringResource(R.string.downloading)) },
                     icon = {
                       CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                     },
@@ -397,7 +373,7 @@ fun SelectionSongMenu(
                 }
                 else -> {
                   Material3MenuItemData(
-                    title = { Text(text = stringResource(R.string.action_download)) },
+                    title = { MenuTileLabel(text = stringResource(R.string.action_download)) },
                     icon = {
                       Icon(
                         painter = painterResource(R.drawable.download),
@@ -426,7 +402,7 @@ fun SelectionSongMenu(
             add(
               Material3MenuItemData(
                 title = {
-                  Text(
+                  MenuTileLabel(
                     text = stringResource(if (allLiked) R.string.dislike_all else R.string.like_all)
                   )
                 },
@@ -457,7 +433,7 @@ fun SelectionSongMenu(
             if (songPosition?.isNotEmpty() == true) {
               add(
                 Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.delete)) },
+                  title = { MenuTileLabel(text = stringResource(R.string.delete)) },
                   icon = {
                     Icon(
                       painter = painterResource(R.drawable.delete),
@@ -591,13 +567,13 @@ fun SelectionMediaMetadataMenu(
       ),
   ) {
     item {
-      Material3MenuGroup(
+      MenuActionGrid(
         items =
           buildList {
             if (currentItems.isNotEmpty() && !isGuest) {
               add(
                 Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.delete)) },
+                  title = { MenuTileLabel(text = stringResource(R.string.delete)) },
                   icon = {
                     Icon(
                       painter = painterResource(R.drawable.delete),
@@ -624,7 +600,7 @@ fun SelectionMediaMetadataMenu(
             if (!isGuest) {
               add(
                 Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.play)) },
+                  title = { MenuTileLabel(text = stringResource(R.string.play)) },
                   icon = {
                     Icon(
                       painter = painterResource(R.drawable.play),
@@ -645,7 +621,7 @@ fun SelectionMediaMetadataMenu(
               )
               add(
                 Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.shuffle)) },
+                  title = { MenuTileLabel(text = stringResource(R.string.shuffle)) },
                   icon = {
                     Icon(
                       painter = painterResource(R.drawable.shuffle),
@@ -667,7 +643,7 @@ fun SelectionMediaMetadataMenu(
               if (!isGuest) {
                 add(
                   Material3MenuItemData(
-                    title = { Text(text = stringResource(R.string.play_next)) },
+                    title = { MenuTileLabel(text = stringResource(R.string.play_next)) },
                     icon = {
                       Icon(
                         painter = painterResource(R.drawable.playlist_play),
@@ -683,7 +659,7 @@ fun SelectionMediaMetadataMenu(
                 )
                 add(
                   Material3MenuItemData(
-                    title = { Text(text = stringResource(R.string.add_to_queue)) },
+                    title = { MenuTileLabel(text = stringResource(R.string.add_to_queue)) },
                     icon = {
                       Icon(
                         painter = painterResource(R.drawable.queue_music),
@@ -701,7 +677,7 @@ fun SelectionMediaMetadataMenu(
             }
             add(
               Material3MenuItemData(
-                title = { Text(text = stringResource(R.string.add_to_playlist)) },
+                title = { MenuTileLabel(text = stringResource(R.string.add_to_playlist)) },
                 icon = {
                   Icon(
                     painter = painterResource(R.drawable.playlist_add),
@@ -711,19 +687,9 @@ fun SelectionMediaMetadataMenu(
                 onClick = { showChoosePlaylistDialog = true }
               )
             )
-          }
-      )
-    }
-
-    item { Spacer(modifier = Modifier.height(12.dp)) }
-
-    item {
-      Material3MenuGroup(
-        items =
-          buildList {
             add(
               Material3MenuItemData(
-                title = { Text(text = stringResource(R.string.like_all)) },
+                title = { MenuTileLabel(text = stringResource(R.string.like_all)) },
                 icon = {
                   Icon(
                     painter =
@@ -751,7 +717,7 @@ fun SelectionMediaMetadataMenu(
                 Download.STATE_COMPLETED -> {
                   Material3MenuItemData(
                     title = {
-                      Text(
+                      MenuTileLabel(
                         text = stringResource(R.string.remove_download),
                         color = MaterialTheme.colorScheme.surface
                       )
@@ -771,7 +737,7 @@ fun SelectionMediaMetadataMenu(
                 Download.STATE_QUEUED,
                 Download.STATE_DOWNLOADING -> {
                   Material3MenuItemData(
-                    title = { Text(text = stringResource(R.string.downloading)) },
+                    title = { MenuTileLabel(text = stringResource(R.string.downloading)) },
                     icon = {
                       CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                     },
@@ -780,7 +746,7 @@ fun SelectionMediaMetadataMenu(
                 }
                 else -> {
                   Material3MenuItemData(
-                    title = { Text(text = stringResource(R.string.action_download)) },
+                    title = { MenuTileLabel(text = stringResource(R.string.action_download)) },
                     icon = {
                       Icon(
                         painter = painterResource(R.drawable.download),

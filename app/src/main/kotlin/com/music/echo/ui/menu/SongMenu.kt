@@ -84,10 +84,9 @@ import echo.music.iad1tya.playback.queues.YouTubeQueue
 import echo.music.iad1tya.ui.component.HeartBurstIcon
 import echo.music.iad1tya.ui.component.ListDialog
 import echo.music.iad1tya.ui.component.LocalBottomSheetPageState
-import echo.music.iad1tya.ui.component.Material3MenuGroup
 import echo.music.iad1tya.ui.component.Material3MenuItemData
-import echo.music.iad1tya.ui.component.NewAction
-import echo.music.iad1tya.ui.component.NewActionGrid
+import echo.music.iad1tya.ui.component.MenuActionGrid
+import echo.music.iad1tya.ui.component.MenuTileLabel
 import echo.music.iad1tya.ui.component.SongListItem
 import echo.music.iad1tya.ui.component.TextFieldDialog
 import echo.music.iad1tya.ui.utils.ShowMediaInfo
@@ -385,155 +384,138 @@ fun SongMenu(
       ),
   ) {
     item {
-      NewActionGrid(
-        actions =
-          listOfNotNull(
-            if (!isGuest && !song.song.isLocal) {
-              NewAction(
-                icon = {
-                  Icon(
-                    painter = painterResource(R.drawable.radio),
-                    contentDescription = null,
-                    modifier = Modifier.size(28.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                  )
-                },
-                text = stringResource(R.string.start_radio),
-                onClick = {
-                  onDismiss()
-                  playerConnection.playQueue(YouTubeQueue.radio(song.toMediaMetadata()))
-                }
-              )
-            } else null,
-            NewAction(
-              icon = {
-                Icon(
-                  painter = painterResource(R.drawable.playlist_add),
-                  contentDescription = null,
-                  modifier = Modifier.size(28.dp),
-                  tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-              },
-              text = stringResource(R.string.add_to_an_playlist),
-              onClick = { showChoosePlaylistDialog = true }
-            ),
-            NewAction(
-              icon = {
-                Icon(
-                  painter = painterResource(R.drawable.share),
-                  contentDescription = null,
-                  modifier = Modifier.size(22.dp),
-                  tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-              },
-              text = stringResource(R.string.share),
-              onClick = {
-                onDismiss()
-                if (song.song.isLocal) {
-                  shareLocalAudio(context, song.id, song.format?.mimeType)
-                } else {
-                  val intent =
-                    Intent().apply {
-                      action = Intent.ACTION_SEND
-                      type = "text/plain"
-                      putExtra(Intent.EXTRA_TEXT, "https://share.echomusic.fun/watch?v=${song.id}")
-                    }
-                  context.startActivity(Intent.createChooser(intent, null))
-                }
-              }
-            )
-          ),
-        columns = 3,
-        modifier = Modifier.padding(horizontal = 4.dp, vertical = 16.dp)
-      )
-    }
-    item {
-      Material3MenuGroup(
-        items =
-          listOfNotNull(
-            if (listenTogetherManager != null && listenTogetherManager.isGuestPlaybackRestricted) {
-              Material3MenuItemData(
-                title = { Text(text = stringResource(R.string.suggest_to_host)) },
-                icon = {
-                  Icon(
-                    painter = painterResource(R.drawable.queue_music),
-                    contentDescription = null,
-                  )
-                },
-                onClick = {
-                  val durationMs =
-                    if (song.song.duration > 0) song.song.duration.toLong() * 1000 else 180000L
-                  val trackInfo =
-                    echo.music.iad1tya.listentogether.TrackInfo(
-                      id = song.id,
-                      title = song.song.title,
-                      artist = orderedArtists.joinToString(", ") { it.name },
-                      album = song.song.albumName,
-                      duration = durationMs,
-                      thumbnail = song.thumbnailUrl
-                    )
-                  listenTogetherManager.suggestTrack(trackInfo)
-                  onDismiss()
-                }
-              )
-            } else null,
-            Material3MenuItemData(
-              title = { Text(text = stringResource(R.string.edit)) },
-              description = { Text(text = stringResource(R.string.edit_song)) },
-              icon = {
-                Icon(
-                  painter = painterResource(R.drawable.edit),
-                  contentDescription = null,
-                )
-              },
-              onClick = { showEditDialog = true }
-            ),
-            if (!isGuest) {
-              Material3MenuItemData(
-                title = { Text(text = stringResource(R.string.play_next)) },
-                description = { Text(text = stringResource(R.string.play_next_desc)) },
-                icon = {
-                  Icon(
-                    painter = painterResource(R.drawable.playlist_play),
-                    contentDescription = null,
-                  )
-                },
-                onClick = {
-                  onDismiss()
-                  playerConnection.playNext(song.toMediaItem())
-                }
-              )
-            } else null,
-            if (!isGuest) {
-              Material3MenuItemData(
-                title = { Text(text = stringResource(R.string.add_to_queue)) },
-                description = { Text(text = stringResource(R.string.add_to_queue_desc)) },
-                icon = {
-                  Icon(
-                    painter = painterResource(R.drawable.queue_music),
-                    contentDescription = null,
-                  )
-                },
-                onClick = {
-                  onDismiss()
-                  playerConnection.addToQueue(song.toMediaItem())
-                }
-              )
-            } else null
-          )
-      )
-    }
-
-    item { Spacer(modifier = Modifier.height(12.dp)) }
-
-    item {
-      Material3MenuGroup(
+      MenuActionGrid(
         items =
           buildList {
+            addAll(
+              listOfNotNull(
+                if (!isGuest && !song.song.isLocal) {
+                  Material3MenuItemData(
+                    icon = {
+                      Icon(
+                        painter = painterResource(R.drawable.radio),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                      )
+                    },
+                    title = { MenuTileLabel(text = stringResource(R.string.start_radio)) },
+                    onClick = {
+                      onDismiss()
+                      playerConnection.playQueue(YouTubeQueue.radio(song.toMediaMetadata()))
+                    }
+                  )
+                } else null,
+                Material3MenuItemData(
+                  icon = {
+                    Icon(
+                      painter = painterResource(R.drawable.playlist_add),
+                      contentDescription = null,
+                      modifier = Modifier.size(24.dp),
+                    )
+                  },
+                  title = { MenuTileLabel(text = stringResource(R.string.add_to_an_playlist)) },
+                  onClick = { showChoosePlaylistDialog = true }
+                ),
+                Material3MenuItemData(
+                  icon = {
+                    Icon(
+                      painter = painterResource(R.drawable.share),
+                      contentDescription = null,
+                      modifier = Modifier.size(22.dp),
+                    )
+                  },
+                  title = { MenuTileLabel(text = stringResource(R.string.share)) },
+                  onClick = {
+                    onDismiss()
+                    if (song.song.isLocal) {
+                      shareLocalAudio(context, song.id, song.format?.mimeType)
+                    } else {
+                      val intent =
+                        Intent().apply {
+                          action = Intent.ACTION_SEND
+                          type = "text/plain"
+                          putExtra(Intent.EXTRA_TEXT, "https://share.echomusic.fun/watch?v=${song.id}")
+                        }
+                      context.startActivity(Intent.createChooser(intent, null))
+                    }
+                  }
+                )
+              )
+            )
+            addAll(
+              listOfNotNull(
+                if (listenTogetherManager != null && listenTogetherManager.isGuestPlaybackRestricted) {
+                  Material3MenuItemData(
+                    title = { MenuTileLabel(text = stringResource(R.string.suggest_to_host)) },
+                    icon = {
+                      Icon(
+                        painter = painterResource(R.drawable.queue_music),
+                        contentDescription = null,
+                      )
+                    },
+                    onClick = {
+                      val durationMs =
+                        if (song.song.duration > 0) song.song.duration.toLong() * 1000 else 180000L
+                      val trackInfo =
+                        echo.music.iad1tya.listentogether.TrackInfo(
+                          id = song.id,
+                          title = song.song.title,
+                          artist = orderedArtists.joinToString(", ") { it.name },
+                          album = song.song.albumName,
+                          duration = durationMs,
+                          thumbnail = song.thumbnailUrl
+                        )
+                      listenTogetherManager.suggestTrack(trackInfo)
+                      onDismiss()
+                    }
+                  )
+                } else null,
+                Material3MenuItemData(
+                  title = { MenuTileLabel(text = stringResource(R.string.edit)) },
+                  icon = {
+                    Icon(
+                      painter = painterResource(R.drawable.edit),
+                      contentDescription = null,
+                    )
+                  },
+                  onClick = { showEditDialog = true }
+                ),
+                if (!isGuest) {
+                  Material3MenuItemData(
+                    title = { MenuTileLabel(text = stringResource(R.string.play_next)) },
+                    icon = {
+                      Icon(
+                        painter = painterResource(R.drawable.playlist_play),
+                        contentDescription = null,
+                      )
+                    },
+                    onClick = {
+                      onDismiss()
+                      playerConnection.playNext(song.toMediaItem())
+                    }
+                  )
+                } else null,
+                if (!isGuest) {
+                  Material3MenuItemData(
+                    title = { MenuTileLabel(text = stringResource(R.string.add_to_queue)) },
+                    icon = {
+                      Icon(
+                        painter = painterResource(R.drawable.queue_music),
+                        contentDescription = null,
+                      )
+                    },
+                    onClick = {
+                      onDismiss()
+                      playerConnection.addToQueue(song.toMediaItem())
+                    }
+                  )
+                } else null
+              )
+            )
             add(
               Material3MenuItemData(
                 title = {
-                  Text(text = if (isPinned) "Unpin from Speed dial" else "Pin to Speed dial")
+                  MenuTileLabel(text = if (isPinned) "Unpin from Speed dial" else "Pin to Speed dial")
                 },
                 icon = {
                   Icon(
@@ -566,7 +548,7 @@ fun SongMenu(
             add(
               Material3MenuItemData(
                 title = {
-                  Text(
+                  MenuTileLabel(
                     text =
                       stringResource(
                         if (song.song.inLibrary == null) R.string.add_to_library
@@ -574,7 +556,6 @@ fun SongMenu(
                       )
                   )
                 },
-                description = { Text(text = stringResource(R.string.add_to_library_desc)) },
                 icon = {
                   Icon(
                     painter =
@@ -601,7 +582,7 @@ fun SongMenu(
             add(
               Material3MenuItemData(
                 title = {
-                  Text(
+                  MenuTileLabel(
                     text =
                       stringResource(
                         if (song.song.hideFromQuickPicks) R.string.unhide_from_home
@@ -609,7 +590,6 @@ fun SongMenu(
                       )
                   )
                 },
-                description = { Text(text = stringResource(R.string.hide_from_home_desc)) },
                 icon = {
                   Icon(
                     painter =
@@ -631,13 +611,8 @@ fun SongMenu(
             add(
               Material3MenuItemData(
                 title = {
-                  Text(
+                  MenuTileLabel(
                     text = if (isExcludedFromRecommendations) "Allow in recommendations" else "Never recommend again"
-                  )
-                },
-                description = {
-                  Text(
-                    text = if (isExcludedFromRecommendations) "Remove exclusion from taste recommendations" else "Exclude track from local taste recommendations"
                   )
                 },
                 icon = {
@@ -674,7 +649,7 @@ fun SongMenu(
             if (event != null) {
               add(
                 Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.remove_from_history)) },
+                  title = { MenuTileLabel(text = stringResource(R.string.remove_from_history)) },
                   icon = {
                     Icon(
                       painter = painterResource(R.drawable.delete),
@@ -691,7 +666,7 @@ fun SongMenu(
             if (playlistSong != null) {
               add(
                 Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.remove_from_playlist)) },
+                  title = { MenuTileLabel(text = stringResource(R.string.remove_from_playlist)) },
                   icon = {
                     Icon(
                       painter = painterResource(R.drawable.delete),
@@ -722,7 +697,7 @@ fun SongMenu(
             if (isFromCache) {
               add(
                 Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.remove_from_cache)) },
+                  title = { MenuTileLabel(text = stringResource(R.string.remove_from_cache)) },
                   icon = {
                     Icon(
                       painter = painterResource(R.drawable.delete),
@@ -736,197 +711,167 @@ fun SongMenu(
                 )
               )
             }
-          }
-      )
-    }
-
-    if (!song.song.isLocal) {
-      item { Spacer(modifier = Modifier.height(12.dp)) }
-
-      item {
-        Material3MenuGroup(
-          items =
-            listOf(
-              when (download?.state) {
-                Download.STATE_COMPLETED -> {
-                  Material3MenuItemData(
-                    title = { Text(text = stringResource(R.string.remove_download)) },
-                    icon = {
-                      Icon(painter = painterResource(R.drawable.offline), contentDescription = null)
-                    },
-                    onClick = {
-                      DownloadService.sendRemoveDownload(
-                        context,
-                        ExoDownloadService::class.java,
-                        song.id,
-                        false,
-                      )
-                    }
-                  )
-                }
-                Download.STATE_QUEUED,
-                Download.STATE_DOWNLOADING -> {
-                  Material3MenuItemData(
-                    title = { Text(text = stringResource(R.string.downloading)) },
-                    icon = {
-                      CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                    },
-                    onClick = {
-                      DownloadService.sendRemoveDownload(
-                        context,
-                        ExoDownloadService::class.java,
-                        song.id,
-                        false,
-                      )
-                    }
-                  )
-                }
-                else -> {
-                  Material3MenuItemData(
-                    title = { Text(text = stringResource(R.string.action_download)) },
-                    description = { Text(text = stringResource(R.string.download_desc)) },
-                    icon = {
-                      Icon(
-                        painter = painterResource(R.drawable.download),
-                        contentDescription = null,
-                      )
-                    },
-                    onClick = {
-                      val downloadRequest =
-                        DownloadRequest.Builder(song.id, song.id.toUri())
-                          .setCustomCacheKey(song.id)
-                          .setData(song.song.title.toByteArray())
-                          .build()
-                      DownloadService.sendAddDownload(
-                        context,
-                        ExoDownloadService::class.java,
-                        downloadRequest,
-                        false,
-                      )
-                    }
-                  )
-                }
-              }
-            )
-        )
-      }
-    }
-
-    if (enableExportAsMp3 && !song.song.isLocal) {
-      item { Spacer(modifier = Modifier.height(12.dp)) }
-      item {
-        Material3MenuGroup(
-          items =
-            listOf(
-              when {
-                isExporting ->
-                  Material3MenuItemData(
-                    title = {
-                      val text = stringResource(R.string.exporting)
-                      Text(text = if (exportProgress != null) "$text • $exportProgress%" else text)
-                    },
-                    icon = {
-                      CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp,
-                        progress = { if (exportProgress != null) exportProgress / 100f else 0f }
-                      )
-                    },
-                    onClick = {}
-                  )
-                isExported ->
-                  Material3MenuItemData(
-                    title = { Text(text = stringResource(R.string.action_exported)) },
-                    icon = {
-                      Icon(
-                        painter = painterResource(R.drawable.folder_managed),
-                        contentDescription = null
-                      )
-                    },
-                    onClick = { showReExportDialog = true }
-                  )
-                else ->
-                  Material3MenuItemData(
-                    title = { Text(text = stringResource(R.string.action_export)) },
-                    description = { Text(text = stringResource(R.string.export_desc)) },
-                    icon = {
-                      Icon(
-                        painter = painterResource(R.drawable.file_export),
-                        contentDescription = null,
-                      )
-                    },
-                    onClick = {
-                      if (exportDirectoryUri.isBlank()) {
-                        android.widget.Toast.makeText(
+            if (!song.song.isLocal) {
+              addAll(
+                listOf(
+                  when (download?.state) {
+                    Download.STATE_COMPLETED -> {
+                      Material3MenuItemData(
+                        title = { MenuTileLabel(text = stringResource(R.string.remove_download)) },
+                        icon = {
+                          Icon(painter = painterResource(R.drawable.offline), contentDescription = null)
+                        },
+                        onClick = {
+                          DownloadService.sendRemoveDownload(
                             context,
-                            context.getString(R.string.export_directory_not_set),
-                            android.widget.Toast.LENGTH_SHORT
+                            ExoDownloadService::class.java,
+                            song.id,
+                            false,
                           )
-                          .show()
-                        onDismiss()
-                      } else {
-                        onDismiss()
-                        echo.music.iad1tya.playback.AudioExportService.start(
-                          context = context,
-                          songId = song.id,
-                          songTitle = song.song.title,
-                          songArtist = song.artists.joinToString(", ") { it.name },
-                          songAlbum = song.song.albumName ?: "",
-                          artworkUrl = song.thumbnailUrl ?: "",
-                          targetDirectoryUri = exportDirectoryUri
-                        )
-                      }
+                        }
+                      )
                     }
-                  )
-              }
-            )
-        )
-      }
-    }
-
-    item { Spacer(modifier = Modifier.height(12.dp)) }
-
-    item {
-      Material3MenuGroup(
-        items =
-          listOf(
-            Material3MenuItemData(
-              title = { Text(text = "Set as Ringtone") },
-              icon = {
-                Icon(
-                  painter = painterResource(R.drawable.notification),
-                  contentDescription = null,
-                  modifier = Modifier.size(24.dp)
+                    Download.STATE_QUEUED,
+                    Download.STATE_DOWNLOADING -> {
+                      Material3MenuItemData(
+                        title = { MenuTileLabel(text = stringResource(R.string.downloading)) },
+                        icon = {
+                          CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                        },
+                        onClick = {
+                          DownloadService.sendRemoveDownload(
+                            context,
+                            ExoDownloadService::class.java,
+                            song.id,
+                            false,
+                          )
+                        }
+                      )
+                    }
+                    else -> {
+                      Material3MenuItemData(
+                        title = { MenuTileLabel(text = stringResource(R.string.action_download)) },
+                        icon = {
+                          Icon(
+                            painter = painterResource(R.drawable.download),
+                            contentDescription = null,
+                          )
+                        },
+                        onClick = {
+                          val downloadRequest =
+                            DownloadRequest.Builder(song.id, song.id.toUri())
+                              .setCustomCacheKey(song.id)
+                              .setData(song.song.title.toByteArray())
+                              .build()
+                          DownloadService.sendAddDownload(
+                            context,
+                            ExoDownloadService::class.java,
+                            downloadRequest,
+                            false,
+                          )
+                        }
+                      )
+                    }
+                  }
                 )
-              },
-              onClick = {
-                if (ringtoneViewModel.hasSettingsPermission(context)) {
-                  ringtoneViewModel.showTrimmer(
-                    song.id,
-                    song.song.title,
-                    song.artists.joinToString { it.name },
-                    song.song.duration
-                  )
-                } else {
-                  ringtoneViewModel.requestSettingsPermission(context)
-                }
-                onDismiss()
-              }
+              )
+            }
+            if (enableExportAsMp3 && !song.song.isLocal) {
+              addAll(
+                listOf(
+                  when {
+                    isExporting ->
+                      Material3MenuItemData(
+                        title = {
+                          val text = stringResource(R.string.exporting)
+                          MenuTileLabel(text = if (exportProgress != null) "$text • $exportProgress%" else text)
+                        },
+                        icon = {
+                          CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp,
+                            progress = { if (exportProgress != null) exportProgress / 100f else 0f }
+                          )
+                        },
+                        onClick = {}
+                      )
+                    isExported ->
+                      Material3MenuItemData(
+                        title = { MenuTileLabel(text = stringResource(R.string.action_exported)) },
+                        icon = {
+                          Icon(
+                            painter = painterResource(R.drawable.folder_managed),
+                            contentDescription = null
+                          )
+                        },
+                        onClick = { showReExportDialog = true }
+                      )
+                    else ->
+                      Material3MenuItemData(
+                        title = { MenuTileLabel(text = stringResource(R.string.action_export)) },
+                        icon = {
+                          Icon(
+                            painter = painterResource(R.drawable.file_export),
+                            contentDescription = null,
+                          )
+                        },
+                        onClick = {
+                          if (exportDirectoryUri.isBlank()) {
+                            android.widget.Toast.makeText(
+                                context,
+                                context.getString(R.string.export_directory_not_set),
+                                android.widget.Toast.LENGTH_SHORT
+                              )
+                              .show()
+                            onDismiss()
+                          } else {
+                            onDismiss()
+                            echo.music.iad1tya.playback.AudioExportService.start(
+                              context = context,
+                              songId = song.id,
+                              songTitle = song.song.title,
+                              songArtist = song.artists.joinToString(", ") { it.name },
+                              songAlbum = song.song.albumName ?: "",
+                              artworkUrl = song.thumbnailUrl ?: "",
+                              targetDirectoryUri = exportDirectoryUri
+                            )
+                          }
+                        }
+                      )
+                  }
+                )
+              )
+            }
+            addAll(
+              listOf(
+                Material3MenuItemData(
+                  title = { MenuTileLabel(text = "Set as Ringtone") },
+                  icon = {
+                    Icon(
+                      painter = painterResource(R.drawable.notification),
+                      contentDescription = null,
+                      modifier = Modifier.size(24.dp)
+                    )
+                  },
+                  onClick = {
+                    if (ringtoneViewModel.hasSettingsPermission(context)) {
+                      ringtoneViewModel.showTrimmer(
+                        song.id,
+                        song.song.title,
+                        song.artists.joinToString { it.name },
+                        song.song.duration
+                      )
+                    } else {
+                      ringtoneViewModel.requestSettingsPermission(context)
+                    }
+                    onDismiss()
+                  }
+                )
+              )
             )
-          )
-      )
-    }
-
-    item { Spacer(modifier = Modifier.height(12.dp)) }
-
-    item {
-      Material3MenuGroup(
-        items =
-          buildList {
             add(
               Material3MenuItemData(
-                title = { Text(text = stringResource(R.string.view_artist)) },
-                description = { Text(text = song.artists.joinToString { it.name }) },
+                title = { MenuTileLabel(text = stringResource(R.string.view_artist)) },
                 icon = {
                   Icon(
                     painter = painterResource(R.drawable.artist),
@@ -946,8 +891,7 @@ fun SongMenu(
             if (song.song.albumId != null) {
               add(
                 Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.view_album)) },
-                  description = { song.song.albumName?.let { Text(text = it) } },
+                  title = { MenuTileLabel(text = stringResource(R.string.view_album)) },
                   icon = {
                     Icon(
                       painter = painterResource(R.drawable.album),
@@ -964,8 +908,7 @@ fun SongMenu(
             if (!song.song.isLocal) {
               add(
                 Material3MenuItemData(
-                  title = { Text(text = stringResource(R.string.refetch)) },
-                  description = { Text(text = stringResource(R.string.refetch_desc)) },
+                  title = { MenuTileLabel(text = stringResource(R.string.refetch)) },
                   icon = {
                     Icon(
                       painter = painterResource(R.drawable.sync),
@@ -1005,8 +948,7 @@ fun SongMenu(
             }
             add(
               Material3MenuItemData(
-                title = { Text(text = stringResource(R.string.details)) },
-                description = { Text(text = stringResource(R.string.details_desc)) },
+                title = { MenuTileLabel(text = stringResource(R.string.details)) },
                 icon = {
                   Icon(
                     painter = painterResource(R.drawable.info),

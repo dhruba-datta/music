@@ -19,7 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -146,13 +146,17 @@ fun CrashScreen(crashLog: String, onClose: () -> Unit, onShare: () -> Unit, onCo
       )
     },
     floatingActionButton = {
-      ExtendedFloatingActionButton(
+      FloatingActionButton(
         onClick = onShare,
-        icon = { Icon(painter = painterResource(R.drawable.share), contentDescription = null) },
-        text = { Text(stringResource(R.string.crash_share_logs)) },
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-      )
+        shape = RoundedCornerShape(18.dp),
+        containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary
+      ) {
+        Icon(
+          painter = painterResource(R.drawable.share),
+          contentDescription = stringResource(R.string.crash_share_logs)
+        )
+      }
     },
     containerColor = MaterialTheme.colorScheme.surface
   ) { paddingValues ->
@@ -160,31 +164,32 @@ fun CrashScreen(crashLog: String, onClose: () -> Unit, onShare: () -> Unit, onCo
       modifier =
         Modifier.fillMaxSize()
           .padding(paddingValues)
-          .padding(horizontal = 16.dp)
+          .padding(horizontal = 18.dp)
           .verticalScroll(rememberScrollState())
     ) {
       Text(
         text = stringResource(R.string.crash_description),
-        style = MaterialTheme.typography.bodyLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(top = 12.dp)
       )
 
-      Spacer(modifier = Modifier.height(16.dp))
+      Spacer(modifier = Modifier.height(12.dp))
 
       Box(
         modifier =
           Modifier.fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-            .padding(16.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .padding(14.dp)
       ) {
         Text(
           text = crashLog,
           style =
             MaterialTheme.typography.bodySmall.copy(
               fontFamily = FontFamily.Monospace,
-              fontSize = 11.sp,
-              lineHeight = 16.sp
+              fontSize = 13.sp,
+              lineHeight = 20.sp
             ),
           color = MaterialTheme.colorScheme.onSurface,
           modifier = Modifier.horizontalScroll(rememberScrollState())

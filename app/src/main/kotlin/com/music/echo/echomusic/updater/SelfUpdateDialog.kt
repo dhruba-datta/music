@@ -9,20 +9,19 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import echo.music.iad1tya.BuildConfig
 import echo.music.iad1tya.R
+import echo.music.iad1tya.ui.component.StageButton
 import java.io.File
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -162,14 +162,13 @@ fun SelfUpdateDialog(release: SelfUpdater.Release? = null, onDismiss: () -> Unit
 
   BasicAlertDialog(onDismissRequest = { if (!busy) onDismiss() }) {
     Surface(
-      modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth(),
-      shape = MaterialTheme.shapes.extraLarge,
+      modifier = Modifier.padding(horizontal = 18.dp).fillMaxWidth(),
+      shape = RoundedCornerShape(28.dp),
       color = MaterialTheme.colorScheme.surfaceContainerHigh,
-      tonalElevation = 8.dp,
     ) {
       Column(
-        modifier = Modifier.padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        modifier = Modifier.padding(22.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
       ) {
         Row(
           verticalAlignment = Alignment.CenterVertically,
@@ -195,9 +194,9 @@ fun SelfUpdateDialog(release: SelfUpdater.Release? = null, onDismiss: () -> Unit
               horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
               CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.5.dp)
-              Text("Looking for a newer version of Music…")
+              UpdateNote("Looking for a newer version of Music…")
             }
-          UpdateStep.UpToDate -> Text("Music ${BuildConfig.VERSION_NAME} is the latest version.")
+          UpdateStep.UpToDate -> UpdateNote("Music ${BuildConfig.VERSION_NAME} is the latest version.")
           is UpdateStep.Available -> {
             Text(
               text = "You have ${BuildConfig.VERSION_NAME}.",
@@ -208,8 +207,13 @@ fun SelfUpdateDialog(release: SelfUpdater.Release? = null, onDismiss: () -> Unit
               Column(
                 modifier = Modifier.heightIn(max = 240.dp).verticalScroll(rememberScrollState())
               ) {
-                Text("What's New", style = MaterialTheme.typography.titleSmall)
-                Text(current.release.notes, style = MaterialTheme.typography.bodyMedium)
+                Text(
+                  text = "What's New",
+                  style = MaterialTheme.typography.titleSmall,
+                  fontWeight = FontWeight.Bold,
+                )
+                Spacer(Modifier.height(4.dp))
+                UpdateNote(current.release.notes)
               }
             }
             Text(
@@ -224,8 +228,9 @@ fun SelfUpdateDialog(release: SelfUpdater.Release? = null, onDismiss: () -> Unit
             LinearProgressIndicator(
               progress = { fraction },
               modifier = Modifier.fillMaxWidth(),
+              trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
             )
-            Text(
+            UpdateNote(
               "${megabytes(current.received)} of ${megabytes(current.total)} MB · " +
                 "${(fraction * 100).toInt()}%"
             )
@@ -236,27 +241,31 @@ fun SelfUpdateDialog(release: SelfUpdater.Release? = null, onDismiss: () -> Unit
             )
           }
           is UpdateStep.NeedsPermission ->
-            Text("Android needs your permission once: switch on \"Allow from this source\" for Music, then come back and tap Continue.")
+            UpdateNote("Android needs your permission once: switch on \"Allow from this source\" for Music, then come back and tap Continue.")
           UpdateStep.Installing -> {
-            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            Text("Music closes while it updates. Open it again if it doesn't come back by itself.")
+            LinearProgressIndicator(
+              modifier = Modifier.fillMaxWidth(),
+              trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            )
+            UpdateNote("Music closes while it updates. Open it again if it doesn't come back by itself.")
           }
           is UpdateStep.Confirm ->
-            Text("Android's installer is open: tap Update. Music closes while it updates.")
-          is UpdateStep.Failed -> Text(current.message)
+            UpdateNote("Android's installer is open: tap Update. Music closes while it updates.")
+          is UpdateStep.Failed -> UpdateNote(current.message)
         }
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
           when (val current = step) {
-            UpdateStep.Checking -> OutlinedButton(onClick = onDismiss) { Text("Cancel") }
-            UpdateStep.UpToDate -> Button(onClick = onDismiss) { Text("OK") }
+            UpdateStep.Checking -> StageButton("Cancel", onClick = onDismiss, primary = false)
+            UpdateStep.UpToDate -> StageButton("OK", onClick = onDismiss)
             is UpdateStep.Available -> {
-              OutlinedButton(onClick = { later(current.release) }) { Text("Later") }
-              Spacer(Modifier.width(8.dp))
-              Button(onClick = { download(current.release) }) { Text("Update") }
+              StageButton("Update", onClick = { download(current.release) })
+              StageButton("Later", onClick = { later(current.release) }, primary = false)
             }
             is UpdateStep.NeedsPermission -> {
-              OutlinedButton(
+              StageButton("Continue", onClick = { install(current.apk) })
+              StageButton(
+                text = "Open Settings",
                 onClick = {
                   context.startActivity(
                     Intent(
@@ -264,19 +273,15 @@ fun SelfUpdateDialog(release: SelfUpdater.Release? = null, onDismiss: () -> Unit
                       Uri.parse("package:${context.packageName}"),
                     )
                   )
-                }
-              ) {
-                Text("Open Settings")
-              }
-              Spacer(Modifier.width(8.dp))
-              Button(onClick = { install(current.apk) }) { Text("Continue") }
+                },
+                primary = false,
+              )
             }
             is UpdateStep.Confirm ->
-              Button(onClick = { context.startActivity(current.intent) }) { Text("Open Installer") }
+              StageButton("Open Installer", onClick = { context.startActivity(current.intent) })
             is UpdateStep.Failed -> {
-              OutlinedButton(onClick = onDismiss) { Text("Close") }
-              Spacer(Modifier.width(8.dp))
-              Button(onClick = current.retry) { Text("Try Again") }
+              StageButton("Try Again", onClick = current.retry)
+              StageButton("Close", onClick = onDismiss, primary = false)
             }
             is UpdateStep.Downloading,
             UpdateStep.Installing -> Unit
@@ -285,6 +290,15 @@ fun SelfUpdateDialog(release: SelfUpdater.Release? = null, onDismiss: () -> Unit
       }
     }
   }
+}
+
+@Composable
+private fun UpdateNote(text: String) {
+  Text(
+    text = text,
+    style = MaterialTheme.typography.bodyMedium,
+    color = MaterialTheme.colorScheme.onSurfaceVariant,
+  )
 }
 
 private fun titleOf(step: UpdateStep): String =
