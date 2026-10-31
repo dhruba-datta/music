@@ -521,6 +521,16 @@ private fun NewMiniPlayer(progressState: ProgressState, modifier: Modifier = Mod
           Spacer(modifier = Modifier.width(8.dp))
         }
 
+        mediaMetadata?.let { metadata ->
+          FavoriteButton(
+            songId = metadata.id,
+            onSurfaceColor = onSurfaceColor,
+            errorColor = errorColor,
+            outlineColor = outlineColor
+          )
+          Spacer(modifier = Modifier.width(4.dp))
+        }
+
         MiniPlayerControls(
           playerConnection = playerConnection,
           playbackState = playbackState,
