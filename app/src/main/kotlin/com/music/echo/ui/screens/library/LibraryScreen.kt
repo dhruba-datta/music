@@ -182,7 +182,7 @@ fun LibraryScreen(navController: NavController) {
           title = stringResource(R.string.create_playlist),
           onClick = {
             showFabMenu = false
-            showCreatePlaylistOptionsDialog = true
+            showCreatePlaylistDialog = true
           },
           leading = {
             Icon(

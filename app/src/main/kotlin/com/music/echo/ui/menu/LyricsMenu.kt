@@ -398,42 +398,6 @@ fun LyricsMenu(
               )
             )
 
-            if (hasApiKey) {
-              add(
-                Material3MenuItemData(
-                  title = { Text(stringResource(R.string.lyrics_translation_menu)) },
-                  icon = {
-                    Icon(
-                      painter = painterResource(R.drawable.translate),
-                      contentDescription = null,
-                    )
-                  },
-                  onClick = {
-                    autoTranslate = !autoTranslate
-                    if (!autoTranslate && hasTranslations) {
-                      lyricsProvider()?.let { lyrics ->
-                        val clearedLyrics = LyricsTranslationHelper.clearTranslations(lyrics)
-                        database.query { upsert(clearedLyrics) }
-                        LyricsTranslationHelper.triggerClearTranslations()
-                      }
-                    }
-                  },
-                  trailingContent = {
-                    StageSwitch(checked = autoTranslate, onCheckedChange = { newCheckedState ->
-                        autoTranslate = newCheckedState
-                        if (!newCheckedState && hasTranslations) {
-                          lyricsProvider()?.let { lyrics ->
-                            val clearedLyrics = LyricsTranslationHelper.clearTranslations(lyrics)
-                            database.query { upsert(clearedLyrics) }
-                            LyricsTranslationHelper.triggerClearTranslations()
-                          }
-                        }
-                      })
-                  },
-                )
-              )
-            }
-
             add(
               Material3MenuItemData(
                 title = { Text(text = stringResource(R.string.romanize_current_track)) },

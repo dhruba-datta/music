@@ -113,7 +113,7 @@ private fun Material3SettingsItemRow(
       else -> 36.dp
     }
   val tileShape = item.iconShape ?: RoundedCornerShape(if (tight) 10.dp else 12.dp)
-  val iconSize = 20.dp
+  val iconSize = 24.dp
   // Sub-page rows are plain text on the boards; a tile only appears where it was asked for.
   val showPlainIcon =
     compact || tight || item.iconBackground != null || !item.tintIcon || item.showBadge
@@ -121,7 +121,6 @@ private fun Material3SettingsItemRow(
   val iconTint =
     when {
       !item.enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-      item.iconBackground != null -> Color.White
       else -> MaterialTheme.colorScheme.onSurface
     }
 
@@ -155,12 +154,7 @@ private fun Material3SettingsItemRow(
           Modifier.size(tileSize)
             .clip(tileShape)
             .then(
-              if (item.tintIcon)
-                Modifier.background(
-                  item.iconBackground ?: MaterialTheme.colorScheme.surfaceContainerHighest,
-                  tileShape
-                )
-              else Modifier
+              Modifier
             ),
         contentAlignment = Alignment.Center
       ) {

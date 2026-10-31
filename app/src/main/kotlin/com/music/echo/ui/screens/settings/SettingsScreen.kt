@@ -142,7 +142,7 @@ fun SettingsScreen(
         add(
           Material3SettingsItem(
             isHighlighted = (highlightKey == accountText),
-            icon = painterResource(R.drawable.account),
+            icon = painterResource(R.drawable.stage_account),
             iconBackground = StageTile.Rose,
             title = { Text(accountText) },
             onClick = { navController.navigate("settings/account") }
@@ -150,25 +150,10 @@ fun SettingsScreen(
         )
       }
 
-      if (
-        aiLyricsText.lowercase().contains(searchLower) ||
-          aiLyricsDesc.lowercase().contains(searchLower)
-      ) {
-        add(
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == aiLyricsText),
-            icon = painterResource(R.drawable.stage_sparkle),
-            iconBackground = StageTile.Violet,
-            title = { Text(aiLyricsText) },
-            onClick = { navController.navigate("settings/ai") }
-          )
-        )
-      }
-
       if ("listening summary".contains(searchLower)) {
         add(
           Material3SettingsItem(
-            icon = painterResource(echo.music.iad1tya.R.drawable.history),
+            icon = painterResource(echo.music.iad1tya.R.drawable.stage_history),
             iconBackground = StageTile.Blue,
             title = { Text(stringResource(echo.music.iad1tya.R.string.listening_summary)) },
             onClick = { navController.navigate("settings/listening_summary") }
@@ -183,7 +168,7 @@ fun SettingsScreen(
         add(
           Material3SettingsItem(
             isHighlighted = (highlightKey == appearanceText),
-            icon = painterResource(R.drawable.palette),
+            icon = painterResource(R.drawable.stage_palette),
             iconBackground = StageTile.Violet,
             title = { Text(appearanceText) },
             onClick = { navController.navigate("settings/appearance") }
@@ -196,7 +181,7 @@ fun SettingsScreen(
         add(
           Material3SettingsItem(
             isHighlighted = (highlightKey == playerText),
-            icon = painterResource(R.drawable.play),
+            icon = painterResource(R.drawable.stage_play),
             iconBackground = StageTile.Blue,
             title = { Text(playerText) },
             onClick = { navController.navigate("settings/player") }
@@ -212,7 +197,7 @@ fun SettingsScreen(
         add(
           Material3SettingsItem(
             isHighlighted = (highlightKey == musicFlowText),
-            icon = painterResource(R.drawable.swipe),
+            icon = painterResource(R.drawable.stage_flow),
             iconBackground = StageTile.Green,
             title = { Text(musicFlowText) },
             onClick = { navController.navigate("settings/music_flow") }
@@ -226,7 +211,7 @@ fun SettingsScreen(
         add(
           Material3SettingsItem(
             isHighlighted = (highlightKey == listenTogetherText),
-            icon = painterResource(R.drawable.group),
+            icon = painterResource(R.drawable.stage_together),
             iconBackground = StageTile.Green,
             title = { Text(listenTogetherText) },
             onClick = { navController.navigate(Screens.ListenTogether.route) }
@@ -240,7 +225,7 @@ fun SettingsScreen(
         add(
           Material3SettingsItem(
             isHighlighted = (highlightKey == contentText),
-            icon = painterResource(R.drawable.language),
+            icon = painterResource(R.drawable.stage_language),
             iconBackground = StageTile.Slate,
             title = { Text(contentText) },
             onClick = { navController.navigate("settings/content") }
@@ -257,7 +242,7 @@ fun SettingsScreen(
         add(
           Material3SettingsItem(
             isHighlighted = (highlightKey == privacyText),
-            icon = painterResource(R.drawable.security),
+            icon = painterResource(R.drawable.stage_security),
             iconBackground = StageTile.Slate,
             title = { Text(privacyText) },
             onClick = { navController.navigate("settings/privacy") }
@@ -271,7 +256,7 @@ fun SettingsScreen(
         add(
           Material3SettingsItem(
             isHighlighted = (highlightKey == storageText),
-            icon = painterResource(R.drawable.storage),
+            icon = painterResource(R.drawable.stage_storage),
             iconBackground = StageTile.Slate,
             title = { Text(storageText) },
             onClick = { navController.navigate("settings/storage") }
@@ -286,7 +271,7 @@ fun SettingsScreen(
         add(
           Material3SettingsItem(
             isHighlighted = (highlightKey == backupText),
-            icon = painterResource(R.drawable.restore),
+            icon = painterResource(R.drawable.stage_restore),
             iconBackground = StageTile.Slate,
             title = { Text(backupText) },
             onClick = { navController.navigate("settings/backup_restore") }
@@ -302,7 +287,7 @@ fun SettingsScreen(
             isHighlighted = (highlightKey == systemUpdateText),
             icon =
               painterResource(
-                if (isUpdateAvailable) R.drawable.ic_launcher_nobg else R.drawable.update
+                if (isUpdateAvailable) R.drawable.ic_launcher_nobg else R.drawable.stage_update
               ),
             iconBackground = StageTile.Slate,
             title = { Text(systemUpdateText) },
@@ -326,7 +311,7 @@ fun SettingsScreen(
           add(
             Material3SettingsItem(
               isHighlighted = (highlightKey == "supported links"),
-              icon = painterResource(R.drawable.link),
+              icon = painterResource(R.drawable.stage_link),
             iconBackground = StageTile.Slate,
               title = { Text("Supported Links") },
               onClick = {
@@ -360,7 +345,7 @@ fun SettingsScreen(
         add(
           Material3SettingsItem(
             isHighlighted = (highlightKey == aboutText),
-            icon = painterResource(R.drawable.info),
+            icon = painterResource(R.drawable.stage_info),
             iconBackground = StageTile.Slate,
             title = { Text(aboutText) },
             onClick = { navController.navigate("settings/about") }

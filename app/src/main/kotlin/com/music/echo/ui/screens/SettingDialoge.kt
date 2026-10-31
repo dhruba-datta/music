@@ -85,27 +85,11 @@ fun SettingDialoge(
         }
       )
       StageSheetRow(
-        text = stringResource(R.string.ai_lyrics_translation),
-        icon = R.drawable.stage_ai,
-        onClick = {
-          onDismissRequest()
-          onNavigate("settings/ai")
-        }
-      )
-      StageSheetRow(
         text = stringResource(R.string.settings),
         icon = R.drawable.stage_settings,
         onClick = {
           onDismissRequest()
           onNavigate("settings")
-        }
-      )
-      StageSheetRow(
-        text = "Extensions",
-        icon = R.drawable.extension,
-        onClick = {
-          onDismissRequest()
-          onNavigate("settings/extensions")
         }
       )
 

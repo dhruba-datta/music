@@ -2624,6 +2624,11 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
       "Appearance",
       "settings/appearance"
     ),
-  ).filterNot { it.route == "settings/ambient" || it.route == "settings/integrations" }
+  ).filterNot {
+    it.route == "settings/ambient" ||
+      it.route == "settings/integrations" ||
+      it.route == "settings/ai" ||
+      it.route == "settings/extensions"
+  }
     .distinctBy { it.title to it.route }
 }

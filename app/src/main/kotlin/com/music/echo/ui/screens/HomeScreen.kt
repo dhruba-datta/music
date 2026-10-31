@@ -931,8 +931,6 @@ fun HomeScreen(
       val list = mutableListOf<HomeSection>()
 
       if (showSpeedDial) list.add(HomeSection.SpeedDial)
-      if (aiRecommendedPlaylist != null && aiRecommendedPlaylist!!.second.isNotEmpty())
-        list.add(HomeSection.AiRecommendations)
       if (heroSongs.isNotEmpty()) list.add(HomeSection.HeroCarousel)
       list.add(HomeSection.MusicSources)
       list.add(HomeSection.ForYou)

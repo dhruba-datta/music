@@ -1504,11 +1504,6 @@ class MainActivity : ComponentActivity() {
                         shuffleEnabled = shuffleEnabled,
                         shuffleIconRes = R.drawable.shuffle,
                         shuffleContentDescription = stringResource(R.string.shuffle),
-                        onAiHubClick = {
-                          navController.navigate("settings/ai") { launchSingleTop = true }
-                        },
-                        aiHubIconRes = R.drawable.ai_pfp,
-                        aiHubContentDescription = stringResource(R.string.ai_lyrics_translation),
                         onSearchLongClick = onRailSearchLongClick,
                         isSelected = { screen ->
                           currentRoute == screen.route ||
@@ -1648,11 +1643,6 @@ class MainActivity : ComponentActivity() {
                   shuffleEnabled = shuffleEnabled,
                   shuffleIconRes = R.drawable.shuffle,
                   shuffleContentDescription = stringResource(R.string.shuffle),
-                  onAiHubClick = {
-                    navController.navigate("settings/ai") { launchSingleTop = true }
-                  },
-                  aiHubIconRes = R.drawable.ai_pfp,
-                  aiHubContentDescription = stringResource(R.string.ai_lyrics_translation)
                 )
               }
               Box(Modifier.weight(1f)) {
