@@ -297,50 +297,6 @@ fun OnlineSearchResult(
 
   val navigateTo: (String) -> Unit = { route -> navController.navigate(route) }
 
-  val spotifyRow: @Composable LazyItemScope.(String, String?, String?, Boolean, Int, Int, Boolean, () -> Unit, (() -> Unit)?) -> Unit =
-    { title, subtitle, imageUrl, circular, index, size, showSource, onClick, onMenu ->
-      ListItem(
-        title = title,
-        subtitle = {
-          if (!subtitle.isNullOrBlank()) {
-            Text(
-              text = subtitle,
-              fontSize = 13.sp,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-              maxLines = 1,
-              overflow = TextOverflow.Ellipsis,
-            )
-          }
-        },
-        thumbnailContent = {
-          AsyncImage(
-            model = imageUrl,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier =
-              Modifier.size(ListThumbnailSize)
-                .clip(if (circular) CircleShape else RoundedCornerShape(ThumbnailCornerRadius))
-                .background(MaterialTheme.colorScheme.surfaceContainerHighest),
-          )
-        },
-        trailingContent = {
-          if (showSource) {
-            SearchSourceIcon(R.drawable.ic_spotify, Color(0xFF1DB954))
-          }
-          if (onMenu != null) {
-            IconButton(onClick = onMenu) {
-              Icon(painter = painterResource(R.drawable.more_vert), contentDescription = null)
-            }
-          }
-        },
-        shape = listItemShape(index, size),
-        modifier =
-          Modifier.fillMaxWidth()
-            .combinedClickable(onClick = onClick, onLongClick = onMenu)
-            .animateItem(),
-      )
-    }
-
   val rowContent: @Composable LazyItemScope.(SearchRow, Int, Int, Boolean) -> Unit =
     { row, index, size, showSource ->
       when (row) {
@@ -359,7 +315,7 @@ fun OnlineSearchResult(
               }
             }
           }
-          spotifyRow(
+          SpotifySearchRow(
             track.name,
             track.artists.joinToString { it.name },
             track.album?.images?.firstOrNull()?.url,
@@ -378,7 +334,7 @@ fun OnlineSearchResult(
           )
         }
         is SearchRow.AlbumRow ->
-          spotifyRow(
+          SpotifySearchRow(
             row.album.name,
             row.album.artists.joinToString { it.name },
             row.album.images.firstOrNull()?.url,
@@ -390,7 +346,7 @@ fun OnlineSearchResult(
             null,
           )
         is SearchRow.ArtistRow ->
-          spotifyRow(
+          SpotifySearchRow(
             row.artist.name,
             null,
             row.artist.images.firstOrNull()?.url,
@@ -403,7 +359,7 @@ fun OnlineSearchResult(
           )
         is SearchRow.PlaylistRow -> {
           val cover = SpotifyMapper.getPlaylistThumbnail(row.playlist)
-          spotifyRow(
+          SpotifySearchRow(
             row.playlist.name,
             row.playlist.owner?.displayName,
             cover,
@@ -637,5 +593,60 @@ private fun SearchSourceIcon(icon: Int, tint: Color) {
     contentDescription = null,
     tint = tint,
     modifier = Modifier.size(16.dp),
+  )
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun LazyItemScope.SpotifySearchRow(
+  title: String,
+  subtitle: String?,
+  imageUrl: String?,
+  circular: Boolean,
+  index: Int,
+  size: Int,
+  showSource: Boolean,
+  onClick: () -> Unit,
+  onMenu: (() -> Unit)?,
+) {
+  ListItem(
+    title = title,
+    subtitle = {
+      if (!subtitle.isNullOrBlank()) {
+        Text(
+          text = subtitle,
+          fontSize = 13.sp,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis,
+        )
+      }
+    },
+    thumbnailContent = {
+      AsyncImage(
+        model = imageUrl,
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        modifier =
+          Modifier.size(ListThumbnailSize)
+            .clip(if (circular) CircleShape else RoundedCornerShape(ThumbnailCornerRadius))
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+      )
+    },
+    trailingContent = {
+      if (showSource) {
+        SearchSourceIcon(R.drawable.ic_spotify, Color(0xFF1DB954))
+      }
+      if (onMenu != null) {
+        IconButton(onClick = onMenu) {
+          Icon(painter = painterResource(R.drawable.more_vert), contentDescription = null)
+        }
+      }
+    },
+    shape = listItemShape(index, size),
+    modifier =
+      Modifier.fillMaxWidth()
+        .combinedClickable(onClick = onClick, onLongClick = onMenu)
+        .animateItem(),
   )
 }
