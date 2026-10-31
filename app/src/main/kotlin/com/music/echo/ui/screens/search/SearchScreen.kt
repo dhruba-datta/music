@@ -81,8 +81,6 @@ import echo.music.iad1tya.constants.GridItemSize
 import echo.music.iad1tya.constants.GridItemsSizeKey
 import echo.music.iad1tya.constants.GridThumbnailHeight
 import echo.music.iad1tya.constants.PauseSearchHistoryKey
-import echo.music.iad1tya.constants.SearchSource
-import echo.music.iad1tya.constants.SearchSourceKey
 import echo.music.iad1tya.db.entities.SearchHistory
 import echo.music.iad1tya.playback.queues.YouTubeQueue
 import echo.music.iad1tya.ui.component.LocalMenuState
@@ -110,7 +108,6 @@ fun SearchScreen(navController: NavController, pureBlack: Boolean) {
   val playerConnection = LocalPlayerConnection.current
   val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
 
-  var searchSource by rememberEnumPreference(SearchSourceKey, SearchSource.ONLINE)
   var query by
     rememberSaveable(stateSaver = TextFieldValue.Saver) { mutableStateOf(TextFieldValue()) }
   val pauseSearchHistory by rememberPreference(PauseSearchHistoryKey, defaultValue = false)
@@ -254,13 +251,7 @@ fun SearchScreen(navController: NavController, pureBlack: Boolean) {
                   Box(modifier = Modifier.weight(1f).padding(horizontal = 4.dp)) {
                     if (query.text.isEmpty()) {
                       Text(
-                        text =
-                          stringResource(
-                            when (searchSource) {
-                              SearchSource.LOCAL -> R.string.search_library
-                              SearchSource.ONLINE -> R.string.search_yt_music
-                            }
-                          ),
+                        text = stringResource(R.string.stage_search_music),
                         style =
                           TextStyle(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -284,25 +275,6 @@ fun SearchScreen(navController: NavController, pureBlack: Boolean) {
             )
           }
 
-          IconButton(
-            onClick = {
-              searchSource =
-                if (searchSource == SearchSource.ONLINE) SearchSource.LOCAL
-                else SearchSource.ONLINE
-            }
-          ) {
-            Icon(
-              painter =
-                painterResource(
-                  when (searchSource) {
-                    SearchSource.LOCAL -> R.drawable.library_music
-                    SearchSource.ONLINE -> R.drawable.globe_search
-                  }
-                ),
-              contentDescription = null,
-              tint = MaterialTheme.colorScheme.onSurface
-            )
-          }
         }
       }
     },
@@ -313,16 +285,7 @@ fun SearchScreen(navController: NavController, pureBlack: Boolean) {
 
     Box(modifier = Modifier.padding(top = paddingValues.calculateTopPadding()).fillMaxSize()) {
       if (searchActive && showSearchContent) {
-        when (searchSource) {
-          SearchSource.LOCAL ->
-            LocalSearchScreen(
-              query = query.text,
-              navController = navController,
-              onDismiss = { searchActive = false },
-              pureBlack = pureBlack
-            )
-          SearchSource.ONLINE ->
-            OnlineSearchScreen(
+        OnlineSearchScreen(
               query = query.text,
               onQueryChange = { query = it },
               navController = navController,
@@ -333,10 +296,13 @@ fun SearchScreen(navController: NavController, pureBlack: Boolean) {
               onDismiss = { searchActive = false },
               pureBlack = pureBlack
             )
-        }
       } else if (!searchActive) {
         val tabPadding = PaddingValues(bottom = bottomPadding)
-        SuggestionsTabContent(navController = navController, contentPadding = tabPadding)
+        SuggestionsTabContent(
+          navController = navController,
+          onSearch = onSearchFromSuggestion,
+          contentPadding = tabPadding,
+        )
       }
     }
   }

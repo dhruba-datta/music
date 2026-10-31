@@ -1,5 +1,11 @@
 package echo.music.iad1tya.ui.screens.search.suggestions
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import echo.music.iad1tya.LocalDatabase
+import kotlinx.coroutines.flow.map
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -51,6 +57,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SuggestionsTabContent(
   navController: NavController,
+  onSearch: (String) -> Unit,
   viewModel: SuggestionsViewModel = hiltViewModel(),
   contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
@@ -59,6 +66,10 @@ fun SuggestionsTabContent(
   val suggestionAlbums by viewModel.suggestionAlbums.collectAsState()
   val suggestionVideos by viewModel.suggestionVideos.collectAsState()
   val isLoading by viewModel.isLoading.collectAsState()
+  val database = LocalDatabase.current
+  val recentSearches by
+    remember { database.searchHistory().map { it.distinctBy { search -> search.query }.take(10) } }
+      .collectAsState(initial = emptyList())
   val isManualLoading by viewModel.isManualLoading.collectAsState()
   val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
   val playerConnection = echo.music.iad1tya.LocalPlayerConnection.current
@@ -84,6 +95,33 @@ fun SuggestionsTabContent(
     modifier = Modifier.fillMaxSize()
   ) {
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
+      if (recentSearches.isNotEmpty()) {
+        item(key = "recent_searches") {
+          StageSectionHeader(title = stringResource(R.string.stage_recent_searches))
+          LazyRow(
+            contentPadding = PaddingValues(horizontal = 18.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+          ) {
+            items(items = recentSearches, key = { it.query }) { search ->
+              Text(
+                text = search.query,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier =
+                  Modifier.widthIn(max = 180.dp)
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                    .clickable { onSearch(search.query) }
+                    .padding(horizontal = 14.dp, vertical = 9.dp),
+              )
+            }
+          }
+        }
+      }
+
       item(key = "moods_and_genres") {
         StageSectionHeader(
           title = stringResource(R.string.mood_and_genres),
@@ -150,52 +188,6 @@ fun SuggestionsTabContent(
         }
       }
 
-      suggestionAlbums?.let { albums ->
-        item {
-          TrendingAlbumsSection(
-            albums = albums,
-            onAlbumClick = { album ->
-              android.widget.Toast.makeText(
-                  context,
-                  "Loading ${album.title}...",
-                  android.widget.Toast.LENGTH_SHORT
-                )
-                .show()
-              viewModel.navigateToAlbum(album, navController)
-            },
-            onMoreClick = {
-              val code =
-                if (regionCode == "system") java.util.Locale.getDefault().country.lowercase()
-                else regionCode.lowercase()
-              uriHandler.openUri("https://music.apple.com/$code/charts/albums")
-            }
-          )
-        }
-      }
-
-      suggestionVideos?.let { videos ->
-        item {
-          TrendingVideosSection(
-            videos = videos,
-            onVideoClick = { video ->
-              android.widget.Toast.makeText(
-                  context,
-                  "Loading video ${video.title}...",
-                  android.widget.Toast.LENGTH_SHORT
-                )
-                .show()
-              viewModel.playVideo(video, playerConnection)
-            },
-            onMoreClick = {
-              val code =
-                if (regionCode == "system") java.util.Locale.getDefault().country.lowercase()
-                else regionCode.lowercase()
-              uriHandler.openUri("https://music.apple.com/$code/charts/videos")
-            }
-          )
-        }
-      }
-
       if (
         suggestionTracks == null &&
           suggestionArtists == null &&
@@ -254,10 +246,6 @@ fun SuggestionsTabContent(
 
 private val TrendingArtSize = 52.dp
 private val TrendingArtistSize = 64.dp
-private val TrendingAlbumArtHeight = 92.dp
-private val TrendingVideoArtHeight = 110.dp
-private const val TrendingAlbumColumns = 3
-private const val TrendingVideoColumns = 2
 
 @Composable
 private fun TrendingTitle(text: String) {
@@ -287,7 +275,7 @@ fun TrendingAppleMusicSection(
   val coroutineScope = rememberCoroutineScope()
 
   Column(modifier = Modifier.fillMaxWidth()) {
-    StageSectionHeader(title = "Apple Music Top 100", onMore = onMoreClick)
+    StageSectionHeader(title = stringResource(R.string.stage_trending_songs), onMore = onMoreClick)
     HorizontalPager(
       state = pagerState,
       verticalAlignment = Alignment.Top,
@@ -427,116 +415,6 @@ fun TopArtistsSection(artists: List<SuggestionArtist>, onArtistClick: (Suggestio
           )
         }
       }
-    }
-  }
-}
-
-/** Artwork with a title and a subtitle under it, as on the boards' `.card`. */
-@Composable
-private fun TrendingCard(
-  imageUrl: String?,
-  title: String,
-  subtitle: String,
-  artHeight: Dp,
-  onClick: () -> Unit,
-  modifier: Modifier = Modifier,
-) {
-  Column(modifier = modifier.clickable(onClick = onClick)) {
-    SubcomposeAsyncImage(
-      model = imageUrl,
-      contentDescription = title,
-      contentScale = ContentScale.Crop,
-      loading = {
-        Box(Modifier.fillMaxSize().shimmer().background(MaterialTheme.colorScheme.surfaceVariant))
-      },
-      modifier =
-        Modifier.fillMaxWidth()
-          .height(artHeight)
-          .clip(RoundedCornerShape(GridThumbnailCornerRadius))
-          .background(MaterialTheme.colorScheme.surfaceVariant)
-    )
-    Spacer(Modifier.height(8.dp))
-    Text(
-      title,
-      fontSize = 15.sp,
-      lineHeight = 19.sp,
-      fontWeight = FontWeight.Bold,
-      color = MaterialTheme.colorScheme.onSurface,
-      maxLines = 1,
-      overflow = TextOverflow.Ellipsis
-    )
-    Spacer(Modifier.height(3.dp))
-    Text(
-      subtitle,
-      fontSize = 13.sp,
-      lineHeight = 17.sp,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-      maxLines = 1,
-      overflow = TextOverflow.Ellipsis
-    )
-  }
-}
-
-/** The boards' `.cards` grid, sized to its content so it can sit inside the page's list. */
-@Composable
-private fun <T> TrendingGrid(
-  items: List<T>,
-  columns: Int,
-  card: @Composable (item: T, modifier: Modifier) -> Unit,
-) {
-  Column(
-    verticalArrangement = Arrangement.spacedBy(12.dp),
-    modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp)
-  ) {
-    items.chunked(columns).forEach { row ->
-      Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-        row.forEach { item -> card(item, Modifier.weight(1f)) }
-        repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
-      }
-    }
-  }
-}
-
-@Composable
-fun TrendingAlbumsSection(
-  albums: List<SuggestionAlbum>,
-  onAlbumClick: (SuggestionAlbum) -> Unit,
-  onMoreClick: () -> Unit
-) {
-  if (albums.isEmpty()) return
-  Column(modifier = Modifier.fillMaxWidth()) {
-    StageSectionHeader(title = "Trending Albums", onMore = onMoreClick)
-    TrendingGrid(items = albums, columns = TrendingAlbumColumns) { album, modifier ->
-      TrendingCard(
-        imageUrl = album.thumbnailUrl,
-        title = album.title,
-        subtitle = album.artist,
-        artHeight = TrendingAlbumArtHeight,
-        onClick = { onAlbumClick(album) },
-        modifier = modifier
-      )
-    }
-  }
-}
-
-@Composable
-fun TrendingVideosSection(
-  videos: List<SuggestionTrack>,
-  onVideoClick: (SuggestionTrack) -> Unit,
-  onMoreClick: () -> Unit
-) {
-  if (videos.isEmpty()) return
-  Column(modifier = Modifier.fillMaxWidth()) {
-    StageSectionHeader(title = "Trending Music Videos", onMore = onMoreClick)
-    TrendingGrid(items = videos, columns = TrendingVideoColumns) { video, modifier ->
-      TrendingCard(
-        imageUrl = video.thumbnailUrl,
-        title = video.title,
-        subtitle = video.artist,
-        artHeight = TrendingVideoArtHeight,
-        onClick = { onVideoClick(video) },
-        modifier = modifier
-      )
     }
   }
 }

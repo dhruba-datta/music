@@ -1008,4 +1008,8 @@
     <string name="stage_see_all">See all</string>
     <string name="stage_your_playlists">Your playlists</string>
     <string name="stage_saved_playlists">Saved playlists</string>
+    <string name="stage_search_music">Search music…</string>
+    <string name="stage_my_library">My library</string>
+    <string name="stage_recent_searches">Recent searches</string>
+    <string name="stage_trending_songs">Trending songs</string>
 </resources>

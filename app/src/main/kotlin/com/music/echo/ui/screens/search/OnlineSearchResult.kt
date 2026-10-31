@@ -1,5 +1,19 @@
 package echo.music.iad1tya.ui.screens.search
 
+import android.net.Uri
+import android.widget.Toast
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
+import coil3.compose.AsyncImage
+import echo.music.iad1tya.spotify.SpotifyMapper
+import echo.music.iad1tya.constants.ListThumbnailSize
+import echo.music.iad1tya.constants.ThumbnailCornerRadius
+import echo.music.iad1tya.spotify.models.SpotifyTrack
+import echo.music.iad1tya.ui.component.ListItem
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -68,7 +82,6 @@ import androidx.navigation.NavController
 import com.music.innertube.YouTube.SearchFilter.Companion.FILTER_ALBUM
 import com.music.innertube.YouTube.SearchFilter.Companion.FILTER_ARTIST
 import com.music.innertube.YouTube.SearchFilter.Companion.FILTER_COMMUNITY_PLAYLIST
-import com.music.innertube.YouTube.SearchFilter.Companion.FILTER_FEATURED_PLAYLIST
 import com.music.innertube.YouTube.SearchFilter.Companion.FILTER_SONG
 import com.music.innertube.YouTube.SearchFilter.Companion.FILTER_VIDEO
 import com.music.innertube.models.AlbumItem
@@ -99,6 +112,8 @@ import echo.music.iad1tya.ui.menu.YouTubeSongMenu
 import echo.music.iad1tya.utils.listItemShape
 import echo.music.iad1tya.utils.rememberPreference
 import echo.music.iad1tya.viewmodels.OnlineSearchViewModel
+import echo.music.iad1tya.viewmodels.SearchResultSource
+import echo.music.iad1tya.viewmodels.SearchRow
 import java.net.URLDecoder
 import java.net.URLEncoder
 import kotlinx.coroutines.Dispatchers
@@ -188,8 +203,8 @@ fun OnlineSearchResult(
       }
   }
 
-  val ytItemContent: @Composable LazyItemScope.(YTItem, Int, Int) -> Unit =
-    { item: YTItem, index: Int, size: Int ->
+  val ytItemContent: @Composable LazyItemScope.(YTItem, Int, Int, Boolean) -> Unit =
+    { item: YTItem, index: Int, size: Int, showSource: Boolean ->
       val longClick = {
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
         menuState.show {
@@ -231,6 +246,9 @@ fun OnlineSearchResult(
         isPlaying = isPlaying,
         shape = listItemShape(index, size),
         trailingContent = {
+          if (showSource) {
+            SearchSourceIcon(R.drawable.stage_youtube_music, Color(0xFFFF4E45))
+          }
           IconButton(
             onClick = longClick,
           ) {
@@ -263,6 +281,156 @@ fun OnlineSearchResult(
             .animateItem(),
       )
     }
+
+  val context = LocalContext.current
+  val notFound = stringResource(R.string.no_results_found)
+
+  fun withResolved(track: SpotifyTrack, action: (SongItem) -> Unit) {
+    viewModel.resolveTrack(track) { song ->
+      if (song != null) {
+        action(song)
+      } else {
+        Toast.makeText(context, notFound, Toast.LENGTH_SHORT).show()
+      }
+    }
+  }
+
+  val navigateTo: (String) -> Unit = { route -> navController.navigate(route) }
+
+  val spotifyRow: @Composable LazyItemScope.(String, String?, String?, Boolean, Int, Int, Boolean, () -> Unit, (() -> Unit)?) -> Unit =
+    { title, subtitle, imageUrl, circular, index, size, showSource, onClick, onMenu ->
+      ListItem(
+        title = title,
+        subtitle = {
+          if (!subtitle.isNullOrBlank()) {
+            Text(
+              text = subtitle,
+              fontSize = 13.sp,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+              maxLines = 1,
+              overflow = TextOverflow.Ellipsis,
+            )
+          }
+        },
+        thumbnailContent = {
+          AsyncImage(
+            model = imageUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier =
+              Modifier.size(ListThumbnailSize)
+                .clip(if (circular) CircleShape else RoundedCornerShape(ThumbnailCornerRadius))
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+          )
+        },
+        trailingContent = {
+          if (showSource) {
+            SearchSourceIcon(R.drawable.ic_spotify, Color(0xFF1DB954))
+          }
+          if (onMenu != null) {
+            IconButton(onClick = onMenu) {
+              Icon(painter = painterResource(R.drawable.more_vert), contentDescription = null)
+            }
+          }
+        },
+        shape = listItemShape(index, size),
+        modifier =
+          Modifier.fillMaxWidth()
+            .combinedClickable(onClick = onClick, onLongClick = onMenu)
+            .animateItem(),
+      )
+    }
+
+  val rowContent: @Composable LazyItemScope.(SearchRow, Int, Int, Boolean) -> Unit =
+    { row, index, size, showSource ->
+      when (row) {
+        is SearchRow.YouTubeRow -> ytItemContent(row.item, index, size, showSource)
+        is SearchRow.TrackRow -> {
+          val track = row.track
+          val showMenu = {
+            withResolved(track) { song ->
+              haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+              menuState.show {
+                YouTubeSongMenu(
+                  song = song,
+                  navController = navController,
+                  onDismiss = menuState::dismiss,
+                )
+              }
+            }
+          }
+          spotifyRow(
+            track.name,
+            track.artists.joinToString { it.name },
+            track.album?.images?.firstOrNull()?.url,
+            false,
+            index,
+            size,
+            showSource,
+            {
+              withResolved(track) { song ->
+                playerConnection.playQueue(
+                  YouTubeQueue(WatchEndpoint(videoId = song.id), song.toMediaMetadata())
+                )
+              }
+            },
+            showMenu,
+          )
+        }
+        is SearchRow.AlbumRow ->
+          spotifyRow(
+            row.album.name,
+            row.album.artists.joinToString { it.name },
+            row.album.images.firstOrNull()?.url,
+            false,
+            index,
+            size,
+            showSource,
+            { viewModel.openAlbum(row.album, navigateTo) },
+            null,
+          )
+        is SearchRow.ArtistRow ->
+          spotifyRow(
+            row.artist.name,
+            null,
+            row.artist.images.firstOrNull()?.url,
+            true,
+            index,
+            size,
+            showSource,
+            { viewModel.openArtist(row.artist, navigateTo) },
+            null,
+          )
+        is SearchRow.PlaylistRow -> {
+          val cover = SpotifyMapper.getPlaylistThumbnail(row.playlist)
+          spotifyRow(
+            row.playlist.name,
+            row.playlist.owner?.displayName,
+            cover,
+            false,
+            index,
+            size,
+            showSource,
+            {
+              val title = Uri.encode(row.playlist.name)
+              val coverArg = Uri.encode(cover.orEmpty())
+              navController.navigate(
+                "spotify_playlist/${row.playlist.id}?title=$title&cover=$coverArg"
+              )
+            },
+            null,
+          )
+        }
+      }
+    }
+
+  val searchSource by viewModel.source.collectAsState()
+  val showSource = searchSource == SearchResultSource.ALL && viewModel.spotifyConnected
+  val youtubeLoading =
+    searchSource != SearchResultSource.SPOTIFY &&
+      (searchFilter?.let { itemsPage == null && !viewModel.filterFailed(it) }
+        ?: (searchSummary == null && !viewModel.summaryFailed))
+  val spotifyLoading = searchSource != SearchResultSource.YOUTUBE && viewModel.spotifyLoading
 
   Column(
     modifier =
@@ -309,7 +477,7 @@ fun OnlineSearchResult(
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
               if (query.text.isEmpty()) {
                 Text(
-                  text = stringResource(R.string.search_yt_music),
+                  text = stringResource(R.string.stage_search_music),
                   fontSize = 15.sp,
                   color = MaterialTheme.colorScheme.onSurfaceVariant,
                   maxLines = 1,
@@ -335,84 +503,112 @@ fun OnlineSearchResult(
       Column(modifier = Modifier.fillMaxWidth()) {
         ChipsRow(
           chips =
-            listOf(
-              null to stringResource(R.string.filter_all),
-              FILTER_SONG to stringResource(R.string.filter_songs),
-              FILTER_VIDEO to stringResource(R.string.filter_videos),
-              FILTER_ALBUM to stringResource(R.string.filter_albums),
-              FILTER_ARTIST to stringResource(R.string.filter_artists),
-              FILTER_COMMUNITY_PLAYLIST to stringResource(R.string.filter_community_playlists),
-              FILTER_FEATURED_PLAYLIST to stringResource(R.string.filter_featured_playlists),
-            ),
-          currentValue = searchFilter,
+            buildList {
+              add(SearchResultSource.ALL to stringResource(R.string.filter_all))
+              add(SearchResultSource.YOUTUBE to stringResource(R.string.stage_youtube_music))
+              if (viewModel.spotifyConnected) {
+                add(SearchResultSource.SPOTIFY to stringResource(R.string.stage_spotify))
+              }
+              add(SearchResultSource.LIBRARY to stringResource(R.string.stage_my_library))
+            },
+          currentValue = searchSource,
           onValueUpdate = {
-            if (viewModel.filter.value != it) {
-              viewModel.filter.value = it
+            viewModel.source.value = it
+            if (it == SearchResultSource.SPOTIFY && searchFilter == FILTER_VIDEO) {
+              viewModel.filter.value = null
             }
-            coroutineScope.launch { lazyListState.animateScrollToItem(0) }
+            coroutineScope.launch { lazyListState.scrollToItem(0) }
           },
           modifier = Modifier.fillMaxWidth()
         )
 
-        LazyColumn(
-          state = lazyListState,
-          contentPadding = WindowInsets.systemBars.only(WindowInsetsSides.Bottom).asPaddingValues(),
-          modifier = Modifier.fillMaxWidth()
-        ) {
-          if (searchFilter == null) {
-            searchSummary?.summaries?.forEach { summary ->
-              item { NavigationTitle(summary.title) }
-
-              itemsIndexed(
-                items = summary.items,
-                key = { index, item -> "${summary.title}/${item.id}/$index" },
-              ) { index, item ->
-                ytItemContent(item, index, summary.items.size)
+        if (searchSource == SearchResultSource.LIBRARY) {
+          LocalSearchScreen(
+            query = decodedQuery,
+            navController = navController,
+            onDismiss = {},
+            pureBlack = pureBlack,
+          )
+        } else {
+          ChipsRow(
+            chips =
+              buildList {
+                add(null to stringResource(R.string.filter_all))
+                add(FILTER_SONG to stringResource(R.string.filter_songs))
+                add(FILTER_ALBUM to stringResource(R.string.filter_albums))
+                add(FILTER_ARTIST to stringResource(R.string.filter_artists))
+                add(FILTER_COMMUNITY_PLAYLIST to stringResource(R.string.filter_playlists))
+                if (searchSource != SearchResultSource.SPOTIFY) {
+                  add(FILTER_VIDEO to stringResource(R.string.filter_videos))
+                }
+              },
+            currentValue = searchFilter,
+            onValueUpdate = {
+              if (viewModel.filter.value != it) {
+                viewModel.filter.value = it
               }
-            }
+              coroutineScope.launch { lazyListState.animateScrollToItem(0) }
+            },
+            modifier = Modifier.fillMaxWidth()
+          )
 
-            if (searchSummary?.summaries?.isEmpty() == true) {
-              item {
-                EmptyPlaceholder(
-                  icon = R.drawable.search,
-                  text = stringResource(R.string.no_results_found),
-                )
-              }
-            }
-          } else {
-            itemsIndexed(
-              items = itemsPage?.items.orEmpty().distinctBy { it.id },
-              key = { _, it -> "filtered_${it.id}" },
-            ) { index, item ->
-              ytItemContent(item, index, itemsPage?.items.orEmpty().distinctBy { it.id }.size)
-            }
-
-            if (itemsPage?.continuation != null) {
-              item(key = "loading") { ShimmerHost { repeat(3) { ListItemPlaceHolder() } } }
-            }
-
-            if (itemsPage?.items?.isEmpty() == true) {
-              item {
-                EmptyPlaceholder(
-                  icon = R.drawable.search,
-                  text = stringResource(R.string.no_results_found),
-                )
-              }
-            }
-          }
-
-          if (
-            searchFilter == null && searchSummary == null ||
-              searchFilter != null && itemsPage == null
+          LazyColumn(
+            state = lazyListState,
+            contentPadding =
+              WindowInsets.systemBars.only(WindowInsetsSides.Bottom).asPaddingValues(),
+            modifier = Modifier.fillMaxWidth()
           ) {
-            item { ShimmerHost { repeat(8) { ListItemPlaceHolder() } } }
-          }
+            val hasResults: Boolean
+            val filter = searchFilter
+            if (filter == null) {
+              val sections = viewModel.sections(searchSource)
+              hasResults = sections.isNotEmpty()
+              sections.forEach { section ->
+                item(key = "title_${section.title}") {
+                  NavigationTitle(stringResource(section.title))
+                }
 
-          item(key = "bottom_spacer") {
-            Spacer(
-              modifier =
-                Modifier.windowInsetsBottomHeight(LocalPlayerAwareWindowInsets.current)
-            )
+                itemsIndexed(
+                  items = section.rows,
+                  key = { _, row -> "${section.title}/${row.key}" },
+                ) { index, row ->
+                  rowContent(row, index, section.rows.size, showSource)
+                }
+              }
+            } else {
+              val rows = viewModel.filteredRows(filter, searchSource)
+              hasResults = rows.isNotEmpty()
+              itemsIndexed(
+                items = rows,
+                key = { _, row -> "filtered_${row.key}" },
+              ) { index, row ->
+                rowContent(row, index, rows.size, showSource)
+              }
+
+              if (searchSource != SearchResultSource.SPOTIFY && itemsPage?.continuation != null) {
+                item(key = "loading") { ShimmerHost { repeat(3) { ListItemPlaceHolder() } } }
+              }
+            }
+
+            if (!hasResults) {
+              if (youtubeLoading || spotifyLoading) {
+                item(key = "shimmer") { ShimmerHost { repeat(8) { ListItemPlaceHolder() } } }
+              } else {
+                item(key = "no_results") {
+                  EmptyPlaceholder(
+                    icon = R.drawable.search,
+                    text = stringResource(R.string.no_results_found),
+                  )
+                }
+              }
+            }
+
+            item(key = "bottom_spacer") {
+              Spacer(
+                modifier =
+                  Modifier.windowInsetsBottomHeight(LocalPlayerAwareWindowInsets.current)
+              )
+            }
           }
         }
       }
@@ -431,4 +627,15 @@ fun OnlineSearchResult(
       }
     }
   }
+}
+
+/** The small service logo at the end of a result row. */
+@Composable
+private fun SearchSourceIcon(icon: Int, tint: Color) {
+  Icon(
+    painter = painterResource(icon),
+    contentDescription = null,
+    tint = tint,
+    modifier = Modifier.size(16.dp),
+  )
 }
