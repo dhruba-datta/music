@@ -320,7 +320,7 @@ fun LibraryMixScreen(
             key = "auto_playlists_grid",
             contentType = CONTENT_TYPE_HEADER,
           ) {
-            AutoPlaylistGrid(autoPlaylistTiles, columns = 2, artHeight = 100.dp)
+            AutoPlaylistGrid(autoPlaylistTiles, columns = 3, artHeight = 88.dp)
           }
 
           item(
@@ -514,7 +514,7 @@ fun LibraryMixScreen(
             span = { GridItemSpan(maxLineSpan) },
             contentType = CONTENT_TYPE_HEADER,
           ) {
-            AutoPlaylistGrid(autoPlaylistTiles, columns = 2, artHeight = 100.dp, modifier = Modifier.stageGridFullWidth())
+            AutoPlaylistGrid(autoPlaylistTiles, columns = 3, artHeight = 88.dp, modifier = Modifier.stageGridFullWidth())
           }
 
           item(
