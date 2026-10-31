@@ -997,4 +997,6 @@
     <string name="stage_tempo">Tempo</string>
     <string name="stage_pitch">Pitch</string>
     <string name="stage_stop_after">Stop after</string>
+    <string name="stage_youtube_music" translatable="false">YouTube Music</string>
+    <string name="stage_spotify" translatable="false">Spotify</string>
 </resources>

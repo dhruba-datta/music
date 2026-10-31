@@ -147,6 +147,8 @@ import echo.music.iad1tya.ui.component.ChipsRow
 import echo.music.iad1tya.ui.component.LocalBottomSheetPageState
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.NavigationTitle
+import echo.music.iad1tya.ui.component.DownloadsGridItem
+import echo.music.iad1tya.ui.component.MusicSourceCard
 import echo.music.iad1tya.ui.component.RandomizeGridItem
 import echo.music.iad1tya.ui.component.SongListItem
 import echo.music.iad1tya.ui.component.SpeedDialGridItem
@@ -189,6 +191,8 @@ sealed class HomeSection(val id: String, val baseWeight: Int) {
   data object AiRecommendations : HomeSection("ai_recommendations", 95)
 
   data object HeroCarousel : HomeSection("hero_carousel", 90)
+
+  data object MusicSources : HomeSection("music_sources", 85)
 
   data object DailyDiscover : HomeSection("daily_discover", 80)
 
@@ -926,10 +930,11 @@ fun HomeScreen(
     ) {
       val list = mutableListOf<HomeSection>()
 
-      if (showSpeedDial && speedDialItems.isNotEmpty()) list.add(HomeSection.SpeedDial)
+      if (showSpeedDial) list.add(HomeSection.SpeedDial)
       if (aiRecommendedPlaylist != null && aiRecommendedPlaylist!!.second.isNotEmpty())
         list.add(HomeSection.AiRecommendations)
       if (heroSongs.isNotEmpty()) list.add(HomeSection.HeroCarousel)
+      list.add(HomeSection.MusicSources)
       list.add(HomeSection.ForYou)
       if (communityPlaylists?.isNotEmpty() == true) list.add(HomeSection.FromTheCommunity)
       if (dailyDiscover?.isNotEmpty() == true) list.add(HomeSection.DailyDiscover)
@@ -953,6 +958,7 @@ fun HomeScreen(
             when (section) {
               HomeSection.SpeedDial -> 20000
               HomeSection.HeroCarousel -> 19000
+              HomeSection.MusicSources -> 18500
               HomeSection.ForYou -> 18000
               is HomeSection.SimilarRecommendation -> if (section.index == 0) 17000 else 100
               is HomeSection.HomePageSection -> 9000 - (section.index * 10)
@@ -968,6 +974,7 @@ fun HomeScreen(
             when (section) {
               HomeSection.SpeedDial,
               HomeSection.HeroCarousel,
+              HomeSection.MusicSources,
               HomeSection.ForYou -> 0
               HomeSection.DailyDiscover -> sectionRandom.nextInt(-200, 400)
               HomeSection.KeepListening,
@@ -983,6 +990,7 @@ fun HomeScreen(
           mapOf(
             HomeSection.SpeedDial to 1100,
             HomeSection.HeroCarousel to 1000,
+            HomeSection.MusicSources to 995,
             HomeSection.ForYou to 990,
             HomeSection.FromTheCommunity to 980,
             HomeSection.DailyDiscover to 970,
@@ -1086,8 +1094,7 @@ fun HomeScreen(
           when (section) {
             HomeSection.SpeedDial -> {
               speedDialItems
-                .takeIf { it.isNotEmpty() }
-                ?.let { items ->
+                .let { items ->
                   item(key = "speed_dial_title") {
                     NavigationTitle(
                       title = stringResource(R.string.speed_dial),
@@ -1100,8 +1107,8 @@ fun HomeScreen(
                     val tileGap = 10.dp
                     val columns = if (maxWidth >= 600.dp) 8 else 4
                     val itemsPerPage = 8
-                    // The random tile always sits in the first slot of the first page.
-                    val tiles = remember(items) { listOf<YTItem?>(null) + items }
+                    // The random and Downloads tiles always sit first on the first page.
+                    val tiles = remember(items) { listOf<YTItem?>(null, null) + items }
                     val rows = if (columns == 4 && tiles.size > 4) 2 else 1
 
                     val pagerState =
@@ -1133,6 +1140,7 @@ fun HomeScreen(
                               for (col in 0 until columns) {
                                 val itemIndex = row * columns + col
                                 val isRandomizeSlot = page == 0 && itemIndex == 0
+                                val isDownloadsSlot = page == 0 && itemIndex == 1
                                 val item = pageTiles.getOrNull(itemIndex)
 
                                 if (isRandomizeSlot) {
@@ -1171,6 +1179,16 @@ fun HomeScreen(
                                             }
                                         }
                                       }
+                                    )
+                                  }
+                                } else if (isDownloadsSlot) {
+                                  Box(
+                                    modifier = Modifier.weight(1f).height(tileSize),
+                                    contentAlignment = Alignment.Center,
+                                  ) {
+                                    DownloadsGridItem(
+                                      modifier = Modifier.size(tileSize),
+                                      onClick = { navController.navigate("auto_playlist/downloaded") }
                                     )
                                   }
                                 } else if (item != null) {
@@ -1409,6 +1427,33 @@ fun HomeScreen(
                 }
               }
             }
+            HomeSection.MusicSources -> {
+              item(key = "music_sources") {
+                Row(
+                  horizontalArrangement = Arrangement.spacedBy(10.dp),
+                  modifier =
+                    Modifier.fillMaxWidth()
+                      .padding(start = 18.dp, end = 18.dp, top = 18.dp)
+                      .animateItem(),
+                ) {
+                  MusicSourceCard(
+                    title = stringResource(R.string.stage_youtube_music),
+                    iconRes = R.drawable.stage_youtube_music,
+                    colors = listOf(Color(0xFFFF4E45), Color(0xFF7A0F1E)),
+                    onClick = { navController.navigate(if (isLoggedIn) "account" else "login") },
+                    modifier = Modifier.weight(1f),
+                  )
+                  MusicSourceCard(
+                    title = stringResource(R.string.stage_spotify),
+                    iconRes = R.drawable.ic_spotify,
+                    colors = listOf(Color(0xFF1DB954), Color(0xFF0B3B20)),
+                    onClick = { navController.navigate("spotify_library") },
+                    modifier = Modifier.weight(1f),
+                  )
+                }
+              }
+            }
+
             HomeSection.HeroCarousel -> {
               heroSongs
                 .takeIf { it.isNotEmpty() }

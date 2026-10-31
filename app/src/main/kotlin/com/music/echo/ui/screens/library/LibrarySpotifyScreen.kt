@@ -57,10 +57,34 @@ import echo.music.iad1tya.constants.ListThumbnailSize
 import echo.music.iad1tya.constants.ThumbnailCornerRadius
 import echo.music.iad1tya.spotify.SpotifyMapper
 import echo.music.iad1tya.ui.component.ListItem
+import echo.music.iad1tya.ui.component.IconButton
+import echo.music.iad1tya.ui.component.StageTopBar
+import echo.music.iad1tya.ui.utils.backToMain
 import echo.music.iad1tya.utils.joinByBullet
 import echo.music.iad1tya.utils.listItemShape
 
 private const val SPOTIFY_LIKED_SONGS_COVER = "https://misc.scdn.co/liked-songs/liked-songs-640.png"
+
+/** The Spotify tab on its own page, opened from the Home card. */
+@Composable
+fun SpotifyLibraryPage(navController: NavController) {
+  LibrarySpotifyScreen(navController, filterContent = {})
+
+  StageTopBar(
+    title = { Text(stringResource(R.string.stage_spotify)) },
+    navigationIcon = {
+      IconButton(
+        onClick = navController::navigateUp,
+        onLongClick = navController::backToMain,
+      ) {
+        Icon(
+          painterResource(R.drawable.arrow_back),
+          contentDescription = null,
+        )
+      }
+    }
+  )
+}
 
 @Composable
 fun LibrarySpotifyScreen(

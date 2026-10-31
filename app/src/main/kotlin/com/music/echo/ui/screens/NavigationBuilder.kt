@@ -32,6 +32,7 @@ import echo.music.iad1tya.ui.screens.equalizer.EqScreen
 import echo.music.iad1tya.ui.screens.equalizer.axion.AxionEqScreen
 import echo.music.iad1tya.ui.screens.generate.GenerateScreen
 import echo.music.iad1tya.ui.screens.library.LibraryScreen
+import echo.music.iad1tya.ui.screens.library.SpotifyLibraryPage
 import echo.music.iad1tya.ui.screens.library.LocalSongScreen
 import echo.music.iad1tya.ui.screens.musicflow.MusicFlowScreen
 import echo.music.iad1tya.ui.screens.playlist.AutoPlaylistScreen
@@ -117,6 +118,8 @@ fun NavGraphBuilder.navigationBuilder(
   composable("mood_and_genres") { MoodAndGenresScreen(navController, scrollBehavior) }
 
   composable("account") { AccountScreen(navController, scrollBehavior) }
+
+  composable("spotify_library") { SpotifyLibraryPage(navController) }
 
   composable("new_release") { NewReleaseScreen(navController, scrollBehavior) }
 
