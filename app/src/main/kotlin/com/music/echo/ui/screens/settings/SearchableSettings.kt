@@ -220,12 +220,6 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
       "settings/appearance"
     ),
     SearchableSetting(
-      stringResource(R.string.app_language),
-      stringResource(R.string.app_language_desc),
-      "Content",
-      "settings/content"
-    ),
-    SearchableSetting(
       stringResource(R.string.app_update_uptodate),
       stringResource(R.string.app_update_uptodate_desc),
       "System Update",
@@ -984,12 +978,6 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
     SearchableSetting(
       stringResource(R.string.lyrics_romanize_hindi),
       stringResource(R.string.lyrics_romanize_hindi_desc),
-      "Romanization",
-      "settings/appearance"
-    ),
-    SearchableSetting(
-      stringResource(R.string.lyrics_romanize_japanese),
-      stringResource(R.string.lyrics_romanize_japanese_desc),
       "Romanization",
       "settings/appearance"
     ),
@@ -2318,14 +2306,6 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
     SearchableSetting("Edit Discord Profile", null, "Discord", "settings/discord"),
     SearchableSetting(stringResource(R.string.preview), null, "Discord", "settings/discord"),
     SearchableSetting(stringResource(R.string.not_logged_in), null, "LastFM", "settings/lastfm"),
-
-    // App Icon Settings
-    SearchableSetting(
-      "App Icon",
-      "Choose your launcher icon",
-      "Appearance",
-      "settings/appearance/app_icon"
-    ),
 
     // About Screen - Social & Support Links
     SearchableSetting("Website", "Visit the Echo Music website", "About", "settings/about"),

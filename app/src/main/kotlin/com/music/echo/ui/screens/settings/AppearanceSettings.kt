@@ -57,7 +57,6 @@ import androidx.navigation.NavController
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.R
 import echo.music.iad1tya.constants.AppFont
-import echo.music.iad1tya.constants.AppIconTypeKey
 import echo.music.iad1tya.constants.AppleMusicLyricsBlurKey
 import echo.music.iad1tya.constants.CanvasThumbnailAnimationKey
 import echo.music.iad1tya.constants.CropAlbumArtKey
@@ -121,8 +120,6 @@ import echo.music.iad1tya.ui.component.WavySlider
 import echo.music.iad1tya.ui.theme.DefaultThemeColor
 import echo.music.iad1tya.ui.theme.PlayerSliderColors
 import echo.music.iad1tya.ui.utils.backToMain
-import echo.music.iad1tya.utils.AppIconType
-import echo.music.iad1tya.utils.IconUtils
 import echo.music.iad1tya.utils.rememberEnumPreference
 import echo.music.iad1tya.utils.rememberPreference
 import kotlin.math.roundToInt
@@ -151,13 +148,6 @@ fun AppearanceSettings(
   val (enableLegacyIcon, onEnableLegacyIconChange) =
     rememberPreference(echo.music.iad1tya.constants.EnableLegacyIconKey, defaultValue = false)
 
-  val (appIconType, onAppIconTypeChange) =
-    rememberEnumPreference(
-      echo.music.iad1tya.constants.AppIconTypeKey,
-      defaultValue = echo.music.iad1tya.utils.AppIconType.DEFAULT
-    )
-
-  var showAppIconDialog by rememberSaveable { mutableStateOf(false) }
   val (enableHighRefreshRate, onEnableHighRefreshRateChange) =
     rememberPreference(echo.music.iad1tya.constants.EnableHighRefreshRateKey, defaultValue = true)
   val (liveBlurDensity, onLiveBlurDensityChange) =
@@ -168,25 +158,6 @@ fun AppearanceSettings(
   val isUsingCustomColor = selectedThemeColorInt != DefaultThemeColor.toArgb()
   val coroutineScope = rememberCoroutineScope()
 
-  fun handleIconChange(iconType: echo.music.iad1tya.utils.AppIconType) {
-    onAppIconTypeChange(iconType)
-    IconUtils.setIcon(activity, iconType)
-    coroutineScope.launch {
-      val result =
-        snackbarHostState.showSnackbar(
-          message = "Icon updated, restart to apply",
-          actionLabel = "Restart"
-        )
-      if (result == SnackbarResult.ActionPerformed) {
-        val packageManager = activity.packageManager
-        val intent = packageManager.getLaunchIntentForPackage(activity.packageName)
-        val componentName = intent?.component
-        val mainIntent = Intent.makeRestartActivityTask(componentName)
-        activity.startActivity(mainIntent)
-        Runtime.getRuntime().exit(0)
-      }
-    }
-  }
 
   val (useNewPlayerDesign, onUseNewPlayerDesignChange) =
     rememberPreference(UseNewPlayerDesignKey, defaultValue = true)
@@ -889,23 +860,12 @@ fun AppearanceSettings(
         buildList {
           add(
             Material3SettingsItem(
-              isHighlighted = (highlightKey == stringResource(R.string.legacy_icon)),
-              icon = painterResource(R.drawable.grid_view),
-              title = { Text("App Icon") },
-              description = { Text("Choose your launcher icon") },
-              onClick = { navController.navigate("settings/appearance/app_icon") }
-            )
-          )
-          add(
-            Material3SettingsItem(
               icon = painterResource(echo.music.iad1tya.R.drawable.alphabet_cyrillic),
               title = { Text(stringResource(echo.music.iad1tya.R.string.app_font)) },
               value = {
                 val fontLabel =
                   when (AppFont.fromValue(selectedFontValue)) {
                     AppFont.SYSTEM -> stringResource(echo.music.iad1tya.R.string.font_system)
-                    AppFont.GOOGLE_SANS ->
-                      stringResource(echo.music.iad1tya.R.string.font_google_sans)
                     AppFont.SANS_FLEX -> stringResource(echo.music.iad1tya.R.string.font_sans_flex)
                     AppFont.MANROPE -> "Manrope"
                     AppFont.OUTFIT -> stringResource(echo.music.iad1tya.R.string.font_outfit)

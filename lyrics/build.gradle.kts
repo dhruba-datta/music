@@ -26,7 +26,6 @@ dependencies {
   implementation(project(":paxsenixlyrics"))
   implementation(project(":innertube"))
 
-  implementation(libs.kuromoji.ipadic)
   implementation(libs.tinypinyin)
   implementation("androidx.core:core-ktx:1.13.1")
   implementation(libs.hilt)

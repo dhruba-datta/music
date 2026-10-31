@@ -53,7 +53,7 @@ jobs:
         run: |
           echo "$KEYSTORE_BASE64" | base64 -d > keystore.jks
           chmod +x gradlew
-          ./gradlew assembleUniversalGmsRelease -PmodVersion="$MOD_VERSION"
+          ./gradlew assembleArm64GmsRelease -PmodVersion="$MOD_VERSION"
 
       - name: Publish release
         env:

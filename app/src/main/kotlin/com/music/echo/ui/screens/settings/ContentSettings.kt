@@ -64,7 +64,6 @@ import com.music.innertube.models.IpVersion
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.R
 import echo.music.iad1tya.constants.AlbumCanvasEnabledKey
-import echo.music.iad1tya.constants.AppLanguageKey
 import echo.music.iad1tya.constants.RecommendationSourceKey
 import echo.music.iad1tya.constants.RecommendationSource
 import echo.music.iad1tya.constants.SpotifySpDcKey
@@ -91,7 +90,6 @@ import echo.music.iad1tya.constants.LyricsRomanizeBelarusianKey
 import echo.music.iad1tya.constants.LyricsRomanizeBulgarianKey
 import echo.music.iad1tya.constants.LyricsRomanizeChineseKey
 import echo.music.iad1tya.constants.LyricsRomanizeHindiKey
-import echo.music.iad1tya.constants.LyricsRomanizeJapaneseKey
 import echo.music.iad1tya.constants.LyricsRomanizeKoreanKey
 import echo.music.iad1tya.constants.LyricsRomanizeKyrgyzKey
 import echo.music.iad1tya.constants.LyricsRomanizeMacedonianKey
@@ -162,11 +160,7 @@ fun ContentSettings(
       }
   }
 
-  val (appLanguage, onAppLanguageChange) =
-    rememberPreference(key = AppLanguageKey, defaultValue = SYSTEM_DEFAULT)
 
-  val (lyricsRomanizeJapanese, onLyricsRomanizeJapaneseChange) =
-    rememberPreference(LyricsRomanizeJapaneseKey, defaultValue = true)
   val (lyricsRomanizeKorean, onLyricsRomanizeKoreanChange) =
     rememberPreference(LyricsRomanizeKoreanKey, defaultValue = true)
   val (lyricsRomanizeChinese, onLyricsRomanizeChineseChange) =
@@ -415,22 +409,6 @@ fun ContentSettings(
     )
   }
 
-  var showAppLanguageDialog by rememberSaveable { mutableStateOf(false) }
-
-  if (showAppLanguageDialog) {
-    EnumDialog(
-      onDismiss = { showAppLanguageDialog = false },
-      onSelect = {
-        onAppLanguageChange(it)
-        showAppLanguageDialog = false
-      },
-      title = stringResource(R.string.app_language),
-      current = appLanguage,
-      values = (listOf(SYSTEM_DEFAULT) + LanguageCodeToName.keys.toList()),
-      valueText = { LanguageCodeToName.getOrElse(it) { stringResource(R.string.system_default) } }
-    )
-  }
-
   var showProviderPriorityDialog by rememberSaveable { mutableStateOf(false) }
 
   if (showProviderPriorityDialog) {
@@ -668,36 +646,6 @@ fun ContentSettings(
       scrollState = scrollState,
       items =
         buildList {
-          add(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            Material3SettingsItem(
-              isHighlighted = (highlightKey == stringResource(R.string.app_language)),
-              icon = painterResource(R.drawable.language),
-              title = { Text(stringResource(R.string.app_language)) },
-              description = { Text(stringResource(R.string.app_language_desc)) },
-              onClick = {
-                context.startActivity(
-                  Intent(
-                    Settings.ACTION_APP_LOCALE_SETTINGS,
-                    "package:${context.packageName}".toUri()
-                  )
-                )
-              }
-            )
-          } else {
-            Material3SettingsItem(
-              isHighlighted = (highlightKey == stringResource(R.string.app_language)),
-              icon = painterResource(R.drawable.language),
-              title = { Text(stringResource(R.string.app_language)) },
-              value = {
-                Text(
-                  LanguageCodeToName.getOrElse(appLanguage) {
-                    stringResource(R.string.system_default)
-                  }
-                )
-              },
-              onClick = { showAppLanguageDialog = true }
-            )
-          })
           add(Material3SettingsItem(
             isHighlighted = (highlightKey == stringResource(R.string.content_language)),
             icon = painterResource(R.drawable.language),
@@ -985,11 +933,9 @@ fun ContentSettings(
             description = { Text(stringResource(R.string.lyrics_romanization_desc)) },
             trailingContent = {
               StageSwitch(checked =
-                  lyricsRomanizeJapanese &&
-                    lyricsRomanizeKorean &&
+                  lyricsRomanizeKorean &&
                     lyricsRomanizeChinese &&
                     lyricsRomanizeRussian, onCheckedChange = { checked ->
-                  onLyricsRomanizeJapaneseChange(checked)
                   onLyricsRomanizeKoreanChange(checked)
                   onLyricsRomanizeChineseChange(checked)
                   onLyricsRomanizeHindiChange(checked)
@@ -1005,11 +951,9 @@ fun ContentSettings(
             },
             onClick = {
               val checked =
-                !(lyricsRomanizeJapanese &&
-                  lyricsRomanizeKorean &&
+                !(lyricsRomanizeKorean &&
                   lyricsRomanizeChinese &&
                   lyricsRomanizeRussian)
-              onLyricsRomanizeJapaneseChange(checked)
               onLyricsRomanizeKoreanChange(checked)
               onLyricsRomanizeChineseChange(checked)
               onLyricsRomanizeHindiChange(checked)

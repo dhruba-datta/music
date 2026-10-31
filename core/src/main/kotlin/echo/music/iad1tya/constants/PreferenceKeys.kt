@@ -19,7 +19,6 @@ val SpotifyAccessTokenKey = stringPreferencesKey("spotify_access_token")
 val SpotifyAccessTokenExpiresAtKey = longPreferencesKey("spotify_access_token_expires_at")
 val EnableDynamicIconKey = booleanPreferencesKey("enableDynamicIcon")
 val EnableLegacyIconKey = booleanPreferencesKey("enableLegacyIcon")
-val AppIconTypeKey = stringPreferencesKey("app_icon_type")
 
 val EnableHighRefreshRateKey = booleanPreferencesKey("enableHighRefreshRate")
 val EnableHapticsKey = booleanPreferencesKey("enableHaptics")
@@ -495,7 +494,6 @@ val EnableLyricsThumbnailPlayPauseKey = booleanPreferencesKey("enableLyricsThumb
 val LyricsTextPositionKey = stringPreferencesKey("lyricsTextPosition")
 val LyricsClickKey = booleanPreferencesKey("lyricsClick")
 val LyricsScrollKey = booleanPreferencesKey("lyricsScrollKey")
-val LyricsRomanizeJapaneseKey = booleanPreferencesKey("lyricsRomanizeJapanese")
 val LyricsRomanizeKoreanKey = booleanPreferencesKey("lyricsRomanizeKorean")
 val LyricsRomanizeChineseKey = booleanPreferencesKey("lyricsRomanizeChinese")
 val LyricsRomanizeRussianKey = booleanPreferencesKey("lyricsRomanizeRussian")
@@ -872,7 +870,6 @@ val AmbientSpacingKey = floatPreferencesKey("ambient_spacing")
 enum class AppFont(val value: String) {
   SYSTEM("system"),
   MANROPE("manrope"),
-  GOOGLE_SANS("google_sans"),
   SANS_FLEX("sans_flex"),
   OUTFIT("outfit"),
   PLUS_JAKARTA_SANS("plus_jakarta_sans"),

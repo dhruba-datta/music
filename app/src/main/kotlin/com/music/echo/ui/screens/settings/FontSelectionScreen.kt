@@ -46,7 +46,6 @@ import echo.music.iad1tya.constants.SelectedFontKey
 import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.Material3SettingsGroup
 import echo.music.iad1tya.ui.component.Material3SettingsItem
-import echo.music.iad1tya.ui.theme.GoogleSansFontFamily
 import echo.music.iad1tya.ui.theme.OutfitFontFamily
 import echo.music.iad1tya.ui.theme.PlusJakartaSansFontFamily
 import echo.music.iad1tya.ui.theme.SansFlexFontFamily
@@ -101,7 +100,6 @@ fun FontSelectionScreen(
       when (AppFont.fromValue(selectedFont)) {
         AppFont.SYSTEM -> FontFamily.Default
         AppFont.MANROPE -> echo.music.iad1tya.ui.theme.ManropeFontFamily
-        AppFont.GOOGLE_SANS -> GoogleSansFontFamily
         AppFont.SANS_FLEX -> SansFlexFontFamily
         AppFont.OUTFIT -> OutfitFontFamily
         AppFont.PLUS_JAKARTA_SANS -> PlusJakartaSansFontFamily
@@ -177,17 +175,6 @@ fun FontSelectionScreen(
                 Text(text = stringResource(R.string.font_system), fontFamily = FontFamily.Default)
               },
               onClick = { onSelectedFontChange(AppFont.SYSTEM.value) }
-            ),
-            Material3SettingsItem(
-              trailingContent = { FontCheck(selectedFont == AppFont.GOOGLE_SANS.value) },
-              showChevron = false,
-              title = {
-                Text(
-                  text = stringResource(R.string.font_google_sans),
-                  fontFamily = GoogleSansFontFamily
-                )
-              },
-              onClick = { onSelectedFontChange(AppFont.GOOGLE_SANS.value) }
             ),
             Material3SettingsItem(
               trailingContent = { FontCheck(selectedFont == AppFont.SANS_FLEX.value) },

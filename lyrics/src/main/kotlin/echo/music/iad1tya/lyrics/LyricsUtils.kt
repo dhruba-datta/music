@@ -1,7 +1,6 @@
 package echo.music.iad1tya.lyrics
 
 import android.text.format.DateUtils
-import com.atilika.kuromoji.ipadic.Tokenizer
 import com.github.promeg.pinyinhelper.Pinyin
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
@@ -1247,8 +1246,6 @@ object LyricsUtils {
 
   private val MACEDONIAN_SPECIFIC_CYRILLIC_LETTERS = setOf("Ѓ", "ѓ", "Ѕ", "ѕ", "Ќ", "ќ")
 
-  private val kuromojiTokenizer: Tokenizer by lazy { Tokenizer() }
-
   private val HEX_ENTITY_REGEX = "&#x([0-9a-fA-F]+);".toRegex()
   private val DEC_ENTITY_REGEX = "&#(\\d+);".toRegex()
 
@@ -1534,73 +1531,6 @@ object LyricsUtils {
           i += 2
           consumed = true
         }
-      }
-
-      if (!consumed) {
-        val oneCharCandidate = katakana[i].toString()
-        val mappedOneChar = KANA_ROMAJI_MAP[oneCharCandidate]
-        if (mappedOneChar != null) {
-          romajiBuilder.append(mappedOneChar)
-        } else {
-          romajiBuilder.append(oneCharCandidate)
-        }
-        i += 1
-      }
-    }
-    return romajiBuilder.toString().lowercase()
-  }
-
-  suspend fun romanizeJapanese(text: String): String =
-    withContext(Dispatchers.Default) {
-      val tokens = kuromojiTokenizer.tokenize(text)
-      val romanizedTokens =
-        tokens.mapIndexed { index, token ->
-          val currentReading =
-            if (token.reading.isNullOrEmpty() || token.reading == "*") {
-              token.surface
-            } else {
-              token.reading
-            }
-          val nextTokenReading =
-            if (index + 1 < tokens.size) {
-              tokens[index + 1].reading?.takeIf { it.isNotEmpty() && it != "*" }
-                ?: tokens[index + 1].surface
-            } else {
-              null
-            }
-          katakanaToRomaji(currentReading, nextTokenReading)
-        }
-      romanizedTokens.joinToString(" ")
-    }
-
-  fun katakanaToRomaji(katakana: String?, nextKatakana: String? = null): String {
-    if (katakana.isNullOrEmpty()) return ""
-
-    val romajiBuilder = StringBuilder(katakana.length)
-    var i = 0
-    val n = katakana.length
-    while (i < n) {
-      var consumed = false
-      if (i + 1 < n) {
-        val twoCharCandidate = katakana.substring(i, i + 2)
-        val mappedTwoChar = KANA_ROMAJI_MAP[twoCharCandidate]
-        if (mappedTwoChar != null) {
-          romajiBuilder.append(mappedTwoChar)
-          i += 2
-          consumed = true
-        }
-      }
-
-      if (!consumed && katakana[i] == 'ッ') {
-        val nextCharToDouble = nextKatakana?.getOrNull(0)
-        if (nextCharToDouble != null) {
-          val nextCharRomaji =
-            KANA_ROMAJI_MAP[nextCharToDouble.toString()]?.getOrNull(0)?.toString()
-              ?: nextCharToDouble.toString()
-          romajiBuilder.append(nextCharRomaji.lowercase().trim())
-        }
-        i += 1
-        consumed = true
       }
 
       if (!consumed) {

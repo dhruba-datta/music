@@ -13,41 +13,6 @@ import androidx.compose.ui.unit.sp
 import echo.music.iad1tya.R
 
 @OptIn(ExperimentalTextApi::class)
-val GoogleSansFontFamily =
-  FontFamily(
-    Font(
-      resId = R.font.google_sans_flex,
-      weight = FontWeight.Normal,
-      variationSettings =
-        FontVariation.Settings(
-          FontVariation.weight(400),
-          FontVariation.width(100f),
-          FontVariation.Setting("ROND", 100f)
-        )
-    ),
-    Font(
-      resId = R.font.google_sans_flex,
-      weight = FontWeight.Medium,
-      variationSettings =
-        FontVariation.Settings(
-          FontVariation.weight(500),
-          FontVariation.width(100f),
-          FontVariation.Setting("ROND", 100f)
-        )
-    ),
-    Font(
-      resId = R.font.google_sans_flex,
-      weight = FontWeight.Bold,
-      variationSettings =
-        FontVariation.Settings(
-          FontVariation.weight(700),
-          FontVariation.width(100f),
-          FontVariation.Setting("ROND", 100f)
-        )
-    )
-  )
-
-@OptIn(ExperimentalTextApi::class)
 val ManropeFontFamily =
   FontFamily(
     Font(R.font.manrope, weight = FontWeight.Normal, variationSettings = FontVariation.Settings(FontVariation.weight(400))),

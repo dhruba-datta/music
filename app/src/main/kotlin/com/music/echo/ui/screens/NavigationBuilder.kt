@@ -49,7 +49,6 @@ import echo.music.iad1tya.ui.screens.search.SearchScreen
 import echo.music.iad1tya.ui.screens.settings.AboutScreen
 import echo.music.iad1tya.ui.screens.settings.AccountSettingsScreen
 import echo.music.iad1tya.ui.screens.settings.AiSettings
-import echo.music.iad1tya.ui.screens.settings.AppIconSettingsScreen
 import echo.music.iad1tya.ui.screens.settings.AppearanceSettings
 import echo.music.iad1tya.ui.screens.settings.BackupAndRestore
 import echo.music.iad1tya.ui.screens.settings.BlockedArtistsScreen
@@ -389,10 +388,6 @@ fun NavGraphBuilder.navigationBuilder(
       snackbarHostState = snackbarHostState,
       highlightKey = backStackEntry.arguments?.getString("highlightKey")
     )
-  }
-
-  composable("settings/appearance/app_icon") {
-    AppIconSettingsScreen(navController, activity, snackbarHostState)
   }
 
   composable("settings/appearance/font") {

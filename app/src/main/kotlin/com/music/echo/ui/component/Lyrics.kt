@@ -137,7 +137,6 @@ import echo.music.iad1tya.constants.LyricsRomanizeBulgarianKey
 import echo.music.iad1tya.constants.LyricsRomanizeChineseKey
 import echo.music.iad1tya.constants.LyricsRomanizeCyrillicByLineKey
 import echo.music.iad1tya.constants.LyricsRomanizeHindiKey
-import echo.music.iad1tya.constants.LyricsRomanizeJapaneseKey
 import echo.music.iad1tya.constants.LyricsRomanizeKoreanKey
 import echo.music.iad1tya.constants.LyricsRomanizeKyrgyzKey
 import echo.music.iad1tya.constants.LyricsRomanizeMacedonianKey
@@ -166,7 +165,6 @@ import echo.music.iad1tya.lyrics.LyricsUtils.isBelarusian
 import echo.music.iad1tya.lyrics.LyricsUtils.isBulgarian
 import echo.music.iad1tya.lyrics.LyricsUtils.isChinese
 import echo.music.iad1tya.lyrics.LyricsUtils.isHindi
-import echo.music.iad1tya.lyrics.LyricsUtils.isJapanese
 import echo.music.iad1tya.lyrics.LyricsUtils.isKorean
 import echo.music.iad1tya.lyrics.LyricsUtils.isKyrgyz
 import echo.music.iad1tya.lyrics.LyricsUtils.isMacedonian
@@ -178,7 +176,6 @@ import echo.music.iad1tya.lyrics.LyricsUtils.parseLyrics
 import echo.music.iad1tya.lyrics.LyricsUtils.romanizeChinese
 import echo.music.iad1tya.lyrics.LyricsUtils.romanizeCyrillic
 import echo.music.iad1tya.lyrics.LyricsUtils.romanizeHindi
-import echo.music.iad1tya.lyrics.LyricsUtils.romanizeJapanese
 import echo.music.iad1tya.lyrics.LyricsUtils.romanizeKorean
 import echo.music.iad1tya.lyrics.LyricsUtils.romanizePunjabi
 import echo.music.iad1tya.ui.component.shimmer.ShimmerHost
@@ -221,7 +218,6 @@ fun Lyrics(
   val lyricsTextPosition by rememberEnumPreference(LyricsTextPositionKey, LyricsPosition.LEFT)
   val changeLyrics by rememberPreference(LyricsClickKey, true)
   val scrollLyrics by rememberPreference(LyricsScrollKey, true)
-  val romanizeJapaneseLyrics by rememberPreference(LyricsRomanizeJapaneseKey, true)
   val romanizeKoreanLyrics by rememberPreference(LyricsRomanizeKoreanKey, true)
   val romanizeRussianLyrics by rememberPreference(LyricsRomanizeRussianKey, true)
   val romanizeUkrainianLyrics by rememberPreference(LyricsRomanizeUkrainianKey, true)
@@ -287,7 +283,6 @@ fun Lyrics(
       if (lyrics == null || lyrics == LYRICS_NOT_FOUND) {
         emptyList()
       } else if (parsedLines.isNotEmpty()) {
-        val effJapanese = currentSongRomanize && romanizeJapaneseLyrics
         val effKorean = currentSongRomanize && romanizeKoreanLyrics
         val effRussian = currentSongRomanize && romanizeRussianLyrics
         val effUkrainian = currentSongRomanize && romanizeUkrainianLyrics
@@ -318,10 +313,6 @@ fun Lyrics(
                 agent = entry.agent,
                 isBackground = entry.isBackground
               )
-
-            if (effJapanese && isJapanese(entry.text) && !isChinese(entry.text)) {
-              scope.launch { newEntry.romanizedTextFlow.value = romanizeJapanese(entry.text) }
-            }
 
             if (effKorean && isKorean(entry.text)) {
               scope.launch { newEntry.romanizedTextFlow.value = romanizeKorean(entry.text) }
@@ -372,7 +363,6 @@ fun Lyrics(
           .let { listOf(LyricsEntry.HEAD_LYRICS_ENTRY) + it }
       } else {
 
-        val effJapanese = currentSongRomanize && romanizeJapaneseLyrics
         val effKorean = currentSongRomanize && romanizeKoreanLyrics
         val effRussian = currentSongRomanize && romanizeRussianLyrics
         val effUkrainian = currentSongRomanize && romanizeUkrainianLyrics
@@ -395,10 +385,6 @@ fun Lyrics(
 
         lyrics.lines().mapIndexed { index, line ->
           val newEntry = LyricsEntry(index * 100L, line)
-
-          if (effJapanese && isJapanese(line) && !isChinese(line)) {
-            scope.launch { newEntry.romanizedTextFlow.value = romanizeJapanese(line) }
-          }
 
           if (effKorean && isKorean(line)) {
             scope.launch { newEntry.romanizedTextFlow.value = romanizeKorean(line) }
@@ -944,8 +930,7 @@ fun Lyrics(
                 textColor = textColor,
                 showRomanized =
                   currentSongRomanize &&
-                    (romanizeJapaneseLyrics ||
-                      romanizeKoreanLyrics ||
+                    (romanizeKoreanLyrics ||
                       romanizeRussianLyrics ||
                       romanizeUkrainianLyrics ||
                       romanizeSerbianLyrics ||
@@ -1032,8 +1017,7 @@ fun Lyrics(
                 textColor = textColor,
                 showRomanized =
                   currentSongRomanize &&
-                    (romanizeJapaneseLyrics ||
-                      romanizeKoreanLyrics ||
+                    (romanizeKoreanLyrics ||
                       romanizeRussianLyrics ||
                       romanizeUkrainianLyrics ||
                       romanizeSerbianLyrics ||

@@ -199,7 +199,10 @@ android {
     checkDependencies = false
   }
 
-  androidResources { generateLocaleConfig = true }
+  androidResources {
+    generateLocaleConfig = false
+    localeFilters += "en"
+  }
 
   packaging {
     jniLibs {
@@ -304,7 +307,6 @@ dependencies {
   "gmsImplementation"(libs.cast.framework)
 
   implementation(libs.room.runtime)
-  implementation(libs.kuromoji.ipadic)
   implementation(libs.tinypinyin)
 
   implementation(libs.room.ktx)
