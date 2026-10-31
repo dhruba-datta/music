@@ -58,8 +58,6 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -72,8 +70,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
-import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -91,6 +87,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -147,8 +144,8 @@ import echo.music.iad1tya.ui.component.ChipsRow
 import echo.music.iad1tya.ui.component.LocalBottomSheetPageState
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.NavigationTitle
-import echo.music.iad1tya.ui.component.DownloadsGridItem
-import echo.music.iad1tya.ui.component.MusicSourceCard
+import echo.music.iad1tya.ui.component.SpeedDialShortcut
+import echo.music.iad1tya.ui.component.StageHeroStrip
 import echo.music.iad1tya.ui.component.RandomizeGridItem
 import echo.music.iad1tya.ui.component.SongListItem
 import echo.music.iad1tya.ui.component.SpeedDialGridItem
@@ -191,8 +188,6 @@ sealed class HomeSection(val id: String, val baseWeight: Int) {
   data object AiRecommendations : HomeSection("ai_recommendations", 95)
 
   data object HeroCarousel : HomeSection("hero_carousel", 90)
-
-  data object MusicSources : HomeSection("music_sources", 85)
 
   data object DailyDiscover : HomeSection("daily_discover", 80)
 
@@ -935,7 +930,6 @@ fun HomeScreen(
 
       if (showSpeedDial) list.add(HomeSection.SpeedDial)
       if (heroSongs.isNotEmpty()) list.add(HomeSection.HeroCarousel)
-      list.add(HomeSection.MusicSources)
       list.add(HomeSection.ForYou)
       if (communityPlaylists?.isNotEmpty() == true) list.add(HomeSection.FromTheCommunity)
       if (dailyDiscover?.isNotEmpty() == true) list.add(HomeSection.DailyDiscover)
@@ -957,9 +951,8 @@ fun HomeScreen(
 
           val base =
             when (section) {
-              HomeSection.SpeedDial -> 20000
-              HomeSection.HeroCarousel -> 19000
-              HomeSection.MusicSources -> 18500
+              HomeSection.HeroCarousel -> 20000
+              HomeSection.SpeedDial -> 19000
               HomeSection.ForYou -> 18000
               is HomeSection.SimilarRecommendation -> if (section.index == 0) 17000 else 100
               is HomeSection.HomePageSection -> 9000 - (section.index * 10)
@@ -975,7 +968,6 @@ fun HomeScreen(
             when (section) {
               HomeSection.SpeedDial,
               HomeSection.HeroCarousel,
-              HomeSection.MusicSources,
               HomeSection.ForYou -> 0
               HomeSection.DailyDiscover -> sectionRandom.nextInt(-200, 400)
               HomeSection.KeepListening,
@@ -989,9 +981,8 @@ fun HomeScreen(
       } else {
         val defaultOrder =
           mapOf(
-            HomeSection.SpeedDial to 1100,
-            HomeSection.HeroCarousel to 1000,
-            HomeSection.MusicSources to 995,
+            HomeSection.HeroCarousel to 1100,
+            HomeSection.SpeedDial to 1000,
             HomeSection.ForYou to 990,
             HomeSection.FromTheCommunity to 980,
             HomeSection.DailyDiscover to 970,
@@ -1057,40 +1048,6 @@ fun HomeScreen(
         modifier = Modifier.hapticScrollEdge(lazylistState),
         contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
       ) {
-        item {
-          ChipsRow(
-            chips =
-              homePage
-                ?.chips
-                ?.filter { !it.title.equals("Uploaded", ignoreCase = true) }
-                ?.sortedByDescending { it.title.equals("Podcasts", ignoreCase = true) }
-                ?.map { it to it.title } ?: emptyList(),
-            currentValue = selectedChip,
-            onValueUpdate = { viewModel.toggleChip(it) }
-          )
-        }
-
-        if (isLoading && homePage?.chips.isNullOrEmpty()) {
-          item(key = "chips_shimmer") {
-            ShimmerHost {
-              Row(
-                modifier =
-                  Modifier.padding(start = 22.dp, end = 22.dp, top = 12.dp)
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-              ) {
-                repeat(5) {
-                  TextPlaceholder(
-                    height = 44.dp,
-                    shape = RoundedCornerShape(22.dp),
-                    modifier = Modifier.width(72.dp)
-                  )
-                }
-              }
-            }
-          }
-        }
-
         homeSections.forEach { section ->
           when (section) {
             HomeSection.SpeedDial -> {
@@ -1105,170 +1062,121 @@ fun HomeScreen(
 
                   item(key = "speed_dial_list") {
                     val tileSize = 74.dp
-                    val tileGap = 10.dp
-                    val columns = if (maxWidth >= 600.dp) 8 else 4
-                    val itemsPerPage = 8
-                    // The random and Downloads tiles always sit first on the first page.
-                    val tiles = remember(items) { (listOf<YTItem?>(null, null) + items).take(itemsPerPage) }
-                    val rows = if (columns == 4 && tiles.size > 4) 2 else 1
 
-                    val pagerState = rememberPagerState(pageCount = { 1 })
-
-                    Column(
+                    LazyRow(
+                      contentPadding = PaddingValues(horizontal = 18.dp),
+                      horizontalArrangement = Arrangement.spacedBy(10.dp),
                       modifier = Modifier.fillMaxWidth().animateItem(),
                     ) {
-                      HorizontalPager(
-                        state = pagerState,
-                        contentPadding = PaddingValues(horizontal = 18.dp),
-                        pageSpacing = 18.dp,
-                        modifier =
-                          Modifier.fillMaxWidth().height(tileSize * rows + tileGap * (rows - 1)),
-                      ) { page ->
-                        val pageTiles = tiles.drop(page * itemsPerPage).take(itemsPerPage)
-
-                        Column(
-                          modifier = Modifier.fillMaxSize(),
-                          verticalArrangement = Arrangement.spacedBy(tileGap)
-                        ) {
-                          for (row in 0 until rows) {
-                            Row(
-                              modifier = Modifier.fillMaxWidth(),
-                              horizontalArrangement = Arrangement.spacedBy(tileGap)
-                            ) {
-                              for (col in 0 until columns) {
-                                val itemIndex = row * columns + col
-                                val isRandomizeSlot = page == 0 && itemIndex == 0
-                                val isDownloadsSlot = page == 0 && itemIndex == 1
-                                val item = pageTiles.getOrNull(itemIndex)
-
-                                if (isRandomizeSlot) {
-                                  Box(
-                                    modifier = Modifier.weight(1f).height(tileSize),
-                                    contentAlignment = Alignment.Center,
-                                  ) {
-                                    RandomizeGridItem(
-                                      isLoading = isRandomizing,
-                                      modifier = Modifier.size(tileSize),
-                                      onClick = {
-                                        if (isRandomizing) {
-                                          randomizeJob?.cancel()
-                                        } else {
-                                          randomizeJob =
-                                            scope.launch {
-                                              val randomItem = viewModel.getRandomItem()
-                                              if (randomItem != null) {
-                                                when (randomItem) {
-                                                  is SongItem ->
-                                                    playerConnection.playQueue(
-                                                      YouTubeQueue(
-                                                        randomItem.endpoint
-                                                          ?: WatchEndpoint(videoId = randomItem.id),
-                                                        randomItem.toMediaMetadata()
-                                                      )
-                                                    )
-                                                  is AlbumItem ->
-                                                    navController.navigate("album/${randomItem.id}")
-                                                  is ArtistItem ->
-                                                    navController.navigate("artist/${randomItem.id}")
-                                                  is PlaylistItem ->
-                                                    navController.navigateToPlaylistItem(randomItem)
-                                                }
-                                              }
-                                            }
-                                        }
-                                      }
-                                    )
-                                  }
-                                } else if (isDownloadsSlot) {
-                                  Box(
-                                    modifier = Modifier.weight(1f).height(tileSize),
-                                    contentAlignment = Alignment.Center,
-                                  ) {
-                                    DownloadsGridItem(
-                                      modifier = Modifier.size(tileSize),
-                                      onClick = { navController.navigate("auto_playlist/downloaded") }
-                                    )
-                                  }
-                                } else if (item != null) {
-                                  val isPinned by
-                                    database.speedDialDao
-                                      .isPinned(item.id)
-                                      .collectAsState(initial = false)
-
-                                  SpeedDialGridItem(
-                                    item = item,
-                                    isPinned = isPinned,
-                                    isActive =
-                                      item.id in
-                                        listOf(mediaMetadata?.album?.id, mediaMetadata?.id),
-                                    isPlaying = isPlaying,
-                                    modifier =
-                                      Modifier.weight(1f)
-                                        .height(tileSize)
-                                        .combinedClickable(
-                                          onClick = {
-                                            when (item) {
-                                              is SongItem ->
-                                                playerConnection.playQueue(
-                                                  YouTubeQueue(
-                                                    item.endpoint
-                                                      ?: WatchEndpoint(videoId = item.id),
-                                                    item.toMediaMetadata()
-                                                  )
-                                                )
-                                              is AlbumItem ->
-                                                navController.navigate("album/${item.id}")
-                                              is ArtistItem ->
-                                                navController.navigate("artist/${item.id}")
-                                              is PlaylistItem ->
-                                                navController.navigateToPlaylistItem(item)
-                                            }
-                                          },
-                                          onLongClick = {
-                                            haptic.performHapticFeedback(
-                                              HapticFeedbackType.LongPress
+                      item(key = "speed_dial_shuffle") {
+                        RandomizeGridItem(
+                            isLoading = isRandomizing,
+                            modifier = Modifier.size(tileSize),
+                            onClick = {
+                              if (isRandomizing) {
+                                randomizeJob?.cancel()
+                              } else {
+                                randomizeJob =
+                                  scope.launch {
+                                    val randomItem = viewModel.getRandomItem()
+                                    if (randomItem != null) {
+                                      when (randomItem) {
+                                        is SongItem ->
+                                          playerConnection.playQueue(
+                                            YouTubeQueue(
+                                              randomItem.endpoint
+                                                ?: WatchEndpoint(videoId = randomItem.id),
+                                              randomItem.toMediaMetadata()
                                             )
-                                            menuState.show {
-                                              SpeedDialMenu(
-                                                item = item,
-                                                scope = scope,
-                                                onMoreOptions = { showYtItemMenu(item) },
-                                                onDismiss = menuState::dismiss
-                                              )
-                                            }
-                                          }
-                                        )
-                                  )
-                                } else {
-                                  Spacer(modifier = Modifier.weight(1f).height(tileSize))
-                                }
+                                          )
+                                        is AlbumItem ->
+                                          navController.navigate("album/${randomItem.id}")
+                                        is ArtistItem ->
+                                          navController.navigate("artist/${randomItem.id}")
+                                        is PlaylistItem ->
+                                          navController.navigateToPlaylistItem(randomItem)
+                                      }
+                                    }
+                                  }
                               }
                             }
-                          }
-                        }
+                          )
                       }
+                      item(key = "speed_dial_downloads") {
+                        SpeedDialShortcut(
+                          iconRes = R.drawable.download,
+                          contentDescription = stringResource(R.string.downloaded_songs),
+                          onClick = { navController.navigate("auto_playlist/downloaded") },
+                          modifier = Modifier.size(tileSize),
+                        )
+                      }
+                      item(key = "speed_dial_youtube_music") {
+                        SpeedDialShortcut(
+                          iconRes = R.drawable.stage_youtube_music,
+                          contentDescription = stringResource(R.string.stage_youtube_music),
+                          colors = listOf(Color(0xFFFF4E45), Color(0xFF7A0F1E)),
+                          onClick = { navController.navigate(if (isLoggedIn) "account" else "login") },
+                          modifier = Modifier.size(tileSize),
+                        )
+                      }
+                      item(key = "speed_dial_spotify") {
+                        SpeedDialShortcut(
+                          iconRes = R.drawable.ic_spotify,
+                          contentDescription = stringResource(R.string.stage_spotify),
+                          colors = listOf(Color(0xFF1DB954), Color(0xFF0B3B20)),
+                          onClick = { navController.navigate("spotify_library") },
+                          modifier = Modifier.size(tileSize),
+                        )
+                      }
+                      items(items = items, key = { "speed_dial_${it.id}" }) { item ->
+                        val isPinned by
+                          database.speedDialDao
+                            .isPinned(item.id)
+                            .collectAsState(initial = false)
 
-                      if (pagerState.pageCount > 1) {
-                        Row(
-                          modifier = Modifier.height(24.dp).fillMaxWidth(),
-                          horizontalArrangement =
-                            androidx.compose.foundation.layout.Arrangement.Center,
-                          verticalAlignment = Alignment.CenterVertically
-                        ) {
-                          repeat(pagerState.pageCount) { iteration ->
-                            val color =
-                              if (pagerState.currentPage == iteration)
-                                MaterialTheme.colorScheme.onSurface
-                              else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                            Box(
-                              modifier =
-                                Modifier.padding(4.dp)
-                                  .clip(RoundedCornerShape(ThumbnailCornerRadius))
-                                  .background(color)
-                                  .size(8.dp)
-                            )
-                          }
-                        }
+                        SpeedDialGridItem(
+                          item = item,
+                          isPinned = isPinned,
+                          isActive =
+                            item.id in
+                              listOf(mediaMetadata?.album?.id, mediaMetadata?.id),
+                          isPlaying = isPlaying,
+                          modifier =
+                            Modifier.size(tileSize)
+                              .combinedClickable(
+                                onClick = {
+                                  when (item) {
+                                    is SongItem ->
+                                      playerConnection.playQueue(
+                                        YouTubeQueue(
+                                          item.endpoint
+                                            ?: WatchEndpoint(videoId = item.id),
+                                          item.toMediaMetadata()
+                                        )
+                                      )
+                                    is AlbumItem ->
+                                      navController.navigate("album/${item.id}")
+                                    is ArtistItem ->
+                                      navController.navigate("artist/${item.id}")
+                                    is PlaylistItem ->
+                                      navController.navigateToPlaylistItem(item)
+                                  }
+                                },
+                                onLongClick = {
+                                  haptic.performHapticFeedback(
+                                    HapticFeedbackType.LongPress
+                                  )
+                                  menuState.show {
+                                    SpeedDialMenu(
+                                      item = item,
+                                      scope = scope,
+                                      onMoreOptions = { showYtItemMenu(item) },
+                                      onDismiss = menuState::dismiss
+                                    )
+                                  }
+                                }
+                              )
+                        )
                       }
                     }
                   }
@@ -1425,69 +1333,20 @@ fun HomeScreen(
                 }
               }
             }
-            HomeSection.MusicSources -> {
-              item(key = "music_sources") {
-                Row(
-                  horizontalArrangement = Arrangement.spacedBy(10.dp),
-                  modifier =
-                    Modifier.fillMaxWidth()
-                      .padding(start = 18.dp, end = 18.dp, top = 18.dp)
-                      .animateItem(),
-                ) {
-                  MusicSourceCard(
-                    title = stringResource(R.string.stage_youtube_music),
-                    iconRes = R.drawable.stage_youtube_music,
-                    colors = listOf(Color(0xFFFF4E45), Color(0xFF7A0F1E)),
-                    onClick = { navController.navigate(if (isLoggedIn) "account" else "login") },
-                    modifier = Modifier.weight(1f),
-                  )
-                  MusicSourceCard(
-                    title = stringResource(R.string.stage_spotify),
-                    iconRes = R.drawable.ic_spotify,
-                    colors = listOf(Color(0xFF1DB954), Color(0xFF0B3B20)),
-                    onClick = { navController.navigate("spotify_library") },
-                    modifier = Modifier.weight(1f),
-                  )
-                }
-              }
-            }
-
             HomeSection.HeroCarousel -> {
               heroSongs
                 .takeIf { it.isNotEmpty() }
                 ?.let { songs ->
                   item(key = "hero_carousel") {
-                    val currentSongs by rememberUpdatedState(songs)
-                    val carouselState = rememberCarouselState { currentSongs.size }
-                    val songIds = remember(songs) { songs.map { it.id } }
-                    LaunchedEffect(carouselState, songIds) {
-                      if (carouselState.currentItem >= currentSongs.size) {
-                        carouselState.scrollToItem(0)
-                      }
-                      while (true) {
-                        delay(5000)
-                        val size = currentSongs.size
-                        if (size > 1 && !carouselState.isScrollInProgress) {
-                          val nextIndex = (carouselState.currentItem + 1) % size
-                          carouselState.animateScrollToItem(nextIndex)
-                        }
-                      }
-                    }
-
-                    HorizontalMultiBrowseCarousel(
-                      state = carouselState,
-                      preferredItemWidth = 304.dp,
-                      itemSpacing = 8.dp,
-                      minSmallItemWidth = 60.dp,
-                      maxSmallItemWidth = 60.dp,
-                      contentPadding = PaddingValues(start = 18.dp),
+                    StageHeroStrip(
+                      count = songs.size,
                       modifier =
                         Modifier.padding(top = 16.dp)
                           .fillMaxWidth()
                           .height(236.dp)
                           .animateItem()
-                    ) { index ->
-                      val originalSong = songs.getOrNull(index) ?: return@HorizontalMultiBrowseCarousel
+                    ) { index, expansion ->
+                      val originalSong = songs.getOrNull(index) ?: return@StageHeroStrip
                       val localSong by
                         database.song(originalSong.id).collectAsState(initial = null)
                       val song = localSong?.toMediaMetadata() ?: originalSong.toMediaMetadata()
@@ -1496,7 +1355,7 @@ fun HomeScreen(
                       Box(
                         modifier =
                           Modifier.fillMaxSize()
-                            .maskClip(RoundedCornerShape(28.dp))
+                            .clip(RoundedCornerShape(if (expansion > 0.5f) 28.dp else 18.dp))
                             .focusable()
                             .combinedClickable(
                               onClick = {
@@ -1578,15 +1437,7 @@ fun HomeScreen(
                           modifier =
                             Modifier.align(Alignment.BottomStart)
                               .padding(16.dp)
-                              .graphicsLayer {
-                                // Hide the text while the card is squeezed to the 60dp peek.
-                                val range = carouselItemDrawInfo.maxSize - carouselItemDrawInfo.minSize
-                                alpha =
-                                  if (range <= 0f) 1f
-                                  else
-                                    ((carouselItemDrawInfo.size - carouselItemDrawInfo.minSize) / range)
-                                      .coerceIn(0f, 1f)
-                              }
+                              .alpha(expansion)
                         ) {
                           Text(
                             text = song.title,

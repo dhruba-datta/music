@@ -70,59 +70,35 @@ fun RandomizeGridItem(isLoading: Boolean, onClick: () -> Unit, modifier: Modifie
   }
 }
 
-/** The fixed speed dial tile that opens downloaded songs. */
+/** A fixed speed dial tile that opens a page, with an optional [colors] gradient. */
 @Composable
-fun DownloadsGridItem(onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun SpeedDialShortcut(
+  @DrawableRes iconRes: Int,
+  contentDescription: String,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+  colors: List<Color>? = null,
+) {
   Box(
     modifier =
       modifier
         .aspectRatio(1f)
         .clip(RoundedCornerShape(18.dp))
-        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+        .then(
+          if (colors != null) {
+            Modifier.background(Brush.linearGradient(colors))
+          } else {
+            Modifier.background(MaterialTheme.colorScheme.surfaceContainerHighest)
+          }
+        )
         .clickable(onClick = onClick),
     contentAlignment = Alignment.Center
   ) {
     Icon(
-      painter = painterResource(R.drawable.download),
-      contentDescription = stringResource(R.string.downloaded_songs),
-      tint = MaterialTheme.colorScheme.onSurface,
-      modifier = Modifier.size(28.dp),
-    )
-  }
-}
-
-/** A Home card that opens one music service. */
-@Composable
-fun MusicSourceCard(
-  title: String,
-  @DrawableRes iconRes: Int,
-  colors: List<Color>,
-  onClick: () -> Unit,
-  modifier: Modifier = Modifier,
-) {
-  Column(
-    verticalArrangement = Arrangement.SpaceBetween,
-    modifier =
-      modifier
-        .height(92.dp)
-        .clip(RoundedCornerShape(18.dp))
-        .background(Brush.linearGradient(colors))
-        .clickable(onClick = onClick)
-        .padding(14.dp),
-  ) {
-    Icon(
       painter = painterResource(iconRes),
-      contentDescription = null,
-      tint = Color.White,
-      modifier = Modifier.size(26.dp),
-    )
-    Text(
-      text = title,
-      color = Color.White,
-      fontSize = 16.sp,
-      fontWeight = FontWeight.ExtraBold,
-      maxLines = 1,
-      overflow = TextOverflow.Ellipsis,
+      contentDescription = contentDescription,
+      tint = if (colors != null) Color.White else MaterialTheme.colorScheme.onSurface,
+      modifier = Modifier.size(28.dp),
     )
   }
 }
