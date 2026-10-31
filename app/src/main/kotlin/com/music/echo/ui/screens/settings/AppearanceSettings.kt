@@ -116,6 +116,8 @@ import echo.music.iad1tya.constants.SwipeThumbnailKey
 import echo.music.iad1tya.constants.SwipeToRemoveSongKey
 import echo.music.iad1tya.constants.SwipeToSongKey
 import echo.music.iad1tya.constants.ThumbnailCornerRadiusKey
+import echo.music.iad1tya.constants.StageLyricsLineSpacingDefault
+import echo.music.iad1tya.constants.StageLyricsTextSizeDefault
 import echo.music.iad1tya.constants.UseNewPlayerDesignKey
 import echo.music.iad1tya.ui.component.DefaultDialog
 import echo.music.iad1tya.ui.component.EnumDialog
@@ -225,10 +227,13 @@ fun AppearanceSettings(
     rememberPreference(LyricsScrollKey, defaultValue = true)
   val (lyricsAnimationStyle, onLyricsAnimationStyleChange) =
     rememberEnumPreference(LyricsAnimationStyleKey, defaultValue = LyricsAnimationStyle.echomusic_1)
+  // When nothing is saved, these show what the current player really uses.
+  val unsetLyricsTextSize = if (useNewPlayerDesign) StageLyricsTextSizeDefault else 24f
+  val unsetLyricsLineSpacing = if (useNewPlayerDesign) StageLyricsLineSpacingDefault else 1.3f
   val (lyricsTextSize, onLyricsTextSizeChange) =
-    rememberPreference(LyricsTextSizeKey, defaultValue = 24f)
+    rememberPreference(LyricsTextSizeKey, defaultValue = unsetLyricsTextSize)
   val (lyricsLineSpacing, onLyricsLineSpacingChange) =
-    rememberPreference(LyricsLineSpacingKey, defaultValue = 1.3f)
+    rememberPreference(LyricsLineSpacingKey, defaultValue = unsetLyricsLineSpacing)
   val (lyricsGlowEffect, onLyricsGlowEffectChange) =
     rememberPreference(LyricsGlowEffectKey, defaultValue = false)
   val (appleMusicLyricsBlur, onAppleMusicLyricsBlurChange) =
@@ -397,7 +402,7 @@ fun AppearanceSettings(
           }, primary = false) {
           Text(stringResource(android.R.string.cancel))
         }
-        StagePillButton(onClick = { tempTextSize = 24f }, primary = false) { Text(stringResource(R.string.reset)) }
+        StagePillButton(onClick = { tempTextSize = unsetLyricsTextSize }, primary = false) { Text(stringResource(R.string.reset)) }
       }
     ) {
       Column(
@@ -448,7 +453,7 @@ fun AppearanceSettings(
           }, primary = false) {
           Text(stringResource(android.R.string.cancel))
         }
-        StagePillButton(onClick = { tempLineSpacing = 1.3f }, primary = false) { Text(stringResource(R.string.reset)) }
+        StagePillButton(onClick = { tempLineSpacing = unsetLyricsLineSpacing }, primary = false) { Text(stringResource(R.string.reset)) }
       }
     ) {
       Column(

@@ -38,6 +38,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import echo.music.iad1tya.BuildConfig
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.sp
 import echo.music.iad1tya.R
 import echo.music.iad1tya.ui.component.StageButton
 import java.io.File
@@ -170,22 +174,12 @@ fun SelfUpdateDialog(release: SelfUpdater.Release? = null, onDismiss: () -> Unit
         modifier = Modifier.padding(22.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
       ) {
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-          Icon(
-            painter = painterResource(R.drawable.update),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(24.dp),
-          )
-          Text(
-            text = titleOf(step),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-          )
-        }
+        Text(
+          text = titleOf(step),
+          fontSize = 22.sp,
+          lineHeight = 28.sp,
+          fontWeight = FontWeight.ExtraBold,
+        )
 
         when (val current = step) {
           UpdateStep.Checking ->
@@ -198,53 +192,37 @@ fun SelfUpdateDialog(release: SelfUpdater.Release? = null, onDismiss: () -> Unit
             }
           UpdateStep.UpToDate -> UpdateNote("Music ${BuildConfig.VERSION_NAME} is the latest version.")
           is UpdateStep.Available -> {
-            Text(
-              text = "You have ${BuildConfig.VERSION_NAME}.",
-              style = MaterialTheme.typography.labelLarge,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            if (current.release.notes.isNotBlank()) {
-              Column(
-                modifier = Modifier.heightIn(max = 240.dp).verticalScroll(rememberScrollState())
-              ) {
-                Text(
-                  text = "What's New",
-                  style = MaterialTheme.typography.titleSmall,
-                  fontWeight = FontWeight.Bold,
-                )
-                Spacer(Modifier.height(4.dp))
-                UpdateNote(current.release.notes)
-              }
-            }
-            Text(
-              text = "${megabytes(current.release.size)} MB download. Your data stays as it is.",
-              style = MaterialTheme.typography.bodySmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            ReleaseSummary(current.release)
+            UpdateNote("${megabytes(current.release.size)} MB download. Your data stays as it is.")
           }
           is UpdateStep.Downloading -> {
             val fraction =
               if (current.total > 0) current.received.toFloat() / current.total else 0f
-            LinearProgressIndicator(
-              progress = { fraction },
-              modifier = Modifier.fillMaxWidth(),
-              trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            )
+            ReleaseSummary(current.release)
+            Box(
+              modifier =
+                Modifier.fillMaxWidth()
+                  .height(8.dp)
+                  .clip(RoundedCornerShape(4.dp))
+                  .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            ) {
+              Box(
+                modifier =
+                  Modifier.fillMaxWidth(fraction.coerceIn(0f, 1f))
+                    .height(8.dp)
+                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(4.dp))
+              )
+            }
             UpdateNote(
               "${megabytes(current.received)} of ${megabytes(current.total)} MB · " +
-                "${(fraction * 100).toInt()}%"
-            )
-            Text(
-              text = "Keep Music open until it finishes.",
-              style = MaterialTheme.typography.bodySmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
+                "${(fraction * 100).toInt()}%. Keep Music open until it finishes."
             )
           }
           is UpdateStep.NeedsPermission ->
             UpdateNote("Android needs your permission once: switch on \"Allow from this source\" for Music, then come back and tap Continue.")
           UpdateStep.Installing -> {
             LinearProgressIndicator(
-              modifier = Modifier.fillMaxWidth(),
+              modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
               trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
             )
             UpdateNote("Music closes while it updates. Open it again if it doesn't come back by itself.")
@@ -292,11 +270,31 @@ fun SelfUpdateDialog(release: SelfUpdater.Release? = null, onDismiss: () -> Unit
   }
 }
 
+/** The installed version and the notes of the new one. */
+@Composable
+private fun ReleaseSummary(release: SelfUpdater.Release) {
+  Text(
+    text = "You have ${BuildConfig.VERSION_NAME}.",
+    fontSize = 14.sp,
+    color = MaterialTheme.colorScheme.onSurfaceVariant,
+  )
+  if (release.notes.isNotBlank()) {
+    Column(
+      verticalArrangement = Arrangement.spacedBy(12.dp),
+      modifier = Modifier.heightIn(max = 240.dp).verticalScroll(rememberScrollState())
+    ) {
+      Text(text = "What's New", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+      UpdateNote(release.notes)
+    }
+  }
+}
+
 @Composable
 private fun UpdateNote(text: String) {
   Text(
     text = text,
-    style = MaterialTheme.typography.bodyMedium,
+    fontSize = 14.sp,
+    lineHeight = 20.sp,
     color = MaterialTheme.colorScheme.onSurfaceVariant,
   )
 }
@@ -306,7 +304,7 @@ private fun titleOf(step: UpdateStep): String =
     UpdateStep.Checking -> "Checking for Updates"
     UpdateStep.UpToDate -> "You're Up to Date"
     is UpdateStep.Available -> "Version ${step.release.tag.removePrefix("v")} Is Ready"
-    is UpdateStep.Downloading -> "Downloading ${step.release.tag.removePrefix("v")}"
+    is UpdateStep.Downloading -> "Version ${step.release.tag.removePrefix("v")} Is Ready"
     is UpdateStep.NeedsPermission -> "Allow Installs"
     UpdateStep.Installing -> "Installing Update"
     is UpdateStep.Confirm -> "Tap Update to Finish"

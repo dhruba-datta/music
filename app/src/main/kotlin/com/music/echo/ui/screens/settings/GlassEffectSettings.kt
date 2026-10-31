@@ -138,10 +138,9 @@ fun GlassEffectSettings(
 
 
     Material3SettingsGroup(
-      title = stringResource(R.string.liquid_glass),
       items =
-        listOf(
-          Material3SettingsItem(
+        buildList {
+          add(Material3SettingsItem(
             icon = painterResource(R.drawable.check),
             title = { Text(stringResource(R.string.liquid_glass_global_enabled)) },
             description = { Text(stringResource(R.string.liquid_glass_performance_warning)) },
@@ -149,16 +148,8 @@ fun GlassEffectSettings(
               StageSwitch(checked = globalEnabled, onCheckedChange = onGlobalEnabledChange, enabled = true)
             },
             onClick = { onGlobalEnabledChange(!globalEnabled) }
-          )
-        )
-    )
-
-
-    Material3SettingsGroup(
-      title = stringResource(R.string.nav_bar_style),
-      items =
-        listOf(
-          Material3SettingsItem(
+          ))
+          add(Material3SettingsItem(
             icon = painterResource(R.drawable.nav_bar),
             title = { Text(stringResource(R.string.floating_nav_bar)) },
             description = { Text(stringResource(R.string.floating_nav_bar_desc)) },
@@ -166,92 +157,50 @@ fun GlassEffectSettings(
               StageSwitch(checked = useFloatingNavBar, onCheckedChange = onUseFloatingNavBarChange)
             },
             onClick = { onUseFloatingNavBarChange(!useFloatingNavBar) }
-          ),
-        )
-    )
-
-
-    Material3SettingsGroup(
-      title = stringResource(R.string.liquid_glass_effects),
-      items =
-        listOf(
-          Material3SettingsItem(
+          ))
+          add(Material3SettingsItem(
             icon = painterResource(R.drawable.tune),
             title = { Text(stringResource(R.string.liquid_glass_vibrancy)) },
             description = { Text(stringResource(R.string.liquid_glass_vibrancy_desc)) },
             onClick = { showVibrancyDialog = true }
-          ),
-          Material3SettingsItem(
+          ))
+          add(Material3SettingsItem(
             icon = painterResource(R.drawable.tune),
             title = { Text(stringResource(R.string.liquid_glass_blur_radius)) },
             description = { Text(stringResource(R.string.liquid_glass_blur_radius_desc)) },
             onClick = { showBlurRadiusDialog = true }
-          ),
-          Material3SettingsItem(
+          ))
+          add(Material3SettingsItem(
             icon = painterResource(R.drawable.tune),
             title = { Text(stringResource(R.string.liquid_glass_lens_height)) },
             description = { Text(stringResource(R.string.liquid_glass_lens_height_desc)) },
             onClick = { showLensHeightDialog = true }
-          ),
-          Material3SettingsItem(
+          ))
+          add(Material3SettingsItem(
             icon = painterResource(R.drawable.tune),
             title = { Text(stringResource(R.string.liquid_glass_lens_amount)) },
             description = { Text(stringResource(R.string.liquid_glass_lens_amount_desc)) },
             onClick = { showLensAmountDialog = true }
-          ),
-          Material3SettingsItem(
-            icon = painterResource(R.drawable.tune),
-            title = { Text(stringResource(R.string.liquid_glass_chromatic_aberration)) },
-            description = { Text(stringResource(R.string.liquid_glass_chromatic_aberration_desc)) },
-            trailingContent = {
-              StageSwitch(checked = chromaticAberration, onCheckedChange = onChromaticAberrationChange)
-            },
-            onClick = { onChromaticAberrationChange(!chromaticAberration) }
-          ),
-          Material3SettingsItem(
-            icon = painterResource(R.drawable.tune),
-            title = { Text(stringResource(R.string.liquid_glass_depth_effect)) },
-            description = { Text(stringResource(R.string.liquid_glass_depth_effect_desc)) },
-            trailingContent = {
-              StageSwitch(checked = depthEffect, onCheckedChange = onDepthEffectChange)
-            },
-            onClick = { onDepthEffectChange(!depthEffect) }
-          ),
-        )
-    )
-
-
-    Material3SettingsGroup(
-      title = stringResource(R.string.liquid_glass_appearance),
-      items =
-        listOf(
-          Material3SettingsItem(
-            icon = painterResource(R.drawable.contrast),
-            title = { Text(stringResource(R.string.liquid_glass_surface_tint)) },
-            description = { Text(stringResource(R.string.liquid_glass_surface_tint_desc)) },
-            onClick = { showSurfaceTintDialog = true }
-          ),
-          Material3SettingsItem(
+          ))
+          add(Material3SettingsItem(
             icon = painterResource(R.drawable.tune),
             title = { Text(stringResource(R.string.liquid_glass_surface_opacity)) },
             description = { Text(stringResource(R.string.liquid_glass_surface_opacity_desc)) },
             onClick = { showSurfaceOpacityDialog = true }
-          ),
-          Material3SettingsItem(
+          ))
+          add(Material3SettingsItem(
+            icon = painterResource(R.drawable.contrast),
+            title = { Text(stringResource(R.string.liquid_glass_surface_tint)) },
+            description = { Text(stringResource(R.string.liquid_glass_surface_tint_desc)) },
+            onClick = { showSurfaceTintDialog = true }
+          ))
+          add(Material3SettingsItem(
             icon = painterResource(R.drawable.ic_text_color),
             title = { Text(stringResource(R.string.liquid_glass_text_color)) },
             description = { Text(stringResource(R.string.liquid_glass_text_color_desc)) },
             onClick = { showTextColorDialog = true }
-          ),
-        )
-    )
-
-
-    Material3SettingsGroup(
-      title = stringResource(R.string.liquid_glass_per_component),
-      items =
-        listOf(
-          Material3SettingsItem(
+          ))
+          add(Material3SettingsItem(
             icon = painterResource(R.drawable.drag_handle),
             title = { Text(stringResource(R.string.liquid_glass_player)) },
             description = { Text(stringResource(R.string.liquid_glass_player_desc)) },
@@ -259,8 +208,33 @@ fun GlassEffectSettings(
               StageSwitch(checked = playerEnabled, onCheckedChange = onPlayerEnabledChange)
             },
             onClick = { onPlayerEnabledChange(!playerEnabled) }
-          ),
-          Material3SettingsItem(
+          ))
+        }
+    )
+
+    Material3SettingsGroup(
+      title = stringResource(R.string.stage_more),
+      items =
+        buildList {
+          add(Material3SettingsItem(
+            icon = painterResource(R.drawable.tune),
+            title = { Text(stringResource(R.string.liquid_glass_chromatic_aberration)) },
+            description = { Text(stringResource(R.string.liquid_glass_chromatic_aberration_desc)) },
+            trailingContent = {
+              StageSwitch(checked = chromaticAberration, onCheckedChange = onChromaticAberrationChange)
+            },
+            onClick = { onChromaticAberrationChange(!chromaticAberration) }
+          ))
+          add(Material3SettingsItem(
+            icon = painterResource(R.drawable.tune),
+            title = { Text(stringResource(R.string.liquid_glass_depth_effect)) },
+            description = { Text(stringResource(R.string.liquid_glass_depth_effect_desc)) },
+            trailingContent = {
+              StageSwitch(checked = depthEffect, onCheckedChange = onDepthEffectChange)
+            },
+            onClick = { onDepthEffectChange(!depthEffect) }
+          ))
+          add(Material3SettingsItem(
             icon = painterResource(R.drawable.drag_handle),
             title = { Text(stringResource(R.string.liquid_glass_mini_player)) },
             description = { Text(stringResource(R.string.liquid_glass_mini_player_desc)) },
@@ -268,8 +242,8 @@ fun GlassEffectSettings(
               StageSwitch(checked = miniPlayerEnabled, onCheckedChange = onMiniPlayerEnabledChange)
             },
             onClick = { onMiniPlayerEnabledChange(!miniPlayerEnabled) }
-          ),
-          Material3SettingsItem(
+          ))
+          add(Material3SettingsItem(
             icon = painterResource(R.drawable.nav_bar),
             title = { Text(stringResource(R.string.liquid_glass_nav_bar)) },
             description = { Text(stringResource(R.string.liquid_glass_nav_bar_desc)) },
@@ -277,8 +251,8 @@ fun GlassEffectSettings(
               StageSwitch(checked = navBarEnabled, onCheckedChange = onNavBarEnabledChange)
             },
             onClick = { onNavBarEnabledChange(!navBarEnabled) }
-          ),
-        )
+          ))
+        }
     )
 
     Spacer(modifier = Modifier.height(16.dp))

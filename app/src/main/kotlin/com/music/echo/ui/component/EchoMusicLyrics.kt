@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import echo.music.iad1tya.constants.StageLyricsLineSpacingDefault
 import echo.music.iad1tya.lyrics.LyricsEntry
 import echo.music.iad1tya.ui.screens.settings.LyricsPosition
 
@@ -54,7 +55,8 @@ fun echomusicLyricsLine(
   isSelectionModeActive: Boolean,
   isAutoScrollActive: Boolean,
   expressiveAccent: Color,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
+  stage: Boolean = false,
 ) {
 
   val duration =
@@ -102,6 +104,7 @@ fun echomusicLyricsLine(
     when {
       !isSynced || (isSelectionModeActive && isSelected) -> 1f
       isActive -> 1f
+      stage -> 0.67f
       distanceFromCurrent == 1 -> 0.65f
       distanceFromCurrent == 2 -> 0.45f
       else -> 0.35f
@@ -116,7 +119,7 @@ fun echomusicLyricsLine(
 
   val scale by
     animateFloatAsState(
-      targetValue = if (isActive) 1f else 0.85f,
+      targetValue = if (isActive || stage) 1f else 0.85f,
       animationSpec = tween(durationMillis = 400),
       label = "lineScale"
     )
@@ -136,7 +139,10 @@ fun echomusicLyricsLine(
           MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
         else Color.Transparent
       )
-      .padding(horizontal = 24.dp, vertical = (8 * lineSpacing).dp)
+      .padding(
+        horizontal = 24.dp,
+        vertical = if (stage) (9 * lineSpacing / StageLyricsLineSpacingDefault).dp else (8 * lineSpacing).dp,
+      )
 
   val agentAlignment =
     when {
@@ -186,7 +192,7 @@ fun echomusicLyricsLine(
         val lineRelTime = (effectivePlaybackPosition - entry.time).coerceAtLeast(0L)
         val wordDuration = (endRelative - startRelative).coerceAtLeast(1L)
 
-        val progress by
+        val wordProgress by
           animateFloatAsState(
             targetValue =
               when {
@@ -199,7 +205,10 @@ fun echomusicLyricsLine(
             label = "wordProgress"
           )
 
-        val finalFontWeight = if (isActive) FontWeight.ExtraBold else FontWeight.Bold
+        val finalFontWeight = if (isActive || stage) FontWeight.ExtraBold else FontWeight.Bold
+        // On the Stage view only the current line fills; the others stay evenly dimmed.
+        val progress = if (stage && !isActive) 1f else wordProgress
+        val glow = if (stage && !isActive) 0f else wordProgress
 
         Text(
           text = wordText,
@@ -218,9 +227,9 @@ fun echomusicLyricsLine(
               textAlign = agentTextAlign,
               shadow =
                 androidx.compose.ui.graphics.Shadow(
-                  color = textColor.copy(alpha = 0.6f * progress),
+                  color = textColor.copy(alpha = 0.6f * glow),
                   offset = Offset.Zero,
-                  blurRadius = (12f * progress).coerceAtLeast(0.1f)
+                  blurRadius = (12f * glow).coerceAtLeast(0.1f)
                 )
             )
         )

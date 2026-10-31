@@ -156,6 +156,8 @@ fun AddToPlaylistDialogOnline(
       if (playlists.isNotEmpty()) {
         item {
           OutlinedTextField(
+        colors = echo.music.iad1tya.ui.component.stageFieldColors(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
             value = searchQuery,
             onValueChange = { searchQuery = it },
             placeholder = {
@@ -184,16 +186,6 @@ fun AddToPlaylistDialogOnline(
               }
             },
             singleLine = true,
-            shape = RoundedCornerShape(24.dp),
-            colors =
-              OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                unfocusedContainerColor =
-                  MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
-                cursorColor = MaterialTheme.colorScheme.primary,
-              ),
             textStyle = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)
           )

@@ -135,6 +135,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -144,6 +145,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -181,8 +183,6 @@ import echo.music.iad1tya.R
 import echo.music.iad1tya.applecanvas.AppleMusicCanvasProvider
 import echo.music.iad1tya.canvas.CanvasArtwork
 import echo.music.iad1tya.canvas.TidalCanvasProvider
-import echo.music.iad1tya.constants.StageLyricsLineSpacingDefault
-import echo.music.iad1tya.constants.StageLyricsTextSizeDefault
 import echo.music.iad1tya.constants.AudioQuality
 import echo.music.iad1tya.constants.AudioQualityKey
 import echo.music.iad1tya.constants.CanvasThumbnailAnimationKey
@@ -977,7 +977,8 @@ fun BottomSheetPlayer(
   }
 
   val dismissedBound =
-    QueuePeekHeight + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()
+    (if (useNewPlayerDesign) StageDockPeekHeight else QueuePeekHeight) +
+      WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()
 
   val queueSheetState =
     rememberBottomSheetState(
@@ -1560,8 +1561,8 @@ fun BottomSheetPlayer(
       }
     }
 
-    val songTitleBlock: @Composable (MediaMetadata, Modifier, TextStyle) -> Unit =
-      { mediaMetadata, blockModifier, titleStyle ->
+    val songTitleBlock: @Composable (MediaMetadata, Modifier, TextStyle, TextUnit) -> Unit =
+      { mediaMetadata, blockModifier, titleStyle, artistSize ->
       Column(
         modifier =
           blockModifier
@@ -1609,7 +1610,7 @@ fun BottomSheetPlayer(
           )
         }
 
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(if (useNewPlayerDesign) 1.dp else 4.dp))
 
         if (isCasting && castDeviceName != null) {
           Row(
@@ -1643,7 +1644,14 @@ fun BottomSheetPlayer(
               mediaMetadata.artists.forEachIndexed { index, artist ->
                 val tag = "artist_${artist.id.orEmpty()}"
                 pushStringAnnotation(tag = tag, annotation = artist.id.orEmpty())
-                withStyle(SpanStyle(color = TextBackgroundColor, fontSize = 16.sp)) {
+                withStyle(
+                  SpanStyle(
+                    color =
+                      if (useNewPlayerDesign) TextBackgroundColor.copy(alpha = StageMutedAlpha)
+                      else TextBackgroundColor,
+                    fontSize = artistSize,
+                  )
+                ) {
                   append(artist.name)
                 }
                 pop()
@@ -1821,7 +1829,12 @@ fun BottomSheetPlayer(
 
           val trackHeight by
             animateDpAsState(
-              targetValue = if (isTrackActive) 16.dp else 10.dp,
+              targetValue =
+                when {
+                  useNewPlayerDesign -> 8.dp
+                  isTrackActive -> 16.dp
+                  else -> 10.dp
+                },
               animationSpec =
                 spring(
                   dampingRatio = Spring.DampingRatioMediumBouncy,
@@ -1861,27 +1874,42 @@ fun BottomSheetPlayer(
                 trackHeight = trackHeight,
                 colors =
                   PlayerSliderColors.getSliderColors(
-                    activeColor =
-                      if (useNewPlayerDesign) textButtonColor
-                      else textButtonColor.copy(alpha = 0.7f),
-                    playerBackground = playerBackground,
-                    useDarkTheme = useDarkTheme
-                  )
+                      activeColor =
+                        if (useNewPlayerDesign) textButtonColor
+                        else textButtonColor.copy(alpha = 0.7f),
+                      playerBackground = playerBackground,
+                      useDarkTheme = useDarkTheme
+                    )
+                    .let {
+                      if (useNewPlayerDesign) {
+                        it.copy(inactiveTrackColor = textButtonColor.copy(alpha = 0.33f))
+                      } else {
+                        it
+                      }
+                    }
               )
             },
             modifier = Modifier.padding(horizontal = playerPadding)
           )
         }
       }
-      Spacer(Modifier.height(4.dp))
+      Spacer(Modifier.height(if (useNewPlayerDesign) 0.dp else 4.dp))
 
+      val timeStyle =
+        if (useNewPlayerDesign) {
+          TextStyle(fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+        } else {
+          MaterialTheme.typography.labelMedium
+        }
       Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = playerPadding + 4.dp),
+        modifier =
+          Modifier.fillMaxWidth()
+            .padding(horizontal = if (useNewPlayerDesign) playerPadding else playerPadding + 4.dp),
       ) {
         Text(
           text = makeTimeString(sliderPosition ?: effectivePosition),
-          style = MaterialTheme.typography.labelMedium,
+          style = timeStyle,
           color = TextBackgroundColor,
           maxLines = 1,
           overflow = TextOverflow.Ellipsis,
@@ -2107,7 +2135,7 @@ fun BottomSheetPlayer(
 
         Text(
           text = if (duration != C.TIME_UNSET) makeTimeString(duration) else "",
-          style = MaterialTheme.typography.labelMedium,
+          style = timeStyle,
           color = TextBackgroundColor,
           maxLines = 1,
           overflow = TextOverflow.Ellipsis,
@@ -2206,15 +2234,15 @@ fun BottomSheetPlayer(
               disabledContentColor = sideButtonContentColor.copy(alpha = 0.38f),
             ),
           modifier =
-            Modifier.size(56.dp).graphicsLayer {
+            Modifier.size(44.dp).graphicsLayer {
               scaleX = backButtonScale
               scaleY = backButtonScale
             }
         ) {
           Icon(
             painter = painterResource(R.drawable.skip_previous),
-            contentDescription = null,
-            modifier = Modifier.size(32.dp)
+            contentDescription = stringResource(R.string.previous),
+            modifier = Modifier.size(24.dp)
           )
         }
 
@@ -2292,7 +2320,7 @@ fun BottomSheetPlayer(
                   if (effectiveIsPlaying) stringResource(R.string.pause)
                   else stringResource(R.string.play)
                 },
-              modifier = Modifier.size(playSize * 0.43f)
+              modifier = Modifier.size(32.dp)
             )
           }
         }
@@ -2310,15 +2338,15 @@ fun BottomSheetPlayer(
               disabledContentColor = sideButtonContentColor.copy(alpha = 0.38f),
             ),
           modifier =
-            Modifier.size(56.dp).graphicsLayer {
+            Modifier.size(44.dp).graphicsLayer {
               scaleX = nextButtonScale
               scaleY = nextButtonScale
             }
         ) {
           Icon(
             painter = painterResource(R.drawable.skip_next),
-            contentDescription = null,
-            modifier = Modifier.size(32.dp)
+            contentDescription = stringResource(R.string.next),
+            modifier = Modifier.size(24.dp)
           )
         }
 
@@ -2337,7 +2365,7 @@ fun BottomSheetPlayer(
     }
 
     val stageActions: @Composable (MediaMetadata) -> Unit = { meta ->
-      StageActionRow(modifier = Modifier.padding(horizontal = 16.dp)) {
+      StageActionRow(modifier = Modifier.padding(horizontal = playerPadding)) {
         StageAction(
           label = stringResource(R.string.action_download),
           color = TextBackgroundColor,
@@ -2376,20 +2404,20 @@ fun BottomSheetPlayer(
                 painter = painterResource(R.drawable.offline),
                 contentDescription = null,
                 tint = TextBackgroundColor,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(StageActionIconSize)
               )
             Download.STATE_QUEUED,
             Download.STATE_DOWNLOADING ->
               CircularWavyProgressIndicator(
                 color = TextBackgroundColor,
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(StageActionIconSize),
               )
             else ->
               Icon(
                 painter = painterResource(R.drawable.download),
                 contentDescription = null,
                 tint = TextBackgroundColor,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(StageActionIconSize)
               )
           }
         }
@@ -2403,7 +2431,7 @@ fun BottomSheetPlayer(
             painter = painterResource(R.drawable.playlist_add),
             contentDescription = null,
             tint = TextBackgroundColor,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(StageActionIconSize)
           )
         }
 
@@ -2424,7 +2452,7 @@ fun BottomSheetPlayer(
             painter = painterResource(R.drawable.share),
             contentDescription = null,
             tint = TextBackgroundColor,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(StageActionIconSize)
           )
         }
 
@@ -2446,7 +2474,7 @@ fun BottomSheetPlayer(
             painter = painterResource(R.drawable.bedtime),
             contentDescription = null,
             tint = if (sleepTimerEnabled) iconButtonColor else TextBackgroundColor,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(StageActionIconSize)
           )
         }
 
@@ -2460,7 +2488,7 @@ fun BottomSheetPlayer(
         modifier =
           Modifier.fillMaxWidth()
             .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
-            .padding(horizontal = 12.dp, vertical = 4.dp),
+            .padding(start = 16.dp, top = 8.dp, end = 16.dp),
       ) {
         StageHeaderButton(
           icon = R.drawable.expand_more,
@@ -2492,7 +2520,7 @@ fun BottomSheetPlayer(
             onClick = { isFullScreen = !isFullScreen },
           )
           StageHeaderButton(
-            icon = R.drawable.more_horiz,
+            icon = R.drawable.more_vert,
             contentDescription = stringResource(R.string.more_options),
             color = TextBackgroundColor,
             onClick = {
@@ -2537,8 +2565,8 @@ fun BottomSheetPlayer(
             lineHeight = 30.sp,
             fontWeight = FontWeight.ExtraBold,
           ),
+          16.sp,
         )
-        Spacer(Modifier.width(8.dp))
         val isLiked = currentSong?.song?.liked == true
         Box(
           contentAlignment = Alignment.Center,
@@ -2567,7 +2595,7 @@ fun BottomSheetPlayer(
         Row(
           verticalAlignment = Alignment.CenterVertically,
           modifier =
-            Modifier.fillMaxWidth().padding(horizontal = playerPadding, vertical = 4.dp),
+            Modifier.fillMaxWidth().padding(start = playerPadding, top = 12.dp, end = playerPadding),
         ) {
           if (isFullScreen) lyricsArtwork(meta)
           songTitleBlock(
@@ -2577,6 +2605,7 @@ fun BottomSheetPlayer(
               fontSize = 20.sp,
               fontWeight = FontWeight.ExtraBold,
             ),
+            15.sp,
           )
         }
 
@@ -2584,12 +2613,13 @@ fun BottomSheetPlayer(
           mediaMetadata = meta,
           showLyrics = showLyrics,
           positionProvider = { effectivePosition },
-          defaultTextSize = StageLyricsTextSizeDefault,
-          defaultLineSpacing = StageLyricsLineSpacingDefault,
           modifier = Modifier.weight(1f),
+          stage = true,
         )
 
+        Spacer(Modifier.height(8.dp))
         progressBlock()
+        Spacer(Modifier.height(8.dp))
 
         AnimatedVisibility(
           visible = !isFullScreen,
@@ -2605,7 +2635,7 @@ fun BottomSheetPlayer(
           }
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(14.dp))
         if (isFullScreen) Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
       }
     }
@@ -2636,6 +2666,7 @@ fun BottomSheetPlayer(
           mediaMetadata,
           Modifier.weight(1f),
           MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+          16.sp,
         )
 
         Spacer(modifier = Modifier.width(12.dp))
@@ -3035,7 +3066,8 @@ fun BottomSheetPlayer(
                   InlineLyricsView(
                     mediaMetadata = mediaMetadata,
                     showLyrics = showLyrics,
-                    positionProvider = { effectivePosition }
+                    positionProvider = { effectivePosition },
+                    stage = true,
                   )
                 } else {
                   Thumbnail(
@@ -3180,7 +3212,7 @@ fun BottomSheetPlayer(
                 showLyrics -> stageLyricsBody(meta, showLyrics)
                 else ->
                   StageEvenLayout(
-                    modifier = Modifier.fillMaxSize().padding(bottom = 8.dp),
+                    modifier = Modifier.fillMaxSize().padding(bottom = 16.dp),
                     artwork = {
                       Thumbnail(
                         sliderPositionProvider = sliderPositionProvider,
@@ -3205,7 +3237,7 @@ fun BottomSheetPlayer(
                         {
                           Column {
                             stageSongRow(meta)
-                            Spacer(Modifier.height(4.dp))
+                            Spacer(Modifier.height(6.dp))
                             progressBlock()
                           }
                         },
@@ -3307,6 +3339,9 @@ fun BottomSheetPlayer(
         onToggleLyrics = { showInlineLyrics = !showInlineLyrics },
         playerMenuRequested = stagePlayerMenuRequested,
         onPlayerMenuRequestHandled = { stagePlayerMenuRequested = false },
+        stageSheetColor =
+          gradientColors.lastOrNull()?.let { lerp(it, Color.White, 0.03f) }
+            ?: MaterialTheme.colorScheme.surfaceContainerHigh,
       )
     }
 
@@ -3342,6 +3377,7 @@ fun InlineLyricsView(
   positionProvider: () -> Long,
   defaultTextSize: Float = 24f,
   defaultLineSpacing: Float = 1.3f,
+  stage: Boolean = false,
 ) {
   val playerConnection = LocalPlayerConnection.current ?: return
   val currentLyrics by playerConnection.currentLyrics.collectAsState(initial = null)
@@ -3398,10 +3434,11 @@ fun InlineLyricsView(
         val lyricsContent: @Composable () -> Unit = {
           Lyrics(
             sliderPositionProvider = positionProvider,
-            modifier = Modifier.padding(horizontal = 24.dp),
+            modifier = if (stage) Modifier else Modifier.padding(horizontal = 24.dp),
             showLyrics = showLyrics,
             defaultTextSize = defaultTextSize,
             defaultLineSpacing = defaultLineSpacing,
+            stage = stage,
           )
         }
         ProvideTextStyle(

@@ -40,6 +40,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.background
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -197,8 +199,11 @@ private fun EqScreenContent(
     }
 
     LazyColumn(
-      modifier = Modifier.fillMaxWidth().padding(start = 18.dp, top = 6.dp, end = 18.dp),
-      contentPadding = PaddingValues(bottom = 18.dp),
+      modifier =
+        Modifier.fillMaxWidth()
+          .padding(start = 18.dp, top = 6.dp, end = 18.dp, bottom = 18.dp)
+          .clip(androidx.compose.foundation.shape.RoundedCornerShape(18.dp))
+          .background(MaterialTheme.colorScheme.surfaceContainer),
     ) {
       item {
         StageEqRow(

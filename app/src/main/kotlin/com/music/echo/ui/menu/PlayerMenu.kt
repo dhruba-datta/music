@@ -102,6 +102,7 @@ import echo.music.iad1tya.constants.QueueEditLockKey
 import echo.music.iad1tya.constants.ShowLyricsOnPlayerKey
 import echo.music.iad1tya.listentogether.ConnectionState
 import echo.music.iad1tya.listentogether.ListenTogetherEvent
+import echo.music.iad1tya.ui.component.stageLabel
 import echo.music.iad1tya.models.MediaMetadata
 import echo.music.iad1tya.playback.ExoDownloadService
 import echo.music.iad1tya.ui.component.BottomSheetState
@@ -1166,15 +1167,16 @@ fun ListenTogetherDialog(visible: Boolean, mediaMetadata: MediaMetadata?, onDism
           Icon(
             painter = painterResource(R.drawable.group),
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.size(48.dp)
           )
           Spacer(modifier = Modifier.height(16.dp))
           Text(
             text = stringResource(R.string.listen_together),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+            fontSize = 22.sp,
+            lineHeight = 28.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = MaterialTheme.colorScheme.onSurface
           )
           Spacer(modifier = Modifier.height(8.dp))
           Text(
@@ -1184,12 +1186,10 @@ fun ListenTogetherDialog(visible: Boolean, mediaMetadata: MediaMetadata?, onDism
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
           Spacer(modifier = Modifier.height(24.dp))
-          Button(
+          echo.music.iad1tya.ui.component.StageButton(
+            text = stringResource(android.R.string.ok),
             onClick = onDismiss,
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-          ) {
-            Text(stringResource(android.R.string.ok))
-          }
+          )
         }
       }
     }
@@ -1219,161 +1219,36 @@ fun ListenTogetherDialog(visible: Boolean, mediaMetadata: MediaMetadata?, onDism
   val joinRequestDeniedText = stringResource(R.string.join_request_denied)
 
   if (selectedUserForMenu != null && selectedUsername != null) {
+    val closeManageUser = {
+      selectedUserForMenu = null
+      selectedUsername = null
+    }
     ListDialog(
-      onDismiss = {
-        selectedUserForMenu = null
-        selectedUsername = null
-      }
+      onDismiss = closeManageUser,
+      title = { Text(text = selectedUsername ?: "", maxLines = 1, overflow = TextOverflow.Ellipsis) },
     ) {
       item {
-        Row(
-          modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.Start
-        ) {
-          Icon(
-            painter = painterResource(R.drawable.group),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(40.dp)
-          )
-          Spacer(modifier = Modifier.width(16.dp))
-          Column {
-            Text(
-              text = stringResource(R.string.manage_user),
-              style = MaterialTheme.typography.headlineSmall,
-              fontWeight = FontWeight.Bold,
-              color = MaterialTheme.colorScheme.primary
-            )
-            Text(
-              text = selectedUsername ?: "",
-              style = MaterialTheme.typography.bodyMedium,
-              color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-          }
-        }
-      }
-
-      item { Spacer(modifier = Modifier.height(12.dp)) }
-
-      item {
-        Surface(
-          modifier =
-            Modifier.fillMaxWidth().padding(horizontal = 12.dp).clickable {
-              selectedUserForMenu?.let { listenTogetherManager.kickUser(it, "Removed by host") }
-              selectedUserForMenu = null
-              selectedUsername = null
-            },
-          shape = RoundedCornerShape(12.dp),
-          color = MaterialTheme.colorScheme.errorContainer
-        ) {
-          Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(16.dp)) {
-            Icon(
-              painter = painterResource(R.drawable.close),
-              contentDescription = null,
-              tint = MaterialTheme.colorScheme.error,
-              modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-              Text(
-                text = stringResource(R.string.kick_user),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.error
-              )
-              Text(
-                text = stringResource(R.string.kick_user_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-              )
-            }
-          }
-        }
-      }
-
-      item { Spacer(modifier = Modifier.height(8.dp)) }
-
-      item {
-        Surface(
-          modifier =
-            Modifier.fillMaxWidth().padding(horizontal = 12.dp).clickable {
-              selectedUserForMenu?.let { userId ->
-                selectedUsername?.let { username ->
-                  listenTogetherManager.blockUser(username)
-                  listenTogetherManager.kickUser(userId, R.string.user_blocked_by_host.toString())
-                }
+        echo.music.iad1tya.ui.component.StageRoomManageRows(
+          onKick = {
+            selectedUserForMenu?.let { listenTogetherManager.kickUser(it, "Removed by host") }
+            closeManageUser()
+          },
+          onBlock = {
+            selectedUserForMenu?.let { userId ->
+              selectedUsername?.let { username ->
+                listenTogetherManager.blockUser(username)
+                listenTogetherManager.kickUser(userId, R.string.user_blocked_by_host.toString())
               }
-              selectedUserForMenu = null
-              selectedUsername = null
-            },
-          shape = RoundedCornerShape(12.dp),
-          color = MaterialTheme.colorScheme.surfaceVariant
-        ) {
-          Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(16.dp)) {
-            Icon(
-              painter = painterResource(R.drawable.close),
-              contentDescription = null,
-              tint = MaterialTheme.colorScheme.error,
-              modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-              Text(
-                text = stringResource(R.string.permanently_kick_user),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-              )
-              Text(
-                text = stringResource(R.string.permanently_kick_user_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-              )
             }
-          }
-        }
+            closeManageUser()
+          },
+          onTransfer = {
+            selectedUserForMenu?.let { listenTogetherManager.transferHost(it) }
+            closeManageUser()
+          },
+          modifier = Modifier.padding(horizontal = 8.dp),
+        )
       }
-
-      item { Spacer(modifier = Modifier.height(8.dp)) }
-
-      item {
-        Surface(
-          modifier =
-            Modifier.fillMaxWidth().padding(horizontal = 12.dp).clickable {
-              selectedUserForMenu?.let { listenTogetherManager.transferHost(it) }
-              selectedUserForMenu = null
-              selectedUsername = null
-            },
-          shape = RoundedCornerShape(12.dp),
-          color = MaterialTheme.colorScheme.primaryContainer
-        ) {
-          Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(16.dp)) {
-            Icon(
-              painter = painterResource(R.drawable.crown),
-              contentDescription = null,
-              tint = MaterialTheme.colorScheme.primary,
-              modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-              Text(
-                text = stringResource(R.string.transfer_ownership),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary
-              )
-              Text(
-                text = stringResource(R.string.transfer_ownership_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-              )
-            }
-          }
-        }
-      }
-
-      item { Spacer(modifier = Modifier.height(16.dp)) }
     }
     return
   }
@@ -1418,786 +1293,199 @@ fun ListenTogetherDialog(visible: Boolean, mediaMetadata: MediaMetadata?, onDism
   val isInRoom = listenTogetherManager.isInRoom
   val isHost = roomState?.hostId == userId
 
-  ListDialog(onDismiss = onDismiss) {
+  ListDialog(
+    onDismiss = onDismiss,
+    title = {
+      Text(
+        text =
+          if (isInRoom) {
+            if (isHost) stringResource(R.string.hosting_room) else stringResource(R.string.in_room)
+          } else {
+            stringResource(R.string.listen_together)
+          },
+      )
+    },
+  ) {
     item {
-      Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Start
+      Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
       ) {
-        Icon(
-          painter = painterResource(R.drawable.group),
-          contentDescription = null,
-          tint = MaterialTheme.colorScheme.primary,
-          modifier = Modifier.size(40.dp)
-        )
-        Spacer(modifier = Modifier.width(16.dp))
-        Text(
-          text =
-            if (isInRoom) {
-              if (isHost) stringResource(R.string.hosting_room)
-              else stringResource(R.string.in_room)
-            } else {
-              stringResource(R.string.listen_together)
-            },
-          style = MaterialTheme.typography.headlineSmall,
-          fontWeight = FontWeight.Bold,
-          color = MaterialTheme.colorScheme.primary
-        )
-      }
-    }
-
-    item {
-      Surface(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(16.dp),
-        color =
-          when (connectionState) {
-            ConnectionState.CONNECTED -> MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-            ConnectionState.CONNECTING,
-            ConnectionState.RECONNECTING -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)
-            ConnectionState.ERROR -> MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
-            ConnectionState.DISCONNECTED -> MaterialTheme.colorScheme.surfaceVariant
-          }
-      ) {
-        Column(
-          modifier = Modifier.padding(16.dp),
-          horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-          Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-          ) {
-            Box(
-              modifier =
-                Modifier.size(10.dp)
-                  .background(
-                    color =
-                      when (connectionState) {
-                        ConnectionState.CONNECTED -> MaterialTheme.colorScheme.primary
-                        ConnectionState.CONNECTING,
-                        ConnectionState.RECONNECTING -> MaterialTheme.colorScheme.secondary
-                        ConnectionState.ERROR -> MaterialTheme.colorScheme.error
-                        ConnectionState.DISCONNECTED -> MaterialTheme.colorScheme.outline
-                      },
-                    shape = RoundedCornerShape(50)
-                  )
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-              text =
-                when (connectionState) {
-                  ConnectionState.CONNECTED -> stringResource(R.string.listen_together_connected)
-                  ConnectionState.CONNECTING -> stringResource(R.string.listen_together_connecting)
-                  ConnectionState.RECONNECTING ->
-                    stringResource(R.string.listen_together_reconnecting)
-                  ConnectionState.ERROR -> stringResource(R.string.listen_together_error)
-                  ConnectionState.DISCONNECTED ->
-                    stringResource(R.string.listen_together_disconnected)
-                },
-              style = MaterialTheme.typography.titleMedium,
-              fontWeight = FontWeight.SemiBold,
-              color =
-                when (connectionState) {
-                  ConnectionState.CONNECTED -> MaterialTheme.colorScheme.primary
-                  ConnectionState.CONNECTING,
-                  ConnectionState.RECONNECTING -> MaterialTheme.colorScheme.secondary
-                  ConnectionState.ERROR -> MaterialTheme.colorScheme.error
-                  ConnectionState.DISCONNECTED -> MaterialTheme.colorScheme.onSurfaceVariant
-                }
-            )
+        val room = roomState
+        if (isInRoom && room != null) {
+          echo.music.iad1tya.ui.component.StageRoomHero(
+            roomCode = room.roomCode,
+            label =
+              if (isHost) {
+                stringResource(R.string.stage_your_room) + " · " + connectionState.stageLabel()
+              } else {
+                stringResource(R.string.listen_together_you_are_guest)
+              },
+          )
+          if (isHost) {
+            echo.music.iad1tya.ui.component.StageRoomCopyButtons(roomCode = room.roomCode)
           }
 
-          if (
-            connectionState == ConnectionState.CONNECTING ||
-              connectionState == ConnectionState.RECONNECTING
-          ) {
-            Spacer(modifier = Modifier.height(12.dp))
-            LinearProgressIndicator(
-              modifier = Modifier.fillMaxWidth(),
-              color = MaterialTheme.colorScheme.primary
-            )
-          }
-
-          Spacer(modifier = Modifier.height(12.dp))
-
-          Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
-          ) {
-            if (
-              connectionState == ConnectionState.DISCONNECTED ||
-                connectionState == ConnectionState.ERROR
-            ) {
-              Button(
-                onClick = { listenTogetherManager.connect() },
-                modifier = Modifier.weight(1f),
-                colors =
-                  ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-              ) {
-                Text(stringResource(R.string.connect), fontWeight = FontWeight.SemiBold)
-              }
-            } else {
-              Button(
-                onClick = { listenTogetherManager.disconnect() },
-                modifier = Modifier.weight(1f),
-                colors =
-                  ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-              ) {
-                Text(stringResource(R.string.disconnect), fontWeight = FontWeight.SemiBold)
-              }
-              FilledTonalButton(
-                onClick = { listenTogetherManager.forceReconnect() },
-                modifier = Modifier.weight(1f)
-              ) {
-                Text("Reconnect", fontWeight = FontWeight.SemiBold)
-              }
-            }
-          }
-        }
-      }
-    }
-
-    item { Spacer(modifier = Modifier.height(12.dp)) }
-
-    if (connectionState == ConnectionState.CONNECTED && !isInRoom) {
-      item {
-        Text(
-          text = stringResource(R.string.listen_together_background_disconnect_note),
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-          modifier = Modifier.padding(horizontal = 24.dp),
-          textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-      }
-    }
-
-    if (isInRoom) {
-
-      roomState?.let { room ->
-        item {
-          Surface(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-          ) {
-            Column(
-              modifier = Modifier.padding(16.dp),
-              horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-              Text(
-                text = stringResource(R.string.room_code),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary
-              )
-              Spacer(modifier = Modifier.height(4.dp))
-              Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-              ) {
-                Text(
-                  text = room.roomCode,
-                  style = MaterialTheme.typography.headlineLarge,
-                  color = MaterialTheme.colorScheme.primary,
-                  fontWeight = FontWeight.Bold,
-                  letterSpacing = 6.sp
+          Text(
+            text = stringResource(R.string.stage_in_the_room),
+            fontSize = 19.sp,
+            lineHeight = 24.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = MaterialTheme.colorScheme.onSurface,
+          )
+          Column {
+            room.users
+              .filter { it.isConnected }
+              .forEach { user ->
+                echo.music.iad1tya.ui.component.StageRoomUserRow(
+                  user = user,
+                  isCurrentUser = user.userId == userId,
+                  enabled = isHost && user.userId != userId,
+                  onClick = {
+                    selectedUserForMenu = user.userId
+                    selectedUsername = user.username
+                  },
                 )
               }
-              if (isHost) {
-                Spacer(modifier = Modifier.height(12.dp))
-                val inviteLink =
-                  remember(room.roomCode) {
-                    "https://metroserverx.meowery.eu/listen?code=${room.roomCode}"
-                  }
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-        StagePillButton(onClick = {
-                      val clipboard =
-                        context.getSystemService(Context.CLIPBOARD_SERVICE)
-                          as android.content.ClipboardManager
-                      val clip = android.content.ClipData.newPlainText("Room Code", room.roomCode)
-                      clipboard.setPrimaryClip(clip)
-                      Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT)
-                        .show()
-                    }) {
-                    Icon(
-                      painter = painterResource(R.drawable.content_copy),
-                      contentDescription = stringResource(R.string.copy_code),
-                      modifier = Modifier.size(18.dp)
-                    )
-                    
-                    Text(stringResource(R.string.copy_code))
-                  }
-        StagePillButton(onClick = {
-                      val clipboard =
-                        context.getSystemService(Context.CLIPBOARD_SERVICE)
-                          as android.content.ClipboardManager
-                      val clip =
-                        android.content.ClipData.newPlainText("Listen Together Link", inviteLink)
-                      clipboard.setPrimaryClip(clip)
-                      Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT)
-                        .show()
-                    }, primary = false) {
-                    Icon(
-                      painter = painterResource(R.drawable.link),
-                      contentDescription = stringResource(R.string.copy_link),
-                      modifier = Modifier.size(18.dp)
-                    )
-                    
-                    Text(stringResource(R.string.copy_link))
-                  }
-      }
-              }
-            }
           }
-        }
 
-        item { Spacer(modifier = Modifier.height(16.dp)) }
-
-        val connectedUsers = room.users.filter { it.isConnected }
-
-        item {
-          Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+          if (isHost && pendingJoinRequests.isNotEmpty()) {
             Text(
-              text = stringResource(R.string.connected_users, connectedUsers.size),
-              style = MaterialTheme.typography.titleSmall,
-              fontWeight = FontWeight.Bold,
-              color = MaterialTheme.colorScheme.primary,
-              modifier = Modifier.padding(bottom = 12.dp)
+              text = stringResource(R.string.listen_together_join_requests),
+              fontSize = 19.sp,
+              lineHeight = 24.sp,
+              fontWeight = FontWeight.ExtraBold,
+              color = MaterialTheme.colorScheme.onSurface,
             )
-
-            Row(
-              modifier = Modifier.fillMaxWidth(),
-              horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-              connectedUsers.forEach { user ->
-                Column(
-                  horizontalAlignment = Alignment.CenterHorizontally,
-                  modifier =
-                    Modifier.width(72.dp)
-                      .clickable(
-                        enabled = isHost && user.userId != userId,
-                        onClick = {
-                          selectedUserForMenu = user.userId
-                          selectedUsername = user.username
-                        }
-                      )
-                ) {
-                  Box(contentAlignment = Alignment.Center) {
-                    Surface(
-                      modifier = Modifier.size(52.dp),
-                      shape = RoundedCornerShape(50),
-                      color =
-                        if (user.isHost) {
-                          MaterialTheme.colorScheme.primary
-                        } else if (user.userId == userId) {
-                          MaterialTheme.colorScheme.secondary
-                        } else {
-                          MaterialTheme.colorScheme.surfaceVariant
-                        }
-                    ) {
-                      Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                        Text(
-                          text = user.username.take(1).uppercase(),
-                          style = MaterialTheme.typography.titleLarge,
-                          fontWeight = FontWeight.Bold,
-                          color =
-                            if (user.isHost) {
-                              MaterialTheme.colorScheme.onPrimary
-                            } else if (user.userId == userId) {
-                              MaterialTheme.colorScheme.onSecondary
-                            } else {
-                              MaterialTheme.colorScheme.onSurfaceVariant
-                            }
-                        )
-                      }
-                    }
-
-                    if (user.isHost || user.userId == userId) {
-                      Surface(
-                        modifier =
-                          Modifier.align(Alignment.BottomEnd)
-                            .offset(x = 4.dp, y = 4.dp)
-                            .size(18.dp),
-                        shape = RoundedCornerShape(50),
-                        color =
-                          if (user.isHost) MaterialTheme.colorScheme.primary
-                          else MaterialTheme.colorScheme.secondary
-                      ) {
-                        Box(
-                          contentAlignment = Alignment.Center,
-                          modifier = Modifier.fillMaxSize()
-                        ) {
-                          Icon(
-                            painter =
-                              painterResource(
-                                if (user.isHost) R.drawable.crown else R.drawable.person
-                              ),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(12.dp)
-                          )
-                        }
-                      }
-                    }
-                  }
-
-                  Spacer(modifier = Modifier.height(6.dp))
-
-                  Text(
-                    text = user.username,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = if (user.userId == userId) FontWeight.Bold else FontWeight.Medium,
-                    color =
-                      if (user.isHost) {
-                        MaterialTheme.colorScheme.primary
-                      } else {
-                        MaterialTheme.colorScheme.onSurface
-                      },
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center
-                  )
-
-                  if (user.isHost) {
-                    Text(
-                      text = stringResource(R.string.host_label),
-                      style = MaterialTheme.typography.labelSmall,
-                      color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-                    )
-                  } else if (user.userId == userId) {
-                    Text(
-                      text = stringResource(R.string.you_label),
-                      style = MaterialTheme.typography.labelSmall,
-                      color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f)
-                    )
-                  }
-                }
+            Column {
+              pendingJoinRequests.forEach { request ->
+                echo.music.iad1tya.ui.component.StageRoomRequestRow(
+                  username = request.username,
+                  onApprove = { listenTogetherManager.approveJoin(request.userId) },
+                  onReject = {
+                    listenTogetherManager.rejectJoin(request.userId, "Rejected by host")
+                  },
+                )
               }
             }
           }
-        }
 
-        if (isHost && pendingJoinRequests.isNotEmpty()) {
-          item {
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-              text = stringResource(R.string.pending_requests),
-              style = MaterialTheme.typography.titleSmall,
-              fontWeight = FontWeight.Bold,
-              color = MaterialTheme.colorScheme.primary,
-              modifier = Modifier.padding(horizontal = 16.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-          }
-
-          items(pendingJoinRequests) { request ->
-            Surface(
-              modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-              shape = RoundedCornerShape(12.dp),
-              color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)
-            ) {
-              Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.padding(12.dp)
-              ) {
-                Row(
-                  verticalAlignment = Alignment.CenterVertically,
-                  horizontalArrangement = Arrangement.spacedBy(12.dp),
-                  modifier = Modifier.weight(1f)
-                ) {
-                  Surface(
-                    modifier = Modifier.size(36.dp),
-                    shape = RoundedCornerShape(50),
-                    color = MaterialTheme.colorScheme.secondary
-                  ) {
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                      Text(
-                        text = request.username.take(1).uppercase(),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSecondary
-                      )
-                    }
-                  }
-                  Text(
-                    text = request.username,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
-                  )
-                }
-
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                  IconButton(onClick = { listenTogetherManager.approveJoin(request.userId) }) {
-                    Icon(
-                      painter = painterResource(R.drawable.check),
-                      contentDescription = stringResource(R.string.approve),
-                      tint = MaterialTheme.colorScheme.primary,
-                      modifier = Modifier.size(24.dp)
-                    )
-                  }
-                  IconButton(
-                    onClick = {
-                      listenTogetherManager.rejectJoin(request.userId, "Rejected by host")
-                    }
-                  ) {
-                    Icon(
-                      painter = painterResource(R.drawable.close),
-                      contentDescription = stringResource(R.string.reject),
-                      tint = MaterialTheme.colorScheme.error,
-                      modifier = Modifier.size(24.dp)
-                    )
-                  }
-                }
-              }
-            }
-          }
-        }
-
-        if (isHost && pendingSuggestions.isNotEmpty()) {
-          item {
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-            Spacer(modifier = Modifier.height(12.dp))
+          if (isHost && pendingSuggestions.isNotEmpty()) {
             Text(
               text = stringResource(R.string.pending_suggestions),
-              style = MaterialTheme.typography.titleSmall,
-              fontWeight = FontWeight.Bold,
-              color = MaterialTheme.colorScheme.primary,
-              modifier = Modifier.padding(horizontal = 16.dp)
+              fontSize = 19.sp,
+              lineHeight = 24.sp,
+              fontWeight = FontWeight.ExtraBold,
+              color = MaterialTheme.colorScheme.onSurface,
             )
-            Spacer(modifier = Modifier.height(8.dp))
-          }
-
-          items(pendingSuggestions) { suggestion ->
-            Surface(
-              modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-              shape = RoundedCornerShape(12.dp),
-              color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)
-            ) {
-              Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.padding(12.dp)
-              ) {
-                Row(
-                  verticalAlignment = Alignment.CenterVertically,
-                  horizontalArrangement = Arrangement.spacedBy(12.dp),
-                  modifier = Modifier.weight(1f)
-                ) {
-                  Icon(
-                    painter = painterResource(R.drawable.queue_music),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                  )
-                  Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                      text = suggestion.trackInfo.title,
-                      style = MaterialTheme.typography.bodyMedium,
-                      fontWeight = FontWeight.Medium,
-                      color = MaterialTheme.colorScheme.onSurface,
-                      maxLines = 1,
-                      overflow = TextOverflow.Ellipsis
+            Column {
+              pendingSuggestions.forEach { suggestion ->
+                echo.music.iad1tya.ui.component.StageRoomSuggestionRow(
+                  title = suggestion.trackInfo.title,
+                  fromUsername = suggestion.fromUsername,
+                  onApprove = { listenTogetherManager.approveSuggestion(suggestion.suggestionId) },
+                  onReject = {
+                    listenTogetherManager.rejectSuggestion(
+                      suggestion.suggestionId,
+                      "Rejected by host"
                     )
-                    Text(
-                      text = suggestion.fromUsername,
-                      style = MaterialTheme.typography.bodySmall,
-                      color = MaterialTheme.colorScheme.onSurfaceVariant,
-                      maxLines = 1,
-                      overflow = TextOverflow.Ellipsis
-                    )
-                  }
-                }
-
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                  IconButton(
-                    onClick = { listenTogetherManager.approveSuggestion(suggestion.suggestionId) }
-                  ) {
-                    Icon(
-                      painter = painterResource(R.drawable.check),
-                      contentDescription = stringResource(R.string.approve),
-                      tint = MaterialTheme.colorScheme.primary,
-                      modifier = Modifier.size(24.dp)
-                    )
-                  }
-                  IconButton(
-                    onClick = {
-                      listenTogetherManager.rejectSuggestion(
-                        suggestion.suggestionId,
-                        "Rejected by host"
-                      )
-                    }
-                  ) {
-                    Icon(
-                      painter = painterResource(R.drawable.close),
-                      contentDescription = stringResource(R.string.reject),
-                      tint = MaterialTheme.colorScheme.error,
-                      modifier = Modifier.size(24.dp)
-                    )
-                  }
-                }
+                  },
+                )
               }
             }
           }
-        }
 
-        item {
-          Spacer(modifier = Modifier.height(20.dp))
-          Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-        StagePillButton(onClick = {
+          echo.music.iad1tya.ui.component.StageRoomConnection(
+            connectionState = connectionState,
+            onConnect = { listenTogetherManager.connect() },
+            onDisconnect = { listenTogetherManager.disconnect() },
+            onReconnect = { listenTogetherManager.forceReconnect() },
+          )
+
+          Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            StagePillButton(
+              onClick = {
                 listenTogetherManager.leaveRoom()
                 onDismiss()
-              }) {
-              Icon(
-                painter = painterResource(R.drawable.logout),
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-              )
-              
-              Text(stringResource(R.string.leave_room), fontWeight = FontWeight.SemiBold)
-            }
-        StagePillButton(onClick = onDismiss, primary = false) {
-              Text(stringResource(R.string.cancel), fontWeight = FontWeight.Medium)
-            }
-      }
-          Spacer(modifier = Modifier.height(16.dp))
-        }
-      }
-    } else {
-
-      item {
-        Surface(
-          modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-          shape = RoundedCornerShape(16.dp),
-          color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        ) {
-          Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-          ) {
-            Text(
-              text = stringResource(R.string.listen_together_description),
-              style = MaterialTheme.typography.bodyMedium,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-              textAlign = TextAlign.Center
-            )
-
-            OutlinedTextField(
-              value = usernameInput,
-              onValueChange = { usernameInput = it },
-              label = { Text(stringResource(R.string.username)) },
-              placeholder = { Text(stringResource(R.string.enter_username)) },
-              leadingIcon = {
-                Icon(
-                  painterResource(R.drawable.person),
-                  null,
-                  tint = MaterialTheme.colorScheme.primary
-                )
               },
-              trailingIcon = {
-                if (usernameInput.isNotBlank()) {
-                  IconButton(onClick = { usernameInput = "" }) {
-                    Icon(painterResource(R.drawable.close), null)
-                  }
-                }
-              },
-              singleLine = true,
-              shape = RoundedCornerShape(12.dp),
-              colors =
-                OutlinedTextFieldDefaults.colors(
-                  focusedBorderColor = MaterialTheme.colorScheme.primary,
-                  unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                  focusedLabelColor = MaterialTheme.colorScheme.primary
-                ),
-              modifier = Modifier.fillMaxWidth()
-            )
-
-            HorizontalDivider()
-
-            Text(
-              text = stringResource(R.string.join_existing_room),
-              style = MaterialTheme.typography.titleSmall,
-              fontWeight = FontWeight.Bold,
-              color = MaterialTheme.colorScheme.primary
-            )
-
-            OutlinedTextField(
-              value = roomCodeInput,
-              onValueChange = {
-                roomCodeInput = it.uppercase().filter { c -> c.isLetterOrDigit() }.take(8)
-              },
-              label = { Text(stringResource(R.string.room_code)) },
-              placeholder = { Text("ABCD1234") },
-              supportingText = {
-                Text(
-                  text = "${roomCodeInput.length}/8",
-                  style = MaterialTheme.typography.labelSmall,
-                  color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-              },
-              leadingIcon = {
-                Icon(
-                  painterResource(R.drawable.token),
-                  null,
-                  tint = MaterialTheme.colorScheme.primary
-                )
-              },
-              singleLine = true,
-              shape = RoundedCornerShape(12.dp),
-              colors =
-                OutlinedTextFieldDefaults.colors(
-                  focusedBorderColor = MaterialTheme.colorScheme.primary,
-                  unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                  focusedLabelColor = MaterialTheme.colorScheme.primary
-                ),
-              modifier = Modifier.fillMaxWidth()
-            )
-
-            if (isJoiningRoom) {
-              Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth()
-              ) {
-                CircularProgressIndicator(
-                  modifier = Modifier.size(18.dp),
-                  strokeWidth = 2.dp,
-                  color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                  text = waitingForApprovalText,
-                  style = MaterialTheme.typography.bodyMedium,
-                  color = MaterialTheme.colorScheme.primary,
-                  fontWeight = FontWeight.Medium
-                )
-              }
-            }
-
-            joinErrorMessage?.let { msg ->
-              Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.error.copy(alpha = 0.1f)
-              ) {
-                Row(
-                  verticalAlignment = Alignment.CenterVertically,
-                  horizontalArrangement = Arrangement.Center,
-                  modifier = Modifier.padding(12.dp)
-                ) {
-                  Icon(
-                    painterResource(R.drawable.error),
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.error
-                  )
-                  Spacer(modifier = Modifier.width(8.dp))
-                  Text(
-                    text = msg,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
-                    fontWeight = FontWeight.Medium
-                  )
-                }
-              }
-            }
-          }
-        }
-      }
-
-      item {
-        Spacer(modifier = Modifier.height(20.dp))
-        Column(
-          modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-          verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-          Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-          ) {
-            Button(
-              onClick = {
-                val username = usernameInput.takeIf { it.isNotBlank() } ?: savedUsername
-                val finalUsername = username.trim()
-                if (finalUsername.isNotBlank()) {
-                  savedUsername = finalUsername
-                  Toast.makeText(context, R.string.creating_room, Toast.LENGTH_SHORT).show()
-                  isCreatingRoom = true
-                  isJoiningRoom = false
-                  joinErrorMessage = null
-                  listenTogetherManager.connect()
-                  listenTogetherManager.createRoom(finalUsername)
-                } else {
-                  Toast.makeText(context, R.string.error_username_empty, Toast.LENGTH_SHORT).show()
-                }
-              },
-              modifier = Modifier.weight(1f),
-              enabled = (usernameInput.trim().isNotBlank() || savedUsername.isNotBlank()),
-              colors =
-                ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+              primary = false,
             ) {
-              Icon(
-                painter = painterResource(R.drawable.add),
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-              )
-              Spacer(Modifier.width(8.dp))
-              Text(stringResource(R.string.create_room), fontWeight = FontWeight.SemiBold)
+              Text(stringResource(R.string.leave_room))
             }
-
-            if (roomCodeInput.length == 8) {
-              Button(
-                onClick = {
-                  val username = usernameInput.takeIf { it.isNotBlank() } ?: savedUsername
-                  val finalUsername = username.trim()
-                  if (finalUsername.isNotBlank()) {
-                    savedUsername = finalUsername
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.joining_room, roomCodeInput),
-                        Toast.LENGTH_SHORT
-                      )
-                      .show()
-                    isJoiningRoom = true
-                    isCreatingRoom = false
-                    joinErrorMessage = null
-                    listenTogetherManager.connect()
-                    listenTogetherManager.joinRoom(roomCodeInput, finalUsername)
-                  } else {
-                    Toast.makeText(context, R.string.error_username_empty, Toast.LENGTH_SHORT)
-                      .show()
-                  }
-                },
-                modifier = Modifier.weight(1f),
-                enabled = (usernameInput.trim().isNotBlank() || savedUsername.isNotBlank()),
-                colors =
-                  ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-              ) {
-                Icon(
-                  painter = painterResource(R.drawable.login),
-                  contentDescription = null,
-                  modifier = Modifier.size(18.dp)
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(stringResource(R.string.join_room), fontWeight = FontWeight.SemiBold)
-              }
+            StagePillButton(onClick = onDismiss, primary = false) {
+              Text(stringResource(R.string.cancel))
             }
           }
+        } else {
+          val hasUsername = usernameInput.trim().isNotBlank() || savedUsername.isNotBlank()
+          echo.music.iad1tya.ui.component.StageRoomJoinForm(
+            roomCode = roomCodeInput,
+            onRoomCodeChange = {
+              roomCodeInput = it.uppercase().filter { c -> c.isLetterOrDigit() }.take(8)
+            },
+            username = usernameInput,
+            onUsernameChange = { usernameInput = it },
+            joinEnabled = hasUsername && roomCodeInput.length == 8,
+            createEnabled = hasUsername,
+            isJoining = isJoiningRoom,
+            errorMessage = joinErrorMessage,
+            onJoin = {
+              val username = usernameInput.takeIf { it.isNotBlank() } ?: savedUsername
+              val finalUsername = username.trim()
+              if (finalUsername.isNotBlank()) {
+                savedUsername = finalUsername
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.joining_room, roomCodeInput),
+                    Toast.LENGTH_SHORT
+                  )
+                  .show()
+                isJoiningRoom = true
+                isCreatingRoom = false
+                joinErrorMessage = null
+                listenTogetherManager.connect()
+                listenTogetherManager.joinRoom(roomCodeInput, finalUsername)
+              } else {
+                Toast.makeText(context, R.string.error_username_empty, Toast.LENGTH_SHORT).show()
+              }
+            },
+            onCreate = {
+              val username = usernameInput.takeIf { it.isNotBlank() } ?: savedUsername
+              val finalUsername = username.trim()
+              if (finalUsername.isNotBlank()) {
+                savedUsername = finalUsername
+                Toast.makeText(context, R.string.creating_room, Toast.LENGTH_SHORT).show()
+                isCreatingRoom = true
+                isJoiningRoom = false
+                joinErrorMessage = null
+                listenTogetherManager.connect()
+                listenTogetherManager.createRoom(finalUsername)
+              } else {
+                Toast.makeText(context, R.string.error_username_empty, Toast.LENGTH_SHORT).show()
+              }
+            },
+          )
 
-          TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+          echo.music.iad1tya.ui.component.StageRoomConnection(
+            connectionState = connectionState,
+            onConnect = { listenTogetherManager.connect() },
+            onDisconnect = { listenTogetherManager.disconnect() },
+            onReconnect = { listenTogetherManager.forceReconnect() },
+          )
+
+          if (connectionState == ConnectionState.CONNECTED) {
             Text(
-              stringResource(R.string.cancel),
-              fontWeight = FontWeight.Medium,
-              color = MaterialTheme.colorScheme.onSurfaceVariant
+              text = stringResource(R.string.listen_together_background_disconnect_note),
+              fontSize = 13.sp,
+              lineHeight = 17.sp,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
           }
+
+          StagePillButton(onClick = onDismiss, primary = false) {
+            Text(stringResource(R.string.cancel))
+          }
         }
-        Spacer(modifier = Modifier.height(16.dp))
       }
     }
   }

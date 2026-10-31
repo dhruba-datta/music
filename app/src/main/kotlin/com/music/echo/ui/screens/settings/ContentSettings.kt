@@ -291,6 +291,8 @@ fun ContentSettings(
             modifier = Modifier.fillMaxWidth()
           ) {
             OutlinedTextField(
+        colors = echo.music.iad1tya.ui.component.stageFieldColors(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
               value = proxyType.name,
               onValueChange = {},
               readOnly = true,
@@ -298,7 +300,6 @@ fun ContentSettings(
               trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedDropdown)
               },
-              colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
               modifier =
                 Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth()
             )
@@ -319,6 +320,8 @@ fun ContentSettings(
           }
 
           OutlinedTextField(
+        colors = echo.music.iad1tya.ui.component.stageFieldColors(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
             value = tempProxyUrl,
             onValueChange = { tempProxyUrl = it },
             label = { Text(stringResource(R.string.proxy_url)) },
@@ -343,12 +346,16 @@ fun ContentSettings(
           AnimatedVisibility(visible = authEnabled) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
               OutlinedTextField(
+        colors = echo.music.iad1tya.ui.component.stageFieldColors(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
                 value = tempProxyUsername,
                 onValueChange = { tempProxyUsername = it },
                 label = { Text(stringResource(R.string.proxy_username)) },
                 modifier = Modifier.fillMaxWidth()
               )
               OutlinedTextField(
+        colors = echo.music.iad1tya.ui.component.stageFieldColors(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
                 value = tempProxyPassword,
                 onValueChange = { tempProxyPassword = it },
                 label = { Text(stringResource(R.string.proxy_password)) },
@@ -660,156 +667,8 @@ fun ContentSettings(
     Material3SettingsGroup(
       scrollState = scrollState,
       items =
-        listOf(
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == "Blocked Artists"),
-            title = { Text("Blocked Artists") },
-            description = { Text("Manage hidden artists") },
-            customIcon = { Icon(Icons.Default.Block, null) },
-            onClick = { navController.navigate("blocked_artists") }
-          )
-        )
-    )
-    }
-
-    if (inSection(null)) {
-    Material3SettingsGroup(
-      scrollState = scrollState,
-      items =
-        listOf(
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == "Force Opus Audio"),
-            icon = painterResource(R.drawable.music_note),
-            title = { Text("Force Opus Audio (itag 251)") },
-            description = {
-              Text(
-                "Force WebM/Opus streaming. Halves data usage and buffers 2x faster, but may lower raw bitrate."
-              )
-            },
-            trailingContent = {
-              StageSwitch(checked = forceOpus, onCheckedChange = onForceOpusChange)
-            },
-            onClick = { onForceOpusChange(!forceOpus) }
-          ),
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == "Enable HTTP/3 (Cronet)"),
-            icon = painterResource(R.drawable.speed),
-            title = { Text("Enable HTTP/3 (Cronet)") },
-            description = {
-              Text("Use QUIC over UDP for zero-latency streaming (Restart required)")
-            },
-            trailingContent = {
-              StageSwitch(checked = enableCronet, onCheckedChange = onEnableCronetChange)
-            },
-            onClick = { onEnableCronetChange(!enableCronet) }
-          ),
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == stringResource(R.string.content_language)),
-            icon = painterResource(R.drawable.language),
-            title = { Text(stringResource(R.string.content_language)) },
-            value = {
-              Text(
-                LanguageCodeToName.getOrElse(contentLanguage) {
-                  stringResource(R.string.system_default)
-                }
-              )
-            },
-            onClick = { showContentLanguageDialog = true }
-          ),
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == stringResource(R.string.content_country)),
-            icon = painterResource(R.drawable.location_on),
-            title = { Text(stringResource(R.string.content_country)) },
-            value = {
-              Text(
-                CountryCodeToName.getOrElse(contentCountry) {
-                  stringResource(R.string.system_default)
-                }
-              )
-            },
-            onClick = { showContentCountryDialog = true }
-          ),
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == "Suggestions Region"),
-            icon = painterResource(R.drawable.globe_location_pin),
-            title = { Text("Suggestions Region") },
-            value = {
-              Text(SuggestionRegionSlugToName.getOrElse(suggestionRegion) { "Global Charts" })
-            },
-            onClick = { showSuggestionSheet = true }
-          ),
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == stringResource(R.string.hide_explicit)),
-            icon = painterResource(R.drawable.explicit),
-            title = { Text(stringResource(R.string.hide_explicit)) },
-            description = { Text(stringResource(R.string.hide_explicit_desc)) },
-            trailingContent = {
-              StageSwitch(checked = hideExplicit, onCheckedChange = onHideExplicitChange)
-            },
-            onClick = { onHideExplicitChange(!hideExplicit) }
-          ),
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == stringResource(R.string.hide_video_songs)),
-            icon = painterResource(R.drawable.slow_motion_video),
-            title = { Text(stringResource(R.string.hide_video_songs)) },
-            description = { Text(stringResource(R.string.hide_video_songs_desc)) },
-            trailingContent = {
-              StageSwitch(checked = hideVideoSongs, onCheckedChange = onHideVideoSongsChange)
-            },
-            onClick = { onHideVideoSongsChange(!hideVideoSongs) }
-          ),
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == stringResource(R.string.hide_youtube_shorts)),
-            icon = painterResource(R.drawable.hide_image),
-            title = { Text(stringResource(R.string.hide_youtube_shorts)) },
-            description = { Text(stringResource(R.string.hide_youtube_shorts_desc)) },
-            trailingContent = {
-              StageSwitch(checked = hideYoutubeShorts, onCheckedChange = onHideYoutubeShortsChange)
-            },
-            onClick = { onHideYoutubeShortsChange(!hideYoutubeShorts) }
-          ),
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == stringResource(R.string.content_sponsor_block)),
-            icon = painterResource(R.drawable.skip_next),
-            title = { Text(stringResource(R.string.content_sponsor_block)) },
-            description = { Text(stringResource(R.string.content_sponsor_block_desc)) },
-            trailingContent = {
-              StageSwitch(checked = sponsorBlockEnabled, onCheckedChange = onSponsorBlockEnabledChange)
-            },
-            onClick = { onSponsorBlockEnabledChange(!sponsorBlockEnabled) }
-          )
-        )
-    )
-    }
-
-
-    if (inSection("album_lyrics")) {
-    Material3SettingsGroup(
-      scrollState = scrollState,
-      title = stringResource(R.string.album_text),
-      items =
-        listOf(
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == stringResource(R.string.show_album_canvas)),
-            icon = painterResource(R.drawable.slow_motion_video),
-            title = { Text(stringResource(R.string.show_album_canvas)) },
-            description = { Text(stringResource(R.string.show_album_canvas_desc)) },
-            trailingContent = {
-              StageSwitch(checked = albumCanvasEnabled, onCheckedChange = onAlbumCanvasEnabledChange)
-            },
-            onClick = { onAlbumCanvasEnabledChange(!albumCanvasEnabled) }
-          )
-        )
-    )
-    }
-
-
-    if (inSection(null)) {
-    Material3SettingsGroup(
-      scrollState = scrollState,
-      items =
-        listOf(
-          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        buildList {
+          add(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             Material3SettingsItem(
               isHighlighted = (highlightKey == stringResource(R.string.app_language)),
               icon = painterResource(R.drawable.language),
@@ -838,11 +697,104 @@ fun ContentSettings(
               },
               onClick = { showAppLanguageDialog = true }
             )
-          }
-        )
+          })
+          add(Material3SettingsItem(
+            isHighlighted = (highlightKey == stringResource(R.string.content_language)),
+            icon = painterResource(R.drawable.language),
+            title = { Text(stringResource(R.string.content_language)) },
+            value = {
+              Text(
+                LanguageCodeToName.getOrElse(contentLanguage) {
+                  stringResource(R.string.system_default)
+                }
+              )
+            },
+            onClick = { showContentLanguageDialog = true }
+          ))
+          add(Material3SettingsItem(
+            isHighlighted = (highlightKey == stringResource(R.string.content_country)),
+            icon = painterResource(R.drawable.location_on),
+            title = { Text(stringResource(R.string.content_country)) },
+            value = {
+              Text(
+                CountryCodeToName.getOrElse(contentCountry) {
+                  stringResource(R.string.system_default)
+                }
+              )
+            },
+            onClick = { showContentCountryDialog = true }
+          ))
+          add(Material3SettingsItem(
+            isHighlighted = (highlightKey == stringResource(R.string.hide_explicit)),
+            icon = painterResource(R.drawable.explicit),
+            title = { Text(stringResource(R.string.hide_explicit)) },
+            description = { Text(stringResource(R.string.hide_explicit_desc)) },
+            trailingContent = {
+              StageSwitch(checked = hideExplicit, onCheckedChange = onHideExplicitChange)
+            },
+            onClick = { onHideExplicitChange(!hideExplicit) }
+          ))
+          add(Material3SettingsItem(
+            isHighlighted = (highlightKey == stringResource(R.string.hide_video_songs)),
+            icon = painterResource(R.drawable.slow_motion_video),
+            title = { Text(stringResource(R.string.hide_video_songs)) },
+            description = { Text(stringResource(R.string.hide_video_songs_desc)) },
+            trailingContent = {
+              StageSwitch(checked = hideVideoSongs, onCheckedChange = onHideVideoSongsChange)
+            },
+            onClick = { onHideVideoSongsChange(!hideVideoSongs) }
+          ))
+          add(Material3SettingsItem(
+            isHighlighted = (highlightKey == stringResource(R.string.content_sponsor_block)),
+            icon = painterResource(R.drawable.skip_next),
+            title = { Text(stringResource(R.string.content_sponsor_block)) },
+            description = { Text(stringResource(R.string.content_sponsor_block_desc)) },
+            trailingContent = {
+              StageSwitch(checked = sponsorBlockEnabled, onCheckedChange = onSponsorBlockEnabledChange)
+            },
+            onClick = { onSponsorBlockEnabledChange(!sponsorBlockEnabled) }
+          ))
+          add(Material3SettingsItem(
+            isHighlighted = (highlightKey == stringResource(R.string.recommendation_source)),
+            icon = painterResource(R.drawable.explore_outlined),
+            title = { Text(stringResource(R.string.recommendation_source)) },
+            value = {
+              Text(
+                when (recommendationSource) {
+                  RecommendationSource.YOUTUBE -> stringResource(R.string.recommendation_source_youtube)
+                  RecommendationSource.SPOTIFY -> stringResource(R.string.recommendation_source_spotify)
+                }
+              )
+            },
+            onClick = {
+              if (recommendationSource == RecommendationSource.YOUTUBE) {
+                if (spotifySpDc.isBlank()) {
+                   // Cannot switch to Spotify if not logged in
+                   scope.launch {
+                       android.widget.Toast.makeText(context, R.string.spotify_recommendation_login_required, android.widget.Toast.LENGTH_LONG).show()
+                   }
+                } else {
+                   onRecommendationSourceChange(RecommendationSource.SPOTIFY)
+                }
+              } else {
+                onRecommendationSourceChange(RecommendationSource.YOUTUBE)
+              }
+            }
+          ))
+          add(Material3SettingsItem(
+            title = { Text(stringResource(R.string.lyrics_provider_priority)) },
+            onClick = { showProviderPriorityDialog = true }
+          ))
+          add(Material3SettingsItem(
+            isHighlighted = (highlightKey == "Blocked Artists"),
+            title = { Text("Blocked Artists") },
+            description = { Text("Manage hidden artists") },
+            customIcon = { Icon(Icons.Default.Block, null) },
+            onClick = { navController.navigate("blocked_artists") }
+          ))
+        }
     )
     }
-
 
     if (inSection(null)) {
     Material3SettingsGroup(
@@ -850,23 +802,6 @@ fun ContentSettings(
       title = stringResource(R.string.stage_more),
       items =
         buildList {
-          add(
-            Material3SettingsItem(
-              isHighlighted = (highlightKey == stringResource(R.string.network_ip_version)),
-              icon = painterResource(R.drawable.network_node),
-              title = { Text(stringResource(R.string.network_ip_version)) },
-              value = {
-                Text(
-                  when (ipVersion) {
-                    IpVersion.AUTO -> stringResource(R.string.ip_version_auto)
-                    IpVersion.IPV4 -> stringResource(R.string.ip_version_ipv4)
-                    IpVersion.IPV6 -> stringResource(R.string.ip_version_ipv6)
-                  }
-                )
-              },
-              onClick = { showIpVersionDialog = true }
-            )
-          )
           add(
             Material3SettingsItem(
               isHighlighted = (highlightKey == stringResource(R.string.enable_proxy)),
@@ -898,9 +833,143 @@ fun ContentSettings(
           )
             )
           }
+          add(Material3SettingsItem(
+            isHighlighted = (highlightKey == "Force Opus Audio"),
+            icon = painterResource(R.drawable.music_note),
+            title = { Text("Force Opus Audio (itag 251)") },
+            description = {
+              Text(
+                "Force WebM/Opus streaming. Halves data usage and buffers 2x faster, but may lower raw bitrate."
+              )
+            },
+            trailingContent = {
+              StageSwitch(checked = forceOpus, onCheckedChange = onForceOpusChange)
+            },
+            onClick = { onForceOpusChange(!forceOpus) }
+          ))
+          add(Material3SettingsItem(
+            isHighlighted = (highlightKey == "Enable HTTP/3 (Cronet)"),
+            icon = painterResource(R.drawable.speed),
+            title = { Text("Enable HTTP/3 (Cronet)") },
+            description = {
+              Text("Use QUIC over UDP for zero-latency streaming (Restart required)")
+            },
+            trailingContent = {
+              StageSwitch(checked = enableCronet, onCheckedChange = onEnableCronetChange)
+            },
+            onClick = { onEnableCronetChange(!enableCronet) }
+          ))
+          add(Material3SettingsItem(
+            isHighlighted = (highlightKey == "Suggestions Region"),
+            icon = painterResource(R.drawable.globe_location_pin),
+            title = { Text("Suggestions Region") },
+            value = {
+              Text(SuggestionRegionSlugToName.getOrElse(suggestionRegion) { "Global Charts" })
+            },
+            onClick = { showSuggestionSheet = true }
+          ))
+          add(Material3SettingsItem(
+            isHighlighted = (highlightKey == stringResource(R.string.hide_youtube_shorts)),
+            icon = painterResource(R.drawable.hide_image),
+            title = { Text(stringResource(R.string.hide_youtube_shorts)) },
+            description = { Text(stringResource(R.string.hide_youtube_shorts_desc)) },
+            trailingContent = {
+              StageSwitch(checked = hideYoutubeShorts, onCheckedChange = onHideYoutubeShortsChange)
+            },
+            onClick = { onHideYoutubeShortsChange(!hideYoutubeShorts) }
+          ))
+          add(
+            Material3SettingsItem(
+              isHighlighted = (highlightKey == stringResource(R.string.network_ip_version)),
+              icon = painterResource(R.drawable.network_node),
+              title = { Text(stringResource(R.string.network_ip_version)) },
+              value = {
+                Text(
+                  when (ipVersion) {
+                    IpVersion.AUTO -> stringResource(R.string.ip_version_auto)
+                    IpVersion.IPV4 -> stringResource(R.string.ip_version_ipv4)
+                    IpVersion.IPV6 -> stringResource(R.string.ip_version_ipv6)
+                  }
+                )
+              },
+              onClick = { showIpVersionDialog = true }
+            )
+          )
+          add(Material3SettingsItem(
+            isHighlighted = (highlightKey == stringResource(R.string.randomize_home_order)),
+            icon = painterResource(R.drawable.shuffle),
+            title = { Text(stringResource(R.string.randomize_home_order)) },
+            description = { Text(stringResource(R.string.randomize_home_order_desc)) },
+            trailingContent = {
+              StageSwitch(checked = randomizeHomeOrder, onCheckedChange = onRandomizeHomeOrderChange)
+            },
+            onClick = { onRandomizeHomeOrderChange(!randomizeHomeOrder) }
+          ))
+          add(Material3SettingsItem(
+            isHighlighted = (highlightKey == stringResource(R.string.top_length)),
+            icon = painterResource(R.drawable.trending_up),
+            title = { Text(stringResource(R.string.top_length)) },
+            value = { Text(lengthTop) },
+            onClick = { showTopLengthDialog = true }
+          ))
+          add(Material3SettingsItem(
+            isHighlighted = (highlightKey == stringResource(R.string.set_quick_picks)),
+            icon = painterResource(R.drawable.home_outlined),
+            title = { Text(stringResource(R.string.set_quick_picks)) },
+            value = {
+              Text(
+                when (quickPicks) {
+                  QuickPicks.QUICK_PICKS -> stringResource(R.string.quick_picks)
+                  QuickPicks.LAST_LISTEN -> stringResource(R.string.last_song_listened)
+                }
+              )
+            },
+            onClick = { showQuickPicksDialog = true }
+          ))
+          add(Material3SettingsItem(
+            isHighlighted = (highlightKey == "Speed Dial"),
+            icon = painterResource(R.drawable.grid_view),
+            title = { Text("Speed Dial") },
+            description = { Text("Show Speed Dial on the Home Screen") },
+            trailingContent = {
+              StageSwitch(checked = showSpeedDial, onCheckedChange = { onShowSpeedDialChange(it) })
+            },
+            onClick = { onShowSpeedDialChange(!showSpeedDial) }
+          ))
         }
     )
     }
+
+
+
+
+
+
+    if (inSection("album_lyrics")) {
+    Material3SettingsGroup(
+      scrollState = scrollState,
+      title = stringResource(R.string.album_text),
+      items =
+        listOf(
+          Material3SettingsItem(
+            isHighlighted = (highlightKey == stringResource(R.string.show_album_canvas)),
+            icon = painterResource(R.drawable.slow_motion_video),
+            title = { Text(stringResource(R.string.show_album_canvas)) },
+            description = { Text(stringResource(R.string.show_album_canvas_desc)) },
+            trailingContent = {
+              StageSwitch(checked = albumCanvasEnabled, onCheckedChange = onAlbumCanvasEnabledChange)
+            },
+            onClick = { onAlbumCanvasEnabledChange(!albumCanvasEnabled) }
+          )
+        )
+    )
+    }
+
+
+
+
+
+
 
 
     if (inSection("album_lyrics")) {
@@ -959,83 +1028,7 @@ fun ContentSettings(
     }
 
 
-    if (inSection(null)) {
-    Material3SettingsGroup(
-      scrollState = scrollState,
-      title = stringResource(R.string.misc),
-      items =
-        listOf(
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == stringResource(R.string.recommendation_source)),
-            icon = painterResource(R.drawable.explore_outlined),
-            title = { Text(stringResource(R.string.recommendation_source)) },
-            value = {
-              Text(
-                when (recommendationSource) {
-                  RecommendationSource.YOUTUBE -> stringResource(R.string.recommendation_source_youtube)
-                  RecommendationSource.SPOTIFY -> stringResource(R.string.recommendation_source_spotify)
-                }
-              )
-            },
-            onClick = {
-              if (recommendationSource == RecommendationSource.YOUTUBE) {
-                if (spotifySpDc.isBlank()) {
-                   // Cannot switch to Spotify if not logged in
-                   scope.launch {
-                       android.widget.Toast.makeText(context, R.string.spotify_recommendation_login_required, android.widget.Toast.LENGTH_LONG).show()
-                   }
-                } else {
-                   onRecommendationSourceChange(RecommendationSource.SPOTIFY)
-                }
-              } else {
-                onRecommendationSourceChange(RecommendationSource.YOUTUBE)
-              }
-            }
-          ),
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == stringResource(R.string.randomize_home_order)),
-            icon = painterResource(R.drawable.shuffle),
-            title = { Text(stringResource(R.string.randomize_home_order)) },
-            description = { Text(stringResource(R.string.randomize_home_order_desc)) },
-            trailingContent = {
-              StageSwitch(checked = randomizeHomeOrder, onCheckedChange = onRandomizeHomeOrderChange)
-            },
-            onClick = { onRandomizeHomeOrderChange(!randomizeHomeOrder) }
-          ),
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == stringResource(R.string.top_length)),
-            icon = painterResource(R.drawable.trending_up),
-            title = { Text(stringResource(R.string.top_length)) },
-            value = { Text(lengthTop) },
-            onClick = { showTopLengthDialog = true }
-          ),
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == stringResource(R.string.set_quick_picks)),
-            icon = painterResource(R.drawable.home_outlined),
-            title = { Text(stringResource(R.string.set_quick_picks)) },
-            value = {
-              Text(
-                when (quickPicks) {
-                  QuickPicks.QUICK_PICKS -> stringResource(R.string.quick_picks)
-                  QuickPicks.LAST_LISTEN -> stringResource(R.string.last_song_listened)
-                }
-              )
-            },
-            onClick = { showQuickPicksDialog = true }
-          ),
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == "Speed Dial"),
-            icon = painterResource(R.drawable.grid_view),
-            title = { Text("Speed Dial") },
-            description = { Text("Show Speed Dial on the Home Screen") },
-            trailingContent = {
-              StageSwitch(checked = showSpeedDial, onCheckedChange = { onShowSpeedDialChange(it) })
-            },
-            onClick = { onShowSpeedDialChange(!showSpeedDial) }
-          )
-        )
-    )
-    }
+
 
     Spacer(modifier = Modifier.height(16.dp))
 

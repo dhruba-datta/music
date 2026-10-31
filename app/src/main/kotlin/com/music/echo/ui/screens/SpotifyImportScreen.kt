@@ -28,7 +28,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.layout.height
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -312,7 +314,7 @@ private fun SpotifyImportProgressDialog(
       )
       LinearProgressIndicator(
         progress = { progress.percent.toFloat() / 100f },
-        modifier = Modifier.fillMaxWidth().clip(CircleShape),
+        modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape),
       )
     }
   }
@@ -694,32 +696,23 @@ private fun SpotifySourcePickerSheet(
         Modifier.fillMaxWidth().fillMaxHeight().padding(horizontal = 20.dp).padding(bottom = 20.dp),
       verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-      ) {
-        Column(modifier = Modifier.weight(1f)) {
-          Text(
-            text = stringResource(R.string.spotify_select_sources),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-          )
-          Text(
-            text = stringResource(R.string.spotify_selected_count, state.selectedSourceIds.size),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-        }
-        TextButton(
-          onClick = onClearSelection,
-        ) {
-          Text(stringResource(R.string.spotify_clear_selection))
-        }
-        TextButton(
-          onClick = onSelectAll,
-        ) {
+      Text(
+        text = stringResource(R.string.spotify_select_sources),
+        fontSize = 22.sp,
+        lineHeight = 28.sp,
+        fontWeight = FontWeight.ExtraBold,
+      )
+      Text(
+        text = stringResource(R.string.spotify_selected_count, state.selectedSourceIds.size),
+        fontSize = 13.sp,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+      Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        echo.music.iad1tya.ui.component.StageChip(onClick = onSelectAll) {
           Text(stringResource(R.string.spotify_select_all))
+        }
+        echo.music.iad1tya.ui.component.StageChip(onClick = onClearSelection) {
+          Text(stringResource(R.string.spotify_clear_selection))
         }
       }
 

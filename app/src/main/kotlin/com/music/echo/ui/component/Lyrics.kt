@@ -149,6 +149,8 @@ import echo.music.iad1tya.constants.LyricsScrollKey
 import echo.music.iad1tya.constants.LyricsStandardBlurKey
 import echo.music.iad1tya.constants.LyricsTextPositionKey
 import echo.music.iad1tya.constants.LyricsTextSizeKey
+import echo.music.iad1tya.constants.StageLyricsLineSpacingDefault
+import echo.music.iad1tya.constants.StageLyricsTextSizeDefault
 import echo.music.iad1tya.constants.OpenRouterApiKey
 import echo.music.iad1tya.constants.OpenRouterBaseUrlKey
 import echo.music.iad1tya.constants.OpenRouterModelKey
@@ -204,6 +206,7 @@ fun Lyrics(
   compact: Boolean = false,
   defaultTextSize: Float = 24f,
   defaultLineSpacing: Float = 1.3f,
+  stage: Boolean = false,
 ) {
   val playerConnection = LocalPlayerConnection.current ?: return
   val database = LocalDatabase.current
@@ -235,9 +238,14 @@ fun Lyrics(
   val lyricsGlowEffect by rememberPreference(LyricsGlowEffectKey, false)
   val lyricsAnimationStyle by
     rememberEnumPreference(LyricsAnimationStyleKey, LyricsAnimationStyle.echomusic_1)
-  val lyricsTextSize by rememberPreference(LyricsTextSizeKey, defaultTextSize)
-  val lyricsLineSpacing by rememberPreference(LyricsLineSpacingKey, defaultLineSpacing)
-  val cappedLineSpacing = lyricsLineSpacing.coerceAtMost(maxOf(1.3f, defaultLineSpacing))
+  val unsetTextSize = if (stage) StageLyricsTextSizeDefault else defaultTextSize
+  val unsetLineSpacing = if (stage) StageLyricsLineSpacingDefault else defaultLineSpacing
+  val lyricsTextSize by rememberPreference(LyricsTextSizeKey, unsetTextSize)
+  val lyricsLineSpacing by rememberPreference(LyricsLineSpacingKey, unsetLineSpacing)
+  val cappedLineSpacing = lyricsLineSpacing.coerceAtMost(maxOf(1.3f, unsetLineSpacing))
+  // The Stage view keeps every line at one weight and sets them 18dp apart at the default spacing.
+  val lineWeight: (FontWeight) -> FontWeight = { if (stage) FontWeight.ExtraBold else it }
+  val lineGap = if (stage) (9 * lyricsLineSpacing / unsetLineSpacing).dp else (8 * lyricsLineSpacing).dp
   val lyricsStandardBlur by rememberPreference(LyricsStandardBlurKey, false)
 
   val openRouterApiKey by rememberPreference(OpenRouterApiKey, "")
@@ -963,6 +971,7 @@ fun Lyrics(
                       romanizePunjabiLyrics),
                 textSize = lyricsTextSize,
                 lineSpacing = lyricsLineSpacing,
+                stage = stage,
                 showTranslated = hasActiveTranslations,
                 isAutoScrollActive = isAutoScrollEnabled,
                 isSelectionModeActive = isSelectionModeActive,
@@ -1187,7 +1196,7 @@ fun Lyrics(
                     MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                   else Color.Transparent
                 )
-                .padding(horizontal = 24.dp, vertical = (8 * lyricsLineSpacing).dp)
+                .padding(horizontal = 24.dp, vertical = lineGap)
 
             val currentLineTime =
               if (displayedCurrentLineIndex >= 0 && displayedCurrentLineIndex < lines.size) {
@@ -1203,6 +1212,7 @@ fun Lyrics(
                   when {
                     !isSynced || (isSelectionModeActive && isSelected) -> 1f
                     isActiveByIndex || isActiveByTime -> 1f
+                    stage -> 1f
                     else -> 0.5f
                   },
                 animationSpec =
@@ -1213,7 +1223,7 @@ fun Lyrics(
               )
             val scale by
               animateFloatAsState(
-                targetValue = if (isActiveByIndex || isActiveByTime) 1.05f else 1f,
+                targetValue = if ((isActiveByIndex || isActiveByTime) && !stage) 1.05f else 1f,
                 animationSpec =
                   spring(
                     dampingRatio = Spring.DampingRatioNoBouncy,
@@ -1301,7 +1311,14 @@ fun Lyrics(
                 if (isActiveLine) {
                   if (item.isBackground) expressiveAccent.copy(alpha = 0.85f) else expressiveAccent
                 } else {
-                  expressiveAccent.copy(alpha = if (item.isBackground) 0.5f else 0.7f)
+                  expressiveAccent.copy(
+                    alpha =
+                      when {
+                        item.isBackground -> 0.5f
+                        stage -> 0.67f
+                        else -> 0.7f
+                      }
+                  )
                 }
               val alignment = agentTextAlign
 
@@ -1344,7 +1361,7 @@ fun Lyrics(
 
                     val wordAlpha =
                       when {
-                        !isActiveLine -> 0.7f
+                        !isActiveLine -> if (stage) 0.67f else 0.7f
                         hasWordPassed -> 1f
                         isWordActive -> 0.5f + (0.5f * transitionProgress)
                         else -> 0.35f
@@ -1353,10 +1370,10 @@ fun Lyrics(
                     val wordColor = expressiveAccent.copy(alpha = wordAlpha)
                     val wordWeight =
                       when {
-                        !isActiveLine -> FontWeight.Bold
-                        hasWordPassed -> FontWeight.Bold
+                        !isActiveLine -> lineWeight(FontWeight.Bold)
+                        hasWordPassed -> lineWeight(FontWeight.Bold)
                         isWordActive -> FontWeight.ExtraBold
-                        else -> FontWeight.Medium
+                        else -> lineWeight(FontWeight.Medium)
                       }
 
                     withStyle(style = SpanStyle(color = wordColor, fontWeight = wordWeight)) {
@@ -1395,7 +1412,7 @@ fun Lyrics(
 
                     val wordAlpha =
                       when {
-                        !isActiveLine -> 0.55f
+                        !isActiveLine -> if (stage) 0.67f else 0.55f
                         hasWordPassed -> 1f
                         isWordActive -> 0.4f + (0.6f * fadeProgress)
                         else -> 0.4f
@@ -1403,10 +1420,10 @@ fun Lyrics(
                     val wordColor = expressiveAccent.copy(alpha = wordAlpha)
                     val wordWeight =
                       when {
-                        !isActiveLine -> FontWeight.Bold
-                        hasWordPassed -> FontWeight.Bold
+                        !isActiveLine -> lineWeight(FontWeight.Bold)
+                        hasWordPassed -> lineWeight(FontWeight.Bold)
                         isWordActive -> FontWeight.ExtraBold
-                        else -> FontWeight.Medium
+                        else -> lineWeight(FontWeight.Medium)
                       }
 
                     val wordShadow =
@@ -1465,16 +1482,16 @@ fun Lyrics(
 
                     val wordColor =
                       when {
-                        !isActiveLine -> expressiveAccent.copy(alpha = 0.5f)
+                        !isActiveLine -> expressiveAccent.copy(alpha = if (stage) 0.67f else 0.5f)
                         isWordActive || hasWordPassed -> expressiveAccent.copy(alpha = brightness)
                         else -> expressiveAccent.copy(alpha = 0.35f)
                       }
                     val wordWeight =
                       when {
-                        !isActiveLine -> FontWeight.Bold
+                        !isActiveLine -> lineWeight(FontWeight.Bold)
                         isWordActive -> FontWeight.ExtraBold
-                        hasWordPassed -> FontWeight.Bold
-                        else -> FontWeight.Medium
+                        hasWordPassed -> lineWeight(FontWeight.Bold)
+                        else -> lineWeight(FontWeight.Medium)
                       }
                     val wordShadow =
                       if (isWordActive && glowIntensity > 0.05f) {
@@ -1714,7 +1731,7 @@ fun Lyrics(
 
                     val wordAlpha =
                       when {
-                        !isActiveLine -> 0.55f
+                        !isActiveLine -> if (stage) 0.67f else 0.55f
                         hasWordPassed -> 1f
                         isWordActive -> 0.55f + (0.45f * smoothProgress)
                         else -> 0.4f
@@ -1722,10 +1739,10 @@ fun Lyrics(
                     val wordColor = expressiveAccent.copy(alpha = wordAlpha)
                     val wordWeight =
                       when {
-                        !isActiveLine -> FontWeight.SemiBold
-                        hasWordPassed -> FontWeight.Bold
+                        !isActiveLine -> lineWeight(FontWeight.SemiBold)
+                        hasWordPassed -> lineWeight(FontWeight.Bold)
                         isWordActive -> FontWeight.ExtraBold
-                        else -> FontWeight.Normal
+                        else -> lineWeight(FontWeight.Normal)
                       }
 
                     val glowIntensity = smoothProgress * smoothProgress
@@ -1904,7 +1921,7 @@ fun Lyrics(
                   isPast = !isActiveLine && item.time < currentPlaybackPosition,
                   effectivePlaybackPosition = effectivePlaybackPosition + 150L,
                   expressiveAccent = expressiveAccent,
-                  inactiveAlpha = 0.35f,
+                  inactiveAlpha = if (stage) 0.67f else 0.35f,
                   baseFontSize = lyricsTextSize,
                   lineHeight = lyricsTextSize * cappedLineSpacing,
                   showTranslated = hasActiveTranslations,
@@ -2006,7 +2023,7 @@ fun Lyrics(
                   fontSize = lyricsTextSize.sp,
                   color = lineColor,
                   textAlign = alignment,
-                  fontWeight = FontWeight.Bold,
+                  fontWeight = lineWeight(FontWeight.Bold),
                   lineHeight = (lyricsTextSize * cappedLineSpacing).sp
                 )
               }

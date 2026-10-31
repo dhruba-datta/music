@@ -58,6 +58,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun AddToPlaylistDialog(
   isVisible: Boolean,
@@ -94,71 +95,40 @@ fun AddToPlaylistDialog(
     }
 
   if (isVisible) {
-    val totalItemsCount = 1 + filteredPlaylists.size
-    ListDialog(
-      onDismiss = onDismiss,
+    androidx.compose.material3.ModalBottomSheet(
+      onDismissRequest = onDismiss,
+      sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true),
+      shape = echo.music.iad1tya.ui.component.StageSheetShape,
+      containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+      dragHandle = { echo.music.iad1tya.ui.component.StageSheetHandle() },
+    ) {
+    androidx.compose.foundation.lazy.LazyColumn(
+      contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 18.dp),
     ) {
       item {
-        ListItem(
-          title = stringResource(R.string.create_playlist),
-          thumbnailContent = {
-            Image(
-              painter = painterResource(R.drawable.add),
-              contentDescription = null,
-              colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground),
-              modifier = Modifier.size(ListThumbnailSize)
-            )
-          },
-          shape = listItemShape(index = 0, count = totalItemsCount),
-          modifier = Modifier.clickable { showCreatePlaylistDialog = true }
+        echo.music.iad1tya.ui.component.StageSheetTitle(
+          title = stringResource(R.string.add_to_playlist)
         )
       }
 
       if (playlists.isNotEmpty()) {
         item {
-          OutlinedTextField(
+          echo.music.iad1tya.ui.component.StageSearchField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            placeholder = {
-              Text(
-                text = stringResource(R.string.search),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-              )
-            },
-            leadingIcon = {
-              Icon(
-                painter = painterResource(R.drawable.search),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
-              )
-            },
-            trailingIcon = {
-              if (searchQuery.isNotEmpty()) {
-                IconButton(onClick = { searchQuery = "" }) {
-                  Icon(
-                    painter = painterResource(R.drawable.close),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                  )
-                }
-              }
-            },
-            singleLine = true,
-            shape = RoundedCornerShape(24.dp),
-            colors =
-              OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                unfocusedContainerColor =
-                  MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
-                cursorColor = MaterialTheme.colorScheme.primary,
-              ),
-            textStyle = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)
+            placeholder = stringResource(R.string.search),
+            modifier = Modifier.padding(start = 18.dp, top = 6.dp, end = 18.dp),
           )
         }
+      }
+
+      item {
+        echo.music.iad1tya.ui.component.StageSheetRow(
+          text = stringResource(R.string.create_playlist),
+          icon = R.drawable.add,
+          onClick = { showCreatePlaylistDialog = true },
+          modifier = Modifier.padding(start = 18.dp, top = 4.dp, end = 18.dp),
+        )
       }
 
       if (playlists.isNotEmpty()) {
@@ -200,7 +170,6 @@ fun AddToPlaylistDialog(
       itemsIndexed(filteredPlaylists) { index, playlist ->
         PlaylistListItem(
           playlist = playlist,
-          shape = listItemShape(index = index + 1, count = totalItemsCount),
           modifier =
             Modifier.clickable {
               selectedPlaylist = playlist
@@ -230,6 +199,7 @@ fun AddToPlaylistDialog(
             }
         )
       }
+    }
     }
   }
 

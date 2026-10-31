@@ -420,19 +420,6 @@ fun PlayerSettings(
         buildList {
           add(
             Material3SettingsItem(
-              isHighlighted = (highlightKey == stringResource(R.string.show_seek_buttons)),
-              icon = painterResource(R.drawable.fast_forward),
-              title = { Text(stringResource(R.string.show_seek_buttons)) },
-              description = { Text(stringResource(R.string.show_seek_buttons_desc)) },
-              trailingContent = {
-                StageSwitch(checked = showSeekButtons, onCheckedChange = onShowSeekButtonsChange)
-              },
-              onClick = { onShowSeekButtonsChange(!showSeekButtons) }
-            )
-          )
-
-          add(
-            Material3SettingsItem(
               isHighlighted = (highlightKey == stringResource(R.string.audio_quality_wifi)),
               icon = painterResource(R.drawable.wifi_proxy),
               title = { Text(stringResource(R.string.audio_quality_wifi)) },
@@ -442,7 +429,6 @@ fun PlayerSettings(
               onClick = { showAudioQualityWifiDialog = true }
             )
           )
-
           add(
             Material3SettingsItem(
               isHighlighted = (highlightKey == stringResource(R.string.audio_quality_cellular)),
@@ -454,7 +440,6 @@ fun PlayerSettings(
               onClick = { showAudioQualityCellularDialog = true }
             )
           )
-
           add(
             Material3SettingsItem(
               isHighlighted = (highlightKey == stringResource(R.string.download_quality_title)),
@@ -472,51 +457,6 @@ fun PlayerSettings(
               onClick = { showDownloadQualityDialog = true }
             )
           )
-
-          add(
-            Material3SettingsItem(
-              isHighlighted = (highlightKey == "Download with metadata"),
-              icon = painterResource(R.drawable.download),
-              title = { Text("Download with metadata") },
-              description = { Text("Downloads lyrics when downloading a song") },
-              trailingContent = {
-                StageSwitch(checked = downloadWithMetadata, onCheckedChange = onDownloadWithMetadataChange)
-              },
-              onClick = { onDownloadWithMetadataChange(!downloadWithMetadata) }
-            )
-          )
-
-          add(
-            Material3SettingsItem(
-              isHighlighted = (highlightKey == stringResource(R.string.download_on_wifi_only)),
-              icon = painterResource(R.drawable.download),
-              title = { Text(stringResource(R.string.download_on_wifi_only)) },
-              description = { Text(stringResource(R.string.download_on_wifi_only_desc)) },
-              trailingContent = {
-                StageSwitch(checked = downloadOnWifiOnly, onCheckedChange = onDownloadOnWifiOnlyChange)
-              },
-              onClick = { onDownloadOnWifiOnlyChange(!downloadOnWifiOnly) }
-            )
-          )
-
-          add(
-            Material3SettingsItem(
-              isHighlighted = false,
-              icon = painterResource(R.drawable.tune),
-              title = { Text("Playback Engine") },
-              value = {
-                Text(
-                  when (playbackEngine) {
-                    echo.music.iad1tya.constants.PlaybackEngine.POTOKEN -> "eXtended InnerTube"
-                    echo.music.iad1tya.constants.PlaybackEngine.BRAVEPIPE -> "BravePipe (NewPipe)"
-                    echo.music.iad1tya.constants.PlaybackEngine.AUTO -> "Auto (Try Both)"
-                  }
-                )
-              },
-              onClick = { showPlaybackEngineDialog = true }
-            )
-          )
-
           add(
             Material3SettingsItem(
               isHighlighted = (highlightKey == stringResource(R.string.crossfade)),
@@ -582,8 +522,120 @@ fun PlayerSettings(
               )
             )
           }
-
           add(
+            Material3SettingsItem(
+              isHighlighted = (highlightKey == stringResource(R.string.skip_silence)),
+              icon = painterResource(R.drawable.fast_forward),
+              title = { Text(stringResource(R.string.skip_silence)) },
+              description = { Text(stringResource(R.string.skip_silence_desc)) },
+              trailingContent = {
+                StageSwitch(checked = skipSilence, onCheckedChange = onSkipSilenceChange)
+              },
+              onClick = { onSkipSilenceChange(!skipSilence) }
+            )
+          )
+          add(
+            Material3SettingsItem(
+              isHighlighted = (highlightKey == stringResource(R.string.audio_normalization)),
+              icon = painterResource(R.drawable.volume_up),
+              title = { Text(stringResource(R.string.audio_normalization)) },
+              description = { Text(stringResource(R.string.audio_normalization_desc)) },
+              trailingContent = {
+                StageSwitch(checked = audioNormalization, onCheckedChange = onAudioNormalizationChange)
+              },
+              onClick = { onAudioNormalizationChange(!audioNormalization) }
+            )
+          )
+          add(
+            Material3SettingsItem(
+              isHighlighted = (highlightKey == stringResource(R.string.echo_equalizer)),
+              icon = painterResource(R.drawable.echoequlizer),
+              title = { Text(stringResource(R.string.echo_equalizer)) },
+              description = { Text(stringResource(R.string.echo_equalizer_desc)) },
+              onClick = { navController.navigate("settings/equalizer") }
+            )
+          )
+        }
+    )
+    }
+
+
+    if (inSection(null)) {
+      Material3SettingsGroup(
+        scrollState = scrollState,
+        title = stringResource(R.string.stage_more),
+        items =
+          buildList {
+            if (highlightKey == null && openSection == null) {
+              add(Material3SettingsItem(
+            title = { Text("Data Saver") },
+            onClick = { openSection = "data" },
+          ))
+              add(Material3SettingsItem(
+            title = { Text(stringResource(R.string.queue)) },
+            description = { Text(stringResource(R.string.stage_player_queue_desc)) },
+            onClick = { openSection = "queue" },
+          ))
+              add(Material3SettingsItem(
+            title = { Text(stringResource(R.string.misc)) },
+            description = { Text(stringResource(R.string.stage_player_misc_desc)) },
+            onClick = { openSection = "misc" },
+          ))
+            }
+            add(
+            Material3SettingsItem(
+              isHighlighted = (highlightKey == stringResource(R.string.show_seek_buttons)),
+              icon = painterResource(R.drawable.fast_forward),
+              title = { Text(stringResource(R.string.show_seek_buttons)) },
+              description = { Text(stringResource(R.string.show_seek_buttons_desc)) },
+              trailingContent = {
+                StageSwitch(checked = showSeekButtons, onCheckedChange = onShowSeekButtonsChange)
+              },
+              onClick = { onShowSeekButtonsChange(!showSeekButtons) }
+            )
+          )
+            add(
+            Material3SettingsItem(
+              isHighlighted = (highlightKey == "Download with metadata"),
+              icon = painterResource(R.drawable.download),
+              title = { Text("Download with metadata") },
+              description = { Text("Downloads lyrics when downloading a song") },
+              trailingContent = {
+                StageSwitch(checked = downloadWithMetadata, onCheckedChange = onDownloadWithMetadataChange)
+              },
+              onClick = { onDownloadWithMetadataChange(!downloadWithMetadata) }
+            )
+          )
+            add(
+            Material3SettingsItem(
+              isHighlighted = (highlightKey == stringResource(R.string.download_on_wifi_only)),
+              icon = painterResource(R.drawable.download),
+              title = { Text(stringResource(R.string.download_on_wifi_only)) },
+              description = { Text(stringResource(R.string.download_on_wifi_only_desc)) },
+              trailingContent = {
+                StageSwitch(checked = downloadOnWifiOnly, onCheckedChange = onDownloadOnWifiOnlyChange)
+              },
+              onClick = { onDownloadOnWifiOnlyChange(!downloadOnWifiOnly) }
+            )
+          )
+            add(
+            Material3SettingsItem(
+              isHighlighted = false,
+              icon = painterResource(R.drawable.tune),
+              title = { Text("Playback Engine") },
+              value = {
+                Text(
+                  when (playbackEngine) {
+                    echo.music.iad1tya.constants.PlaybackEngine.POTOKEN -> "eXtended InnerTube"
+                    echo.music.iad1tya.constants.PlaybackEngine.BRAVEPIPE -> "BravePipe (NewPipe)"
+                    echo.music.iad1tya.constants.PlaybackEngine.AUTO -> "Auto (Try Both)"
+                  }
+                )
+              },
+              onClick = { showPlaybackEngineDialog = true }
+            )
+          )
+            add(
             Material3SettingsItem(
               isHighlighted = highlightKey == stringResource(R.string.automix),
               icon = painterResource(R.drawable.graphic_eq),
@@ -610,7 +662,7 @@ fun PlayerSettings(
               }
             )
           )
-          if (automixCrossfade) {
+            if (automixCrossfade) {
             add(
               Material3SettingsItem(
                 isHighlighted = highlightKey == stringResource(R.string.automix_debug),
@@ -624,8 +676,7 @@ fun PlayerSettings(
               )
             )
           }
-
-          add(
+            add(
             Material3SettingsItem(
               isHighlighted = (highlightKey == "Bit-Perfect USB-DAC"),
               icon = painterResource(R.drawable.volume_up),
@@ -637,8 +688,7 @@ fun PlayerSettings(
               onClick = { onEnableBitPerfectUsbDacChange(!enableBitPerfectUsbDac) }
             )
           )
-
-          add(
+            add(
             Material3SettingsItem(
               isHighlighted = (highlightKey == stringResource(R.string.history_duration)),
               icon = painterResource(R.drawable.history),
@@ -654,19 +704,7 @@ fun PlayerSettings(
               trailingContent = { Text(text = historyDuration.roundToInt().toString()) }
             )
           )
-          add(
-            Material3SettingsItem(
-              isHighlighted = (highlightKey == stringResource(R.string.skip_silence)),
-              icon = painterResource(R.drawable.fast_forward),
-              title = { Text(stringResource(R.string.skip_silence)) },
-              description = { Text(stringResource(R.string.skip_silence_desc)) },
-              trailingContent = {
-                StageSwitch(checked = skipSilence, onCheckedChange = onSkipSilenceChange)
-              },
-              onClick = { onSkipSilenceChange(!skipSilence) }
-            )
-          )
-          add(
+            add(
             Material3SettingsItem(
               isHighlighted = (highlightKey == stringResource(R.string.skip_silence_instant)),
               icon = painterResource(R.drawable.skip_next),
@@ -678,19 +716,7 @@ fun PlayerSettings(
               onClick = { if (skipSilence) onSkipSilenceInstantChange(!skipSilenceInstant) }
             )
           )
-          add(
-            Material3SettingsItem(
-              isHighlighted = (highlightKey == stringResource(R.string.audio_normalization)),
-              icon = painterResource(R.drawable.volume_up),
-              title = { Text(stringResource(R.string.audio_normalization)) },
-              description = { Text(stringResource(R.string.audio_normalization_desc)) },
-              trailingContent = {
-                StageSwitch(checked = audioNormalization, onCheckedChange = onAudioNormalizationChange)
-              },
-              onClick = { onAudioNormalizationChange(!audioNormalization) }
-            )
-          )
-          add(
+            add(
             Material3SettingsItem(
               isHighlighted = (highlightKey == stringResource(R.string.varispeed)),
               icon = painterResource(R.drawable.speed),
@@ -702,7 +728,7 @@ fun PlayerSettings(
               onClick = { onVarispeedChange(!varispeed) }
             )
           )
-          add(
+            add(
             Material3SettingsItem(
               isHighlighted = (highlightKey == stringResource(R.string.audio_loudness_preset)),
               icon = painterResource(R.drawable.volume_up),
@@ -724,7 +750,7 @@ fun PlayerSettings(
               onClick = { showLoudnessPresetDialog = true }
             )
           )
-          add(
+            add(
             Material3SettingsItem(
               isHighlighted = (highlightKey == stringResource(R.string.spatial_audio)),
               icon = painterResource(R.drawable.graphic_eq),
@@ -736,7 +762,7 @@ fun PlayerSettings(
               onClick = { onSpatialAudioChange(!spatialAudio) }
             )
           )
-          add(
+            add(
             Material3SettingsItem(
               isHighlighted = (highlightKey == stringResource(R.string.audio_offload)),
               icon = painterResource(R.drawable.graphic_eq),
@@ -753,8 +779,7 @@ fun PlayerSettings(
               onClick = { if (!crossfadeEnabled) onAudioOffloadChange(!audioOffload) }
             )
           )
-
-          add(
+            add(
             Material3SettingsItem(
               isHighlighted = (highlightKey == "Preload Next Song"),
               icon = painterResource(R.drawable.skip_next),
@@ -766,8 +791,7 @@ fun PlayerSettings(
               onClick = { onPreloadNextSongEnabledChange(!preloadNextSongEnabled) }
             )
           )
-
-          if (preloadNextSongEnabled) {
+            if (preloadNextSongEnabled) {
             add(
               Material3SettingsItem(
                 isHighlighted = (highlightKey == "Preload Limit"),
@@ -798,8 +822,7 @@ fun PlayerSettings(
               )
             )
           }
-
-          if (BuildConfig.CAST_AVAILABLE) {
+            if (BuildConfig.CAST_AVAILABLE) {
             add(
               Material3SettingsItem(
                 isHighlighted = (highlightKey == stringResource(R.string.google_cast)),
@@ -813,7 +836,7 @@ fun PlayerSettings(
               )
             )
           }
-          add(
+            add(
             Material3SettingsItem(
               isHighlighted = (highlightKey == stringResource(R.string.seek_seconds_addup)),
               icon = painterResource(R.drawable.arrow_forward),
@@ -825,40 +848,7 @@ fun PlayerSettings(
               onClick = { onSeekExtraSeconds(!seekExtraSeconds) }
             )
           )
-          add(
-            Material3SettingsItem(
-              isHighlighted = (highlightKey == stringResource(R.string.echo_equalizer)),
-              icon = painterResource(R.drawable.echoequlizer),
-              title = { Text(stringResource(R.string.echo_equalizer)) },
-              description = { Text(stringResource(R.string.echo_equalizer_desc)) },
-              onClick = { navController.navigate("settings/equalizer") }
-            )
-          )
-        }
-    )
-    }
-
-
-    if (highlightKey == null && openSection == null) {
-      Material3SettingsGroup(
-        title = stringResource(R.string.stage_more),
-        items =
-          listOf(
-          Material3SettingsItem(
-            title = { Text("Data Saver") },
-            onClick = { openSection = "data" },
-          ),
-          Material3SettingsItem(
-            title = { Text(stringResource(R.string.queue)) },
-            description = { Text(stringResource(R.string.stage_player_queue_desc)) },
-            onClick = { openSection = "queue" },
-          ),
-          Material3SettingsItem(
-            title = { Text(stringResource(R.string.misc)) },
-            description = { Text(stringResource(R.string.stage_player_misc_desc)) },
-            onClick = { openSection = "misc" },
-          )
-          ),
+          }
       )
     }
 

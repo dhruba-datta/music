@@ -234,6 +234,8 @@ fun DiscordSettings(
       key = DiscordSmallImageCustomUrlKey,
       defaultValue = "",
     )
+  var connectionOpen by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+  var imageOpen by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
   var isRefreshing by remember { mutableStateOf(false) }
 
   val (activityStatusSelection, onActivityStatusSelectionChange) =
@@ -439,7 +441,7 @@ fun DiscordSettings(
       }
 
       item {
-        PreferenceGroup(title = stringResource(R.string.options)) {
+        PreferenceGroup() {
           item {
             PreferenceEntry(
               title = { Text(stringResource(R.string.refresh)) },
@@ -452,7 +454,7 @@ fun DiscordSettings(
                     modifier = Modifier.size(28.dp),
                   )
                 } else {
-                  OutlinedButton(
+                  echo.music.iad1tya.ui.component.StageChip(
                     enabled = discordRPC && isLoggedIn,
                     onClick = {
                       coroutineScope.launch {
@@ -482,32 +484,6 @@ fun DiscordSettings(
                   }
                 }
               },
-            )
-          }
-        }
-      }
-
-      item {
-        PreferenceGroup(title = stringResource(R.string.discord_connection_settings)) {
-          item {
-            ListPreference(
-              title = { Text(stringResource(R.string.activity_status)) },
-              icon = { Icon(painterResource(R.drawable.info), null) },
-              selectedValue = activityStatusSelection,
-              values = DiscordActivityStatusOptions,
-              valueText = { discordPresenceStatusLabel(it) },
-              onValueSelected = onActivityStatusSelectionChange,
-            )
-          }
-
-          item {
-            ListPreference(
-              title = { Text(stringResource(R.string.platform_status)) },
-              icon = { Icon(painterResource(R.drawable.info), null) },
-              selectedValue = platformSelection,
-              values = DiscordPlatformOptions,
-              valueText = { discordPlatformLabel(it) },
-              onValueSelected = onPlatformSelectionChange,
             )
           }
         }
@@ -567,8 +543,53 @@ fun DiscordSettings(
       }
 
       item {
-        PreferenceGroup(title = stringResource(R.string.discord_image_options)) {
+        PreferenceGroup(title = stringResource(R.string.stage_more)) {
           item {
+            PreferenceEntry(
+              title = { Text(stringResource(R.string.discord_connection_settings)) },
+              trailingContent = {
+                Icon(
+                  painterResource(if (connectionOpen) R.drawable.expand_less else R.drawable.expand_more),
+                  null,
+                )
+              },
+              onClick = { connectionOpen = !connectionOpen },
+            )
+          }
+          item(visible = connectionOpen) {
+            ListPreference(
+              title = { Text(stringResource(R.string.activity_status)) },
+              icon = { Icon(painterResource(R.drawable.info), null) },
+              selectedValue = activityStatusSelection,
+              values = DiscordActivityStatusOptions,
+              valueText = { discordPresenceStatusLabel(it) },
+              onValueSelected = onActivityStatusSelectionChange,
+            )
+          }
+
+          item(visible = connectionOpen) {
+            ListPreference(
+              title = { Text(stringResource(R.string.platform_status)) },
+              icon = { Icon(painterResource(R.drawable.info), null) },
+              selectedValue = platformSelection,
+              values = DiscordPlatformOptions,
+              valueText = { discordPlatformLabel(it) },
+              onValueSelected = onPlatformSelectionChange,
+            )
+          }
+          item {
+            PreferenceEntry(
+              title = { Text(stringResource(R.string.discord_image_options)) },
+              trailingContent = {
+                Icon(
+                  painterResource(if (imageOpen) R.drawable.expand_less else R.drawable.expand_more),
+                  null,
+                )
+              },
+              onClick = { imageOpen = !imageOpen },
+            )
+          }
+          item(visible = imageOpen) {
             ListPreference(
               title = { Text(stringResource(R.string.large_image)) },
               icon = { Icon(painterResource(R.drawable.image), null) },
@@ -579,7 +600,7 @@ fun DiscordSettings(
             )
           }
 
-          item(visible = largeImageType == "custom") {
+          item(visible = imageOpen && largeImageType == "custom") {
             EditTextPreference(
               title = { Text(stringResource(R.string.large_image_custom_url)) },
               icon = { Icon(painterResource(R.drawable.link), null) },
@@ -589,7 +610,7 @@ fun DiscordSettings(
             )
           }
 
-          item {
+          item(visible = imageOpen) {
             ListPreference(
               title = { Text(stringResource(R.string.small_image)) },
               icon = { Icon(painterResource(R.drawable.image), null) },
@@ -600,7 +621,7 @@ fun DiscordSettings(
             )
           }
 
-          item(visible = smallImageType == "custom") {
+          item(visible = imageOpen && smallImageType == "custom") {
             EditTextPreference(
               title = { Text(stringResource(R.string.small_image_custom_url)) },
               icon = { Icon(painterResource(R.drawable.link), null) },
@@ -946,7 +967,7 @@ private fun DiscordAccountGroupCard(
         }
 
         if (isLoggedIn) {
-          OutlinedButton(
+          echo.music.iad1tya.ui.component.StageChip(
             onClick = onPrimaryAction,
             enabled = primaryActionEnabled,
             modifier = Modifier.weight(1f).heightIn(min = 56.dp),
@@ -1006,7 +1027,7 @@ private fun DiscordReauthorizeWarningRow(
         )
       },
       trailingContent = {
-        TextButton(
+        echo.music.iad1tya.ui.component.StageChip(
           onClick = onReauthorize,
           enabled = enabled,
           colors =
@@ -1100,7 +1121,7 @@ fun EditablePreference(
     description = description ?: if (value.isEmpty()) defaultValue else value,
     icon = { Icon(painterResource(iconRes), null) },
     trailingContent = {
-      TextButton(onClick = { showDialog = true }) { Text("Edit") }
+      echo.music.iad1tya.ui.component.StageChip(onClick = { showDialog = true }) { Text("Edit") }
     },
   )
   if (showDialog) {

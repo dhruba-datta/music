@@ -195,7 +195,7 @@ fun AccountSettingsScreen(
                       Icon(painterResource(R.drawable.close), contentDescription = "Remove Account")
                     }
                   } else {
-                    OutlinedButton(
+                    echo.music.iad1tya.ui.component.StageChip(
                       onClick = { showLogoutDialog = true },
                       colors =
                         ButtonDefaults.outlinedButtonColors(
@@ -262,7 +262,7 @@ fun AccountSettingsScreen(
                 trailingContent =
                   if (isLoggedIn)
                     ({
-                      OutlinedButton(
+                      echo.music.iad1tya.ui.component.StageChip(
                         onClick = { showLogoutDialog = true },
                         colors =
                           ButtonDefaults.outlinedButtonColors(

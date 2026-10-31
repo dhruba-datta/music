@@ -23,6 +23,13 @@ import echo.music.iad1tya.ui.component.LocalArtistsGrid
 import echo.music.iad1tya.ui.component.LocalSongsGrid
 import echo.music.iad1tya.ui.component.NavigationTitle
 import echo.music.iad1tya.ui.component.StageBarTitle
+import echo.music.iad1tya.ui.component.StageSectionHeader
+import echo.music.iad1tya.ui.component.StageStatCards
+import echo.music.iad1tya.ui.component.StageStatCircles
+import echo.music.iad1tya.ui.component.StageStatEntry
+import echo.music.iad1tya.ui.component.StageStatTile
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import echo.music.iad1tya.ui.utils.resize
 import echo.music.iad1tya.utils.joinByBullet
 import echo.music.iad1tya.utils.makeTimeString
@@ -49,7 +56,7 @@ fun DetailedListeningHistoryScreen(
   val dateStr =
     Instant.ofEpochMilli(viewModel.startTimestamp)
       .atZone(ZoneOffset.UTC)
-      .format(DateTimeFormatter.ofPattern("EEEE, MMM d, yyyy"))
+      .format(DateTimeFormatter.ofPattern("EEEE, d MMMM"))
 
   Scaffold(
     topBar = {
@@ -64,182 +71,95 @@ fun DetailedListeningHistoryScreen(
     }
   ) { paddingValues ->
     LazyColumn(contentPadding = paddingValues, modifier = Modifier.fillMaxSize()) {
-      item { Spacer(modifier = Modifier.height(16.dp)) }
-
       item {
-        ElevatedCard(
-          modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-          shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp)
-        ) {
-          Column(
-            modifier = Modifier.fillMaxWidth().padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-          ) {
-            // Format precise time mapping
-            val preciseSec = (totalPlayTime / 1000) % 60
-            val preciseMin = (totalPlayTime / (1000 * 60)) % 60
-            val preciseHr = (totalPlayTime / (1000 * 60 * 60))
-            val detailedTimeStr =
-              buildString {
-                  if (preciseHr > 0) append("${preciseHr}h ")
-                  if (preciseMin > 0 || preciseHr > 0) append("${preciseMin}m ")
-                  append("${preciseSec}s")
-                }
-                .trim()
-
-            // Header
-            Row(
-              modifier = Modifier.fillMaxWidth(),
-              horizontalArrangement = Arrangement.SpaceBetween,
-              verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-            ) {
-              Text(
-                text = "Total listening time",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-              )
-              Text(
-                text = detailedTimeStr,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-              )
-            }
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
-
-            // Stats Grid
-            Row(
-              modifier = Modifier.fillMaxWidth(),
-              horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-              Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
-                Text(
-                  text = "$uniqueSongsCount",
-                  style = MaterialTheme.typography.titleMedium,
-                  fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                )
-                Text(
-                  text = "Songs",
-                  style = MaterialTheme.typography.bodyMedium,
-                  color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-              }
-              Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
-                Text(
-                  text = "$uniqueArtistsCount",
-                  style = MaterialTheme.typography.titleMedium,
-                  fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                )
-                Text(
-                  text = "Artists",
-                  style = MaterialTheme.typography.bodyMedium,
-                  color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-              }
-              Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
-                Text(
-                  text = "$uniqueAlbumsCount",
-                  style = MaterialTheme.typography.titleMedium,
-                  fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                )
-                Text(
-                  text = "Albums",
-                  style = MaterialTheme.typography.bodyMedium,
-                  color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-              }
-            }
-
-            // Top Artist Highlight
-            val topArtist = mostPlayedArtists.firstOrNull()
-            if (topArtist != null) {
-              Spacer(modifier = Modifier.height(4.dp))
-              Row(
-                modifier =
-                  Modifier.fillMaxWidth()
-                    .background(
-                      MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f),
-                      androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
-                    )
-                    .padding(12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-              ) {
-                Text(
-                  text = "Top Artist:",
-                  style = MaterialTheme.typography.bodyMedium,
-                  color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                  text = topArtist.artist.name,
-                  style = MaterialTheme.typography.titleMedium,
-                  fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                  color = MaterialTheme.colorScheme.secondary
-                )
-              }
-            }
+        val totalHours = totalPlayTime / (1000 * 60 * 60)
+        val totalMinutes = (totalPlayTime / (1000 * 60)) % 60
+        val totalSeconds = (totalPlayTime / 1000) % 60
+        val detailedTimeStr =
+          if (totalHours > 0) {
+            "${totalHours}h ${"%02d".format(totalMinutes)}m"
+          } else {
+            "${totalMinutes}m ${totalSeconds}s"
           }
+        Row(
+          horizontalArrangement = Arrangement.spacedBy(10.dp),
+          modifier =
+            Modifier.padding(start = 18.dp, top = 12.dp, end = 18.dp)
+              .fillMaxWidth()
+              .height(IntrinsicSize.Min),
+        ) {
+          StageStatTile(
+            value = detailedTimeStr,
+            label = "Total listening time",
+            modifier = Modifier.weight(1f).fillMaxHeight(),
+          )
+          StageStatTile(
+            value = mostPlayedArtists.firstOrNull()?.artist?.name ?: "-",
+            label = "Top Artist",
+            modifier = Modifier.weight(1f).fillMaxHeight(),
+          )
         }
-        Spacer(modifier = Modifier.height(24.dp))
       }
 
       if (mostPlayedSongs.isNotEmpty()) {
         item {
-          NavigationTitle(title = "${mostPlayedSongs.size} Songs")
-          LazyRow {
-            itemsIndexed(mostPlayedSongs, key = { _, song -> song.id }) { index, song ->
-              LocalSongsGrid(
-                title = "${index + 1}. ${song.title}",
-                subtitle =
-                  joinByBullet(
-                    "${song.songCountListened} plays",
-                    makeTimeString(song.timeListened ?: 0L)
-                  ),
-                thumbnailUrl = song.thumbnailUrl,
-                modifier = Modifier.fillMaxWidth()
-              )
-            }
-          }
+          StageSectionHeader(title = "Songs")
+          StageStatCards(
+            entries =
+              mostPlayedSongs.map { song ->
+                StageStatEntry(
+                  key = song.id,
+                  title = song.title,
+                  subtitle =
+                    joinByBullet(
+                      "${song.songCountListened} plays",
+                      makeTimeString(song.timeListened ?: 0L)
+                    ),
+                  thumbnailUrl = song.thumbnailUrl,
+                )
+              },
+            artHeight = 72.dp,
+          )
         }
       }
 
       if (mostPlayedArtists.isNotEmpty()) {
         item {
-          NavigationTitle(title = "${mostPlayedArtists.size} Artists")
-          LazyRow {
-            itemsIndexed(mostPlayedArtists, key = { _, artist -> artist.id }) { index, artist ->
-              LocalArtistsGrid(
-                title = "${index + 1}. ${artist.artist.name}",
-                subtitle =
-                  joinByBullet(
-                    "${artist.songCount} plays",
-                    makeTimeString(artist.timeListened?.toLong() ?: 0L)
-                  ),
-                thumbnailUrl = artist.artist.thumbnailUrl?.resize(544, 544)
-              )
-            }
-          }
+          StageSectionHeader(title = "Artists")
+          StageStatCircles(
+            entries =
+              mostPlayedArtists.map { artist ->
+                StageStatEntry(
+                  key = artist.id,
+                  title = artist.artist.name,
+                  subtitle = "${artist.songCount} plays",
+                  thumbnailUrl = artist.artist.thumbnailUrl?.resize(544, 544),
+                )
+              },
+            size = 60.dp,
+          )
         }
       }
 
       if (mostPlayedAlbums.isNotEmpty()) {
         item {
-          NavigationTitle(title = "${mostPlayedAlbums.size} Albums")
-          LazyRow {
-            itemsIndexed(mostPlayedAlbums, key = { _, album -> album.id }) { index, album ->
-              LocalAlbumsGrid(
-                title = "${index + 1}. ${album.album.title}",
-                subtitle =
-                  joinByBullet(
-                    "${album.songCountListened} plays",
-                    makeTimeString(album.timeListened ?: 0L)
-                  ),
-                thumbnailUrl = album.album.thumbnailUrl?.resize(544, 544),
-                modifier = Modifier.fillMaxWidth()
-              )
-            }
-          }
+          StageSectionHeader(title = "Albums")
+          StageStatCards(
+            entries =
+              mostPlayedAlbums.map { album ->
+                StageStatEntry(
+                  key = album.id,
+                  title = album.album.title,
+                  subtitle =
+                    joinByBullet(
+                      "${album.songCountListened} plays",
+                      makeTimeString(album.timeListened ?: 0L)
+                    ),
+                  thumbnailUrl = album.album.thumbnailUrl?.resize(544, 544),
+                )
+              },
+            artHeight = 72.dp,
+          )
         }
       }
 

@@ -12,6 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -138,7 +139,16 @@ fun AmbientSettingsContent(modifier: Modifier = Modifier) {
             fontWeight = FontWeight.Bold,
           )
           Text(
-            text = lyricsAnimationStyle.name,
+            text =
+              when (lyricsAnimationStyle) {
+                LyricsAnimationStyle.NONE -> stringResource(R.string.none)
+                LyricsAnimationStyle.APPLE -> stringResource(R.string.apple_music_style)
+                LyricsAnimationStyle.APPLE_V2 -> stringResource(R.string.apple_music_style_letter)
+                LyricsAnimationStyle.echomusic_1 -> stringResource(R.string.echomusic_1)
+                LyricsAnimationStyle.LYRICS_V2 -> stringResource(R.string.lyrics_v2_fluid)
+                LyricsAnimationStyle.METRO_LYRICS -> stringResource(R.string.lyrics_animation_metro)
+                else -> lyricsAnimationStyle.name
+              },
             fontSize = 13.sp,
             lineHeight = 17.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

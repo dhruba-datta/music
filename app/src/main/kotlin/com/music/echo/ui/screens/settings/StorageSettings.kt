@@ -310,53 +310,27 @@ fun StorageSettings(
 
     Material3SettingsGroup(
       scrollState = scrollState,
-      title = stringResource(R.string.storage),
+      title = stringResource(R.string.downloaded_songs),
       items =
-        listOf(
-          Material3SettingsItem(
+        buildList {
+          add(Material3SettingsItem(
             isHighlighted = (highlightKey == stringResource(R.string.downloaded_songs)),
             icon = painterResource(R.drawable.storage),
             title = { Text(stringResource(R.string.downloaded_songs)) },
             value = { Text(text = formatFileSize(downloadCacheSize)) }
-          ),
-          Material3SettingsItem(
+          ))
+          add(Material3SettingsItem(
             isHighlighted = (highlightKey == stringResource(R.string.clear_all_downloads)),
             icon = painterResource(R.drawable.clear_all),
             title = { Text(stringResource(R.string.clear_all_downloads)) },
             description = { Text(stringResource(R.string.clear_all_downloads_desc)) },
             onClick = { clearDownloads = true }
-          ),
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == stringResource(R.string.export_directory)),
-            icon = painterResource(R.drawable.folder_managed),
-            title = { Text(stringResource(R.string.export_directory)) },
-            description = {
-              Text(
-                text =
-                  if (exportDirectoryUri.isBlank()) {
-                    stringResource(R.string.not_set)
-                  } else {
-                    exportDirectoryUri
-                  }
-              )
-            },
-            onClick = { launchExportPicker() }
-          )
-        )
+          ))
+        }
     )
 
-    if (exportingSongIds.isNotBlank()) {
-    Spacer(modifier = Modifier.height(12.dp))
 
-    Material3SettingsGroup(
-        scrollState = scrollState,
-        items = listOf(Material3SettingsItem(
-          icon = painterResource(R.drawable.close),
-          title = { Text(stringResource(R.string.cancel_exports)) },
-          description = { Text(stringResource(R.string.exporting)) },
-          onClick = { AudioExportService.cancelAll(context) })),
-      )
-    }
+
 
 
     Material3SettingsGroup(
@@ -389,6 +363,43 @@ fun StorageSettings(
           )
         )
     )
+
+    Material3SettingsGroup(
+      scrollState = scrollState,
+      title = stringResource(R.string.stage_exports),
+      items =
+        buildList {
+          add(Material3SettingsItem(
+            isHighlighted = (highlightKey == stringResource(R.string.export_directory)),
+            icon = painterResource(R.drawable.folder_managed),
+            title = { Text(stringResource(R.string.export_directory)) },
+            description = {
+              Text(
+                text =
+                  if (exportDirectoryUri.isBlank()) {
+                    stringResource(R.string.not_set)
+                  } else {
+                    exportDirectoryUri
+                  }
+              )
+            },
+            onClick = { launchExportPicker() }
+          ))
+        }
+    )
+
+    if (exportingSongIds.isNotBlank()) {
+    Spacer(modifier = Modifier.height(12.dp))
+
+    Material3SettingsGroup(
+        scrollState = scrollState,
+        items = listOf(Material3SettingsItem(
+          icon = painterResource(R.drawable.close),
+          title = { Text(stringResource(R.string.cancel_exports)) },
+          description = { Text(stringResource(R.string.exporting)) },
+          onClick = { AudioExportService.cancelAll(context) })),
+      )
+    }
     Spacer(Modifier.padding(bottom = 30.dp))
 
     Spacer(

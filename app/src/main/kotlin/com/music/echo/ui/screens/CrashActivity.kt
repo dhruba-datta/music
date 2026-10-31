@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import echo.music.iad1tya.R
+import androidx.compose.foundation.layout.heightIn
 import echo.music.iad1tya.ui.theme.echomusicTheme
 import echo.music.iad1tya.utils.CrashHandler
 import java.io.File
@@ -126,6 +127,14 @@ fun CrashScreen(crashLog: String, onClose: () -> Unit, onShare: () -> Unit, onCo
             text = stringResource(R.string.crash_title)
           )
         },
+        navigationIcon = {
+          IconButton(onClick = onClose) {
+            Icon(
+              painter = painterResource(R.drawable.arrow_back),
+              contentDescription = stringResource(R.string.crash_close)
+            )
+          }
+        },
         actions = {
           IconButton(onClick = onCopy) {
             Icon(
@@ -166,9 +175,10 @@ fun CrashScreen(crashLog: String, onClose: () -> Unit, onShare: () -> Unit, onCo
     ) {
       Text(
         text = stringResource(R.string.crash_description),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(top = 12.dp)
+        fontSize = 15.sp,
+        lineHeight = 22.sp,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
+        modifier = Modifier.padding(start = 4.dp, top = 12.dp, end = 4.dp)
       )
 
       Spacer(modifier = Modifier.height(12.dp))
@@ -176,6 +186,7 @@ fun CrashScreen(crashLog: String, onClose: () -> Unit, onShare: () -> Unit, onCo
       Box(
         modifier =
           Modifier.fillMaxWidth()
+            .heightIn(min = 430.dp)
             .clip(RoundedCornerShape(18.dp))
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .padding(14.dp)

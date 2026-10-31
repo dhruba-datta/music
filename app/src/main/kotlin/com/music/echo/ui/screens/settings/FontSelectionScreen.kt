@@ -18,6 +18,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.unit.sp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -133,113 +136,73 @@ fun FontSelectionScreen(
         )
       )
     )
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(12.dp))
 
     // Typography Preview Card
-    Card(
-      shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
-      colors =
-        CardDefaults.cardColors(
-          containerColor = MaterialTheme.colorScheme.primaryContainer,
-          contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-        ),
-      modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
+    Column(
+      modifier =
+        Modifier.fillMaxWidth()
+          .background(
+            MaterialTheme.colorScheme.surfaceContainer,
+            androidx.compose.foundation.shape.RoundedCornerShape(18.dp)
+          )
+          .padding(14.dp)
     ) {
-      Column(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
-        Text(
-          text = stringResource(R.string.typography_preview).uppercase(),
-          style = MaterialTheme.typography.labelMedium,
-          color = MaterialTheme.colorScheme.primary,
-          fontWeight = FontWeight.Bold,
-          modifier = Modifier.padding(bottom = 8.dp)
-        )
-
-        Text(
-          text = stringResource(R.string.preview_text_quote),
-          fontFamily = activeFontFamily,
-          style = MaterialTheme.typography.headlineMedium,
-          color = MaterialTheme.colorScheme.onPrimaryContainer,
-          modifier = Modifier.padding(bottom = 12.dp)
-        )
-
-        Text(
-          text =
-            "Expressive typeface is applied to display, headlines, and titles. Body copy and labels remain in the system font for maximum readability.",
-          style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-        )
-      }
+      Text(
+        text = stringResource(R.string.typography_preview),
+        fontSize = 13.sp,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+      Text(
+        text = stringResource(R.string.preview_text_quote),
+        fontFamily = activeFontFamily,
+        fontSize = 21.sp,
+        lineHeight = 27.sp,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSurface,
+      )
     }
 
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(12.dp))
 
     Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
       // Options settings group
       Material3SettingsGroup(
-        title = stringResource(R.string.font_selection),
         items =
           listOf(
             Material3SettingsItem(
-              customIcon = {
-                AnimatedRadioButton(selected = selectedFont == AppFont.SYSTEM.value, onClick = null)
-              },
+              trailingContent = { FontCheck(selectedFont == AppFont.SYSTEM.value) },
+              showChevron = false,
               title = {
                 Text(text = stringResource(R.string.font_system), fontFamily = FontFamily.Default)
-              },
-              description = {
-                Text(
-                  text = stringResource(R.string.font_system_desc),
-                  fontFamily = FontFamily.Default
-                )
               },
               onClick = { onSelectedFontChange(AppFont.SYSTEM.value) }
             ),
             Material3SettingsItem(
-              customIcon = {
-                AnimatedRadioButton(
-                  selected = selectedFont == AppFont.GOOGLE_SANS.value,
-                  onClick = null
-                )
-              },
+              trailingContent = { FontCheck(selectedFont == AppFont.GOOGLE_SANS.value) },
+              showChevron = false,
               title = {
                 Text(
                   text = stringResource(R.string.font_google_sans),
                   fontFamily = GoogleSansFontFamily
                 )
               },
-              description = {
-                Text(
-                  text = stringResource(R.string.font_google_sans_desc),
-                  fontFamily = GoogleSansFontFamily
-                )
-              },
               onClick = { onSelectedFontChange(AppFont.GOOGLE_SANS.value) }
             ),
             Material3SettingsItem(
-              customIcon = {
-                AnimatedRadioButton(
-                  selected = selectedFont == AppFont.SANS_FLEX.value,
-                  onClick = null
-                )
-              },
+              trailingContent = { FontCheck(selectedFont == AppFont.SANS_FLEX.value) },
+              showChevron = false,
               title = {
                 Text(
                   text = stringResource(R.string.font_sans_flex),
                   fontFamily = SansFlexFontFamily
                 )
               },
-              description = {
-                Text(
-                  text = stringResource(R.string.font_sans_flex_desc),
-                  fontFamily = SansFlexFontFamily
-                )
-              },
               onClick = { onSelectedFontChange(AppFont.SANS_FLEX.value) }
             ),
             Material3SettingsItem(
-              customIcon = {
-                AnimatedRadioButton(selected = selectedFont == AppFont.MANROPE.value, onClick = null)
-              },
+              trailingContent = { FontCheck(selectedFont == AppFont.MANROPE.value) },
+              showChevron = false,
               title = {
                 Text(text = "Manrope", fontFamily = echo.music.iad1tya.ui.theme.ManropeFontFamily)
               },
@@ -249,58 +212,29 @@ fun FontSelectionScreen(
               onClick = { onSelectedFontChange(AppFont.MANROPE.value) }
             ),
             Material3SettingsItem(
-              customIcon = {
-                AnimatedRadioButton(selected = selectedFont == AppFont.OUTFIT.value, onClick = null)
-              },
+              trailingContent = { FontCheck(selectedFont == AppFont.OUTFIT.value) },
+              showChevron = false,
               title = {
                 Text(text = stringResource(R.string.font_outfit), fontFamily = OutfitFontFamily)
-              },
-              description = {
-                Text(
-                  text = stringResource(R.string.font_outfit_desc),
-                  fontFamily = OutfitFontFamily
-                )
               },
               onClick = { onSelectedFontChange(AppFont.OUTFIT.value) }
             ),
             Material3SettingsItem(
-              customIcon = {
-                AnimatedRadioButton(
-                  selected = selectedFont == AppFont.PLUS_JAKARTA_SANS.value,
-                  onClick = null
-                )
-              },
+              trailingContent = { FontCheck(selectedFont == AppFont.PLUS_JAKARTA_SANS.value) },
+              showChevron = false,
               title = {
                 Text(
                   text = stringResource(R.string.font_plus_jakarta_sans),
                   fontFamily = PlusJakartaSansFontFamily
                 )
               },
-              description = {
-                Text(
-                  text = stringResource(R.string.font_plus_jakarta_sans_desc),
-                  fontFamily = PlusJakartaSansFontFamily
-                )
-              },
               onClick = { onSelectedFontChange(AppFont.PLUS_JAKARTA_SANS.value) }
             ),
             Material3SettingsItem(
-              customIcon = {
-                AnimatedRadioButton(selected = selectedFont == AppFont.CUSTOM.value, onClick = null)
-              },
+              trailingContent = { FontCheck(selectedFont == AppFont.CUSTOM.value) },
+              showChevron = false,
               title = {
                 Text(text = stringResource(R.string.font_custom), fontFamily = FontFamily.Default)
-              },
-              description = {
-                Text(
-                  text = stringResource(R.string.font_custom_desc),
-                  fontFamily = FontFamily.Default
-                )
-              },
-              trailingContent = {
-                TextButton(onClick = { fontPickerLauncher.launchSafely("*/*", context) }) {
-                  Text(stringResource(R.string.import_custom_font))
-                }
               },
               onClick = {
                 if (selectedFont != AppFont.CUSTOM.value) {
@@ -313,6 +247,10 @@ fun FontSelectionScreen(
                   fontPickerLauncher.launchSafely("*/*", context)
                 }
               }
+            ),
+            Material3SettingsItem(
+              title = { Text(stringResource(R.string.import_custom_font)) },
+              onClick = { fontPickerLauncher.launchSafely("*/*", context) }
             )
           )
       )
@@ -341,4 +279,17 @@ fun FontSelectionScreen(
       }
     }
 )
+}
+
+/** The check mark at the end of the chosen font's row. */
+@Composable
+private fun FontCheck(selected: Boolean) {
+  if (selected) {
+    Icon(
+      painter = painterResource(R.drawable.check),
+      contentDescription = null,
+      tint = MaterialTheme.colorScheme.onSurface,
+      modifier = Modifier.size(24.dp),
+    )
+  }
 }
