@@ -69,13 +69,17 @@ object SelfUpdater {
     )
   }
 
-  /** Same as the startup check, but also replaces a check that is already waiting. */
+  /** A check the user asked for, so it replaces any waiting check and may use mobile data. */
   fun checkNow(context: Context) {
     WorkManager.getInstance(context)
       .enqueueUniqueWork(
         STARTUP_WORK,
         ExistingWorkPolicy.REPLACE,
-        OneTimeWorkRequestBuilder<SelfUpdateWorker>().setConstraints(constraints).build()
+        OneTimeWorkRequestBuilder<SelfUpdateWorker>()
+          .setConstraints(
+            Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
+          )
+          .build()
       )
   }
 
@@ -200,9 +204,9 @@ class SelfUpdateWorker(context: Context, params: WorkerParameters) :
       if (!getAutoUpdateCheckSetting(applicationContext)) return@withContext Result.success()
       try {
         val release = SelfUpdater.fetchLatestRelease() ?: return@withContext Result.success()
-        if (!isNewerVersion(release.tag, BuildConfig.VERSION_NAME)) {
-          return@withContext Result.success()
-        }
+        val isAvailable = isNewerVersion(release.tag, BuildConfig.VERSION_NAME)
+        saveUpdateAvailableState(applicationContext, isAvailable)
+        if (!isAvailable) return@withContext Result.success()
         if (SelfUpdater.isPlaybackActive(applicationContext)) return@withContext Result.retry()
 
         if (

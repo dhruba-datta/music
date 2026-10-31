@@ -38,6 +38,9 @@ jobs:
           while [ "$(printf '%s' "$base" | tr -cd . | wc -c)" -lt 2 ]; do base="$base.0"; done
           echo "name=$base.$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
 
+      - name: Apply Music branding
+        run: python3 scripts/rebrand.py
+
       - name: Build signed APK
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}

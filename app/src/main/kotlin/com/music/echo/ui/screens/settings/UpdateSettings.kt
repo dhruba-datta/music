@@ -134,6 +134,12 @@ fun UpdateSettings(
             },
             onClick = {
               echo.music.iad1tya.echomusic.updater.SelfUpdater.checkNow(context)
+              android.widget.Toast.makeText(
+                  context,
+                  "Checking for updates",
+                  android.widget.Toast.LENGTH_SHORT
+                )
+                .show()
             }
           )
         )
@@ -141,7 +147,7 @@ fun UpdateSettings(
 
     Text(
       text =
-        "Updates download on Wi-Fi and install automatically while nothing is playing.",
+        "Updates download on Wi-Fi and install automatically while nothing is playing. Tap above to check now on any connection.",
       style = MaterialTheme.typography.bodySmall,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
       modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp)
