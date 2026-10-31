@@ -67,6 +67,10 @@ import androidx.compose.ui.util.fastForEachIndexed
 import androidx.compose.ui.util.fastForEachReversed
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.media3.exoplayer.offline.Download
+import androidx.media3.exoplayer.offline.DownloadRequest
+import androidx.media3.exoplayer.offline.DownloadService
+import androidx.core.net.toUri
+import echo.music.iad1tya.playback.ExoDownloadService
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import echo.music.iad1tya.LocalDatabase
@@ -87,7 +91,10 @@ import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.NavigationTitle
 import echo.music.iad1tya.ui.component.SongListItem
 import echo.music.iad1tya.ui.component.StageCheckbox
+import echo.music.iad1tya.ui.component.DefaultDialog
 import echo.music.iad1tya.ui.component.StageHero
+import echo.music.iad1tya.ui.component.StageHeroDownloadButton
+import echo.music.iad1tya.ui.component.StagePillButton
 import echo.music.iad1tya.ui.component.StageHeroAction
 import echo.music.iad1tya.ui.component.StageHeroArtwork
 import echo.music.iad1tya.ui.component.StageHeroIconButton
@@ -218,6 +225,43 @@ fun AlbumScreen(
 
   val lazyListState = rememberLazyListState()
 
+  var showRemoveDownloadDialog by remember { mutableStateOf(false) }
+
+  if (showRemoveDownloadDialog) {
+    DefaultDialog(
+      onDismiss = { showRemoveDownloadDialog = false },
+      content = {
+        Text(
+          text =
+            stringResource(
+              R.string.remove_download_playlist_confirm,
+              albumWithSongs?.album?.title.orEmpty(),
+            ),
+          style = MaterialTheme.typography.bodyLarge,
+          modifier = Modifier.padding(horizontal = 18.dp),
+        )
+      },
+      buttons = {
+        StagePillButton(onClick = {
+          showRemoveDownloadDialog = false
+          albumWithSongs?.songs?.forEach { song ->
+            DownloadService.sendRemoveDownload(
+              context,
+              ExoDownloadService::class.java,
+              song.id,
+              false,
+            )
+          }
+        }) {
+          Text(text = stringResource(android.R.string.ok))
+        }
+        StagePillButton(onClick = { showRemoveDownloadDialog = false }, primary = false) {
+          Text(text = stringResource(android.R.string.cancel))
+        }
+      },
+    )
+  }
+
   val heroUnderBar by rememberStageHeroUnderBar(lazyListState)
 
   LazyColumn(
@@ -312,6 +356,37 @@ fun AlbumScreen(
               }
             },
             leadingActions = {
+              StageHeroDownloadButton(
+                downloadState = downloadState,
+                onClick = {
+                  when (downloadState) {
+                    Download.STATE_COMPLETED -> showRemoveDownloadDialog = true
+                    Download.STATE_DOWNLOADING ->
+                      albumWithSongs.songs.forEach { song ->
+                        DownloadService.sendRemoveDownload(
+                          context,
+                          ExoDownloadService::class.java,
+                          song.id,
+                          false,
+                        )
+                      }
+                    else ->
+                      albumWithSongs.songs.forEach { song ->
+                        val downloadRequest =
+                          DownloadRequest.Builder(song.id, song.id.toUri())
+                            .setCustomCacheKey(song.id)
+                            .setData(song.song.title.toByteArray())
+                            .build()
+                        DownloadService.sendAddDownload(
+                          context,
+                          ExoDownloadService::class.java,
+                          downloadRequest,
+                          false,
+                        )
+                      }
+                  }
+                },
+              )
               StageHeroAction(
                 onClick = { database.query { update(albumWithSongs.album.toggleLike()) } }
               ) {
