@@ -33,10 +33,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -70,6 +67,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.media3.exoplayer.offline.Download
@@ -432,8 +430,9 @@ private fun TopBar(
         Column(modifier = Modifier.weight(1f)) {
           Text(
             text = stringResource(R.string.music_flow),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
+            fontSize = 24.sp,
+            lineHeight = 28.sp,
+            fontWeight = FontWeight.ExtraBold,
             color = Color.White,
           )
           if (state.isOfflineFeed) {
@@ -534,6 +533,7 @@ private fun FeedMessage(message: String, action: String, onAction: () -> Unit) {
     Text(
       text = message,
       style = MaterialTheme.typography.titleMedium,
+      fontWeight = FontWeight.ExtraBold,
       color = Color.White,
       textAlign = TextAlign.Center,
     )

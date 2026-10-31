@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -51,6 +50,7 @@ import echo.music.iad1tya.ui.component.LocalArtistsGrid
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.LocalSongsGrid
 import echo.music.iad1tya.ui.component.NavigationTitle
+import echo.music.iad1tya.ui.component.StageBarTitle
 import echo.music.iad1tya.ui.menu.AlbumMenu
 import echo.music.iad1tya.ui.menu.ArtistMenu
 import echo.music.iad1tya.ui.menu.SongMenu
@@ -396,7 +396,7 @@ fun StatsScreen(
     }
 
     TopAppBar(
-      title = { Text(stringResource(R.string.stats)) },
+      title = { StageBarTitle(stringResource(R.string.stats)) },
       navigationIcon = {
         IconButton(
           onClick = navController::navigateUp,

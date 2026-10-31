@@ -27,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -35,6 +36,7 @@ import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.R
 import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.NavigationTitle
+import echo.music.iad1tya.ui.component.StageBarTitle
 import echo.music.iad1tya.ui.component.shimmer.ListItemPlaceHolder
 import echo.music.iad1tya.ui.component.shimmer.ShimmerHost
 import echo.music.iad1tya.ui.utils.backToMain
@@ -92,7 +94,7 @@ fun MoodAndGenresScreen(
   }
 
   TopAppBar(
-    title = { Text(stringResource(R.string.mood_and_genres)) },
+    title = { StageBarTitle(stringResource(R.string.mood_and_genres)) },
     navigationIcon = {
       IconButton(
         onClick = navController::navigateUp,
@@ -118,18 +120,19 @@ fun MoodAndGenresButton(
     modifier =
       modifier
         .height(MoodAndGenresButtonHeight)
-        .clip(RoundedCornerShape(6.dp))
-        .background(MaterialTheme.colorScheme.surfaceContainer)
+        .clip(RoundedCornerShape(18.dp))
+        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
         .clickable(onClick = onClick)
-        .padding(horizontal = 12.dp),
+        .padding(horizontal = 14.dp),
   ) {
     Text(
       text = title,
-      style = MaterialTheme.typography.labelLarge,
-      maxLines = 1,
+      style = MaterialTheme.typography.titleSmall,
+      fontWeight = FontWeight.ExtraBold,
+      maxLines = 2,
       overflow = TextOverflow.Ellipsis,
     )
   }
 }
 
-val MoodAndGenresButtonHeight = 48.dp
+val MoodAndGenresButtonHeight = 72.dp

@@ -95,6 +95,7 @@ import echo.music.iad1tya.ui.component.DefaultDialog
 import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.Material3SettingsGroup
 import echo.music.iad1tya.ui.component.Material3SettingsItem
+import echo.music.iad1tya.ui.component.StageBarTitle
 import echo.music.iad1tya.ui.utils.backToMain
 import echo.music.iad1tya.utils.rememberPreference
 import kotlinx.coroutines.launch
@@ -305,7 +306,7 @@ fun ListenTogetherScreen(navController: NavController, showTopBar: Boolean = fal
             onClick = { listenTogetherManager.leaveRoom() },
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(25.dp)
           ) {
             Icon(
               painter = painterResource(R.drawable.logout),
@@ -414,7 +415,7 @@ fun ListenTogetherScreen(navController: NavController, showTopBar: Boolean = fal
       item {
         Card(
           modifier = Modifier.fillMaxWidth(),
-          shape = RoundedCornerShape(24.dp),
+          shape = RoundedCornerShape(18.dp),
           colors =
             CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
           elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -426,7 +427,7 @@ fun ListenTogetherScreen(navController: NavController, showTopBar: Boolean = fal
             Text(
               text = "How it Works",
               style = MaterialTheme.typography.titleLarge,
-              fontWeight = FontWeight.Bold,
+              fontWeight = FontWeight.ExtraBold,
               color = MaterialTheme.colorScheme.onSurface
             )
 
@@ -452,7 +453,7 @@ fun ListenTogetherScreen(navController: NavController, showTopBar: Boolean = fal
 
   if (shouldShowTopBar) {
     TopAppBar(
-      title = { Text(stringResource(R.string.listen_together)) },
+      title = { StageBarTitle(stringResource(R.string.listen_together)) },
       navigationIcon = {
         IconButton(onClick = navController::navigateUp, onLongClick = navController::backToMain) {
           Icon(painterResource(R.drawable.arrow_back), contentDescription = null)
@@ -488,7 +489,7 @@ private fun InstructionStep(title: String, description: String) {
     Text(
       text = title,
       style = MaterialTheme.typography.titleMedium,
-      fontWeight = FontWeight.Bold,
+      fontWeight = FontWeight.ExtraBold,
       color = MaterialTheme.colorScheme.onSurface
     )
     Text(
@@ -542,7 +543,7 @@ private fun ConnectionStatusCard(
           animationSpec =
             spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
         ),
-    shape = RoundedCornerShape(24.dp),
+    shape = RoundedCornerShape(18.dp),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
   ) {
@@ -578,7 +579,7 @@ private fun ConnectionStatusCard(
               ConnectionState.DISCONNECTED -> stringResource(R.string.listen_together_disconnected)
             },
           style = MaterialTheme.typography.titleMedium,
-          fontWeight = FontWeight.Bold,
+          fontWeight = FontWeight.ExtraBold,
           color =
             when (connectionState) {
               ConnectionState.CONNECTED -> MaterialTheme.colorScheme.onSurface
@@ -611,7 +612,7 @@ private fun ConnectionStatusCard(
           Button(
             onClick = onConnect,
             modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(25.dp),
             colors =
               ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onSurface)
           ) {
@@ -627,7 +628,7 @@ private fun ConnectionStatusCard(
           Button(
             onClick = onDisconnect,
             modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(25.dp),
             colors =
               ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onSurface)
           ) {
@@ -636,7 +637,7 @@ private fun ConnectionStatusCard(
           FilledTonalButton(
             onClick = onReconnect,
             modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(25.dp)
           ) {
             Text("Reconnect", fontWeight = FontWeight.SemiBold)
           }
@@ -657,7 +658,7 @@ private fun RoomStatusCard(
 ) {
   Card(
     modifier = Modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(24.dp),
+    shape = RoundedCornerShape(18.dp),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
   ) {
@@ -755,7 +756,7 @@ private fun ConnectedUsersSection(
 ) {
   Card(
     modifier = Modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(24.dp),
+    shape = RoundedCornerShape(18.dp),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
   ) {
@@ -763,7 +764,7 @@ private fun ConnectedUsersSection(
       Text(
         text = "${stringResource(R.string.connected_users)} (${users.size})",
         style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.ExtraBold,
         color = MaterialTheme.colorScheme.onSurface
       )
       Spacer(modifier = Modifier.height(12.dp))
@@ -811,7 +812,7 @@ private fun UserAvatar(
           Text(
             text = user.username.take(1).uppercase(),
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.ExtraBold,
             color =
               when {
                 user.isHost -> MaterialTheme.colorScheme.surface
@@ -880,7 +881,7 @@ private fun PendingJoinRequestsSection(
 ) {
   Card(
     modifier = Modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(24.dp),
+    shape = RoundedCornerShape(18.dp),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
   ) {
@@ -888,7 +889,7 @@ private fun PendingJoinRequestsSection(
       Text(
         text = stringResource(R.string.listen_together_join_requests),
         style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.ExtraBold,
         color = MaterialTheme.colorScheme.onSurface
       )
       Spacer(modifier = Modifier.height(12.dp))
@@ -907,7 +908,7 @@ private fun PendingJoinRequestsSection(
               Text(
                 text = request.username.take(1).uppercase(),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onSurface
               )
             }
@@ -949,7 +950,7 @@ private fun PendingSuggestionsSection(
 ) {
   Card(
     modifier = Modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(24.dp),
+    shape = RoundedCornerShape(18.dp),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
   ) {
@@ -957,7 +958,7 @@ private fun PendingSuggestionsSection(
       Text(
         text = stringResource(R.string.pending_suggestions),
         style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.ExtraBold,
         color = MaterialTheme.colorScheme.onSurface
       )
       Spacer(modifier = Modifier.height(12.dp))
@@ -1032,7 +1033,7 @@ private fun JoinCreateRoomSection(
 
   Card(
     modifier = Modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(24.dp),
+    shape = RoundedCornerShape(18.dp),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
   ) {
@@ -1044,14 +1045,14 @@ private fun JoinCreateRoomSection(
       Row(
         modifier =
           Modifier.fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(18.dp))
             .background(MaterialTheme.colorScheme.surfaceContainerLow),
         horizontalArrangement = Arrangement.spacedBy(0.dp)
       ) {
         Button(
           onClick = { selectedTab = 0 },
           modifier = Modifier.weight(1f),
-          shape = RoundedCornerShape(16.dp),
+          shape = RoundedCornerShape(25.dp),
           colors =
             ButtonDefaults.buttonColors(
               containerColor =
@@ -1073,7 +1074,7 @@ private fun JoinCreateRoomSection(
         Button(
           onClick = { selectedTab = 1 },
           modifier = Modifier.weight(1f),
-          shape = RoundedCornerShape(16.dp),
+          shape = RoundedCornerShape(25.dp),
           colors =
             ButtonDefaults.buttonColors(
               containerColor =
@@ -1234,7 +1235,7 @@ private fun JoinCreateRoomSection(
           onClick = onCreateRoom,
           modifier = Modifier.fillMaxWidth(),
           enabled = hasUsername && !isCreatingRoom && !isJoiningRoom,
-          shape = RoundedCornerShape(16.dp),
+          shape = RoundedCornerShape(25.dp),
           colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onSurface)
         ) {
           Icon(
@@ -1250,7 +1251,7 @@ private fun JoinCreateRoomSection(
           onClick = onJoinRoom,
           modifier = Modifier.fillMaxWidth(),
           enabled = hasUsername && hasRoomCode && !isCreatingRoom && !isJoiningRoom,
-          shape = RoundedCornerShape(16.dp),
+          shape = RoundedCornerShape(25.dp),
           colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
         ) {
           Icon(
@@ -1354,7 +1355,7 @@ private fun UserActionDialog(
             Text(
               text = stringResource(R.string.kick_user),
               style = MaterialTheme.typography.titleMedium,
-              fontWeight = FontWeight.SemiBold,
+              fontWeight = FontWeight.ExtraBold,
               color = MaterialTheme.colorScheme.error
             )
             Text(
@@ -1383,7 +1384,7 @@ private fun UserActionDialog(
             Text(
               text = stringResource(R.string.permanently_kick_user),
               style = MaterialTheme.typography.titleMedium,
-              fontWeight = FontWeight.SemiBold
+              fontWeight = FontWeight.ExtraBold
             )
             Text(
               text = stringResource(R.string.permanently_kick_user_desc),
@@ -1411,7 +1412,7 @@ private fun UserActionDialog(
             Text(
               text = stringResource(R.string.transfer_ownership),
               style = MaterialTheme.typography.titleMedium,
-              fontWeight = FontWeight.SemiBold,
+              fontWeight = FontWeight.ExtraBold,
               color = MaterialTheme.colorScheme.onSurface
             )
             Text(
