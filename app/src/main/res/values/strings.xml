@@ -1005,4 +1005,7 @@
     <string name="stage_music_flow_enable_description">Adds a shortcut to Home</string>
     <string name="stage_in_the_room">In the room</string>
     <string name="stage_your_room">Your room</string>
+    <string name="stage_see_all">See all</string>
+    <string name="stage_your_playlists">Your playlists</string>
+    <string name="stage_saved_playlists">Saved playlists</string>
 </resources>

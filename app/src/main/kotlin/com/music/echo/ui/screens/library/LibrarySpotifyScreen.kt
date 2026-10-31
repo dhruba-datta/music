@@ -58,11 +58,23 @@ import echo.music.iad1tya.constants.ThumbnailCornerRadius
 import echo.music.iad1tya.spotify.SpotifyMapper
 import echo.music.iad1tya.ui.component.ListItem
 import echo.music.iad1tya.ui.component.IconButton
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.lazy.items
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import echo.music.iad1tya.ui.component.StageSourceCard
+import echo.music.iad1tya.ui.component.StageSourcePinnedCard
+import echo.music.iad1tya.ui.component.stageSourceSection
 import echo.music.iad1tya.ui.component.StageTopBar
 import echo.music.iad1tya.ui.utils.backToMain
 import echo.music.iad1tya.utils.joinByBullet
 import echo.music.iad1tya.utils.listItemShape
 
+private const val SPOTIFY_MINE = "spotify_mine"
+private const val SPOTIFY_SAVED = "spotify_saved"
+private const val SPOTIFY_ARTISTS = "spotify_artists_all"
 private const val SPOTIFY_LIKED_SONGS_COVER = "https://misc.scdn.co/liked-songs/liked-songs-640.png"
 
 /** The Spotify tab on its own page, opened from the Home card. */
@@ -94,6 +106,17 @@ fun LibrarySpotifyScreen(
 ) {
   val uiState by viewModel.uiState.collectAsState()
   val lifecycleOwner = LocalLifecycleOwner.current
+  var seeAll by rememberSaveable { mutableStateOf<String?>(null) }
+  val seeAllLabel = stringResource(R.string.stage_see_all)
+  val minePlaylistsTitle = stringResource(R.string.stage_your_playlists)
+  val savedPlaylistsTitle = stringResource(R.string.stage_saved_playlists)
+  val artistsTitle = stringResource(R.string.filter_artists)
+  val (minePlaylists, savedPlaylists) =
+    remember(uiState.playlists, uiState.accountName) {
+      uiState.playlists.partition { it.owner?.displayName == uiState.accountName }
+    }
+
+  BackHandler(enabled = seeAll != null) { seeAll = null }
 
   DisposableEffect(lifecycleOwner) {
     val observer = LifecycleEventObserver { _, event ->
@@ -152,86 +175,102 @@ fun LibrarySpotifyScreen(
           )
         }
 
-        // Liked Songs Pinned Item (uses native ListItem and matches Spotify aesthetic)
-        item(key = "liked_songs") {
-          val totalPlaylists = uiState.playlists.size + 1
-          val songCount = uiState.likedSongsCount ?: 0
-
-          ListItem(
-            title = stringResource(R.string.spotify_liked_songs),
-            subtitle = {
-              val sub = joinByBullet(
-                "Spotify",
-                pluralStringResource(R.plurals.n_song, songCount, songCount),
-              )
-              Text(
-                text = sub,
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-              )
-            },
-            thumbnailContent = {
-              Box(
-                modifier = Modifier
-                  .size(ListThumbnailSize)
-                  .clip(RoundedCornerShape(ThumbnailCornerRadius))
-                  .background(
-                    Brush.linearGradient(
-                      listOf(
-                        Color(0xFF450AF5),
-                        Color(0xFF8E8EE5),
-                        Color(0xFFABEDD8),
-                      )
-                    )
-                  ),
-                contentAlignment = Alignment.Center,
-              ) {
-                Icon(
-                  painter = painterResource(R.drawable.favorite),
-                  contentDescription = null,
-                  tint = Color.White,
-                  modifier = Modifier.size(24.dp),
-                )
-                AsyncImage(
-                  model = SPOTIFY_LIKED_SONGS_COVER,
-                  contentDescription = null,
-                  contentScale = ContentScale.Crop,
-                  modifier = Modifier.fillMaxSize(),
-                )
-              }
-            },
-            trailingContent = {
-              Icon(
-                painter = painterResource(R.drawable.ic_push_pin),
-                contentDescription = "Pinned",
-                tint = Color(0xFF1DB954),
-                modifier = Modifier
-                  .size(18.dp)
-                  .padding(end = 4.dp),
-              )
-            },
-            shape = listItemShape(0, totalPlaylists),
-            modifier = Modifier
-              .fillMaxWidth()
-              .clickable {
+        if (seeAll == null) {
+          item(key = "liked_songs") {
+            StageSourcePinnedCard(
+              title = stringResource(R.string.spotify_liked_songs),
+              subtitle =
+                uiState.likedSongsCount?.let {
+                  pluralStringResource(R.plurals.n_song, it, it)
+                },
+              iconRes = R.drawable.favorite,
+              colors = listOf(Color(0xFF450AF5), Color(0xFF8E8EE5)),
+              onClick = {
                 val titleEnc = Uri.encode("Liked Songs")
                 val coverEnc = Uri.encode(SPOTIFY_LIKED_SONGS_COVER)
                 navController.navigate("spotify_playlist/liked?title=$titleEnc&cover=$coverEnc")
               },
-          )
-        }
+              modifier = Modifier.padding(start = 18.dp, end = 18.dp, top = 8.dp),
+            )
+          }
 
-        if (uiState.playlists.isNotEmpty()) {
+          listOf(
+              SPOTIFY_MINE to (minePlaylistsTitle to minePlaylists),
+              SPOTIFY_SAVED to (savedPlaylistsTitle to savedPlaylists),
+            )
+            .forEach { (key, section) ->
+              stageSourceSection(
+                key = key,
+                title = section.first,
+                items = section.second,
+                itemKey = { it.id },
+                seeAllLabel = seeAllLabel,
+                onSeeAll = { seeAll = key },
+              ) { playlist ->
+                val coverUrl = SpotifyMapper.getPlaylistThumbnail(playlist)
+                StageSourceCard(
+                  title = playlist.name,
+                  subtitle = playlist.tracks?.total?.let { "$it songs" },
+                  imageUrl = coverUrl,
+                  onClick = {
+                    val titleEnc = Uri.encode(playlist.name)
+                    val coverEnc = Uri.encode(coverUrl.orEmpty())
+                    navController.navigate(
+                      "spotify_playlist/${playlist.id}?title=$titleEnc&cover=$coverEnc"
+                    )
+                  },
+                )
+              }
+            }
+
+          stageSourceSection(
+            key = "spotify_artists",
+            title = artistsTitle,
+            items = uiState.artists,
+            itemKey = { it.id },
+            seeAllLabel = seeAllLabel,
+            onSeeAll = { seeAll = SPOTIFY_ARTISTS },
+          ) { artist ->
+            StageSourceCard(
+              title = artist.name,
+              subtitle = null,
+              imageUrl = artist.images.firstOrNull()?.url,
+              circular = true,
+              onClick = {
+                navController.navigate("search/${Uri.encode(artist.name)}")
+              },
+            )
+          }
+        } else if (seeAll == SPOTIFY_ARTISTS) {
+          items(items = uiState.artists, key = { it.id }) { artist ->
+            ListItem(
+              title = artist.name,
+              subtitle = {},
+              thumbnailContent = {
+                AsyncImage(
+                  model = artist.images.firstOrNull()?.url,
+                  contentDescription = null,
+                  contentScale = ContentScale.Crop,
+                  modifier = Modifier
+                    .size(ListThumbnailSize)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+                )
+              },
+              modifier = Modifier
+                .fillMaxWidth()
+                .clickable { navController.navigate("search/${Uri.encode(artist.name)}") },
+            )
+          }
+        } else {
           itemsIndexed(
-            items = uiState.playlists,
+            items = if (seeAll == SPOTIFY_MINE) minePlaylists else savedPlaylists,
             key = { _, pl -> pl.id }
           ) { index, playlist ->
             val coverUrl = SpotifyMapper.getPlaylistThumbnail(playlist)
             val owner = playlist.owner?.displayName?.takeIf { it.isNotBlank() }
             val countText = playlist.tracks?.total?.let { "$it songs" }
-            val totalPlaylists = uiState.playlists.size + 1
+            val totalPlaylists = if (seeAll == SPOTIFY_MINE) minePlaylists.size else savedPlaylists.size
 
             ListItem(
               title = playlist.name,
@@ -258,15 +297,7 @@ fun LibrarySpotifyScreen(
                     .background(MaterialTheme.colorScheme.surfaceContainerHighest),
                 )
               },
-              trailingContent = {
-                Icon(
-                  painter = painterResource(R.drawable.more_vert),
-                  contentDescription = null,
-                  tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                  modifier = Modifier.padding(end = 4.dp),
-                )
-              },
-              shape = listItemShape(index + 1, totalPlaylists),
+              shape = listItemShape(index, totalPlaylists),
               modifier = Modifier
                 .fillMaxWidth()
                 .clickable {

@@ -7,6 +7,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import echo.music.iad1tya.constants.SpotifySpDcKey
 import echo.music.iad1tya.spotify.Spotify
+import echo.music.iad1tya.spotify.models.SpotifyArtist
 import echo.music.iad1tya.spotify.models.SpotifyPlaylist
 import echo.music.iad1tya.spotifyimport.SpotifyImportRepository
 import echo.music.iad1tya.utils.dataStore
@@ -26,6 +27,7 @@ data class SpotifyLibraryUiState(
   val accountName: String? = null,
   val avatarUrl: String? = null,
   val playlists: List<SpotifyPlaylist> = emptyList(),
+  val artists: List<SpotifyArtist> = emptyList(),
   val likedSongsCount: Int? = null,
   val isLoading: Boolean = false,
   val error: String? = null,
@@ -81,15 +83,22 @@ constructor(
         val likedCount = likedResult.getOrNull()
 
         // Fetch user playlists
-        val playlistsResult = Spotify.myPlaylists(limit = 50, offset = 0)
-        val playlists = playlistsResult.getOrNull()?.items.orEmpty()
+        val playlists = mutableListOf<SpotifyPlaylist>()
+        do {
+          val page = Spotify.myPlaylists(limit = 50, offset = playlists.size).getOrNull()
+          val pageItems = page?.items.orEmpty()
+          playlists.addAll(pageItems)
+        } while (pageItems.isNotEmpty() && playlists.size < (page?.total ?: 0))
+
+        val artists = Spotify.myArtists(limit = 50, offset = 0).getOrNull()?.items.orEmpty()
 
         _uiState.update {
           it.copy(
             isAuthenticated = true,
             accountName = session.accountName,
             avatarUrl = session.accountAvatarUrl,
-            playlists = playlists,
+            playlists = playlists.toList(),
+            artists = artists,
             likedSongsCount = likedCount,
             isLoading = false,
             error = null,
