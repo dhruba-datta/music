@@ -48,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.music.innertube.models.AlbumItem
@@ -133,10 +134,10 @@ fun OnlineSearchScreen(
       item(key = "history_header") {
         Text(
           text = stringResource(R.string.search_history),
-          style = MaterialTheme.typography.titleMedium,
-          fontWeight = FontWeight.Bold,
-          color = MaterialTheme.colorScheme.primary,
-          modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp).animateItem()
+          fontSize = 19.sp,
+          fontWeight = FontWeight.ExtraBold,
+          color = MaterialTheme.colorScheme.onSurface,
+          modifier = Modifier.padding(start = 18.dp, top = 16.dp, bottom = 8.dp).animateItem()
         )
       }
     }
@@ -169,10 +170,10 @@ fun OnlineSearchScreen(
       item(key = "suggestions_header") {
         Text(
           text = stringResource(R.string.suggestions),
-          style = MaterialTheme.typography.titleMedium,
-          fontWeight = FontWeight.Bold,
-          color = MaterialTheme.colorScheme.primary,
-          modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp).animateItem()
+          fontSize = 19.sp,
+          fontWeight = FontWeight.ExtraBold,
+          color = MaterialTheme.colorScheme.onSurface,
+          modifier = Modifier.padding(start = 18.dp, top = 8.dp, bottom = 8.dp).animateItem()
         )
       }
     }
@@ -205,10 +206,10 @@ fun OnlineSearchScreen(
             stringResource(
               if (viewState.isFromLink) R.string.parsed_from_link else R.string.top_result
             ),
-          style = MaterialTheme.typography.titleMedium,
-          fontWeight = FontWeight.Bold,
-          color = MaterialTheme.colorScheme.primary,
-          modifier = Modifier.padding(start = 16.dp, top = 8.dp).animateItem()
+          fontSize = 19.sp,
+          fontWeight = FontWeight.ExtraBold,
+          color = MaterialTheme.colorScheme.onSurface,
+          modifier = Modifier.padding(start = 18.dp, top = 8.dp).animateItem()
         )
       }
       item(key = "search_divider_spacer") { Spacer(modifier = Modifier.height(8.dp)) }

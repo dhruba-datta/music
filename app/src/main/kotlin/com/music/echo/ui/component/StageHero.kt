@@ -1,6 +1,7 @@
 package echo.music.iad1tya.ui.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -361,6 +362,26 @@ fun StageSectionTitle(text: String, modifier: Modifier = Modifier) {
     overflow = TextOverflow.Ellipsis,
     modifier = modifier,
   )
+}
+
+/** Section heading with an optional "More" link on the right. */
+@Composable
+fun StageSectionHeader(title: String, modifier: Modifier = Modifier, onMore: (() -> Unit)? = null) {
+  Row(
+    verticalAlignment = Alignment.CenterVertically,
+    modifier = modifier.fillMaxWidth().padding(horizontal = 18.dp),
+  ) {
+    StageSectionTitle(text = title, modifier = Modifier.weight(1f))
+    if (onMore != null) {
+      Text(
+        text = stringResource(R.string.more_label),
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.clickable(onClick = onMore).padding(vertical = 6.dp),
+      )
+    }
+  }
 }
 
 /** Keeps a top bar icon legible over the hero artwork. */

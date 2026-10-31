@@ -49,6 +49,7 @@ import com.valentinilk.shimmer.shimmer
 import echo.music.iad1tya.R
 import echo.music.iad1tya.constants.SuggestionRegionKey
 import echo.music.iad1tya.constants.SuggestionRegionSlugToName
+import echo.music.iad1tya.ui.component.StageSectionHeader
 import echo.music.iad1tya.utils.rememberPreference
 import kotlin.math.abs
 import kotlinx.coroutines.launch
@@ -266,15 +267,12 @@ fun TrendingAppleMusicSection(
   val coroutineScope = rememberCoroutineScope()
 
   Column(modifier = Modifier.fillMaxWidth()) {
-    Text(
-      text = "Apple Music Top 100",
-      style = MaterialTheme.typography.titleLarge,
-      modifier = Modifier.padding(horizontal = 16.dp).padding(top = 32.dp)
-    )
+    StageSectionHeader(title = "Apple Music Top 100", modifier = Modifier.padding(top = 32.dp), onMore = onMoreClick)
     Text(
       text = SuggestionRegionSlugToName[countryCode] ?: "Global Charts",
       style = MaterialTheme.typography.bodyMedium,
-      modifier = Modifier.padding(horizontal = 16.dp)
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      modifier = Modifier.padding(horizontal = 18.dp)
     )
     HorizontalPager(
       state = pagerState,
@@ -315,7 +313,7 @@ fun TrendingAppleMusicSection(
             Row(
               modifier =
                 Modifier.fillMaxWidth()
-                  .clip(RoundedCornerShape(12.dp))
+                  .clip(RoundedCornerShape(18.dp))
                   .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                   .clickable { onMoreClick() }
                   .padding(16.dp),
@@ -444,11 +442,7 @@ fun TrendingAppleMusicSection(
 fun TopArtistsSection(artists: List<SuggestionArtist>, onArtistClick: (SuggestionArtist) -> Unit) {
   if (artists.isEmpty()) return
   Column(modifier = Modifier.fillMaxWidth()) {
-    Text(
-      text = "Trending Artists",
-      style = MaterialTheme.typography.titleLarge,
-      modifier = Modifier.padding(horizontal = 16.dp).padding(top = 16.dp)
-    )
+    StageSectionHeader(title = "Trending Artists", modifier = Modifier.padding(top = 16.dp))
     LazyRow(
       contentPadding = PaddingValues(horizontal = 16.dp),
       horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -473,7 +467,7 @@ fun TopArtistsSection(artists: List<SuggestionArtist>, onArtistClick: (Suggestio
               },
               modifier =
                 Modifier.size(120.dp)
-                  .clip(RoundedCornerShape(12.dp))
+                  .clip(RoundedCornerShape(18.dp))
                   .background(MaterialTheme.colorScheme.surfaceVariant)
             )
             Surface(
@@ -527,11 +521,7 @@ fun TrendingAlbumsSection(
 ) {
   if (albums.isEmpty()) return
   Column(modifier = Modifier.fillMaxWidth()) {
-    Text(
-      text = "Trending Albums",
-      style = MaterialTheme.typography.titleLarge,
-      modifier = Modifier.padding(horizontal = 16.dp).padding(top = 16.dp)
-    )
+    StageSectionHeader(title = "Trending Albums", modifier = Modifier.padding(top = 16.dp), onMore = onMoreClick)
     LazyRow(
       contentPadding = PaddingValues(horizontal = 16.dp),
       horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -556,7 +546,7 @@ fun TrendingAlbumsSection(
               },
               modifier =
                 Modifier.size(120.dp)
-                  .clip(RoundedCornerShape(12.dp))
+                  .clip(RoundedCornerShape(18.dp))
                   .background(MaterialTheme.colorScheme.surfaceVariant)
             )
             Surface(
@@ -605,7 +595,7 @@ fun TrendingAlbumsSection(
             contentAlignment = Alignment.Center,
             modifier =
               Modifier.size(120.dp)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(18.dp))
                 .background(MaterialTheme.colorScheme.primaryContainer)
           ) {
             Icon(
