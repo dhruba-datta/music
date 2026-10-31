@@ -120,8 +120,6 @@ import com.music.innertube.utils.parseCookieString
 import echo.music.iad1tya.LocalDatabase
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.LocalPlayerConnection
-import echo.music.iad1tya.constants.RecommendationSource
-import echo.music.iad1tya.constants.RecommendationSourceKey
 import echo.music.iad1tya.R
 import echo.music.iad1tya.constants.InnerTubeCookieKey
 import echo.music.iad1tya.constants.ListItemHeight
@@ -600,11 +598,6 @@ private fun SpeedDialMenu(
   }
 }
 
-@OptIn(
-  ExperimentalFoundationApi::class,
-  ExperimentalMaterial3Api::class,
-  ExperimentalMaterial3ExpressiveApi::class
-)
 /** A Home section for one music service: suggestions, or a way to connect it. */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -656,6 +649,11 @@ private fun HomeSourceSection(
   }
 }
 
+@OptIn(
+  ExperimentalFoundationApi::class,
+  ExperimentalMaterial3Api::class,
+  ExperimentalMaterial3ExpressiveApi::class
+)
 @Composable
 fun HomeScreen(
   navController: NavController,
