@@ -1306,16 +1306,6 @@ class MainActivity : ComponentActivity() {
                               )
                             }
                           }
-                          IconButton(
-                            onClick = { navController.navigate("stats") },
-                            modifier = Modifier.size(44.dp)
-                          ) {
-                            Icon(
-                              painter = painterResource(R.drawable.stage_stats),
-                              contentDescription = stringResource(R.string.stats),
-                              modifier = Modifier.size(24.dp)
-                            )
-                          }
                           if (listenTogetherInTopBar) {
                             IconButton(
                               onClick = { navController.navigate("listen_together_from_topbar") },

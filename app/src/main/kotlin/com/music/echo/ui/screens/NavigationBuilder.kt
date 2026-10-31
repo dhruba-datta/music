@@ -113,7 +113,6 @@ fun NavGraphBuilder.navigationBuilder(
 
   composable("local_songs") { LocalSongScreen(navController) }
 
-  composable("stats") { StatsScreen(navController) }
 
   composable("mood_and_genres") { MoodAndGenresScreen(navController, scrollBehavior) }
 
