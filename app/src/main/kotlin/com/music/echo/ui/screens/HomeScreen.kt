@@ -199,7 +199,9 @@ sealed class HomeSection(val id: String, val baseWeight: Int) {
 
   data object FromTheCommunity : HomeSection("from_the_community", 20)
 
-  data object ForYou : HomeSection("for_you", 10)
+  data object YouTubeMusic : HomeSection("youtube_music", 10)
+
+  data object Spotify : HomeSection("spotify", 9)
 
   data class SimilarRecommendation(val index: Int) :
     HomeSection("similar_recommendation_$index", 10)
@@ -603,6 +605,57 @@ private fun SpeedDialMenu(
   ExperimentalMaterial3Api::class,
   ExperimentalMaterial3ExpressiveApi::class
 )
+/** A Home section for one music service: suggestions, or a way to connect it. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun HomeSourceSection(
+  title: String,
+  iconRes: Int,
+  iconTint: Color,
+  songs: List<SongItem>,
+  connected: Boolean,
+  connectText: String,
+  onOpen: () -> Unit,
+  onShowMenu: (SongItem) -> Unit,
+  onPlay: (SongItem) -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  if (connected && songs.isEmpty()) return
+
+  Column(modifier = modifier) {
+    NavigationTitle(
+      title = title,
+      thumbnail = {
+        Icon(
+          painter = painterResource(iconRes),
+          contentDescription = null,
+          tint = iconTint,
+          modifier = Modifier.size(24.dp),
+        )
+      },
+      onClick = onOpen,
+    )
+    if (connected) {
+      songs.forEach { song ->
+        YouTubeListItem(
+          item = song,
+          color = Color.Transparent,
+          isSwipeable = false,
+          trailingContent = { StageRowMoreButton(onClick = { onShowMenu(song) }) },
+          modifier =
+            Modifier.combinedClickable(onClick = { onPlay(song) }, onLongClick = { onShowMenu(song) }),
+        )
+      }
+    } else {
+      StageButton(
+        text = connectText,
+        onClick = onOpen,
+        modifier = Modifier.padding(horizontal = 18.dp),
+      )
+    }
+  }
+}
+
 @Composable
 fun HomeScreen(
   navController: NavController,
@@ -634,6 +687,7 @@ fun HomeScreen(
   val allYtItems by viewModel.allYtItems.collectAsState()
   val speedDialItems by viewModel.speedDialItems.collectAsState()
   val selectedChip by viewModel.selectedChip.collectAsState()
+  val spotifyRecommendations by viewModel.spotifyRecommendations.collectAsState()
 
   val isLoading: Boolean by viewModel.isLoading.collectAsState()
   val isMoodAndGenresLoading = isLoading && explorePage?.moodAndGenres == null
@@ -656,6 +710,18 @@ fun HomeScreen(
   val spotifyConnected = spotifyStatus == true
 
   val scope = rememberCoroutineScope()
+
+  fun showHomeSongMenu(song: SongItem) {
+    menuState.show {
+      YouTubeSongMenu(song = song, navController = navController, onDismiss = menuState::dismiss)
+    }
+  }
+
+  fun playHomeSong(song: SongItem) {
+    playerConnection?.playQueue(
+      YouTubeQueue(song.endpoint ?: WatchEndpoint(videoId = song.id), song.toMediaMetadata())
+    )
+  }
 
   var randomizeJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
 
@@ -922,6 +988,8 @@ fun HomeScreen(
       forgottenFavorites,
       communityPlaylists,
       similarRecommendations,
+      spotifyRecommendations,
+      spotifyStatus,
       homePage?.sections,
       explorePage?.moodAndGenres,
       aiRecommendedPlaylist
@@ -930,7 +998,8 @@ fun HomeScreen(
 
       if (showSpeedDial) list.add(HomeSection.SpeedDial)
       if (heroSongs.isNotEmpty()) list.add(HomeSection.HeroCarousel)
-      list.add(HomeSection.ForYou)
+      list.add(HomeSection.YouTubeMusic)
+      list.add(HomeSection.Spotify)
       if (communityPlaylists?.isNotEmpty() == true) list.add(HomeSection.FromTheCommunity)
       if (dailyDiscover?.isNotEmpty() == true) list.add(HomeSection.DailyDiscover)
       if (keepListening?.isNotEmpty() == true) list.add(HomeSection.KeepListening)
@@ -953,7 +1022,8 @@ fun HomeScreen(
             when (section) {
               HomeSection.HeroCarousel -> 20000
               HomeSection.SpeedDial -> 19000
-              HomeSection.ForYou -> 18000
+              HomeSection.YouTubeMusic -> 18000
+              HomeSection.Spotify -> 17900
               is HomeSection.SimilarRecommendation -> if (section.index == 0) 17000 else 100
               is HomeSection.HomePageSection -> 9000 - (section.index * 10)
               HomeSection.DailyDiscover -> 500
@@ -968,7 +1038,8 @@ fun HomeScreen(
             when (section) {
               HomeSection.SpeedDial,
               HomeSection.HeroCarousel,
-              HomeSection.ForYou -> 0
+              HomeSection.YouTubeMusic,
+              HomeSection.Spotify -> 0
               HomeSection.DailyDiscover -> sectionRandom.nextInt(-200, 400)
               HomeSection.KeepListening,
               HomeSection.AccountPlaylists,
@@ -983,7 +1054,8 @@ fun HomeScreen(
           mapOf(
             HomeSection.HeroCarousel to 1100,
             HomeSection.SpeedDial to 1000,
-            HomeSection.ForYou to 990,
+            HomeSection.YouTubeMusic to 990,
+            HomeSection.Spotify to 985,
             HomeSection.FromTheCommunity to 980,
             HomeSection.DailyDiscover to 970,
             HomeSection.KeepListening to 960,
@@ -996,7 +1068,7 @@ fun HomeScreen(
           when (section) {
             is HomeSection.HomePageSection -> 900 - section.index
             is HomeSection.SimilarRecommendation ->
-              if (section.index == 0) 985 else 30 - section.index
+              if (section.index == 0) 975 else 30 - section.index
             else -> defaultOrder[section] ?: 0
           }
         }
@@ -1211,10 +1283,8 @@ fun HomeScreen(
                 }
               }
             }
-            HomeSection.ForYou -> {
-              item(key = "for_you") {
-                val (recommendationSource, onRecommendationSourceChange) =
-                  rememberEnumPreference(RecommendationSourceKey, RecommendationSource.YOUTUBE)
+            HomeSection.YouTubeMusic -> {
+              item(key = "youtube_music") {
                 val songs =
                   remember(similarRecommendations) {
                     similarRecommendations
@@ -1224,112 +1294,48 @@ fun HomeScreen(
                       .distinctBy { it.id }
                       .take(5)
                   }
-                val spotify = recommendationSource == RecommendationSource.SPOTIFY
-                val noAccount = !isLoggedIn && !spotifyConnected
-                val sourceConnected = if (spotify) spotifyConnected else isLoggedIn
-                Column(modifier = Modifier.animateItem()) {
-                  NavigationTitle(
-                    title = "For you",
-                    endText = if (noAccount) null else "Pull down to refresh"
+                HomeSourceSection(
+                  title = stringResource(R.string.stage_youtube_music),
+                  iconRes = R.drawable.stage_youtube_music,
+                  iconTint = Color(0xFFFF4E45),
+                  songs = songs,
+                  connected = isLoggedIn,
+                  connectText = "Sign in to Google",
+                  onOpen = { navController.navigate(if (isLoggedIn) "account" else "login") },
+                  onShowMenu = ::showHomeSongMenu,
+                  onPlay = ::playHomeSong,
+                  modifier = Modifier.animateItem(),
+                )
+              }
+            }
+            HomeSection.Spotify -> {
+              item(key = "spotify") {
+                val songs =
+                  remember(spotifyRecommendations) {
+                    spotifyRecommendations
+                      .orEmpty()
+                      .flatMap { it.items }
+                      .filterIsInstance<SongItem>()
+                      .distinctBy { it.id }
+                      .take(5)
+                  }
+                if (spotifyStatus != null) {
+                  HomeSourceSection(
+                    title = stringResource(R.string.stage_spotify),
+                    iconRes = R.drawable.ic_spotify,
+                    iconTint = Color(0xFF1DB954),
+                    songs = songs,
+                    connected = spotifyConnected,
+                    connectText = "Connect Spotify",
+                    onOpen = {
+                      navController.navigate(
+                        if (spotifyConnected) "spotify_library" else "settings/spotify_import"
+                      )
+                    },
+                    onShowMenu = ::showHomeSongMenu,
+                    onPlay = ::playHomeSong,
+                    modifier = Modifier.animateItem(),
                   )
-                  if (!noAccount) {
-                    ChipsRow(
-                      chips =
-                        listOf(
-                          RecommendationSource.YOUTUBE to "YouTube Music",
-                          RecommendationSource.SPOTIFY to "Spotify"
-                        ),
-                      currentValue = recommendationSource,
-                      onValueUpdate = { source ->
-                        if (recommendationSource != source) {
-                          onRecommendationSourceChange(source)
-                          viewModel.refresh()
-                        }
-                      }
-                    )
-                  }
-                  if ((noAccount || !sourceConnected) && spotifyStatus != null) {
-                    Column(
-                      modifier =
-                        Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp)
-                          .fillMaxWidth()
-                          .background(MaterialTheme.colorScheme.surfaceContainer, StageCardShape)
-                          .padding(14.dp)
-                    ) {
-                      Text(
-                        text = "Get suggestions from your account",
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold
-                      )
-                      Text(
-                        text =
-                          "Connect one to fill this list. Until then, suggestions come from what you play here.",
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
-                      )
-                      Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (noAccount || !spotify) {
-                          StageButton(
-                            text = "Sign in to Google",
-                            onClick = { navController.navigate("login") }
-                          )
-                        }
-                        if (noAccount || spotify) {
-                          StageButton(
-                            text = "Connect Spotify",
-                            primary = !noAccount,
-                            onClick = { navController.navigate("settings/spotify_import") }
-                          )
-                        }
-                      }
-                    }
-                  }
-                  if (songs.isNotEmpty()) {
-                    if (noAccount) {
-                      NavigationTitle(title = "From your listening")
-                    } else if (sourceConnected) {
-                      Text(
-                        text =
-                          "Based on your connected " +
-                            (if (spotify) "Spotify" else "YouTube Music") +
-                            " account",
-                        fontSize = 14.sp,
-                        lineHeight = 21.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 22.dp, end = 22.dp, top = 10.dp)
-                      )
-                    }
-                    songs.forEach { song ->
-                      val showSongMenu = {
-                        menuState.show {
-                          YouTubeSongMenu(
-                            song = song,
-                            navController = navController,
-                            onDismiss = menuState::dismiss
-                          )
-                        }
-                      }
-                      YouTubeListItem(
-                        item = song,
-                        color = Color.Transparent,
-                        isSwipeable = false,
-                        trailingContent = { StageRowMoreButton(onClick = showSongMenu) },
-                        modifier =
-                          Modifier.combinedClickable(
-                            onClick = {
-                              playerConnection?.playQueue(
-                                YouTubeQueue(
-                                  song.endpoint ?: WatchEndpoint(videoId = song.id),
-                                  song.toMediaMetadata()
-                                )
-                              )
-                            },
-                            onLongClick = showSongMenu
-                          )
-                      )
-                    }
-                  }
                 }
               }
             }

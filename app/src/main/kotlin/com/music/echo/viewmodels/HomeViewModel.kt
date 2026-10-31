@@ -28,8 +28,6 @@ import echo.music.iad1tya.constants.HideYoutubeShortsKey
 import echo.music.iad1tya.constants.InnerTubeCookieKey
 import echo.music.iad1tya.constants.QuickPicks
 import echo.music.iad1tya.constants.QuickPicksKey
-import echo.music.iad1tya.constants.RecommendationSourceKey
-import echo.music.iad1tya.constants.RecommendationSource
 import echo.music.iad1tya.constants.SongSortType
 import echo.music.iad1tya.db.MusicDatabase
 import echo.music.iad1tya.db.entities.Album
@@ -121,6 +119,7 @@ constructor(
   val forgottenFavorites = MutableStateFlow<List<Song>?>(null)
   val keepListening = MutableStateFlow<List<LocalItem>?>(null)
   val similarRecommendations = MutableStateFlow<List<SimilarRecommendation>?>(null)
+  val spotifyRecommendations = MutableStateFlow<List<SimilarRecommendation>?>(null)
   val accountPlaylists = MutableStateFlow<List<PlaylistItem>?>(null)
   val homePage = MutableStateFlow<HomePage?>(null)
   val explorePage = MutableStateFlow<ExplorePage?>(null)
@@ -596,25 +595,20 @@ constructor(
     val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
     val fromTimeStamp = System.currentTimeMillis() - 86400000L * 7 * 2
 
-            val recommendationSource =
-                context.dataStore.data.first()[RecommendationSourceKey]
-                    .toEnum(RecommendationSource.YOUTUBE)
-
-            if (recommendationSource == RecommendationSource.SPOTIFY) {
-                val spotifyRecs = try {
-                        loadSpotifyRecommendationsUseCase(
-                            hideExplicit = hideExplicit,
-                            fromTimeStamp = fromTimeStamp,
-                        )
-                    } catch (e: Exception) { null }
-
-                if (!spotifyRecs.isNullOrEmpty()) {
-                    similarRecommendations.value = spotifyRecs.shuffled()
-                    // updateAllYtItems()
-                    return
-                }
-            }
-
+    if (isSpotifyConnected()) {
+      spotifyRecommendations.value =
+        try {
+          loadSpotifyRecommendationsUseCase(
+            hideExplicit = hideExplicit,
+            fromTimeStamp = fromTimeStamp,
+          )
+            ?.shuffled()
+        } catch (e: Exception) {
+          null
+        }
+    } else {
+      spotifyRecommendations.value = null
+    }
 
     coroutineScope {
       val artistDeferreds =
