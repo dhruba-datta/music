@@ -1259,10 +1259,18 @@ class MainActivity : ComponentActivity() {
                       Text(
                         text = currentTitle,
                         style =
-                          MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 24.sp
-                          ),
+                          if (navBackStackEntry?.destination?.route == Screens.Library.route) {
+                            MaterialTheme.typography.titleLarge.copy(
+                              fontWeight = FontWeight.ExtraBold,
+                              fontSize = 34.sp,
+                              lineHeight = 40.sp
+                            )
+                          } else {
+                            MaterialTheme.typography.titleLarge.copy(
+                              fontWeight = FontWeight.Bold,
+                              fontSize = 24.sp
+                            )
+                          },
                       )
                     },
                     actions = {

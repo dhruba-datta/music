@@ -803,6 +803,15 @@ private fun LocalSongControlsCard(
     verticalAlignment = Alignment.CenterVertically,
     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
   ) {
+    Text(
+      text = pluralStringResource(R.plurals.n_song, visibleSongCount, visibleSongCount),
+      style = MaterialTheme.typography.titleMedium,
+      fontWeight = FontWeight.ExtraBold,
+      color = MaterialTheme.colorScheme.onSurface,
+    )
+
+    Spacer(Modifier.weight(1f))
+
     SortHeader(
       sortType = sortType,
       sortDescending = sortDescending,
@@ -816,15 +825,6 @@ private fun LocalSongControlsCard(
           LocalSongSortType.ALBUM -> R.string.sort_by_album
         }
       },
-    )
-
-    Spacer(modifier = Modifier.weight(1f))
-
-    Text(
-      text = pluralStringResource(R.plurals.n_song, visibleSongCount, visibleSongCount),
-      style = MaterialTheme.typography.titleSmall,
-      color = MaterialTheme.colorScheme.secondary,
-      modifier = Modifier.padding(end = 4.dp),
     )
 
     if (onSearchClick != null) {

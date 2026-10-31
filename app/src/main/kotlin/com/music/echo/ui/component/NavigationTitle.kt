@@ -28,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import echo.music.iad1tya.R
 
 @Composable
@@ -47,7 +48,7 @@ fun NavigationTitle(
         .fillMaxWidth()
         .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
         .clickable(enabled = onClick != null) { onClick?.invoke() }
-        .padding(horizontal = 12.dp, vertical = 12.dp)
+        .padding(horizontal = 18.dp, vertical = 12.dp)
   ) {
     thumbnail?.invoke()
 
@@ -61,10 +62,11 @@ fun NavigationTitle(
       }
 
       Text(
-        text = title.uppercase(),
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        text = title,
+        fontSize = 19.sp,
+        lineHeight = 24.sp,
+        fontWeight = FontWeight.ExtraBold,
+        color = MaterialTheme.colorScheme.onSurface,
         overflow = TextOverflow.Ellipsis,
         maxLines = 1,
       )

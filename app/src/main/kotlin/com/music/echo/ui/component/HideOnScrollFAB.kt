@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -71,6 +72,7 @@ fun BoxScope.HideOnScrollFAB(
       }
       FloatingActionButton(
         onClick = onClick,
+        shape = RoundedCornerShape(18.dp),
         containerColor = MaterialTheme.colorScheme.onSurface,
         contentColor = MaterialTheme.colorScheme.surface,
       ) {
@@ -124,6 +126,7 @@ fun BoxScope.HideOnScrollFAB(
       }
       FloatingActionButton(
         onClick = onClick,
+        shape = RoundedCornerShape(18.dp),
         containerColor = MaterialTheme.colorScheme.onSurface,
         contentColor = MaterialTheme.colorScheme.surface,
       ) {
@@ -177,6 +180,7 @@ fun BoxScope.HideOnScrollFAB(
       }
       FloatingActionButton(
         onClick = onClick,
+        shape = RoundedCornerShape(18.dp),
         containerColor = MaterialTheme.colorScheme.onSurface,
         contentColor = MaterialTheme.colorScheme.surface,
       ) {

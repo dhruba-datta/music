@@ -334,6 +334,35 @@ fun rememberStageHeroUnderBar(state: LazyListState, threshold: Dp = 180.dp): Sta
   }
 }
 
+/** Bold title for a page's top bar. */
+@Composable
+fun StageBarTitle(text: String, modifier: Modifier = Modifier) {
+  Text(
+    text = text,
+    fontSize = 24.sp,
+    lineHeight = 28.sp,
+    fontWeight = FontWeight.ExtraBold,
+    maxLines = 1,
+    overflow = TextOverflow.Ellipsis,
+    modifier = modifier,
+  )
+}
+
+/** Bold section heading used inside a page. */
+@Composable
+fun StageSectionTitle(text: String, modifier: Modifier = Modifier) {
+  Text(
+    text = text,
+    fontSize = 19.sp,
+    lineHeight = 24.sp,
+    fontWeight = FontWeight.ExtraBold,
+    color = MaterialTheme.colorScheme.onSurface,
+    maxLines = 2,
+    overflow = TextOverflow.Ellipsis,
+    modifier = modifier,
+  )
+}
+
 /** Keeps a top bar icon legible over the hero artwork. */
 @Composable
 fun Modifier.stageBarButton(): Modifier =

@@ -18,7 +18,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -43,6 +43,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -107,7 +108,7 @@ fun LibraryArtistsScreen(
           colors =
             FilterChipDefaults.filterChipColors(containerColor = MaterialTheme.colorScheme.surface),
           onClick = onDeselect,
-          shape = RoundedCornerShape(16.dp),
+          shape = CircleShape,
           leadingIcon = {
             Icon(painter = painterResource(R.drawable.close), contentDescription = "")
           },
@@ -154,8 +155,17 @@ fun LibraryArtistsScreen(
     @Composable {
       Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(start = 16.dp),
+        modifier = Modifier.padding(start = 18.dp),
       ) {
+        Text(
+          text = pluralStringResource(R.plurals.n_artist, artists.size, artists.size),
+          style = MaterialTheme.typography.titleMedium,
+          fontWeight = FontWeight.ExtraBold,
+          color = MaterialTheme.colorScheme.onSurface,
+        )
+
+        Spacer(Modifier.weight(1f))
+
         SortHeader(
           sortType = sortType,
           sortDescending = sortDescending,
@@ -169,14 +179,6 @@ fun LibraryArtistsScreen(
               ArtistSortType.PLAY_TIME -> R.string.sort_by_play_time
             }
           },
-        )
-
-        Spacer(Modifier.weight(1f))
-
-        Text(
-          text = pluralStringResource(R.plurals.n_artist, artists.size, artists.size),
-          style = MaterialTheme.typography.titleSmall,
-          color = MaterialTheme.colorScheme.secondary,
         )
 
         FlowRow(

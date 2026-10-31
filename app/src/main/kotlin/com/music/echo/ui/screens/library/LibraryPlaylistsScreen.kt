@@ -38,6 +38,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -191,8 +192,17 @@ fun LibraryPlaylistsScreen(
     @Composable {
       Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(start = 16.dp),
+        modifier = Modifier.padding(start = 18.dp),
       ) {
+        Text(
+          text = pluralStringResource(R.plurals.n_playlist, playlists.size, playlists.size),
+          style = MaterialTheme.typography.titleMedium,
+          fontWeight = FontWeight.ExtraBold,
+          color = MaterialTheme.colorScheme.onSurface,
+        )
+
+        Spacer(Modifier.weight(1f))
+
         SortHeader(
           sortType = sortType,
           sortDescending = sortDescending,
@@ -206,14 +216,6 @@ fun LibraryPlaylistsScreen(
               PlaylistSortType.LAST_UPDATED -> R.string.sort_by_last_updated
             }
           },
-        )
-
-        Spacer(Modifier.weight(1f))
-
-        Text(
-          text = pluralStringResource(R.plurals.n_playlist, playlists.size, playlists.size),
-          style = MaterialTheme.typography.titleSmall,
-          color = MaterialTheme.colorScheme.secondary,
         )
 
         Spacer(modifier = Modifier.width(16.dp))
@@ -248,10 +250,10 @@ fun LibraryPlaylistsScreen(
             contentType = CONTENT_TYPE_HEADER,
           ) {
             FlowRow(
-              maxItemsInEachRow = 2,
+              maxItemsInEachRow = 3,
               horizontalArrangement = Arrangement.spacedBy(8.dp),
               verticalArrangement = Arrangement.spacedBy(8.dp),
-              modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+              modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 8.dp)
             ) {
               val itemModifier = Modifier.weight(1f)
               if (showLiked) {
@@ -327,8 +329,8 @@ fun LibraryPlaylistsScreen(
           ) {
             androidx.compose.material3.Text(
               text = "Playlists",
-              style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
-              fontWeight = FontWeight.Bold,
+              fontSize = 19.sp,
+              fontWeight = FontWeight.ExtraBold,
               modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
             )
           }
@@ -386,10 +388,10 @@ fun LibraryPlaylistsScreen(
             contentType = CONTENT_TYPE_HEADER,
           ) {
             FlowRow(
-              maxItemsInEachRow = 2,
+              maxItemsInEachRow = 3,
               horizontalArrangement = Arrangement.spacedBy(8.dp),
               verticalArrangement = Arrangement.spacedBy(8.dp),
-              modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+              modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 8.dp)
             ) {
               val itemModifier = Modifier.weight(1f)
               if (showLiked) {
@@ -466,8 +468,8 @@ fun LibraryPlaylistsScreen(
           ) {
             androidx.compose.material3.Text(
               text = "Playlists",
-              style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
-              fontWeight = FontWeight.Bold,
+              fontSize = 19.sp,
+              fontWeight = FontWeight.ExtraBold,
               modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
             )
           }
