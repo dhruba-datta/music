@@ -100,6 +100,13 @@ fun UpdateSettings(
     UpdateInfoDialog(onDismiss = { showInfoDialog = false })
   }
 
+  var showSelfUpdateDialog by remember { mutableStateOf(false) }
+  if (showSelfUpdateDialog) {
+    echo.music.iad1tya.echomusic.updater.SelfUpdateDialog(
+      onDismiss = { showSelfUpdateDialog = false }
+    )
+  }
+
   Column(
     Modifier.windowInsetsPadding(
         LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal)
@@ -133,13 +140,7 @@ fun UpdateSettings(
               }
             },
             onClick = {
-              echo.music.iad1tya.echomusic.updater.SelfUpdater.checkNow(context)
-              android.widget.Toast.makeText(
-                  context,
-                  "Checking for updates",
-                  android.widget.Toast.LENGTH_SHORT
-                )
-                .show()
+              showSelfUpdateDialog = true
             }
           )
         )
@@ -147,7 +148,7 @@ fun UpdateSettings(
 
     Text(
       text =
-        "Updates download on Wi-Fi and install automatically while nothing is playing. Tap above to check now on any connection.",
+        "Music checks when you open it and asks before downloading. Updates use your current connection, so an update may use mobile data.",
       style = MaterialTheme.typography.bodySmall,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
       modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp)

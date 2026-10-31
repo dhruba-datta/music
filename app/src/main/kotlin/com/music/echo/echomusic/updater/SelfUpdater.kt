@@ -1,147 +1,91 @@
 package echo.music.iad1tya.echomusic.updater
 
-import android.Manifest
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
-import android.content.pm.PackageManager
-import android.content.pm.ServiceInfo
-import android.media.AudioManager
-import android.net.Uri
 import android.os.Build
-import android.provider.Settings
 import android.util.Log
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
-import androidx.work.Constraints
-import androidx.work.CoroutineWorker
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.ExistingWorkPolicy
-import androidx.work.ForegroundInfo
-import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import androidx.work.WorkerParameters
-import androidx.work.workDataOf
 import echo.music.iad1tya.BuildConfig
-import echo.music.iad1tya.R
 import java.io.File
+import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.json.JSONObject
 
 /**
- * Keeps the app current from this mod's own GitHub releases: no website, no second app. Updates are
- * only fetched on an unmetered network and only installed while nothing is playing, because
- * installing restarts the app.
+ * Finds, downloads and installs updates from this mod's own GitHub releases. Nothing happens
+ * without the user: [SelfUpdateDialog] drives each step.
  */
 object SelfUpdater {
   private const val TAG = "SelfUpdater"
-  private const val PERIODIC_WORK = "self_update_periodic"
-  private const val STARTUP_WORK = "self_update_startup"
-  private const val CHANNEL_ID = "updates"
-  private const val NOTIFICATION_ID = 1002
-  private const val CHECK_INTERVAL_HOURS = 6L
-  const val KEY_MANUAL_CHECK = "manual_check"
+  private const val PREFS = "self_update"
+  private const val KEY_LATER_VERSION = "later_version"
+  private const val KEY_LATER_AT = "later_at"
+  private val SNOOZE_MILLIS = TimeUnit.HOURS.toMillis(1)
 
-  private val constraints =
-    Constraints.Builder().setRequiredNetworkType(NetworkType.UNMETERED).build()
+  data class Release(
+    val tag: String,
+    val apkUrl: String,
+    val size: Long,
+    val sha256: String?,
+    val notes: String,
+  )
 
-  fun schedule(context: Context) {
+  sealed interface InstallEvent {
+    data class NeedsConfirmation(val intent: Intent) : InstallEvent
+
+    data class Failed(val message: String) : InstallEvent
+  }
+
+  val installEvents = MutableStateFlow<InstallEvent?>(null)
+
+  /** Older versions updated from background work, which would otherwise keep running. */
+  fun cancelBackgroundWork(context: Context) {
     val workManager = WorkManager.getInstance(context)
-    workManager.enqueueUniquePeriodicWork(
-      PERIODIC_WORK,
-      ExistingPeriodicWorkPolicy.KEEP,
-      PeriodicWorkRequestBuilder<SelfUpdateWorker>(CHECK_INTERVAL_HOURS, TimeUnit.HOURS)
-        .setConstraints(constraints)
-        .build()
-    )
-    workManager.enqueueUniqueWork(
-      STARTUP_WORK,
-      ExistingWorkPolicy.KEEP,
-      OneTimeWorkRequestBuilder<SelfUpdateWorker>().setConstraints(constraints).build()
-    )
+    workManager.cancelUniqueWork("self_update_periodic")
+    workManager.cancelUniqueWork("self_update_startup")
   }
 
-  /** A check the user asked for, so it replaces any waiting check and may use mobile data. */
-  fun checkNow(context: Context) {
-    WorkManager.getInstance(context)
-      .enqueueUniqueWork(
-        STARTUP_WORK,
-        ExistingWorkPolicy.REPLACE,
-        OneTimeWorkRequestBuilder<SelfUpdateWorker>()
-          .setConstraints(
-            Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
-          )
-          .setInputData(workDataOf(KEY_MANUAL_CHECK to true))
-          .build()
-      )
+  /** The newest release if it is newer than this build. Throws when GitHub can't be reached. */
+  fun findUpdate(context: Context): Release? {
+    val release = fetchLatestRelease()
+    val isAvailable = release != null && isNewerVersion(release.tag, BuildConfig.VERSION_NAME)
+    saveUpdateAvailableState(context, isAvailable)
+    return release.takeIf { isAvailable }
   }
 
-  fun isPlaybackActive(context: Context): Boolean =
-    context.getSystemService(AudioManager::class.java).isMusicActive
-
-  private fun builder(context: Context, title: String, text: String): NotificationCompat.Builder {
-    val manager = context.getSystemService(NotificationManager::class.java)
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      manager.createNotificationChannel(
-        NotificationChannel(
-          CHANNEL_ID,
-          context.getString(R.string.app_updates_title),
-          NotificationManager.IMPORTANCE_LOW
-        )
-      )
-    }
-    return NotificationCompat.Builder(context, CHANNEL_ID)
-      .setSmallIcon(R.drawable.ic_launcher_nobg)
-      .setContentTitle(title)
-      .setContentText(text)
+  /** Like [findUpdate], for the pop-up at app start: stays quiet offline or after "Later". */
+  fun findOfferedUpdate(context: Context): Release? {
+    val release =
+      try {
+        findUpdate(context)
+      } catch (e: IOException) {
+        Log.w(TAG, "Startup check failed: ${e.message}")
+        null
+      } ?: return null
+    val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+    val snoozed =
+      prefs.getString(KEY_LATER_VERSION, null) == release.tag &&
+        System.currentTimeMillis() - prefs.getLong(KEY_LATER_AT, 0) < SNOOZE_MILLIS
+    return release.takeUnless { snoozed }
   }
 
-  private fun post(context: Context, builder: NotificationCompat.Builder) {
-    val canPost =
-      Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
-        ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
-          PackageManager.PERMISSION_GRANTED
-    if (canPost) NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, builder.build())
+  fun snooze(context: Context, release: Release) {
+    context
+      .getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+      .edit()
+      .putString(KEY_LATER_VERSION, release.tag)
+      .putLong(KEY_LATER_AT, System.currentTimeMillis())
+      .apply()
   }
 
-  fun notify(context: Context, title: String, text: String, target: PendingIntent? = null) {
-    post(context, builder(context, title, text).setContentIntent(target).setAutoCancel(true))
-  }
-
-  private fun progressBuilder(context: Context, percent: Int): NotificationCompat.Builder =
-    builder(context, "Downloading update", "$percent%")
-      .setOngoing(true)
-      .setOnlyAlertOnce(true)
-      .setProgress(100, percent, percent == 0)
-
-  fun showProgress(context: Context, percent: Int) {
-    post(context, progressBuilder(context, percent))
-  }
-
-  fun foregroundInfo(context: Context): ForegroundInfo {
-    val notification = progressBuilder(context, 0).build()
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-      ForegroundInfo(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
-    } else {
-      ForegroundInfo(NOTIFICATION_ID, notification)
-    }
-  }
-
-  internal data class Release(val tag: String, val apkUrl: String, val sha256: String?)
-
-  internal fun fetchLatestRelease(): Release? {
+  private fun fetchLatestRelease(): Release? {
     val connection =
       URL("https://api.github.com/repos/${BuildConfig.UPDATE_REPOSITORY}/releases/latest")
         .openConnection() as HttpURLConnection
@@ -149,12 +93,12 @@ object SelfUpdater {
     connection.readTimeout = 15_000
     connection.setRequestProperty("Accept", "application/vnd.github+json")
     try {
-      if (connection.responseCode != HttpURLConnection.HTTP_OK) {
-        Log.w(TAG, "No release available: HTTP ${connection.responseCode}")
-        return null
+      when (connection.responseCode) {
+        HttpURLConnection.HTTP_OK -> Unit
+        HttpURLConnection.HTTP_NOT_FOUND -> return null
+        else -> throw IOException("HTTP ${connection.responseCode}")
       }
-      val release =
-        JSONObject(connection.inputStream.bufferedReader().use { it.readText() })
+      val release = JSONObject(connection.inputStream.bufferedReader().use { it.readText() })
       val assets = release.getJSONArray("assets")
       for (index in 0 until assets.length()) {
         val asset = assets.getJSONObject(index)
@@ -162,7 +106,9 @@ object SelfUpdater {
           return Release(
             tag = release.getString("tag_name"),
             apkUrl = asset.getString("browser_download_url"),
+            size = asset.getLong("size"),
             sha256 = asset.optString("digest").removePrefix("sha256:").ifEmpty { null },
+            notes = release.optString("body"),
           )
         }
       }
@@ -172,20 +118,22 @@ object SelfUpdater {
     }
   }
 
-  internal fun download(
-    url: String,
-    target: File,
-    expectedSha256: String?,
-    onProgress: (Int) -> Unit,
-  ): Boolean {
+  fun download(
+    context: Context,
+    release: Release,
+    onProgress: (received: Long, total: Long) -> Unit,
+  ): File {
+    val directory = File(context.cacheDir, "self_update")
+    directory.deleteRecursively()
+    directory.mkdirs()
+    val target = File(directory, "${release.tag}.apk")
     val digest = MessageDigest.getInstance("SHA-256")
-    target.parentFile?.mkdirs()
-    val connection = URL(url).openConnection()
+    val connection = URL(release.apkUrl).openConnection()
     connection.connectTimeout = 15_000
     connection.readTimeout = 30_000
-    val total = connection.contentLengthLong
+    val total = connection.contentLengthLong.takeIf { it > 0 } ?: release.size
     var received = 0L
-    var reported = -1
+    var reported = -1L
     connection.getInputStream().use { input ->
       target.outputStream().use { output ->
         val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
@@ -195,19 +143,23 @@ object SelfUpdater {
           digest.update(buffer, 0, read)
           output.write(buffer, 0, read)
           received += read
-          val percent = if (total > 0) (received * 100 / total).toInt() else 0
+          val percent = received * 100 / total
           if (percent != reported) {
             reported = percent
-            onProgress(percent)
+            onProgress(received, total)
           }
         }
       }
     }
     val actual = digest.digest().joinToString("") { "%02x".format(it) }
-    return expectedSha256 == null || actual.equals(expectedSha256, ignoreCase = true)
+    if (release.sha256 != null && !actual.equals(release.sha256, ignoreCase = true)) {
+      target.delete()
+      throw IOException("the file was corrupted")
+    }
+    return target
   }
 
-  internal fun install(context: Context, apk: File) {
+  fun install(context: Context, apk: File) {
     val installer = context.packageManager.packageInstaller
     val params =
       PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
@@ -237,91 +189,6 @@ object SelfUpdater {
   }
 }
 
-class SelfUpdateWorker(context: Context, params: WorkerParameters) :
-  CoroutineWorker(context, params) {
-
-  override suspend fun doWork(): Result =
-    withContext(Dispatchers.IO) {
-      val manual = inputData.getBoolean(SelfUpdater.KEY_MANUAL_CHECK, false)
-      if (!manual && !getAutoUpdateCheckSetting(applicationContext)) {
-        return@withContext Result.success()
-      }
-      try {
-        val release = SelfUpdater.fetchLatestRelease()
-        val isAvailable =
-          release != null && isNewerVersion(release.tag, BuildConfig.VERSION_NAME)
-        saveUpdateAvailableState(applicationContext, isAvailable)
-        if (release == null || !isAvailable) {
-          if (manual) SelfUpdater.notify(applicationContext, "You're up to date", versionText())
-          return@withContext Result.success()
-        }
-        if (SelfUpdater.isPlaybackActive(applicationContext)) return@withContext waitForSilence(release)
-
-        if (
-          Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-            !applicationContext.packageManager.canRequestPackageInstalls()
-        ) {
-          askForInstallPermission()
-          return@withContext Result.success()
-        }
-
-        // Keeps a slow download alive past WorkManager's time limit where Android allows it.
-        try {
-          setForeground(SelfUpdater.foregroundInfo(applicationContext))
-        } catch (e: IllegalStateException) {
-          Log.w("SelfUpdater", "Downloading without a foreground service: ${e.message}")
-        }
-
-        val apk = File(applicationContext.cacheDir, "self_update/${release.tag}.apk")
-        val verified =
-          SelfUpdater.download(release.apkUrl, apk, release.sha256) { percent ->
-            SelfUpdater.showProgress(applicationContext, percent)
-          }
-        if (!verified) {
-          Log.e("SelfUpdater", "Checksum mismatch for ${release.tag}")
-          apk.delete()
-          SelfUpdater.notify(applicationContext, "Update failed", "Download was corrupted, retrying")
-          return@withContext Result.retry()
-        }
-        // Downloading takes a while, so the user may have started listening since the first check.
-        if (SelfUpdater.isPlaybackActive(applicationContext)) return@withContext waitForSilence(release)
-        SelfUpdater.notify(applicationContext, "Installing update", release.tag)
-        SelfUpdater.install(applicationContext, apk)
-        Result.success()
-      } catch (e: Exception) {
-        Log.e("SelfUpdater", "Update failed: ${e.message}", e)
-        SelfUpdater.notify(applicationContext, "Update failed", "Will try again: ${e.message}")
-        Result.retry()
-      }
-    }
-
-  private fun versionText() = "Version ${BuildConfig.VERSION_NAME}"
-
-  private fun waitForSilence(release: SelfUpdater.Release): Result {
-    SelfUpdater.notify(
-      applicationContext,
-      "Update ${release.tag} is waiting",
-      "It will install once playback stops",
-    )
-    return Result.retry()
-  }
-
-  private fun askForInstallPermission() {
-    val settings =
-      Intent(
-          Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-          Uri.parse("package:${applicationContext.packageName}"),
-        )
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    SelfUpdater.notify(
-      applicationContext,
-      "Allow automatic updates",
-      "Tap once to let this app install its own updates",
-      PendingIntent.getActivity(applicationContext, 0, settings, PendingIntent.FLAG_IMMUTABLE),
-    )
-  }
-}
-
 class SelfUpdateResultReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {
     when (intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)) {
@@ -329,23 +196,14 @@ class SelfUpdateResultReceiver : BroadcastReceiver() {
         // Some Android versions and phone brands still insist on a confirmation tap.
         @Suppress("DEPRECATION")
         val confirm = intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT) ?: return
-        SelfUpdater.notify(
-          context,
-          "Update ready",
-          "Tap to finish installing the update",
-          PendingIntent.getActivity(
-            context,
-            0,
-            confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-          ),
-        )
+        SelfUpdater.installEvents.value =
+          SelfUpdater.InstallEvent.NeedsConfirmation(confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
       }
       PackageInstaller.STATUS_SUCCESS -> Unit
       else -> {
-        val message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
+        val message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE) ?: "unknown error"
         Log.e("SelfUpdater", "Install failed: $message")
-        SelfUpdater.notify(context, "Update failed", "Could not install: $message")
+        SelfUpdater.installEvents.value = SelfUpdater.InstallEvent.Failed(message)
       }
     }
   }

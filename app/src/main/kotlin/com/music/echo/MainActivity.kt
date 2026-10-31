@@ -517,6 +517,13 @@ class MainActivity : ComponentActivity() {
     val enableHighRefreshRate by rememberPreference(EnableHighRefreshRateKey, defaultValue = true)
     val context = LocalContext.current
     var showUpdateDialog by remember { androidx.compose.runtime.mutableStateOf(false) }
+    var offeredUpdate by remember {
+      androidx.compose.runtime.mutableStateOf<
+        echo.music.iad1tya.echomusic.updater.SelfUpdater.Release?
+      >(
+        null
+      )
+    }
     var availableUpdateVersion by remember { androidx.compose.runtime.mutableStateOf("") }
     var availableUpdateChangelog by remember {
       androidx.compose.runtime.mutableStateOf<
@@ -562,8 +569,14 @@ class MainActivity : ComponentActivity() {
     LaunchedEffect(Unit) {
       val prefs = context.dataStore.data.first()
 
+      echo.music.iad1tya.echomusic.updater.SelfUpdater.cancelBackgroundWork(context)
       if (getAutoUpdateCheckSetting(context)) {
-        echo.music.iad1tya.echomusic.updater.SelfUpdater.schedule(context)
+        delay(2000L)
+        offeredUpdate =
+          withContext(Dispatchers.IO) {
+            echo.music.iad1tya.echomusic.updater.SelfUpdater.findOfferedUpdate(context)
+          }
+        showUpdateDialog = offeredUpdate != null
       }
     }
 
@@ -724,10 +737,8 @@ class MainActivity : ComponentActivity() {
       val hapticHelper = rememberHapticHelper()
 
       if (showUpdateDialog) {
-        echo.music.iad1tya.echomusic.component.UpdateAvailableDialog(
-          version = availableUpdateVersion,
-          changelog = availableUpdateChangelog,
-          description = availableUpdateDescription,
+        echo.music.iad1tya.echomusic.updater.SelfUpdateDialog(
+          release = offeredUpdate,
           onDismiss = { showUpdateDialog = false }
         )
       } else {
