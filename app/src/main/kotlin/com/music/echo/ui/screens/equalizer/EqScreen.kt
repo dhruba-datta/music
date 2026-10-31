@@ -224,12 +224,7 @@ private fun EqScreenContent(
         contentPadding = PaddingValues(bottom = 16.dp)
       ) {
         item {
-          androidx.compose.material3.Card(
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
-            colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-            elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 0.dp),
-            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-          ) {
+          StageEqRow(selected = activeProfileId == null) {
             NoEqualizationItem(
               isSelected = activeProfileId == null,
               onSelected = { onProfileSelected(null) }
@@ -241,12 +236,7 @@ private fun EqScreenContent(
 
         if (customProfiles.isNotEmpty()) {
           items(customProfiles) { profile ->
-            androidx.compose.material3.Card(
-              shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
-              colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-              elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 0.dp),
-              modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-            ) {
+            StageEqRow(selected = activeProfileId == profile.id) {
               EQProfileItem(
                 profile = profile,
                 isSelected = activeProfileId == profile.id,
@@ -291,16 +281,56 @@ private fun EqScreenContent(
   }
 }
 
+/** A rounded row that turns white while selected, with its content following in dark. */
+@Composable
+private fun StageEqRow(selected: Boolean, content: @Composable () -> Unit) {
+  androidx.compose.material3.Card(
+    shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
+    colors =
+      androidx.compose.material3.CardDefaults.cardColors(
+        containerColor =
+          if (selected) MaterialTheme.colorScheme.primary
+          else MaterialTheme.colorScheme.surfaceContainerHigh,
+        contentColor =
+          if (selected) MaterialTheme.colorScheme.onPrimary
+          else MaterialTheme.colorScheme.onSurface
+      ),
+    elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 0.dp),
+    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+  ) {
+    content()
+  }
+}
+
+@Composable
+private fun stageEqListColors(isSelected: Boolean) =
+  androidx.compose.material3.ListItemDefaults.colors(
+    containerColor = androidx.compose.ui.graphics.Color.Transparent,
+    headlineColor =
+      if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+    supportingColor =
+      if (isSelected) MaterialTheme.colorScheme.onPrimary
+      else MaterialTheme.colorScheme.onSurfaceVariant
+  )
+
+@Composable
+private fun stageEqRadioColors() =
+  androidx.compose.material3.RadioButtonDefaults.colors(
+    selectedColor = MaterialTheme.colorScheme.onPrimary
+  )
+
 @Composable
 private fun NoEqualizationItem(isSelected: Boolean, onSelected: () -> Unit) {
-  ListItem(colors = androidx.compose.material3.ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+  ListItem(colors = stageEqListColors(isSelected),
     headlineContent = {
       Text(
         stringResource(R.string.eq_disabled),
         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
       )
     },
-    leadingContent = { RadioButton(selected = isSelected, onClick = onSelected) },
+    leadingContent = {
+      RadioButton(selected = isSelected, onClick = onSelected, colors = stageEqRadioColors())
+    },
     modifier = Modifier.clickable(onClick = onSelected)
   )
 }
@@ -314,7 +344,7 @@ private fun EQProfileItem(
 ) {
   var showDeleteDialog by remember { mutableStateOf(false) }
 
-  ListItem(colors = androidx.compose.material3.ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+  ListItem(colors = stageEqListColors(isSelected),
     headlineContent = {
       Text(
         text = profile.deviceModel,
@@ -330,13 +360,17 @@ private fun EQProfileItem(
         )
       )
     },
-    leadingContent = { RadioButton(selected = isSelected, onClick = onSelected) },
+    leadingContent = {
+      RadioButton(selected = isSelected, onClick = onSelected, colors = stageEqRadioColors())
+    },
     trailingContent = {
       IconButton(onClick = { showDeleteDialog = true }) {
         Icon(
           painter = painterResource(R.drawable.delete),
           contentDescription = stringResource(R.string.delete_profile_desc),
-          tint = MaterialTheme.colorScheme.error
+          tint =
+            if (isSelected) MaterialTheme.colorScheme.onPrimary
+            else MaterialTheme.colorScheme.error
         )
       }
     },

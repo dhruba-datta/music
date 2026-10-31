@@ -108,7 +108,8 @@ data class ThumbnailDimensions(
   val itemWidth: Dp,
   val containerSize: Dp,
   val thumbnailSize: Dp,
-  val cornerRadius: Dp
+  val cornerRadius: Dp,
+  val horizontalPadding: Dp = PlayerHorizontalPadding
 )
 
 @Immutable data class MediaItemsData(val items: List<MediaItem>, val currentIndex: Int)
@@ -119,12 +120,15 @@ private fun calculateThumbnailDimensions(
   containerHeight: Dp = containerWidth,
   horizontalPadding: Dp = PlayerHorizontalPadding,
   cornerRadius: Dp = ThumbnailCornerRadius,
-  isLandscape: Boolean = false
+  isLandscape: Boolean = false,
+  fitHeight: Boolean = false
 ): ThumbnailDimensions {
 
   val effectiveSize =
     if (isLandscape) {
       minOf(containerWidth, containerHeight) - (horizontalPadding * 2)
+    } else if (fitHeight) {
+      minOf(containerWidth - (horizontalPadding * 2), containerHeight)
     } else {
       containerWidth - (horizontalPadding * 2)
     }
@@ -132,7 +136,8 @@ private fun calculateThumbnailDimensions(
     itemWidth = containerWidth,
     containerSize = containerWidth,
     thumbnailSize = effectiveSize,
-    cornerRadius = cornerRadius * 2
+    cornerRadius = cornerRadius * 2,
+    horizontalPadding = horizontalPadding
   )
 }
 
@@ -252,6 +257,7 @@ fun Thumbnail(
   modifier: Modifier = Modifier,
   isPlayerExpanded: () -> Boolean = { true },
   isLandscape: Boolean = false,
+  stage: Boolean = false,
   isListenTogetherGuest: Boolean = false,
 ) {
   val playerConnection = LocalPlayerConnection.current ?: return
@@ -380,14 +386,15 @@ fun Thumbnail(
       enter = fadeIn(),
       exit = fadeOut(),
       modifier =
-        Modifier.fillMaxSize().then(if (!isLandscape) Modifier.statusBarsPadding() else Modifier),
+        Modifier.fillMaxSize()
+          .then(if (!isLandscape && !stage) Modifier.statusBarsPadding() else Modifier),
     ) {
       Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = if (isLandscape) Arrangement.Center else Arrangement.Top
       ) {
-        if (!isLandscape) {
+        if (!isLandscape && !stage) {
           ThumbnailHeader(
             queueTitle = queueTitle,
             albumTitle = mediaMetadata?.album?.title,
@@ -405,12 +412,17 @@ fun Thumbnail(
             }
         ) {
           val dimensions =
-            remember(maxWidth, maxHeight, isLandscape, thumbnailCornerRadius) {
+            remember(maxWidth, maxHeight, isLandscape, stage, thumbnailCornerRadius) {
               calculateThumbnailDimensions(
                 containerWidth = maxWidth,
                 containerHeight = maxHeight,
-                cornerRadius = thumbnailCornerRadius.dp,
-                isLandscape = isLandscape
+                horizontalPadding =
+                  if (stage && !isLandscape) StagePlayerPadding else PlayerHorizontalPadding,
+                // Stage rounds the artwork more unless the user chose their own radius.
+                cornerRadius =
+                  if (stage && thumbnailCornerRadius == 3f) 14.dp else thumbnailCornerRadius.dp,
+                isLandscape = isLandscape,
+                fitHeight = stage && !isLandscape
               )
             }
 
@@ -481,35 +493,66 @@ fun Thumbnail(
   }
 }
 
+/** The "Now Playing" and source lines, for the player header. */
+@Composable
+internal fun StageNowPlayingTitle(textColor: Color, modifier: Modifier = Modifier) {
+  val playerConnection = LocalPlayerConnection.current ?: return
+  val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
+  val queueTitle by playerConnection.queueTitle.collectAsState()
+  ThumbnailHeader(
+    queueTitle = queueTitle,
+    albumTitle = mediaMetadata?.album?.title,
+    textColor = textColor,
+    stage = true,
+    modifier = modifier
+  )
+}
+
 @Composable
 private fun ThumbnailHeader(
   queueTitle: String?,
   albumTitle: String?,
   textColor: Color,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
+  stage: Boolean = false
 ) {
   val listenTogetherManager = LocalListenTogetherManager.current
   val listenTogetherRoleState = listenTogetherManager?.role?.collectAsState(initial = RoomRole.NONE)
   val isListenTogetherGuest by
     listenTogetherManager?.guestPlaybackRestricted?.collectAsState(initial = false)
       ?: remember { mutableStateOf(false) }
-  Box(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+  val roleStyle =
+    if (stage) MaterialTheme.typography.labelMedium else MaterialTheme.typography.titleMedium
+  val sourceStyle =
+    if (stage) {
+      MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+    } else {
+      MaterialTheme.typography.titleMedium
+    }
+  Box(
+    modifier =
+      modifier
+        .fillMaxWidth()
+        .then(if (stage) Modifier else Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+  ) {
     Column(
       horizontalAlignment = Alignment.CenterHorizontally,
-      modifier = Modifier.align(Alignment.Center).padding(horizontal = 48.dp)
+      modifier =
+        Modifier.align(Alignment.Center)
+          .then(if (stage) Modifier else Modifier.padding(horizontal = 48.dp))
     ) {
       if (listenTogetherRoleState?.value != RoomRole.NONE) {
         Text(
           text =
             if (listenTogetherRoleState?.value == RoomRole.HOST) "Hosting Listen Together"
             else "Listening Together",
-          style = MaterialTheme.typography.titleMedium,
+          style = roleStyle,
           color = textColor
         )
       } else {
         Text(
           text = stringResource(R.string.now_playing),
-          style = MaterialTheme.typography.titleMedium,
+          style = roleStyle,
           color = textColor
         )
       }
@@ -522,10 +565,10 @@ private fun ThumbnailHeader(
         label = "NowPlayingAnimation"
       ) { text ->
         if (!text.isNullOrBlank()) {
-          Spacer(modifier = Modifier.height(4.dp))
+          if (!stage) Spacer(modifier = Modifier.height(4.dp))
           Text(
             text = text,
-            style = MaterialTheme.typography.titleMedium,
+            style = sourceStyle,
             color = textColor.copy(alpha = 0.8f),
             maxLines = 1,
             modifier = Modifier.basicMarquee()
@@ -586,7 +629,7 @@ private fun ThumbnailItem(
             Modifier.width(dimensions.itemWidth).fillMaxSize()
           }
         )
-        .padding(horizontal = PlayerHorizontalPadding)
+        .padding(horizontal = dimensions.horizontalPadding)
         .graphicsLayer {
           val layoutInfo = lazyGridState.layoutInfo
           val itemKey = item.mediaId.ifEmpty { "unknown_${item.hashCode()}" }

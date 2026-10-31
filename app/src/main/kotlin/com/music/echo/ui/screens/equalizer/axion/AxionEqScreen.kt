@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
@@ -17,6 +20,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
@@ -122,24 +126,20 @@ fun AxionEqScreen(onBackClick: () -> Unit, viewModel: AxionEqViewModel = hiltVie
 
       Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
       ) {
-        ToggleButton(
-          checked = mode == 0,
-          onCheckedChange = { viewModel.setMode(0) },
-          modifier = Modifier.weight(1f).semantics { role = Role.RadioButton },
-          shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
-        ) {
-          Text(stringResource(R.string.eq_simple))
-        }
-        ToggleButton(
-          checked = mode == 1,
-          onCheckedChange = { viewModel.setMode(1) },
-          modifier = Modifier.weight(1f).semantics { role = Role.RadioButton },
-          shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
-        ) {
-          Text(stringResource(R.string.eq_advanced))
-        }
+        StageEqChip(
+          text = stringResource(R.string.eq_simple),
+          selected = mode == 0,
+          onClick = { viewModel.setMode(0) },
+          modifier = Modifier.weight(1f),
+        )
+        StageEqChip(
+          text = stringResource(R.string.eq_advanced),
+          selected = mode == 1,
+          onClick = { viewModel.setMode(1) },
+          modifier = Modifier.weight(1f),
+        )
       }
 
       AnimatedContent(
@@ -315,10 +315,10 @@ private fun SimpleEqMode(
       enter = expandVertically() + fadeIn(),
       exit = shrinkVertically() + fadeOut()
     ) {
-      OutlinedButton(
+      Button(
         onClick = onSaveClick,
         modifier = Modifier.padding(bottom = 8.dp),
-        shape = MaterialTheme.shapes.medium,
+        shape = CircleShape,
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
       ) {
         Icon(
@@ -344,15 +344,13 @@ private fun SimpleEqMode(
       )
     }
 
-    echoPresets.chunked(4).forEach { chunk ->
-      PresetSection(
-        title = if (echoPresets.first() in chunk) stringResource(R.string.eq_label_echo) else "",
-        presets = chunk,
-        enabled = enabled,
-        viewModel = viewModel,
-        bandGains = bandGains
-      )
-    }
+    PresetSection(
+      title = stringResource(R.string.eq_label_echo),
+      presets = echoPresets,
+      enabled = enabled,
+      viewModel = viewModel,
+      bandGains = bandGains
+    )
     PresetSection(
       stringResource(R.string.eq_label_dolby),
       dolbyPresets,
@@ -372,7 +370,46 @@ private fun SimpleEqMode(
   }
 }
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun StageEqChip(
+  text: String,
+  selected: Boolean,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+  enabled: Boolean = true,
+) {
+  Box(
+    contentAlignment = Alignment.Center,
+    modifier =
+      modifier
+        .heightIn(min = 44.dp)
+        .clip(CircleShape)
+        .background(
+          if (selected) MaterialTheme.colorScheme.primary
+          else MaterialTheme.colorScheme.surfaceContainerHigh
+        )
+        .selectable(
+          selected = selected,
+          enabled = enabled,
+          role = Role.RadioButton,
+          onClick = onClick
+        )
+        .padding(horizontal = 16.dp)
+        .alpha(if (enabled) 1f else 0.5f),
+  ) {
+    Text(
+      text = text,
+      color =
+        if (selected) MaterialTheme.colorScheme.onPrimary
+        else MaterialTheme.colorScheme.onSurface,
+      style = MaterialTheme.typography.labelLarge,
+      fontWeight = FontWeight.Bold,
+      maxLines = 1,
+    )
+  }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun PresetSection(
   title: String,
@@ -416,9 +453,10 @@ private fun PresetSection(
       }
     }
 
-    Row(
+    FlowRow(
       modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+      verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
       presets.forEachIndexed { index, (nameRes, bands) ->
         val name = presetNames?.getOrNull(index) ?: stringResource(nameRes)
@@ -427,21 +465,12 @@ private fun PresetSection(
             bandGains.size == bands.size && bandGains.zip(bands).all { (g, b) -> abs(g - b) < 10f }
           }
 
-        ToggleButton(
-          checked = isSelected,
-          onCheckedChange = { if (enabled) viewModel.setBandsGains(bands) },
+        StageEqChip(
+          text = name,
+          selected = isSelected,
           enabled = enabled,
-          shapes =
-            when {
-              presets.size == 1 || index == 0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-              index == presets.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-              else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-            },
-          modifier = Modifier.weight(1f).semantics { role = Role.RadioButton },
-          contentPadding = PaddingValues(horizontal = 4.dp)
-        ) {
-          Text(text = name, style = MaterialTheme.typography.labelSmall, maxLines = 1)
-        }
+          onClick = { if (enabled) viewModel.setBandsGains(bands) },
+        )
       }
     }
   }
@@ -536,8 +565,8 @@ private fun AdvancedEqMode(
     Box(
       modifier =
         Modifier.fillMaxWidth()
-          .clip(MaterialTheme.shapes.extraLarge)
-          .background(MaterialTheme.colorScheme.surfaceContainerLow)
+          .clip(RoundedCornerShape(24.dp))
+          .background(MaterialTheme.colorScheme.surfaceContainer)
           .padding(vertical = 16.dp)
     ) {
       Row(
@@ -559,7 +588,7 @@ private fun AdvancedEqMode(
       modifier = Modifier.fillMaxWidth(),
       horizontalArrangement = Arrangement.Center,
     ) {
-      OutlinedButton(onClick = onReset) {
+      FilledTonalButton(onClick = onReset, shape = CircleShape) {
         Icon(Icons.Rounded.Replay, contentDescription = null)
         Spacer(modifier = Modifier.width(8.dp))
         Text(stringResource(R.string.eq_reset))
