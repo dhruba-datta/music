@@ -1,0 +1,110 @@
+name: Build mod release
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Rebuild even if this upstream version was already released
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mod-release
+  cancel-in-progress: false
+
+env:
+  UPSTREAM: EchoMusicApp/Echo-Music
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Find new upstream release
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          upstream=$(gh release view --repo "$UPSTREAM" --json tagName --jq .tagName)
+          current=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName 2>/dev/null || true)
+          echo "tag=$upstream" >> "$GITHUB_OUTPUT"
+          if [ "$upstream" = "$current" ] && [ "$FORCE" != "true" ]; then
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.check.outputs.build == 'true'
+        with:
+          ref: mod/self-update
+          fetch-depth: 0
+
+      - name: Merge upstream release
+        if: steps.check.outputs.build == 'true'
+        env:
+          TAG: ${{ steps.check.outputs.tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --no-tags "https://github.com/$UPSTREAM" "refs/tags/$TAG:refs/tags/upstream-$TAG"
+          if ! git merge --no-edit "upstream-$TAG"; then
+            # A change to the deleted Firebase config is the only conflict that is safe to resolve here.
+            git rm --quiet --ignore-unmatch app/google-services.json
+            if [ -n "$(git diff --name-only --diff-filter=U)" ]; then
+              git diff --name-only --diff-filter=U
+              exit 1
+            fi
+            git commit --no-edit
+          fi
+          git rm --quiet --ignore-unmatch app/google-services.json
+          git diff --cached --quiet || git commit -m "chore: keep upstream Firebase config out of the mod"
+          # The default token cannot push upstream edits to workflow files. The build still uses the
+          # merged tree, and the next run merges again.
+          git push origin HEAD:mod/self-update || echo "::warning::Could not push the merge commit"
+
+      - uses: actions/setup-java@v4
+        if: steps.check.outputs.build == 'true'
+        with:
+          java-version: "21"
+          distribution: temurin
+          cache: gradle
+
+      - name: Install Android components
+        if: steps.check.outputs.build == 'true'
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;28.2.13676358"
+
+      - name: Build signed APK
+        if: steps.check.outputs.build == 'true'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > keystore.jks
+          chmod +x gradlew
+          ./gradlew assembleUniversalGmsRelease
+
+      - name: Publish release
+        if: steps.check.outputs.build == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.check.outputs.tag }}
+        run: |
+          apk=$(find app/build/outputs/apk -name '*.apk' | head -n 1)
+          cp "$apk" EchoMusicMod.apk
+          gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes 2>/dev/null || true
+          gh release create "$TAG" EchoMusicMod.apk \
+            --repo "$GITHUB_REPOSITORY" \
+            --target mod/self-update \
+            --title "Echo Music Mod $TAG" \
+            --notes "Built from upstream $TAG with the self-updater."

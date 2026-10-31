@@ -563,32 +563,7 @@ class MainActivity : ComponentActivity() {
       val prefs = context.dataStore.data.first()
 
       if (getAutoUpdateCheckSetting(context)) {
-
-        delay(2000L)
-        checkForUpdate(
-          context = context,
-          onSuccess = { latestVersion, isAvailable, changelog, _, _, description, _, _ ->
-            val currentVersion = BuildConfig.VERSION_NAME
-            Log.d(
-              "UpdateCheck",
-              "Startup check success. Latest: $latestVersion, Current: $currentVersion, isAvailable: $isAvailable"
-            )
-            saveUpdateAvailableState(context, isAvailable)
-
-            if (isAvailable) {
-              availableUpdateVersion = latestVersion
-              availableUpdateChangelog = changelog
-              availableUpdateDescription = description
-              showUpdateDialog = true
-            }
-
-            if (isAvailable && getUpdateNotificationsSetting(context)) {
-              Log.d("UpdateCheck", "Posting update notification for $latestVersion")
-              UpdateNotificationHelper.showUpdateNotification(context, latestVersion)
-            }
-          },
-          onError = { Log.e("UpdateCheck", "Startup check failed") }
-        )
+        echo.music.iad1tya.echomusic.updater.SelfUpdater.schedule(context)
       }
     }
 

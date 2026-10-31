@@ -30,7 +30,7 @@ android {
   ndkVersion = "28.2.13676358"
 
   defaultConfig {
-    applicationId = "echo.music.iad1tya"
+    applicationId = "echo.music.iad1tya.mod"
     minSdk = 26
     targetSdk = 36
     versionCode = 165
@@ -38,6 +38,8 @@ android {
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     vectorDrawables.useSupportLibrary = true
+
+    buildConfigField("String", "UPDATE_REPOSITORY", "\"dhruba-datta/EchoMusicMod\"")
 
     // LastFM API keys from GitHub Secrets
     val lastFmKey = "266d77b5790e413ada7e41ef100d017a"
@@ -246,11 +248,6 @@ dependencies {
   implementation(project(":audio-dsp"))
   implementation(project(":dsp-core"))
   implementation(project(":usbaudio"))
-
-  // Firebase - GMS flavor only (excluded from F-Droid / FOSS builds)
-  "gmsImplementation"(platform("com.google.firebase:firebase-bom:34.19.0"))
-  "gmsImplementation"("com.google.firebase:firebase-analytics")
-  "gmsImplementation"("com.google.firebase:firebase-crashlytics")
 
   // GMS Location Services for high-accuracy weather AI context
   "gmsImplementation"(libs.play.services.location)
