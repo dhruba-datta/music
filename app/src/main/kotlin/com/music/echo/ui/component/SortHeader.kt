@@ -101,18 +101,6 @@ inline fun <reified T : Enum<T>> SortHeader(
   }
 }
 
-/** Title of a Stage bottom sheet. */
-@Composable
-fun StageSheetTitle(text: String, modifier: Modifier = Modifier) {
-  Text(
-    text = text,
-    fontSize = 22.sp,
-    fontWeight = FontWeight.ExtraBold,
-    color = MaterialTheme.colorScheme.onSurface,
-    modifier = modifier.padding(start = 22.dp, end = 22.dp, top = 12.dp, bottom = 4.dp),
-  )
-}
-
 /** The rounded group of rows inside a Stage bottom sheet. */
 @Composable
 fun StageSheetGroup(modifier: Modifier = Modifier, content: @Composable () -> Unit) {

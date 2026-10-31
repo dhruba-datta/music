@@ -41,21 +41,6 @@ fun StageSheetHandle() {
   )
 }
 
-/** The left-aligned 22sp sheet title. */
-@Composable
-fun StageSheetTitle(text: String, modifier: Modifier = Modifier) {
-  Text(
-    text = text,
-    fontSize = 22.sp,
-    lineHeight = 28.sp,
-    fontWeight = FontWeight.ExtraBold,
-    color = MaterialTheme.colorScheme.onSurface,
-    maxLines = 1,
-    overflow = TextOverflow.Ellipsis,
-    modifier = modifier.fillMaxWidth().padding(start = 22.dp, end = 22.dp, top = 12.dp, bottom = 4.dp),
-  )
-}
-
 /** A flat 52dp sheet row: a 22dp line icon, a bold label and optional trailing content. */
 @Composable
 fun StageSheetRow(
