@@ -219,7 +219,13 @@ fun RecognitionScreen(navController: NavController) {
             }
           ) { paddingValues ->
             Column(
-              modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp),
+              modifier =
+                Modifier.fillMaxSize()
+                  .padding(paddingValues)
+                  .windowInsetsPadding(
+                    LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Bottom)
+                  )
+                  .padding(16.dp),
               horizontalAlignment = Alignment.CenterHorizontally,
               verticalArrangement = Arrangement.Center
             ) {

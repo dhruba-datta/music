@@ -57,7 +57,7 @@ fun <E> ChipsRow(
   currentValue: E,
   onValueUpdate: (E) -> Unit,
   modifier: Modifier = Modifier,
-  containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+  containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
 ) {
   Row(
     modifier =
@@ -74,7 +74,7 @@ fun <E> ChipsRow(
 
       val cornerRadius by
         animateDpAsState(
-          targetValue = 12.dp,
+          targetValue = 50.dp,
           animationSpec =
             spring(
               dampingRatio = Spring.DampingRatioMediumBouncy,
@@ -133,7 +133,7 @@ fun <Int> ChoiceChipsRow(
   currentValue: Int,
   onValueUpdate: (Int) -> Unit,
   modifier: Modifier = Modifier,
-  containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+  containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
 ) {
   var menuExpanded by remember { mutableStateOf(false) }
 
@@ -230,7 +230,7 @@ fun <Int> ChoiceChipsRow(
 
         val cornerRadius by
           animateDpAsState(
-            targetValue = 12.dp,
+            targetValue = 50.dp,
             animationSpec =
               spring(
                 dampingRatio = Spring.DampingRatioMediumBouncy,
