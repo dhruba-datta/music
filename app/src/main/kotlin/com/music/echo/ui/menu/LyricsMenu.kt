@@ -1,5 +1,9 @@
 package echo.music.iad1tya.ui.menu
 
+import echo.music.iad1tya.ui.component.StageRowValue
+import echo.music.iad1tya.ui.component.StageSheetTitle
+import echo.music.iad1tya.ui.component.StagePillButton
+import echo.music.iad1tya.ui.component.StageSwitch
 import android.app.SearchManager
 import android.content.Intent
 import android.content.res.Configuration
@@ -31,7 +35,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -73,8 +76,6 @@ import echo.music.iad1tya.ui.component.DefaultDialog
 import echo.music.iad1tya.ui.component.ListDialog
 import echo.music.iad1tya.ui.component.Material3MenuGroup
 import echo.music.iad1tya.ui.component.Material3MenuItemData
-import echo.music.iad1tya.ui.component.NewAction
-import echo.music.iad1tya.ui.component.NewActionGrid
 import echo.music.iad1tya.ui.component.TextFieldDialog
 import echo.music.iad1tya.utils.rememberPreference
 import echo.music.iad1tya.viewmodels.LyricsMenuViewModel
@@ -161,34 +162,7 @@ fun LyricsMenu(
       icon = { Icon(painter = painterResource(R.drawable.search), contentDescription = null) },
       title = { Text(stringResource(R.string.search_lyrics)) },
       buttons = {
-        TextButton(
-          onClick = { showSearchDialog = false },
-        ) {
-          Text(stringResource(android.R.string.cancel))
-        }
-
-        Spacer(Modifier.width(8.dp))
-
-        TextButton(
-          onClick = {
-            showSearchDialog = false
-            onDismiss()
-            try {
-              context.startActivity(
-                Intent(Intent.ACTION_WEB_SEARCH).apply {
-                  putExtra(SearchManager.QUERY, "${artistField.text} ${titleField.text} lyrics")
-                },
-              )
-            } catch (_: Exception) {}
-          },
-        ) {
-          Text(stringResource(R.string.search_online))
-        }
-
-        Spacer(Modifier.width(8.dp))
-
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             viewModel.search(
               searchMediaMetadata.id,
               titleField.text,
@@ -206,9 +180,24 @@ fun LyricsMenu(
                 )
                 .show()
             }
-          },
-        ) {
+          }) {
           Text(stringResource(android.R.string.ok))
+        }
+        StagePillButton(onClick = {
+            showSearchDialog = false
+            onDismiss()
+            try {
+              context.startActivity(
+                Intent(Intent.ACTION_WEB_SEARCH).apply {
+                  putExtra(SearchManager.QUERY, "${artistField.text} ${titleField.text} lyrics")
+                },
+              )
+            } catch (_: Exception) {}
+          }, primary = false) {
+          Text(stringResource(R.string.search_online))
+        }
+        StagePillButton(onClick = { showSearchDialog = false }, primary = false) {
+          Text(stringResource(android.R.string.cancel))
         }
       },
     ) {
@@ -357,58 +346,54 @@ fun LyricsMenu(
         bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(),
       ),
   ) {
-    item {
-      NewActionGrid(
-        actions =
-          listOf(
-            NewAction(
-              icon = {
-                Icon(
-                  painter = painterResource(R.drawable.edit),
-                  contentDescription = null,
-                  modifier = Modifier.size(28.dp),
-                  tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-              },
-              text = stringResource(R.string.edit),
-              onClick = { showEditDialog = true }
-            ),
-            NewAction(
-              icon = {
-                Icon(
-                  painter = painterResource(R.drawable.cached),
-                  contentDescription = null,
-                  modifier = Modifier.size(28.dp),
-                  tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-              },
-              text = stringResource(R.string.refetch),
-              onClick = {
-                onDismiss()
-                viewModel.refetchLyrics(mediaMetadataProvider(), lyricsProvider())
-              }
-            ),
-            NewAction(
-              icon = {
-                Icon(
-                  painter = painterResource(R.drawable.search),
-                  contentDescription = null,
-                  modifier = Modifier.size(28.dp),
-                  tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-              },
-              text = stringResource(R.string.search),
-              onClick = { showSearchDialog = true }
-            )
-          ),
-        modifier = Modifier.padding(horizontal = 4.dp, vertical = 16.dp)
-      )
-    }
+    item { StageSheetTitle(title = stringResource(R.string.lyrics)) }
 
     item {
       Material3MenuGroup(
         items =
           buildList {
+            add(
+              Material3MenuItemData(
+                title = { Text(stringResource(R.string.edit)) },
+                icon = {
+                  Icon(
+                    painter = painterResource(R.drawable.edit),
+                    contentDescription = null,
+                  )
+                },
+                onClick = { showEditDialog = true },
+              )
+            )
+
+            add(
+              Material3MenuItemData(
+                title = { Text(stringResource(R.string.refetch)) },
+                icon = {
+                  Icon(
+                    painter = painterResource(R.drawable.cached),
+                    contentDescription = null,
+                  )
+                },
+                onClick = {
+                  onDismiss()
+                  viewModel.refetchLyrics(mediaMetadataProvider(), lyricsProvider())
+                },
+              )
+            )
+
+            add(
+              Material3MenuItemData(
+                title = { Text(stringResource(R.string.search)) },
+                icon = {
+                  Icon(
+                    painter = painterResource(R.drawable.search),
+                    contentDescription = null,
+                  )
+                },
+                onClick = { showSearchDialog = true },
+              )
+            )
+
             if (hasApiKey) {
               add(
                 Material3MenuItemData(
@@ -430,9 +415,7 @@ fun LyricsMenu(
                     }
                   },
                   trailingContent = {
-                    Switch(
-                      checked = autoTranslate,
-                      onCheckedChange = { newCheckedState ->
+                    StageSwitch(checked = autoTranslate, onCheckedChange = { newCheckedState ->
                         autoTranslate = newCheckedState
                         if (!newCheckedState && hasTranslations) {
                           lyricsProvider()?.let { lyrics ->
@@ -441,35 +424,11 @@ fun LyricsMenu(
                             LyricsTranslationHelper.triggerClearTranslations()
                           }
                         }
-                      },
-                    )
+                      })
                   },
                 )
               )
             }
-
-            add(
-              Material3MenuItemData(
-                title = { Text(stringResource(R.string.lyrics_offset)) },
-                icon = {
-                  Icon(
-                    painter = painterResource(R.drawable.fast_forward),
-                    contentDescription = null,
-                  )
-                },
-                onClick = {
-                  onDismiss()
-                  onShowOffsetDialog()
-                },
-                trailingContent = {
-                  Text(
-                    text = "${if (lyricsOffset >= 0) "+" else ""}${lyricsOffset}ms",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                  )
-                }
-              )
-            )
 
             add(
               Material3MenuItemData(
@@ -487,15 +446,31 @@ fun LyricsMenu(
                   }
                 },
                 trailingContent = {
-                  Switch(
-                    checked = isChecked,
-                    onCheckedChange = { newCheckedState ->
+                  StageSwitch(checked = isChecked, onCheckedChange = { newCheckedState ->
                       isChecked = newCheckedState
                       songProvider()?.let { song ->
                         database.query { upsert(song.copy(romanizeLyrics = newCheckedState)) }
                       }
-                    }
+                    })
+                }
+              )
+            )
+
+            add(
+              Material3MenuItemData(
+                title = { Text(stringResource(R.string.lyrics_offset)) },
+                icon = {
+                  Icon(
+                    painter = painterResource(R.drawable.fast_forward),
+                    contentDescription = null,
                   )
+                },
+                onClick = {
+                  onDismiss()
+                  onShowOffsetDialog()
+                },
+                trailingContent = {
+                  StageRowValue(text = "${if (lyricsOffset >= 0) "+" else ""}${lyricsOffset}ms")
                 }
               )
             )

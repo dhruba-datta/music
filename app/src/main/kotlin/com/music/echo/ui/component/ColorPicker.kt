@@ -168,23 +168,20 @@ fun ColorPickerDialog(
     onDismiss = onDismiss,
     title = { Text(title) },
     buttons = {
+      StagePillButton(onClick = { onConfirm(selectedColor) }) {
+        Text(stringResource(android.R.string.ok))
+      }
+      StagePillButton(onClick = onDismiss, primary = false) { Text(stringResource(android.R.string.cancel)) }
       if (defaultColor != null || onReset != null) {
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             if (onReset != null) {
               onReset()
             } else {
               defaultColor?.let(::selectColor)
             }
-          }
-        ) {
+          }, primary = false) {
           Text(stringResource(R.string.reset))
         }
-        Spacer(Modifier.weight(1f))
-      }
-      TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
-      TextButton(onClick = { onConfirm(selectedColor) }) {
-        Text(stringResource(android.R.string.ok))
       }
     },
   ) {

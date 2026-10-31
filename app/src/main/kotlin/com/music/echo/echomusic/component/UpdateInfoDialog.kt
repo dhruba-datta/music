@@ -1,5 +1,6 @@
 package echo.music.iad1tya.echomusic.component
 
+import echo.music.iad1tya.ui.component.StagePillButton
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -138,24 +139,17 @@ fun UpdateInfoDialog(onDismiss: () -> Unit) {
           }
         }
 
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.End,
-        ) {
-          Button(
-            onClick = onDismiss,
-            shape = actionShape,
-          ) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        StagePillButton(onClick = onDismiss) {
             Icon(
               painter = painterResource(R.drawable.arrow_forward),
               contentDescription = null,
               modifier = Modifier.size(18.dp),
             )
-            Spacer(modifier = Modifier.size(6.dp))
+            
             Text(text = stringResource(android.R.string.ok))
           }
-        }
+      }
       }
     }
   }

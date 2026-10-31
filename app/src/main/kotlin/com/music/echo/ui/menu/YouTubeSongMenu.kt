@@ -1,5 +1,8 @@
 package echo.music.iad1tya.ui.menu
 
+import echo.music.iad1tya.ui.component.StageSheetTitle
+import echo.music.iad1tya.ui.component.StageAlertDialog
+import echo.music.iad1tya.ui.component.StagePillButton
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.Configuration
@@ -127,13 +130,12 @@ fun YouTubeSongMenu(
   var showReExportDialog by
     androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
   if (showReExportDialog) {
-    androidx.compose.material3.AlertDialog(
+    StageAlertDialog(
       onDismissRequest = { showReExportDialog = false },
       title = { androidx.compose.material3.Text("Re-export") },
       text = { androidx.compose.material3.Text("Wanna re-export it again?") },
       confirmButton = {
-        androidx.compose.material3.Button(
-          onClick = {
+        StagePillButton(onClick = {
             showReExportDialog = false
             if (exportDirectoryUri.isBlank()) {
               android.widget.Toast.makeText(
@@ -155,17 +157,16 @@ fun YouTubeSongMenu(
                 targetDirectoryUri = exportDirectoryUri
               )
             }
-          }
-        ) {
+          }) {
           androidx.compose.material3.Text("Yes")
         }
       },
       dismissButton = {
-        androidx.compose.material3.OutlinedButton(onClick = { showReExportDialog = false }) {
+        StagePillButton(onClick = { showReExportDialog = false }, primary = false) {
           androidx.compose.material3.Text("No")
         }
       }
-    )
+)
   }
 
   var showChoosePlaylistDialog by rememberSaveable { mutableStateOf(false) }
@@ -226,37 +227,9 @@ fun YouTubeSongMenu(
   }
 
   if (showSongHeader) {
-    ListItem(
-      headlineContent = {
-        Text(
-          text = song.title,
-          modifier = Modifier.basicMarquee(),
-          maxLines = 1,
-          overflow = TextOverflow.Ellipsis,
-        )
-      },
-      supportingContent = {
-        Text(
-          text =
-            joinByBullet(
-              song.artists.joinToString { it.name },
-              song.duration?.let { makeTimeString(it * 1000L) },
-            )
-        )
-      },
-      leadingContent = {
-        Box(
-          contentAlignment = Alignment.Center,
-          modifier = Modifier.size(ListThumbnailSize).clip(RoundedCornerShape(ThumbnailCornerRadius))
-        ) {
-          AsyncImage(
-            model = song.thumbnail,
-            contentDescription = null,
-            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(ThumbnailCornerRadius))
-          )
-        }
-      },
-      trailingContent = {
+    StageSheetTitle(
+      title = song.title,
+      trailing = {
         IconButton(
           onClick = {
             database.transaction {
@@ -288,8 +261,6 @@ fun YouTubeSongMenu(
         }
       },
     )
-
-    Spacer(modifier = Modifier.height(12.dp))
   }
 
   val bottomSheetPageState = LocalBottomSheetPageState.current
@@ -319,7 +290,7 @@ fun YouTubeSongMenu(
                       Icon(
                         painter = painterResource(R.drawable.radio),
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(22.dp),
                       )
                     },
                     title = { MenuTileLabel(text = stringResource(R.string.start_radio)) },
@@ -334,7 +305,7 @@ fun YouTubeSongMenu(
                     Icon(
                       painter = painterResource(R.drawable.playlist_add),
                       contentDescription = null,
-                      modifier = Modifier.size(24.dp),
+                      modifier = Modifier.size(22.dp),
                     )
                   },
                   title = { MenuTileLabel(text = stringResource(R.string.add_to_an_playlist)) },
@@ -345,7 +316,7 @@ fun YouTubeSongMenu(
                     Icon(
                       painter = painterResource(R.drawable.share),
                       contentDescription = null,
-                      modifier = Modifier.size(24.dp),
+                      modifier = Modifier.size(22.dp),
                     )
                   },
                   title = { MenuTileLabel(text = stringResource(R.string.share)) },
@@ -641,7 +612,7 @@ fun YouTubeSongMenu(
                     Icon(
                       painter = painterResource(R.drawable.notification),
                       contentDescription = null,
-                      modifier = Modifier.size(24.dp)
+                      modifier = Modifier.size(22.dp)
                     )
                   },
                   onClick = {

@@ -1,5 +1,11 @@
 package echo.music.iad1tya.ui.screens.settings
 
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.activity.compose.BackHandler
+import echo.music.iad1tya.ui.component.StagePillButton
+import echo.music.iad1tya.ui.component.StageSwitch
+import echo.music.iad1tya.ui.component.StageTopBar
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -13,11 +19,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -89,6 +92,12 @@ fun PlayerSettings(
   highlightKey: String? = null
 ) {
   val scrollState = androidx.compose.foundation.rememberScrollState()
+
+  var openSection by rememberSaveable { mutableStateOf<String?>(null) }
+  // A search result lands on the full page so its row can be scrolled to and highlighted.
+  val inSection = { key: String? -> highlightKey != null || openSection == key }
+  BackHandler(enabled = openSection != null) { openSection = null }
+  LaunchedEffect(openSection) { scrollState.scrollTo(0) }
 
   val (audioQuality, onAudioQualityChange) =
     rememberEnumPreference(AudioQualityKey, defaultValue = AudioQuality.OPUS)
@@ -347,7 +356,7 @@ fun PlayerSettings(
         LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal)
       )
       .verticalScroll(scrollState)
-      .padding(horizontal = 16.dp)
+      .padding(horizontal = 18.dp)
   ) {
     var showCrossfadeBetaDialog by remember { mutableStateOf(false) }
 
@@ -356,18 +365,16 @@ fun PlayerSettings(
         onDismiss = { showCrossfadeBetaDialog = false },
         title = { Text(stringResource(R.string.crossfade_beta_title)) },
         buttons = {
-          TextButton(onClick = { showCrossfadeBetaDialog = false }) {
-            Text(stringResource(R.string.cancel))
-          }
-          TextButton(
-            onClick = {
+        StagePillButton(onClick = {
               showCrossfadeBetaDialog = false
               onCrossfadeEnabledChange(true)
-            }
-          ) {
+            }) {
             Text(stringResource(R.string.enable))
           }
-        }
+        StagePillButton(onClick = { showCrossfadeBetaDialog = false }, primary = false) {
+            Text(stringResource(R.string.cancel))
+          }
+      }
       ) {
         Text(stringResource(R.string.crossfade_beta_message))
       }
@@ -377,8 +384,8 @@ fun PlayerSettings(
       Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Top))
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
 
+    if (inSection("data")) {
     Material3SettingsGroup(
       scrollState = scrollState,
       title = "Data Saver",
@@ -395,29 +402,17 @@ fun PlayerSettings(
                 )
               },
               trailingContent = {
-                Switch(
-                  checked = dataSaverEnabled,
-                  onCheckedChange = onDataSaverEnabledChange,
-                  thumbContent = {
-                    Icon(
-                      painter =
-                        painterResource(
-                          id = if (dataSaverEnabled) R.drawable.check else R.drawable.close
-                        ),
-                      contentDescription = null,
-                      modifier = Modifier.size(SwitchDefaults.IconSize)
-                    )
-                  }
-                )
+                StageSwitch(checked = dataSaverEnabled, onCheckedChange = onDataSaverEnabledChange)
               },
               onClick = { onDataSaverEnabledChange(!dataSaverEnabled) }
             )
           )
         }
     )
+    }
 
-    Spacer(modifier = Modifier.height(16.dp))
 
+    if (inSection(null)) {
     Material3SettingsGroup(
       scrollState = scrollState,
       title = stringResource(R.string.player),
@@ -430,7 +425,7 @@ fun PlayerSettings(
               title = { Text(stringResource(R.string.show_seek_buttons)) },
               description = { Text(stringResource(R.string.show_seek_buttons_desc)) },
               trailingContent = {
-                Switch(checked = showSeekButtons, onCheckedChange = onShowSeekButtonsChange)
+                StageSwitch(checked = showSeekButtons, onCheckedChange = onShowSeekButtonsChange)
               },
               onClick = { onShowSeekButtonsChange(!showSeekButtons) }
             )
@@ -465,7 +460,7 @@ fun PlayerSettings(
               isHighlighted = (highlightKey == stringResource(R.string.download_quality_title)),
               icon = painterResource(R.drawable.download),
               title = { Text(stringResource(R.string.download_quality_title)) },
-              description = {
+              value = {
                 Text(
                   when (downloadQuality) {
                     echo.music.iad1tya.constants.DownloadQuality.YOUTUBE ->
@@ -485,25 +480,7 @@ fun PlayerSettings(
               title = { Text("Download with metadata") },
               description = { Text("Downloads lyrics when downloading a song") },
               trailingContent = {
-                Switch(
-                  checked = downloadWithMetadata,
-                  onCheckedChange = onDownloadWithMetadataChange,
-                  thumbContent = {
-                    if (downloadWithMetadata) {
-                      Icon(
-                        painter = painterResource(id = R.drawable.check),
-                        contentDescription = null,
-                        modifier = Modifier.size(SwitchDefaults.IconSize),
-                      )
-                    } else {
-                      Icon(
-                        painter = painterResource(id = R.drawable.close),
-                        contentDescription = null,
-                        modifier = Modifier.size(SwitchDefaults.IconSize),
-                      )
-                    }
-                  }
-                )
+                StageSwitch(checked = downloadWithMetadata, onCheckedChange = onDownloadWithMetadataChange)
               },
               onClick = { onDownloadWithMetadataChange(!downloadWithMetadata) }
             )
@@ -516,20 +493,7 @@ fun PlayerSettings(
               title = { Text(stringResource(R.string.download_on_wifi_only)) },
               description = { Text(stringResource(R.string.download_on_wifi_only_desc)) },
               trailingContent = {
-                Switch(
-                  checked = downloadOnWifiOnly,
-                  onCheckedChange = onDownloadOnWifiOnlyChange,
-                  thumbContent = {
-                    Icon(
-                      painter =
-                        painterResource(
-                          id = if (downloadOnWifiOnly) R.drawable.check else R.drawable.close
-                        ),
-                      contentDescription = null,
-                      modifier = Modifier.size(SwitchDefaults.IconSize)
-                    )
-                  }
-                )
+                StageSwitch(checked = downloadOnWifiOnly, onCheckedChange = onDownloadOnWifiOnlyChange)
               },
               onClick = { onDownloadOnWifiOnlyChange(!downloadOnWifiOnly) }
             )
@@ -540,7 +504,7 @@ fun PlayerSettings(
               isHighlighted = false,
               icon = painterResource(R.drawable.tune),
               title = { Text("Playback Engine") },
-              description = {
+              value = {
                 Text(
                   when (playbackEngine) {
                     echo.music.iad1tya.constants.PlaybackEngine.POTOKEN -> "eXtended InnerTube"
@@ -561,27 +525,14 @@ fun PlayerSettings(
               description = { Text(stringResource(R.string.crossfade_desc)) },
               showBadge = true,
               trailingContent = {
-                Switch(
-                  checked = crossfadeEnabled,
-                  onCheckedChange = {
+                StageSwitch(checked = crossfadeEnabled, onCheckedChange = {
                     if (!crossfadeEnabled) {
                       showCrossfadeBetaDialog = true
                     } else {
                       onCrossfadeEnabledChange(false)
                       onAutomixCrossfadeChange(false)
                     }
-                  },
-                  thumbContent = {
-                    Icon(
-                      painter =
-                        painterResource(
-                          id = if (crossfadeEnabled) R.drawable.check else R.drawable.close
-                        ),
-                      contentDescription = null,
-                      modifier = Modifier.size(SwitchDefaults.IconSize)
-                    )
-                  }
-                )
+                  })
               },
               onClick = {
                 if (!crossfadeEnabled) {
@@ -625,20 +576,7 @@ fun PlayerSettings(
                 title = { Text(stringResource(R.string.crossfade_gapless)) },
                 description = { Text(stringResource(R.string.crossfade_gapless_desc)) },
                 trailingContent = {
-                  Switch(
-                    checked = crossfadeGapless,
-                    onCheckedChange = onCrossfadeGaplessChange,
-                    thumbContent = {
-                      Icon(
-                        painter =
-                          painterResource(
-                            id = if (crossfadeGapless) R.drawable.check else R.drawable.close
-                          ),
-                        contentDescription = null,
-                        modifier = Modifier.size(SwitchDefaults.IconSize)
-                      )
-                    }
-                  )
+                  StageSwitch(checked = crossfadeGapless, onCheckedChange = onCrossfadeGaplessChange)
                 },
                 onClick = { onCrossfadeGaplessChange(!crossfadeGapless) }
               )
@@ -652,27 +590,14 @@ fun PlayerSettings(
               title = { Text(stringResource(R.string.automix)) },
               description = { Text(stringResource(R.string.automix_desc)) },
               trailingContent = {
-                Switch(
-                  checked = automixCrossfade,
-                  onCheckedChange = {
+                StageSwitch(checked = automixCrossfade, onCheckedChange = {
                     onAutomixCrossfadeChange(it)
                     if (it) {
                       onCrossfadeEnabledChange(true)
                     } else {
                       onCrossfadeEnabledChange(false)
                     }
-                  },
-                  thumbContent = {
-                    Icon(
-                      painter =
-                        painterResource(
-                          id = if (automixCrossfade) R.drawable.check else R.drawable.close
-                        ),
-                      contentDescription = null,
-                      modifier = Modifier.size(SwitchDefaults.IconSize)
-                    )
-                  }
-                )
+                  })
               },
               onClick = {
                 val newValue = !automixCrossfade
@@ -693,20 +618,7 @@ fun PlayerSettings(
                 title = { Text(stringResource(R.string.automix_debug)) },
                 description = { Text(stringResource(R.string.automix_debug_desc)) },
                 trailingContent = {
-                  Switch(
-                    checked = automixDebugOverlay,
-                    onCheckedChange = onAutomixDebugOverlayChange,
-                    thumbContent = {
-                      Icon(
-                        painter =
-                          painterResource(
-                            id = if (automixDebugOverlay) R.drawable.check else R.drawable.close
-                          ),
-                        contentDescription = null,
-                        modifier = Modifier.size(SwitchDefaults.IconSize)
-                      )
-                    }
-                  )
+                  StageSwitch(checked = automixDebugOverlay, onCheckedChange = onAutomixDebugOverlayChange)
                 },
                 onClick = { onAutomixDebugOverlayChange(!automixDebugOverlay) }
               )
@@ -720,20 +632,7 @@ fun PlayerSettings(
               title = { Text("Bit-Perfect USB-DAC Output") },
               description = { Text("Direct UAC1/UAC2 driver bypassing Android OS mixer") },
               trailingContent = {
-                Switch(
-                  checked = enableBitPerfectUsbDac,
-                  onCheckedChange = onEnableBitPerfectUsbDacChange,
-                  thumbContent = {
-                    Icon(
-                      painter =
-                        painterResource(
-                          id = if (enableBitPerfectUsbDac) R.drawable.check else R.drawable.close
-                        ),
-                      contentDescription = null,
-                      modifier = Modifier.size(SwitchDefaults.IconSize)
-                    )
-                  }
-                )
+                StageSwitch(checked = enableBitPerfectUsbDac, onCheckedChange = onEnableBitPerfectUsbDacChange)
               },
               onClick = { onEnableBitPerfectUsbDacChange(!enableBitPerfectUsbDac) }
             )
@@ -762,20 +661,7 @@ fun PlayerSettings(
               title = { Text(stringResource(R.string.skip_silence)) },
               description = { Text(stringResource(R.string.skip_silence_desc)) },
               trailingContent = {
-                Switch(
-                  checked = skipSilence,
-                  onCheckedChange = onSkipSilenceChange,
-                  thumbContent = {
-                    Icon(
-                      painter =
-                        painterResource(
-                          id = if (skipSilence) R.drawable.check else R.drawable.close
-                        ),
-                      contentDescription = null,
-                      modifier = Modifier.size(SwitchDefaults.IconSize)
-                    )
-                  }
-                )
+                StageSwitch(checked = skipSilence, onCheckedChange = onSkipSilenceChange)
               },
               onClick = { onSkipSilenceChange(!skipSilence) }
             )
@@ -787,21 +673,7 @@ fun PlayerSettings(
               title = { Text(stringResource(R.string.skip_silence_instant)) },
               description = { Text(stringResource(R.string.skip_silence_instant_desc)) },
               trailingContent = {
-                Switch(
-                  checked = skipSilenceInstant,
-                  onCheckedChange = { onSkipSilenceInstantChange(it) },
-                  enabled = skipSilence,
-                  thumbContent = {
-                    Icon(
-                      painter =
-                        painterResource(
-                          id = if (skipSilenceInstant) R.drawable.check else R.drawable.close
-                        ),
-                      contentDescription = null,
-                      modifier = Modifier.size(SwitchDefaults.IconSize)
-                    )
-                  }
-                )
+                StageSwitch(checked = skipSilenceInstant, onCheckedChange = { onSkipSilenceInstantChange(it) }, enabled = skipSilence)
               },
               onClick = { if (skipSilence) onSkipSilenceInstantChange(!skipSilenceInstant) }
             )
@@ -813,20 +685,7 @@ fun PlayerSettings(
               title = { Text(stringResource(R.string.audio_normalization)) },
               description = { Text(stringResource(R.string.audio_normalization_desc)) },
               trailingContent = {
-                Switch(
-                  checked = audioNormalization,
-                  onCheckedChange = onAudioNormalizationChange,
-                  thumbContent = {
-                    Icon(
-                      painter =
-                        painterResource(
-                          id = if (audioNormalization) R.drawable.check else R.drawable.close
-                        ),
-                      contentDescription = null,
-                      modifier = Modifier.size(SwitchDefaults.IconSize)
-                    )
-                  }
-                )
+                StageSwitch(checked = audioNormalization, onCheckedChange = onAudioNormalizationChange)
               },
               onClick = { onAudioNormalizationChange(!audioNormalization) }
             )
@@ -838,17 +697,7 @@ fun PlayerSettings(
               title = { Text(stringResource(R.string.varispeed)) },
               description = { Text(stringResource(R.string.varispeed_description)) },
               trailingContent = {
-                Switch(
-                  checked = varispeed,
-                  onCheckedChange = onVarispeedChange,
-                  thumbContent = {
-                    Icon(
-                      painter = painterResource(id = if (varispeed) R.drawable.check else R.drawable.close),
-                      contentDescription = null,
-                      modifier = Modifier.size(SwitchDefaults.IconSize)
-                    )
-                  }
-                )
+                StageSwitch(checked = varispeed, onCheckedChange = onVarispeedChange)
               },
               onClick = { onVarispeedChange(!varispeed) }
             )
@@ -858,7 +707,7 @@ fun PlayerSettings(
               isHighlighted = (highlightKey == stringResource(R.string.audio_loudness_preset)),
               icon = painterResource(R.drawable.volume_up),
               title = { Text(stringResource(R.string.audio_loudness_preset)) },
-              description = {
+              value = {
                 Text(
                   when (audioLoudnessPreset) {
                     echo.music.iad1tya.constants.AudioLoudnessPreset.QUIET ->
@@ -882,20 +731,7 @@ fun PlayerSettings(
               title = { Text(stringResource(R.string.spatial_audio)) },
               description = { Text(stringResource(R.string.spatial_audio_desc)) },
               trailingContent = {
-                Switch(
-                  checked = spatialAudio,
-                  onCheckedChange = onSpatialAudioChange,
-                  thumbContent = {
-                    Icon(
-                      painter =
-                        painterResource(
-                          id = if (spatialAudio) R.drawable.check else R.drawable.close
-                        ),
-                      contentDescription = null,
-                      modifier = Modifier.size(SwitchDefaults.IconSize)
-                    )
-                  }
-                )
+                StageSwitch(checked = spatialAudio, onCheckedChange = onSpatialAudioChange)
               },
               onClick = { onSpatialAudioChange(!spatialAudio) }
             )
@@ -912,23 +748,7 @@ fun PlayerSettings(
                 )
               },
               trailingContent = {
-                Switch(
-                  checked = if (crossfadeEnabled) false else audioOffload,
-                  onCheckedChange = onAudioOffloadChange,
-                  enabled = !crossfadeEnabled,
-                  thumbContent = {
-                    Icon(
-                      painter =
-                        painterResource(
-                          id =
-                            if (!crossfadeEnabled && audioOffload) R.drawable.check
-                            else R.drawable.close
-                        ),
-                      contentDescription = null,
-                      modifier = Modifier.size(SwitchDefaults.IconSize)
-                    )
-                  }
-                )
+                StageSwitch(checked = if (crossfadeEnabled) false else audioOffload, onCheckedChange = onAudioOffloadChange, enabled = !crossfadeEnabled)
               },
               onClick = { if (!crossfadeEnabled) onAudioOffloadChange(!audioOffload) }
             )
@@ -941,20 +761,7 @@ fun PlayerSettings(
               title = { Text("Preload Next Song") },
               description = { Text("Cache the next song for gapless playback") },
               trailingContent = {
-                Switch(
-                  checked = preloadNextSongEnabled,
-                  onCheckedChange = onPreloadNextSongEnabledChange,
-                  thumbContent = {
-                    Icon(
-                      painter =
-                        painterResource(
-                          id = if (preloadNextSongEnabled) R.drawable.check else R.drawable.close
-                        ),
-                      contentDescription = null,
-                      modifier = Modifier.size(SwitchDefaults.IconSize)
-                    )
-                  }
-                )
+                StageSwitch(checked = preloadNextSongEnabled, onCheckedChange = onPreloadNextSongEnabledChange)
               },
               onClick = { onPreloadNextSongEnabledChange(!preloadNextSongEnabled) }
             )
@@ -985,20 +792,7 @@ fun PlayerSettings(
                 title = { Text("Preload Lyrics") },
                 description = { Text("Also cache lyrics for the preloaded songs") },
                 trailingContent = {
-                  Switch(
-                    checked = preloadLyricsEnabled,
-                    onCheckedChange = onPreloadLyricsEnabledChange,
-                    thumbContent = {
-                      Icon(
-                        painter =
-                          painterResource(
-                            id = if (preloadLyricsEnabled) R.drawable.check else R.drawable.close
-                          ),
-                        contentDescription = null,
-                        modifier = Modifier.size(SwitchDefaults.IconSize)
-                      )
-                    }
-                  )
+                  StageSwitch(checked = preloadLyricsEnabled, onCheckedChange = onPreloadLyricsEnabledChange)
                 },
                 onClick = { onPreloadLyricsEnabledChange(!preloadLyricsEnabled) }
               )
@@ -1013,20 +807,7 @@ fun PlayerSettings(
                 title = { Text(stringResource(R.string.google_cast)) },
                 description = { Text(stringResource(R.string.google_cast_description)) },
                 trailingContent = {
-                  Switch(
-                    checked = enableGoogleCast,
-                    onCheckedChange = onEnableGoogleCastChange,
-                    thumbContent = {
-                      Icon(
-                        painter =
-                          painterResource(
-                            id = if (enableGoogleCast) R.drawable.check else R.drawable.close
-                          ),
-                        contentDescription = null,
-                        modifier = Modifier.size(SwitchDefaults.IconSize)
-                      )
-                    }
-                  )
+                  StageSwitch(checked = enableGoogleCast, onCheckedChange = onEnableGoogleCastChange)
                 },
                 onClick = { onEnableGoogleCastChange(!enableGoogleCast) }
               )
@@ -1039,20 +820,7 @@ fun PlayerSettings(
               title = { Text(stringResource(R.string.seek_seconds_addup)) },
               description = { Text(stringResource(R.string.seek_seconds_addup_description)) },
               trailingContent = {
-                Switch(
-                  checked = seekExtraSeconds,
-                  onCheckedChange = onSeekExtraSeconds,
-                  thumbContent = {
-                    Icon(
-                      painter =
-                        painterResource(
-                          id = if (seekExtraSeconds) R.drawable.check else R.drawable.close
-                        ),
-                      contentDescription = null,
-                      modifier = Modifier.size(SwitchDefaults.IconSize)
-                    )
-                  }
-                )
+                StageSwitch(checked = seekExtraSeconds, onCheckedChange = onSeekExtraSeconds)
               },
               onClick = { onSeekExtraSeconds(!seekExtraSeconds) }
             )
@@ -1068,9 +836,33 @@ fun PlayerSettings(
           )
         }
     )
+    }
 
-    Spacer(modifier = Modifier.height(16.dp))
 
+    if (highlightKey == null && openSection == null) {
+      Material3SettingsGroup(
+        title = stringResource(R.string.stage_more),
+        items =
+          listOf(
+          Material3SettingsItem(
+            title = { Text("Data Saver") },
+            onClick = { openSection = "data" },
+          ),
+          Material3SettingsItem(
+            title = { Text(stringResource(R.string.queue)) },
+            description = { Text(stringResource(R.string.stage_player_queue_desc)) },
+            onClick = { openSection = "queue" },
+          ),
+          Material3SettingsItem(
+            title = { Text(stringResource(R.string.misc)) },
+            description = { Text(stringResource(R.string.stage_player_misc_desc)) },
+            onClick = { openSection = "misc" },
+          )
+          ),
+      )
+    }
+
+    if (inSection("queue")) {
     Material3SettingsGroup(
       scrollState = scrollState,
       title = stringResource(R.string.queue),
@@ -1082,20 +874,7 @@ fun PlayerSettings(
             title = { Text(stringResource(R.string.persistent_queue)) },
             description = { Text(stringResource(R.string.persistent_queue_desc)) },
             trailingContent = {
-              Switch(
-                checked = persistentQueue,
-                onCheckedChange = onPersistentQueueChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (persistentQueue) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = persistentQueue, onCheckedChange = onPersistentQueueChange)
             },
             onClick = { onPersistentQueueChange(!persistentQueue) }
           ),
@@ -1105,20 +884,7 @@ fun PlayerSettings(
             title = { Text(stringResource(R.string.auto_load_more)) },
             description = { Text(stringResource(R.string.auto_load_more_desc)) },
             trailingContent = {
-              Switch(
-                checked = autoLoadMore,
-                onCheckedChange = onAutoLoadMoreChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (autoLoadMore) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = autoLoadMore, onCheckedChange = onAutoLoadMoreChange)
             },
             onClick = { onAutoLoadMoreChange(!autoLoadMore) }
           ),
@@ -1128,20 +894,7 @@ fun PlayerSettings(
             title = { Text(stringResource(R.string.auto_download_on_like)) },
             description = { Text(stringResource(R.string.auto_download_on_like_desc)) },
             trailingContent = {
-              Switch(
-                checked = autoDownloadOnLike,
-                onCheckedChange = onAutoDownloadOnLikeChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (autoDownloadOnLike) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = autoDownloadOnLike, onCheckedChange = onAutoDownloadOnLikeChange)
             },
             onClick = { onAutoDownloadOnLikeChange(!autoDownloadOnLike) }
           ),
@@ -1151,20 +904,7 @@ fun PlayerSettings(
             title = { Text(stringResource(R.string.enable_similar_content)) },
             description = { Text(stringResource(R.string.similar_content_desc)) },
             trailingContent = {
-              Switch(
-                checked = similarContentEnabled,
-                onCheckedChange = similarContentEnabledChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (similarContentEnabled) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = similarContentEnabled, onCheckedChange = similarContentEnabledChange)
             },
             onClick = { similarContentEnabledChange(!similarContentEnabled) }
           ),
@@ -1174,21 +914,7 @@ fun PlayerSettings(
             title = { Text(stringResource(R.string.persistent_shuffle_title)) },
             description = { Text(stringResource(R.string.persistent_shuffle_desc)) },
             trailingContent = {
-              Switch(
-                checked = persistentShuffleAcrossQueues,
-                onCheckedChange = onPersistentShuffleAcrossQueuesChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id =
-                          if (persistentShuffleAcrossQueues) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = persistentShuffleAcrossQueues, onCheckedChange = onPersistentShuffleAcrossQueuesChange)
             },
             onClick = { onPersistentShuffleAcrossQueuesChange(!persistentShuffleAcrossQueues) }
           ),
@@ -1198,20 +924,7 @@ fun PlayerSettings(
             title = { Text(stringResource(R.string.remember_shuffle_and_repeat)) },
             description = { Text(stringResource(R.string.remember_shuffle_and_repeat_desc)) },
             trailingContent = {
-              Switch(
-                checked = rememberShuffleAndRepeat,
-                onCheckedChange = onRememberShuffleAndRepeatChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (rememberShuffleAndRepeat) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = rememberShuffleAndRepeat, onCheckedChange = onRememberShuffleAndRepeatChange)
             },
             onClick = { onRememberShuffleAndRepeatChange(!rememberShuffleAndRepeat) }
           ),
@@ -1221,20 +934,7 @@ fun PlayerSettings(
             title = { Text(stringResource(R.string.shuffle_playlist_first)) },
             description = { Text(stringResource(R.string.shuffle_playlist_first_desc)) },
             trailingContent = {
-              Switch(
-                checked = shufflePlaylistFirst,
-                onCheckedChange = onShufflePlaylistFirstChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (shufflePlaylistFirst) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = shufflePlaylistFirst, onCheckedChange = onShufflePlaylistFirstChange)
             },
             onClick = { onShufflePlaylistFirstChange(!shufflePlaylistFirst) }
           ),
@@ -1245,21 +945,7 @@ fun PlayerSettings(
             title = { Text(stringResource(R.string.prevent_duplicate_tracks_in_queue)) },
             description = { Text(stringResource(R.string.prevent_duplicate_tracks_in_queue_desc)) },
             trailingContent = {
-              Switch(
-                checked = preventDuplicateTracksInQueue,
-                onCheckedChange = onPreventDuplicateTracksInQueueChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id =
-                          if (preventDuplicateTracksInQueue) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = preventDuplicateTracksInQueue, onCheckedChange = onPreventDuplicateTracksInQueueChange)
             },
             onClick = { onPreventDuplicateTracksInQueueChange(!preventDuplicateTracksInQueue) }
           ),
@@ -1269,28 +955,16 @@ fun PlayerSettings(
             title = { Text(stringResource(R.string.auto_skip_next_on_error)) },
             description = { Text(stringResource(R.string.auto_skip_next_on_error_desc)) },
             trailingContent = {
-              Switch(
-                checked = autoSkipNextOnError,
-                onCheckedChange = onAutoSkipNextOnErrorChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (autoSkipNextOnError) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = autoSkipNextOnError, onCheckedChange = onAutoSkipNextOnErrorChange)
             },
             onClick = { onAutoSkipNextOnErrorChange(!autoSkipNextOnError) }
           )
         )
     )
+    }
 
-    Spacer(modifier = Modifier.height(16.dp))
 
+    if (inSection("misc")) {
     Material3SettingsGroup(
       scrollState = scrollState,
       title = stringResource(R.string.misc),
@@ -1302,20 +976,7 @@ fun PlayerSettings(
             title = { Text(stringResource(R.string.stop_music_on_task_clear)) },
             description = { Text(stringResource(R.string.stop_music_on_task_clear_desc)) },
             trailingContent = {
-              Switch(
-                checked = stopMusicOnTaskClear,
-                onCheckedChange = onStopMusicOnTaskClearChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (stopMusicOnTaskClear) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = stopMusicOnTaskClear, onCheckedChange = onStopMusicOnTaskClearChange)
             },
             onClick = { onStopMusicOnTaskClearChange(!stopMusicOnTaskClear) }
           ),
@@ -1326,18 +987,7 @@ fun PlayerSettings(
             title = { Text(stringResource(R.string.pause_music_when_media_is_muted)) },
             description = { Text(stringResource(R.string.pause_music_when_media_is_muted_desc)) },
             trailingContent = {
-              Switch(
-                checked = pauseOnMute,
-                onCheckedChange = onPauseOnMuteChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(id = if (pauseOnMute) R.drawable.check else R.drawable.close),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = pauseOnMute, onCheckedChange = onPauseOnMuteChange)
             },
             onClick = { onPauseOnMuteChange(!pauseOnMute) }
           ),
@@ -1347,20 +997,7 @@ fun PlayerSettings(
             title = { Text(stringResource(R.string.resume_on_bluetooth_connect)) },
             description = { Text(stringResource(R.string.resume_on_bluetooth_connect_desc)) },
             trailingContent = {
-              Switch(
-                checked = resumeOnBluetoothConnect,
-                onCheckedChange = onResumeOnBluetoothConnectChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (resumeOnBluetoothConnect) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = resumeOnBluetoothConnect, onCheckedChange = onResumeOnBluetoothConnectChange)
             },
             onClick = { onResumeOnBluetoothConnectChange(!resumeOnBluetoothConnect) }
           ),
@@ -1370,20 +1007,7 @@ fun PlayerSettings(
             title = { Text(stringResource(R.string.autoplay_on_automotive_connect)) },
             description = { Text(stringResource(R.string.autoplay_on_automotive_connect_desc)) },
             trailingContent = {
-              Switch(
-                checked = autoplayOnAutomotiveConnect,
-                onCheckedChange = onAutoplayOnAutomotiveConnectChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (autoplayOnAutomotiveConnect) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = autoplayOnAutomotiveConnect, onCheckedChange = onAutoplayOnAutomotiveConnectChange)
             },
             onClick = { onAutoplayOnAutomotiveConnectChange(!autoplayOnAutomotiveConnect) }
           ),
@@ -1396,20 +1020,7 @@ fun PlayerSettings(
               Text(stringResource(R.string.keep_screen_on_when_player_is_expanded_desc))
             },
             trailingContent = {
-              Switch(
-                checked = keepScreenOn,
-                onCheckedChange = onKeepScreenOnChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (keepScreenOn) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = keepScreenOn, onCheckedChange = onKeepScreenOnChange)
             },
             onClick = { onKeepScreenOnChange(!keepScreenOn) }
           ),
@@ -1419,25 +1030,13 @@ fun PlayerSettings(
             title = { Text(stringResource(R.string.export_desc)) },
             description = { Text("Show 'Export as MP3' in menus") },
             trailingContent = {
-              Switch(
-                checked = enableExportAsMp3,
-                onCheckedChange = onEnableExportAsMp3Change,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (enableExportAsMp3) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = enableExportAsMp3, onCheckedChange = onEnableExportAsMp3Change)
             },
             onClick = { onEnableExportAsMp3Change(!enableExportAsMp3) }
           )
         )
     )
+    }
     Spacer(modifier = Modifier.height(16.dp))
 
     Spacer(
@@ -1447,12 +1046,12 @@ fun PlayerSettings(
     )
   }
 
-  TopAppBar(
+  StageTopBar(
     title = { Text(stringResource(R.string.player_and_audio)) },
     navigationIcon = {
-      IconButton(onClick = navController::navigateUp, onLongClick = navController::backToMain) {
+      IconButton(onClick = { if (openSection != null) openSection = null else navController.navigateUp() }, onLongClick = navController::backToMain) {
         Icon(painterResource(R.drawable.arrow_back), contentDescription = null)
       }
     }
-  )
+)
 }

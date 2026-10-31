@@ -80,7 +80,7 @@ fun RingtoneTrimmerDialog(
     }
   }
 
-  AlertDialog(
+  StageAlertDialog(
     onDismissRequest = {
       exoPlayer.stop()
       onDismiss()
@@ -175,24 +175,20 @@ fun RingtoneTrimmerDialog(
       }
     },
     confirmButton = {
-      Button(
-        onClick = {
+        StagePillButton(onClick = {
           exoPlayer.stop()
           onConfirm((rangeSec.start * 1000).toLong(), (rangeSec.endInclusive * 1000).toLong())
-        },
-      ) {
+        }) {
         Text("Set as Ringtone")
       }
-    },
+      },
     dismissButton = {
-      TextButton(
-        onClick = {
+        StagePillButton(onClick = {
           exoPlayer.stop()
           onDismiss()
-        }
-      ) {
+        }, primary = false) {
         Text(stringResource(R.string.cancel))
       }
-    }
-  )
+      }
+)
 }

@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.menu
 
+import echo.music.iad1tya.ui.component.StageSheetTitle
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.Configuration
@@ -218,12 +219,9 @@ fun YouTubeAlbumMenu(
     }
   }
 
-  YouTubeListItem(
-    item = albumItem,
-    shape = MaterialTheme.shapes.large,
-    color = androidx.compose.ui.graphics.Color.Transparent,
-    badges = {},
-    trailingContent = {
+  StageSheetTitle(
+    title = albumItem.title,
+    trailing = {
       IconButton(
         onClick = { database.query { album?.album?.toggleLike()?.let(::update) } },
       ) {
@@ -241,8 +239,6 @@ fun YouTubeAlbumMenu(
       }
     },
   )
-
-  Spacer(modifier = Modifier.height(12.dp))
 
   val configuration = LocalConfiguration.current
   val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
@@ -268,7 +264,7 @@ fun YouTubeAlbumMenu(
                       Icon(
                         painter = painterResource(R.drawable.play),
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(22.dp),
                       )
                     },
                     title = { MenuTileLabel(text = stringResource(R.string.play)) },
@@ -286,7 +282,7 @@ fun YouTubeAlbumMenu(
                       Icon(
                         painter = painterResource(R.drawable.shuffle),
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(22.dp),
                       )
                     },
                     title = { MenuTileLabel(text = stringResource(R.string.shuffle)) },
@@ -305,7 +301,7 @@ fun YouTubeAlbumMenu(
                     Icon(
                       painter = painterResource(R.drawable.share),
                       contentDescription = null,
-                      modifier = Modifier.size(24.dp),
+                      modifier = Modifier.size(22.dp),
                     )
                   },
                   title = { MenuTileLabel(text = stringResource(R.string.share)) },

@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.screens.settings
 
+import echo.music.iad1tya.ui.component.StageTopBar
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,7 +12,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -85,14 +85,14 @@ fun DiscordExperimental(navController: NavController) {
 
   Scaffold { inner ->
     Column(Modifier.fillMaxSize()) {
-      TopAppBar(
+      StageTopBar(
         title = { Text(stringResource(R.string.experiment_settings)) },
         navigationIcon = {
           IconButton(onClick = navController::navigateUp) {
             Icon(painterResource(R.drawable.arrow_back), contentDescription = null)
           }
-        },
-      )
+        }
+)
 
       LazyColumn(
         modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),

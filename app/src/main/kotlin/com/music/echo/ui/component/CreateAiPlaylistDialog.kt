@@ -171,9 +171,7 @@ fun CreateAiPlaylistDialog(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
               )
             }
-            Switch(
-              checked = weatherEnabled,
-              onCheckedChange = { checked ->
+            StageSwitch(checked = weatherEnabled, onCheckedChange = { checked ->
                 if (checked) {
                   val hasFine =
                     ContextCompat.checkSelfPermission(
@@ -209,8 +207,7 @@ fun CreateAiPlaylistDialog(
                     isPermanentlyDenied = false
                   )
                 }
-              }
-            )
+              })
           }
 
           // Weather Preview / Rationale Card

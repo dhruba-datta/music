@@ -1,5 +1,7 @@
 package echo.music.iad1tya.ui.screens.settings
 
+import echo.music.iad1tya.ui.component.StageTile
+import echo.music.iad1tya.ui.component.StageTopBar
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -16,7 +18,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -137,7 +138,7 @@ fun BackupAndRestore(
           LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal)
         )
         .verticalScroll(rememberScrollState())
-        .padding(horizontal = 16.dp)
+        .padding(horizontal = 18.dp)
     ) {
       Spacer(
         Modifier.windowInsetsPadding(
@@ -148,15 +149,16 @@ fun BackupAndRestore(
       when (screen) {
         BackupSubScreen.MAIN -> {
 
-          Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(12.dp))
 
-          Material3SettingsGroup(
+    Material3SettingsGroup(
             items =
               listOf(
                 Material3SettingsItem(
                   title = { Text("Local Backup") },
                   description = { Text("Create a manual zip backup of your data") },
                   icon = painterResource(R.drawable.backup),
+                  iconBackground = StageTile.Slate,
                   onClick = {
                     val formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
                     backupLauncher.launchSafely(
@@ -169,12 +171,14 @@ fun BackupAndRestore(
                 ),
                 Material3SettingsItem(
                   title = { Text("Import") },
+                  iconBackground = StageTile.Slate,
                   description = { Text("Restore data from backups or other sources") },
                   icon = painterResource(R.drawable.restore),
                   onClick = { currentScreen = BackupSubScreen.IMPORT }
                 ),
                 Material3SettingsItem(
                   title = { Text("Import from Spotify") },
+                  iconBackground = StageTile.Slate,
                   description = { Text(stringResource(R.string.spotify_import_desc)) },
                   icon = painterResource(R.drawable.ic_spotify),
                   onClick = { navController.navigate("settings/spotify_import") }
@@ -184,9 +188,8 @@ fun BackupAndRestore(
         }
         BackupSubScreen.IMPORT -> {
 
-          Spacer(modifier = Modifier.height(16.dp))
 
-          Material3SettingsGroup(
+    Material3SettingsGroup(
             title = "Import Data",
             items =
               listOf(
@@ -235,7 +238,7 @@ fun BackupAndRestore(
       BackupSubScreen.IMPORT -> "Import"
     }
 
-  TopAppBar(
+  StageTopBar(
     title = { Text(titleRes) },
     navigationIcon = {
       IconButton(
@@ -254,7 +257,7 @@ fun BackupAndRestore(
         )
       }
     }
-  )
+)
 
   AddToPlaylistDialogOnline(
     isVisible = showChoosePlaylistDialogOnline,

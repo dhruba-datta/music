@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.screens
 
+import echo.music.iad1tya.ui.component.StageTopBar
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -26,7 +27,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -408,11 +408,7 @@ fun HistoryScreen(
     )
   }
 
-  TopAppBar(
-    colors =
-      TopAppBarDefaults.topAppBarColors(
-        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
-      ),
+  StageTopBar(
     title = {
       if (inSelectMode) {
         Text(pluralStringResource(R.plurals.n_selected, selection.size, selection.size))
@@ -508,5 +504,5 @@ fun HistoryScreen(
         }
       }
     }
-  )
+)
 }

@@ -1,5 +1,10 @@
 package echo.music.iad1tya.ui.screens.settings
 
+import androidx.activity.compose.BackHandler
+import echo.music.iad1tya.ui.component.StageAlertDialog
+import echo.music.iad1tya.ui.component.StagePillButton
+import echo.music.iad1tya.ui.component.StageSwitch
+import echo.music.iad1tya.ui.component.StageTopBar
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
@@ -20,7 +25,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
@@ -33,11 +37,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -141,6 +142,12 @@ fun ContentSettings(
   highlightKey: String? = null
 ) {
   val scrollState = androidx.compose.foundation.rememberScrollState()
+
+  var openSection by rememberSaveable { mutableStateOf<String?>(null) }
+  // A search result lands on the full page so its row can be scrolled to and highlighted.
+  val inSection = { key: String? -> highlightKey != null || openSection == key }
+  BackHandler(enabled = openSection != null) { openSection = null }
+  LaunchedEffect(openSection) { scrollState.scrollTo(0) }
 
   val context = LocalContext.current
   val scope = rememberCoroutineScope()
@@ -269,7 +276,7 @@ fun ContentSettings(
       mutableStateOf(proxyUsername.isNotBlank() || proxyPassword.isNotBlank())
     }
 
-    AlertDialog(
+    StageAlertDialog(
       onDismissRequest = { showProxyConfigurationDialog = false },
       title = { Text(stringResource(R.string.config_proxy)) },
       text = {
@@ -324,16 +331,13 @@ fun ContentSettings(
             horizontalArrangement = Arrangement.SpaceBetween
           ) {
             Text(stringResource(R.string.enable_authentication))
-            Switch(
-              checked = authEnabled,
-              onCheckedChange = {
+            StageSwitch(checked = authEnabled, onCheckedChange = {
                 authEnabled = it
                 if (!it) {
                   tempProxyUsername = ""
                   tempProxyPassword = ""
                 }
-              }
-            )
+              })
           }
 
           AnimatedVisibility(visible = authEnabled) {
@@ -355,23 +359,21 @@ fun ContentSettings(
         }
       },
       confirmButton = {
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             onProxyUrlChange(tempProxyUrl)
             onProxyUsernameChange(if (authEnabled) tempProxyUsername else "")
             onProxyPasswordChange(if (authEnabled) tempProxyPassword else "")
             showProxyConfigurationDialog = false
-          }
-        ) {
+          }) {
           Text(stringResource(R.string.save))
         }
       },
       dismissButton = {
-        TextButton(onClick = { showProxyConfigurationDialog = false }) {
+        StagePillButton(onClick = { showProxyConfigurationDialog = false }, primary = false) {
           Text(stringResource(R.string.cancel))
         }
       }
-    )
+)
   }
 
   var showContentLanguageDialog by rememberSaveable { mutableStateOf(false) }
@@ -539,18 +541,11 @@ fun ContentSettings(
             )
           }
 
-          Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.End,
-          ) {
-            Button(
-              onClick = { showProviderPriorityDialog = false },
-              shape = actionShape,
-            ) {
+          Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        StagePillButton(onClick = { showProviderPriorityDialog = false }) {
               Text(text = stringResource(R.string.close))
             }
-          }
+      }
         }
       }
     }
@@ -582,7 +577,7 @@ fun ContentSettings(
   if (showTopLengthDialog) {
     var tempLength by rememberSaveable { mutableFloatStateOf(lengthTop.toFloat()) }
 
-    AlertDialog(
+    StageAlertDialog(
       onDismissRequest = { showTopLengthDialog = false },
       title = { Text(stringResource(R.string.top_length)) },
       text = {
@@ -601,16 +596,14 @@ fun ContentSettings(
         }
       },
       confirmButton = {
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             onLengthTopChange(tempLength.toInt().toString())
             showTopLengthDialog = false
-          }
-        ) {
+          }) {
           Text(stringResource(R.string.save))
         }
       }
-    )
+)
   }
 
   var showIpVersionDialog by rememberSaveable { mutableStateOf(false) }
@@ -656,17 +649,16 @@ fun ContentSettings(
         LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal)
       )
       .verticalScroll(scrollState)
-      .padding(horizontal = 16.dp),
+      .padding(horizontal = 18.dp),
   ) {
     Spacer(
       Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Top))
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
 
+    if (inSection(null)) {
     Material3SettingsGroup(
       scrollState = scrollState,
-      title = "Privacy",
       items =
         listOf(
           Material3SettingsItem(
@@ -678,10 +670,11 @@ fun ContentSettings(
           )
         )
     )
+    }
 
+    if (inSection(null)) {
     Material3SettingsGroup(
       scrollState = scrollState,
-      title = stringResource(R.string.general),
       items =
         listOf(
           Material3SettingsItem(
@@ -694,18 +687,7 @@ fun ContentSettings(
               )
             },
             trailingContent = {
-              Switch(
-                checked = forceOpus,
-                onCheckedChange = onForceOpusChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(id = if (forceOpus) R.drawable.check else R.drawable.close),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize),
-                  )
-                },
-              )
+              StageSwitch(checked = forceOpus, onCheckedChange = onForceOpusChange)
             },
             onClick = { onForceOpusChange(!forceOpus) }
           ),
@@ -717,20 +699,7 @@ fun ContentSettings(
               Text("Use QUIC over UDP for zero-latency streaming (Restart required)")
             },
             trailingContent = {
-              Switch(
-                checked = enableCronet,
-                onCheckedChange = onEnableCronetChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (enableCronet) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize),
-                  )
-                },
-              )
+              StageSwitch(checked = enableCronet, onCheckedChange = onEnableCronetChange)
             },
             onClick = { onEnableCronetChange(!enableCronet) }
           ),
@@ -738,7 +707,7 @@ fun ContentSettings(
             isHighlighted = (highlightKey == stringResource(R.string.content_language)),
             icon = painterResource(R.drawable.language),
             title = { Text(stringResource(R.string.content_language)) },
-            description = {
+            value = {
               Text(
                 LanguageCodeToName.getOrElse(contentLanguage) {
                   stringResource(R.string.system_default)
@@ -751,7 +720,7 @@ fun ContentSettings(
             isHighlighted = (highlightKey == stringResource(R.string.content_country)),
             icon = painterResource(R.drawable.location_on),
             title = { Text(stringResource(R.string.content_country)) },
-            description = {
+            value = {
               Text(
                 CountryCodeToName.getOrElse(contentCountry) {
                   stringResource(R.string.system_default)
@@ -764,7 +733,7 @@ fun ContentSettings(
             isHighlighted = (highlightKey == "Suggestions Region"),
             icon = painterResource(R.drawable.globe_location_pin),
             title = { Text("Suggestions Region") },
-            description = {
+            value = {
               Text(SuggestionRegionSlugToName.getOrElse(suggestionRegion) { "Global Charts" })
             },
             onClick = { showSuggestionSheet = true }
@@ -775,20 +744,7 @@ fun ContentSettings(
             title = { Text(stringResource(R.string.hide_explicit)) },
             description = { Text(stringResource(R.string.hide_explicit_desc)) },
             trailingContent = {
-              Switch(
-                checked = hideExplicit,
-                onCheckedChange = onHideExplicitChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (hideExplicit) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = hideExplicit, onCheckedChange = onHideExplicitChange)
             },
             onClick = { onHideExplicitChange(!hideExplicit) }
           ),
@@ -798,20 +754,7 @@ fun ContentSettings(
             title = { Text(stringResource(R.string.hide_video_songs)) },
             description = { Text(stringResource(R.string.hide_video_songs_desc)) },
             trailingContent = {
-              Switch(
-                checked = hideVideoSongs,
-                onCheckedChange = onHideVideoSongsChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (hideVideoSongs) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = hideVideoSongs, onCheckedChange = onHideVideoSongsChange)
             },
             onClick = { onHideVideoSongsChange(!hideVideoSongs) }
           ),
@@ -821,20 +764,7 @@ fun ContentSettings(
             title = { Text(stringResource(R.string.hide_youtube_shorts)) },
             description = { Text(stringResource(R.string.hide_youtube_shorts_desc)) },
             trailingContent = {
-              Switch(
-                checked = hideYoutubeShorts,
-                onCheckedChange = onHideYoutubeShortsChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (hideYoutubeShorts) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = hideYoutubeShorts, onCheckedChange = onHideYoutubeShortsChange)
             },
             onClick = { onHideYoutubeShortsChange(!hideYoutubeShorts) }
           ),
@@ -844,28 +774,16 @@ fun ContentSettings(
             title = { Text(stringResource(R.string.content_sponsor_block)) },
             description = { Text(stringResource(R.string.content_sponsor_block_desc)) },
             trailingContent = {
-              Switch(
-                checked = sponsorBlockEnabled,
-                onCheckedChange = onSponsorBlockEnabledChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (sponsorBlockEnabled) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = sponsorBlockEnabled, onCheckedChange = onSponsorBlockEnabledChange)
             },
             onClick = { onSponsorBlockEnabledChange(!sponsorBlockEnabled) }
           )
         )
     )
+    }
 
-    Spacer(modifier = Modifier.height(16.dp))
 
+    if (inSection("album_lyrics")) {
     Material3SettingsGroup(
       scrollState = scrollState,
       title = stringResource(R.string.album_text),
@@ -877,31 +795,18 @@ fun ContentSettings(
             title = { Text(stringResource(R.string.show_album_canvas)) },
             description = { Text(stringResource(R.string.show_album_canvas_desc)) },
             trailingContent = {
-              Switch(
-                checked = albumCanvasEnabled,
-                onCheckedChange = onAlbumCanvasEnabledChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (albumCanvasEnabled) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = albumCanvasEnabled, onCheckedChange = onAlbumCanvasEnabledChange)
             },
             onClick = { onAlbumCanvasEnabledChange(!albumCanvasEnabled) }
           )
         )
     )
+    }
 
-    Spacer(modifier = Modifier.height(16.dp))
 
+    if (inSection(null)) {
     Material3SettingsGroup(
       scrollState = scrollState,
-      title = stringResource(R.string.app_language),
       items =
         listOf(
           if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -924,7 +829,7 @@ fun ContentSettings(
               isHighlighted = (highlightKey == stringResource(R.string.app_language)),
               icon = painterResource(R.drawable.language),
               title = { Text(stringResource(R.string.app_language)) },
-              description = {
+              value = {
                 Text(
                   LanguageCodeToName.getOrElse(appLanguage) {
                     stringResource(R.string.system_default)
@@ -936,12 +841,13 @@ fun ContentSettings(
           }
         )
     )
+    }
 
-    Spacer(modifier = Modifier.height(16.dp))
 
+    if (inSection(null)) {
     Material3SettingsGroup(
       scrollState = scrollState,
-      title = stringResource(R.string.proxy),
+      title = stringResource(R.string.stage_more),
       items =
         buildList {
           add(
@@ -949,7 +855,7 @@ fun ContentSettings(
               isHighlighted = (highlightKey == stringResource(R.string.network_ip_version)),
               icon = painterResource(R.drawable.network_node),
               title = { Text(stringResource(R.string.network_ip_version)) },
-              description = {
+              value = {
                 Text(
                   when (ipVersion) {
                     IpVersion.AUTO -> stringResource(R.string.ip_version_auto)
@@ -968,20 +874,7 @@ fun ContentSettings(
               title = { Text(stringResource(R.string.enable_proxy)) },
               description = { Text(stringResource(R.string.enable_proxy_desc)) },
               trailingContent = {
-                Switch(
-                  checked = proxyEnabled,
-                  onCheckedChange = onProxyEnabledChange,
-                  thumbContent = {
-                    Icon(
-                      painter =
-                        painterResource(
-                          id = if (proxyEnabled) R.drawable.check else R.drawable.close
-                        ),
-                      contentDescription = null,
-                      modifier = Modifier.size(SwitchDefaults.IconSize)
-                    )
-                  }
-                )
+                StageSwitch(checked = proxyEnabled, onCheckedChange = onProxyEnabledChange)
               },
               onClick = { onProxyEnabledChange(!proxyEnabled) }
             )
@@ -997,11 +890,20 @@ fun ContentSettings(
               )
             )
           }
+          if (highlightKey == null) {
+            add(
+          Material3SettingsItem(
+            title = { Text(stringResource(R.string.stage_album_and_lyrics)) },
+            onClick = { openSection = "album_lyrics" },
+          )
+            )
+          }
         }
     )
+    }
 
-    Spacer(modifier = Modifier.height(16.dp))
 
+    if (inSection("album_lyrics")) {
     Material3SettingsGroup(
       scrollState = scrollState,
       title = stringResource(R.string.lyrics),
@@ -1013,13 +915,11 @@ fun ContentSettings(
             title = { Text(stringResource(R.string.lyrics_romanization)) },
             description = { Text(stringResource(R.string.lyrics_romanization_desc)) },
             trailingContent = {
-              Switch(
-                checked =
+              StageSwitch(checked =
                   lyricsRomanizeJapanese &&
                     lyricsRomanizeKorean &&
                     lyricsRomanizeChinese &&
-                    lyricsRomanizeRussian,
-                onCheckedChange = { checked ->
+                    lyricsRomanizeRussian, onCheckedChange = { checked ->
                   onLyricsRomanizeJapaneseChange(checked)
                   onLyricsRomanizeKoreanChange(checked)
                   onLyricsRomanizeChineseChange(checked)
@@ -1032,20 +932,7 @@ fun ContentSettings(
                   onLyricsRomanizeBelarusianChange(checked)
                   onLyricsRomanizeKyrgyzChange(checked)
                   onLyricsRomanizeMacedonianChange(checked)
-                },
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id =
-                          if (lyricsRomanizeJapanese && lyricsRomanizeKorean) R.drawable.check
-                          else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+                })
             },
             onClick = {
               val checked =
@@ -1069,9 +956,10 @@ fun ContentSettings(
           )
         )
     )
+    }
 
-    Spacer(modifier = Modifier.height(16.dp))
 
+    if (inSection(null)) {
     Material3SettingsGroup(
       scrollState = scrollState,
       title = stringResource(R.string.misc),
@@ -1081,7 +969,7 @@ fun ContentSettings(
             isHighlighted = (highlightKey == stringResource(R.string.recommendation_source)),
             icon = painterResource(R.drawable.explore_outlined),
             title = { Text(stringResource(R.string.recommendation_source)) },
-            description = {
+            value = {
               Text(
                 when (recommendationSource) {
                   RecommendationSource.YOUTUBE -> stringResource(R.string.recommendation_source_youtube)
@@ -1110,20 +998,7 @@ fun ContentSettings(
             title = { Text(stringResource(R.string.randomize_home_order)) },
             description = { Text(stringResource(R.string.randomize_home_order_desc)) },
             trailingContent = {
-              Switch(
-                checked = randomizeHomeOrder,
-                onCheckedChange = onRandomizeHomeOrderChange,
-                thumbContent = {
-                  Icon(
-                    painter =
-                      painterResource(
-                        id = if (randomizeHomeOrder) R.drawable.check else R.drawable.close
-                      ),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                  )
-                }
-              )
+              StageSwitch(checked = randomizeHomeOrder, onCheckedChange = onRandomizeHomeOrderChange)
             },
             onClick = { onRandomizeHomeOrderChange(!randomizeHomeOrder) }
           ),
@@ -1131,14 +1006,14 @@ fun ContentSettings(
             isHighlighted = (highlightKey == stringResource(R.string.top_length)),
             icon = painterResource(R.drawable.trending_up),
             title = { Text(stringResource(R.string.top_length)) },
-            description = { Text(lengthTop) },
+            value = { Text(lengthTop) },
             onClick = { showTopLengthDialog = true }
           ),
           Material3SettingsItem(
             isHighlighted = (highlightKey == stringResource(R.string.set_quick_picks)),
             icon = painterResource(R.drawable.home_outlined),
             title = { Text(stringResource(R.string.set_quick_picks)) },
-            description = {
+            value = {
               Text(
                 when (quickPicks) {
                   QuickPicks.QUICK_PICKS -> stringResource(R.string.quick_picks)
@@ -1154,20 +1029,13 @@ fun ContentSettings(
             title = { Text("Speed Dial") },
             description = { Text("Show Speed Dial on the Home Screen") },
             trailingContent = {
-              Switch(
-                checked = showSpeedDial,
-                onCheckedChange = { onShowSpeedDialChange(it) },
-                colors =
-                  SwitchDefaults.colors(
-                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                    checkedTrackColor = MaterialTheme.colorScheme.primary
-                  )
-              )
+              StageSwitch(checked = showSpeedDial, onCheckedChange = { onShowSpeedDialChange(it) })
             },
             onClick = { onShowSpeedDialChange(!showSpeedDial) }
           )
         )
     )
+    }
 
     Spacer(modifier = Modifier.height(16.dp))
 
@@ -1178,11 +1046,11 @@ fun ContentSettings(
     )
   }
 
-  TopAppBar(
+  StageTopBar(
     title = { Text(stringResource(R.string.content)) },
     navigationIcon = {
       IconButton(
-        onClick = navController::navigateUp,
+        onClick = { if (openSection != null) openSection = null else navController.navigateUp() },
         onLongClick = navController::backToMain,
       ) {
         Icon(
@@ -1191,5 +1059,5 @@ fun ContentSettings(
         )
       }
     }
-  )
+)
 }

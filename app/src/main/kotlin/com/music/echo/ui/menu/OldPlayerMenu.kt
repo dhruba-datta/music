@@ -1,5 +1,7 @@
 package echo.music.iad1tya.ui.menu
 
+import echo.music.iad1tya.ui.component.StageAlertDialog
+import echo.music.iad1tya.ui.component.StagePillButton
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.animation.core.LinearEasing
@@ -164,13 +166,12 @@ fun OldPlayerMenu(
   var showReExportDialog by
     androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
   if (showReExportDialog) {
-    androidx.compose.material3.AlertDialog(
+    StageAlertDialog(
       onDismissRequest = { showReExportDialog = false },
       title = { androidx.compose.material3.Text("Re-export") },
       text = { androidx.compose.material3.Text("Wanna re-export it again?") },
       confirmButton = {
-        androidx.compose.material3.Button(
-          onClick = {
+        StagePillButton(onClick = {
             showReExportDialog = false
             if (exportDirectoryUri.isBlank()) {
               android.widget.Toast.makeText(
@@ -192,17 +193,16 @@ fun OldPlayerMenu(
                 targetDirectoryUri = exportDirectoryUri
               )
             }
-          }
-        ) {
+          }) {
           androidx.compose.material3.Text("Yes")
         }
       },
       dismissButton = {
-        androidx.compose.material3.OutlinedButton(onClick = { showReExportDialog = false }) {
+        StagePillButton(onClick = { showReExportDialog = false }, primary = false) {
           androidx.compose.material3.Text("No")
         }
       }
-    )
+)
   }
 
   var showChoosePlaylistDialog by rememberSaveable { mutableStateOf(false) }
@@ -388,14 +388,14 @@ fun OldPlayerMenu(
         androidx.compose.foundation.Image(
           painter = painterResource(R.drawable.songdna),
           contentDescription = null,
-          modifier = Modifier.size(24.dp).clip(androidx.compose.foundation.shape.CircleShape)
+          modifier = Modifier.size(22.dp).clip(androidx.compose.foundation.shape.CircleShape)
         )
       },
       title = {
         Text("Song DNA", fontWeight = FontWeight.Bold)
       },
       buttons = {
-        TextButton(onClick = { showSongDnaDialog = false }) { Text(stringResource(android.R.string.ok)) }
+        StagePillButton(onClick = { showSongDnaDialog = false }) { Text(stringResource(android.R.string.ok)) }
       }
     ) {
       LazyColumn(
@@ -447,7 +447,7 @@ fun OldPlayerMenu(
         Icon(
           painter = painterResource(R.drawable.cast),
           contentDescription = null,
-          modifier = Modifier.size(24.dp),
+          modifier = Modifier.size(22.dp),
           tint = MaterialTheme.colorScheme.primary
         )
         Spacer(modifier = Modifier.width(10.dp))
@@ -558,7 +558,7 @@ fun OldPlayerMenu(
                   androidx.compose.foundation.Image(
                     painter = painterResource(R.drawable.songdna),
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp).clip(androidx.compose.foundation.shape.CircleShape)
+                    modifier = Modifier.size(22.dp).clip(androidx.compose.foundation.shape.CircleShape)
                   )
                 },
                 onClick = {
@@ -579,7 +579,7 @@ fun OldPlayerMenu(
                   Icon(
                     painter = painterResource(R.drawable.fullscreen),
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(22.dp)
                   )
                 },
                 onClick = {
@@ -597,7 +597,7 @@ fun OldPlayerMenu(
                   Icon(
                     painter = painterResource(R.drawable.lyrics),
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(22.dp)
                   )
                 },
                 onClick = {
@@ -615,7 +615,7 @@ fun OldPlayerMenu(
                     Icon(
                       painter = painterResource(R.drawable.shuffle),
                       contentDescription = null,
-                      modifier = Modifier.size(24.dp),
+                      modifier = Modifier.size(22.dp),
                       tint =
                         if (shuffleModeEnabled) MaterialTheme.colorScheme.primary
                         else androidx.compose.material3.LocalContentColor.current
@@ -638,7 +638,7 @@ fun OldPlayerMenu(
                       Icon(
                         painter = painterResource(R.drawable.offline),
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(22.dp)
                       )
                     },
                     onClick = {
@@ -681,7 +681,7 @@ fun OldPlayerMenu(
                       Icon(
                         painter = painterResource(R.drawable.download),
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(22.dp)
                       )
                     },
                     onClick = {
@@ -727,7 +727,7 @@ fun OldPlayerMenu(
                         Icon(
                           painter = painterResource(R.drawable.folder_managed),
                           contentDescription = null,
-                          modifier = Modifier.size(24.dp)
+                          modifier = Modifier.size(22.dp)
                         )
                       },
                       onClick = { showReExportDialog = true }
@@ -741,7 +741,7 @@ fun OldPlayerMenu(
                         Icon(
                           painter = painterResource(R.drawable.file_export),
                           contentDescription = null,
-                          modifier = Modifier.size(24.dp)
+                          modifier = Modifier.size(22.dp)
                         )
                       },
                       onClick = {
@@ -894,7 +894,7 @@ fun OldPlayerMenu(
                     Icon(
                       painter = painterResource(R.drawable.artist),
                       contentDescription = null,
-                      modifier = Modifier.size(24.dp)
+                      modifier = Modifier.size(22.dp)
                     )
                   },
                   onClick = {
@@ -953,7 +953,7 @@ fun OldPlayerMenu(
                 Icon(
                   painter = painterResource(R.drawable.notification),
                   contentDescription = null,
-                  modifier = Modifier.size(24.dp)
+                  modifier = Modifier.size(22.dp)
                 )
               },
               onClick = {
@@ -987,7 +987,7 @@ fun OldPlayerMenu(
                   Icon(
                     painter = painterResource(R.drawable.group),
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(22.dp)
                   )
                 },
                 onClick = { showListenTogetherDialog = true }
@@ -1001,7 +1001,7 @@ fun OldPlayerMenu(
                     Icon(
                       painter = painterResource(R.drawable.replay),
                       contentDescription = null,
-                      modifier = Modifier.size(24.dp)
+                      modifier = Modifier.size(22.dp)
                     )
                   },
                   onClick = {
@@ -1029,7 +1029,7 @@ fun OldPlayerMenu(
                   Icon(
                     painter = painterResource(R.drawable.info),
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(22.dp)
                   )
                 },
                 onClick = {
@@ -1047,7 +1047,7 @@ fun OldPlayerMenu(
                   Icon(
                     painter = painterResource(R.drawable.equalizer),
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(22.dp)
                   )
                 },
                 onClick = {
@@ -1065,7 +1065,7 @@ fun OldPlayerMenu(
                   Icon(
                     painter = painterResource(R.drawable.tune),
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(22.dp)
                   )
                 },
                 onClick = { if (!varispeedMode) showPitchTempoDialog = true else showSpeedDialog = true }

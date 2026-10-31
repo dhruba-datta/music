@@ -7,25 +7,26 @@ import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Clear
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
@@ -34,13 +35,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.R
 import echo.music.iad1tya.echomusic.updater.getUpdateAvailableState
 import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.Material3SettingsGroup
-import echo.music.iad1tya.ui.component.withIconTiles
+import echo.music.iad1tya.ui.component.StageSearchField
+import echo.music.iad1tya.ui.component.StageTile
 import echo.music.iad1tya.ui.component.Material3SettingsItem
 import echo.music.iad1tya.ui.screens.Screens
 import echo.music.iad1tya.ui.utils.backToMain
@@ -89,48 +92,48 @@ fun SettingsScreen(
   val scrollState = rememberScrollState()
   Column(
     Modifier.windowInsetsPadding(
-        LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal)
-      )
-      .verticalScroll(scrollState)
-      .padding(horizontal = 16.dp)
+      LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal)
+    )
   ) {
-    Spacer(
-      Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Top))
-    )
-    Text(
-      text = stringResource(R.string.settings),
-      style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.SemiBold),
-      color = MaterialTheme.colorScheme.onBackground,
-      modifier = Modifier.padding(start = 8.dp, top = 24.dp, bottom = 16.dp)
-    )
+    Spacer(Modifier.windowInsetsPadding(WindowInsets.statusBars))
+    Row(
+      verticalAlignment = Alignment.CenterVertically,
+      modifier = Modifier.fillMaxWidth().padding(start = 22.dp, top = 20.dp, end = 12.dp),
+    ) {
+      Text(
+        text = stringResource(R.string.settings),
+        fontSize = 34.sp,
+        lineHeight = 40.sp,
+        letterSpacing = (-0.68).sp,
+        fontWeight = FontWeight.ExtraBold,
+        color = MaterialTheme.colorScheme.onBackground,
+        modifier = Modifier.weight(1f),
+      )
+      // The boards leave this corner empty, but the page must keep its way back.
+      IconButton(
+        onClick = navController::navigateUp,
+        onLongClick = navController::backToMain,
+        modifier = Modifier.size(44.dp),
+      ) {
+        Icon(
+          painterResource(R.drawable.arrow_back),
+          contentDescription = stringResource(R.string.cd_back),
+        )
+      }
+    }
 
-    TextField(
+    StageSearchField(
       value = searchQuery,
       onValueChange = { searchQuery = it },
-      placeholder = { Text(stringResource(R.string.search)) },
-      leadingIcon = {
-        Icon(
-          imageVector = Icons.Rounded.Search,
-          contentDescription = stringResource(R.string.search)
-        )
-      },
-      trailingIcon = {
-        if (searchQuery.isNotEmpty()) {
-          IconButton(onClick = { searchQuery = "" }) {
-            Icon(imageVector = Icons.Rounded.Clear, contentDescription = "Clear")
-          }
-        }
-      },
-      shape = RoundedCornerShape(28.dp),
-      colors =
-        TextFieldDefaults.colors(
-          focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-          unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-          disabledIndicatorColor = androidx.compose.ui.graphics.Color.Transparent
-        ),
-      modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, bottom = 16.dp)
+      placeholder = stringResource(R.string.stage_search_settings),
+      modifier = Modifier.padding(start = 18.dp, top = 4.dp, end = 18.dp),
     )
 
+    Column(
+      Modifier.weight(1f)
+        .verticalScroll(scrollState)
+        .padding(start = 18.dp, top = 8.dp, end = 18.dp)
+    ) {
     val itemsList = buildList {
       if (
         accountText.lowercase().contains(searchLower) ||
@@ -140,8 +143,8 @@ fun SettingsScreen(
           Material3SettingsItem(
             isHighlighted = (highlightKey == accountText),
             icon = painterResource(R.drawable.account),
+            iconBackground = StageTile.Rose,
             title = { Text(accountText) },
-            description = { Text(accountDesc) },
             onClick = { navController.navigate("settings/account") }
           )
         )
@@ -154,18 +157,9 @@ fun SettingsScreen(
         add(
           Material3SettingsItem(
             isHighlighted = (highlightKey == aiLyricsText),
-            customIcon = {
-              Text(
-                text = "Ai",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                color =
-                  if (highlightKey == aiLyricsText) MaterialTheme.colorScheme.onSurface
-                  else MaterialTheme.colorScheme.onSurfaceVariant
-              )
-            },
+            icon = painterResource(R.drawable.stage_sparkle),
+            iconBackground = StageTile.Violet,
             title = { Text(aiLyricsText) },
-            description = { Text(aiLyricsDesc) },
             onClick = { navController.navigate("settings/ai") }
           )
         )
@@ -175,10 +169,8 @@ fun SettingsScreen(
         add(
           Material3SettingsItem(
             icon = painterResource(echo.music.iad1tya.R.drawable.history),
+            iconBackground = StageTile.Blue,
             title = { Text(stringResource(echo.music.iad1tya.R.string.listening_summary)) },
-            description = {
-              Text(stringResource(echo.music.iad1tya.R.string.listening_summary_desc))
-            },
             onClick = { navController.navigate("settings/listening_summary") }
           )
         )
@@ -192,8 +184,8 @@ fun SettingsScreen(
           Material3SettingsItem(
             isHighlighted = (highlightKey == appearanceText),
             icon = painterResource(R.drawable.palette),
+            iconBackground = StageTile.Violet,
             title = { Text(appearanceText) },
-            description = { Text(appearanceDesc) },
             onClick = { navController.navigate("settings/appearance") }
           )
         )
@@ -205,8 +197,8 @@ fun SettingsScreen(
           Material3SettingsItem(
             isHighlighted = (highlightKey == playerText),
             icon = painterResource(R.drawable.play),
+            iconBackground = StageTile.Blue,
             title = { Text(playerText) },
-            description = { Text(playerDesc) },
             onClick = { navController.navigate("settings/player") }
           )
         )
@@ -221,8 +213,8 @@ fun SettingsScreen(
           Material3SettingsItem(
             isHighlighted = (highlightKey == musicFlowText),
             icon = painterResource(R.drawable.swipe),
+            iconBackground = StageTile.Green,
             title = { Text(musicFlowText) },
-            description = { Text(musicFlowDesc) },
             onClick = { navController.navigate("settings/music_flow") }
           )
         )
@@ -235,8 +227,8 @@ fun SettingsScreen(
           Material3SettingsItem(
             isHighlighted = (highlightKey == listenTogetherText),
             icon = painterResource(R.drawable.group),
+            iconBackground = StageTile.Green,
             title = { Text(listenTogetherText) },
-            description = { Text(listenTogetherDesc) },
             onClick = { navController.navigate(Screens.ListenTogether.route) }
           )
         )
@@ -249,8 +241,8 @@ fun SettingsScreen(
           Material3SettingsItem(
             isHighlighted = (highlightKey == contentText),
             icon = painterResource(R.drawable.language),
+            iconBackground = StageTile.Slate,
             title = { Text(contentText) },
-            description = { Text(contentDesc) },
             onClick = { navController.navigate("settings/content") }
           )
         )
@@ -266,8 +258,8 @@ fun SettingsScreen(
           Material3SettingsItem(
             isHighlighted = (highlightKey == privacyText),
             icon = painterResource(R.drawable.security),
+            iconBackground = StageTile.Slate,
             title = { Text(privacyText) },
-            description = { Text(privacyDesc) },
             onClick = { navController.navigate("settings/privacy") }
           )
         )
@@ -280,8 +272,8 @@ fun SettingsScreen(
           Material3SettingsItem(
             isHighlighted = (highlightKey == storageText),
             icon = painterResource(R.drawable.storage),
+            iconBackground = StageTile.Slate,
             title = { Text(storageText) },
-            description = { Text(storageDesc) },
             onClick = { navController.navigate("settings/storage") }
           )
         )
@@ -295,8 +287,8 @@ fun SettingsScreen(
           Material3SettingsItem(
             isHighlighted = (highlightKey == backupText),
             icon = painterResource(R.drawable.restore),
+            iconBackground = StageTile.Slate,
             title = { Text(backupText) },
-            description = { Text(backupDesc) },
             onClick = { navController.navigate("settings/backup_restore") }
           )
         )
@@ -312,6 +304,7 @@ fun SettingsScreen(
               painterResource(
                 if (isUpdateAvailable) R.drawable.ic_launcher_nobg else R.drawable.update
               ),
+            iconBackground = StageTile.Slate,
             title = { Text(systemUpdateText) },
             description =
               if (isUpdateAvailable) {
@@ -322,7 +315,7 @@ fun SettingsScreen(
                   )
                 }
               } else {
-                { Text(systemUpdateDesc) }
+                null
               },
             onClick = { navController.navigate("settings/update") }
           )
@@ -334,8 +327,8 @@ fun SettingsScreen(
             Material3SettingsItem(
               isHighlighted = (highlightKey == "supported links"),
               icon = painterResource(R.drawable.link),
+            iconBackground = StageTile.Slate,
               title = { Text("Supported Links") },
-              description = { Text("App linking settings") },
               onClick = {
                 try {
                   val intent =
@@ -368,8 +361,8 @@ fun SettingsScreen(
           Material3SettingsItem(
             isHighlighted = (highlightKey == aboutText),
             icon = painterResource(R.drawable.info),
+            iconBackground = StageTile.Slate,
             title = { Text(aboutText) },
-            description = { Text(aboutDesc) },
             onClick = { navController.navigate("settings/about") }
           )
         )
@@ -389,6 +382,7 @@ fun SettingsScreen(
             .map { setting ->
               Material3SettingsItem(
                 icon = painterResource(R.drawable.search),
+                iconBackground = StageTile.Slate,
                 title = { Text(setting.title) },
                 description = {
                   if (setting.description != null) {
@@ -421,63 +415,16 @@ fun SettingsScreen(
         textAlign = TextAlign.Center,
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
       )
-    } else if (searchQuery.isNotEmpty()) {
-      Spacer(modifier = Modifier.height(16.dp))
-      Material3SettingsGroup(scrollState = scrollState, items = finalItemsList)
     } else {
-      Spacer(modifier = Modifier.height(16.dp))
-
-      // Let's just create groups manually using itemsList which preserves order
-      val tiledItems = itemsList.withIconTiles()
-      val accountGroup = tiledItems.take(2) // Account, AI
-      val listeningSummaryGroup = tiledItems.drop(2).take(1) // Listening Summary
-      val playerGroup = tiledItems.drop(3).take(4) // Appearance, Player, Music Flow, Listen Together
-      val dataGroup = tiledItems.drop(7).take(4) // Content, Privacy, Storage, Backup
-      val systemGroup = tiledItems.drop(11) // Update, Links, About
-
-      if (accountGroup.isNotEmpty()) {
-        Material3SettingsGroup(scrollState = scrollState, items = accountGroup)
-        Spacer(modifier = Modifier.height(16.dp))
-      }
-      if (listeningSummaryGroup.isNotEmpty()) {
-        Material3SettingsGroup(scrollState = scrollState, items = listeningSummaryGroup)
-        Spacer(modifier = Modifier.height(16.dp))
-      }
-      if (playerGroup.isNotEmpty()) {
-        Material3SettingsGroup(scrollState = scrollState, items = playerGroup)
-        Spacer(modifier = Modifier.height(16.dp))
-      }
-      if (dataGroup.isNotEmpty()) {
-        Material3SettingsGroup(scrollState = scrollState, items = dataGroup)
-        Spacer(modifier = Modifier.height(16.dp))
-      }
-      if (systemGroup.isNotEmpty()) {
-        Material3SettingsGroup(scrollState = scrollState, items = systemGroup)
-      }
+      Material3SettingsGroup(tight = true, scrollState = scrollState, items = finalItemsList)
     }
 
-    Spacer(modifier = Modifier.height(50.dp))
+    Spacer(modifier = Modifier.height(24.dp))
     Spacer(
       Modifier.windowInsetsPadding(
         LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Bottom)
       )
     )
-  }
-
-  TopAppBar(
-    title = {
-      androidx.compose.animation.AnimatedVisibility(
-        visible = scrollState.value > 100,
-        enter = androidx.compose.animation.fadeIn(),
-        exit = androidx.compose.animation.fadeOut()
-      ) {
-        Text(text = stringResource(R.string.settings), style = MaterialTheme.typography.titleLarge)
-      }
-    },
-    navigationIcon = {
-      IconButton(onClick = navController::navigateUp, onLongClick = navController::backToMain) {
-        Icon(painterResource(R.drawable.arrow_back), contentDescription = null)
-      }
     }
-  )
+  }
 }

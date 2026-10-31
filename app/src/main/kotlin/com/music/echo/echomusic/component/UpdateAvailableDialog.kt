@@ -1,5 +1,6 @@
 package echo.music.iad1tya.echomusic.component
 
+import echo.music.iad1tya.ui.component.StagePillButton
 import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -181,30 +182,19 @@ fun UpdateAvailableDialog(
           }
         }
 
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.End,
-        ) {
-          TextButton(
-            onClick = onDismiss,
-            shape = actionShape,
-          ) {
-            Text(text = "Next time")
-          }
-          Spacer(modifier = Modifier.width(8.dp))
-          Button(
-            onClick = {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        StagePillButton(onClick = {
               onDismiss()
               val intent =
                 Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://echomusic.fun"))
               context.startActivity(intent)
-            },
-            shape = actionShape,
-          ) {
+            }) {
             Text(text = "Update")
           }
-        }
+        StagePillButton(onClick = onDismiss, primary = false) {
+            Text(text = "Next time")
+          }
+      }
       }
     }
   }

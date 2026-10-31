@@ -1,17 +1,17 @@
 package echo.music.iad1tya.ui.screens.equalizer.axion
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -58,24 +58,36 @@ fun AutoEqBottomSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
-        sheetState = sheetState
+        sheetState = sheetState,
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        dragHandle = {
+            androidx.compose.foundation.layout.Box(
+                modifier =
+                    Modifier.padding(top = 10.dp)
+                        .size(width = 44.dp, height = 5.dp)
+                        .background(
+                            MaterialTheme.colorScheme.outline,
+                            androidx.compose.foundation.shape.RoundedCornerShape(3.dp),
+                        )
+            )
+        },
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().fillMaxHeight(0.9f).padding(horizontal = 16.dp)
+            modifier = Modifier.fillMaxWidth().fillMaxHeight(0.9f).padding(horizontal = 18.dp)
         ) {
             Text(
                 text = "AutoEq Profiles",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 16.dp)
+                fontSize = 22.sp,
+                lineHeight = 28.sp,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
+                modifier = Modifier.padding(start = 4.dp, top = 12.dp, bottom = 10.dp)
             )
 
-            OutlinedTextField(
+            echo.music.iad1tya.ui.component.StageSearchField(
                 value = query,
                 onValueChange = { query = it },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Search your headphones...") },
-                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-                singleLine = true
+                placeholder = "Search your headphones...",
             )
 
             Spacer(modifier = Modifier.height(16.dp))

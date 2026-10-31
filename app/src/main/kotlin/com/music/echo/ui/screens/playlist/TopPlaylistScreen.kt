@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.screens.playlist
 
+import echo.music.iad1tya.ui.component.StagePillButton
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -217,14 +218,7 @@ fun TopPlaylistScreen(
         )
       },
       buttons = {
-        TextButton(
-          onClick = { showRemoveDownloadDialog = false },
-        ) {
-          Text(text = stringResource(android.R.string.cancel))
-        }
-
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             showRemoveDownloadDialog = false
             songs!!.forEach { song ->
               DownloadService.sendRemoveDownload(
@@ -234,9 +228,11 @@ fun TopPlaylistScreen(
                 false,
               )
             }
-          },
-        ) {
+          }) {
           Text(text = stringResource(android.R.string.ok))
+        }
+        StagePillButton(onClick = { showRemoveDownloadDialog = false }, primary = false) {
+          Text(text = stringResource(android.R.string.cancel))
         }
       },
     )

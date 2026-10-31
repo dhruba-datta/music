@@ -1,5 +1,8 @@
 package echo.music.iad1tya.ui.menu
 
+import echo.music.iad1tya.ui.component.StageSheetTitle
+import echo.music.iad1tya.ui.component.StageAlertDialog
+import echo.music.iad1tya.ui.component.StagePillButton
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.Configuration
@@ -122,13 +125,12 @@ fun YouTubePlaylistMenu(
   var showReExportDialog by
     androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
   if (showReExportDialog) {
-    androidx.compose.material3.AlertDialog(
+    StageAlertDialog(
       onDismissRequest = { showReExportDialog = false },
       title = { androidx.compose.material3.Text("Re-export") },
       text = { androidx.compose.material3.Text("Wanna re-export it again?") },
       confirmButton = {
-        androidx.compose.material3.Button(
-          onClick = {
+        StagePillButton(onClick = {
             showReExportDialog = false
             if (exportDirectoryUri.isBlank()) {
               android.widget.Toast.makeText(
@@ -150,17 +152,16 @@ fun YouTubePlaylistMenu(
                 )
               }
             }
-          }
-        ) {
+          }) {
           androidx.compose.material3.Text("Yes")
         }
       },
       dismissButton = {
-        androidx.compose.material3.OutlinedButton(onClick = { showReExportDialog = false }) {
+        StagePillButton(onClick = { showReExportDialog = false }, primary = false) {
           androidx.compose.material3.Text("No")
         }
       }
-    )
+)
   }
 
   var showChoosePlaylistDialog by rememberSaveable { mutableStateOf(false) }
@@ -187,11 +188,9 @@ fun YouTubePlaylistMenu(
     onDismiss = { showChoosePlaylistDialog = false },
   )
 
-  YouTubeListItem(
-    item = playlist,
-    shape = MaterialTheme.shapes.large,
-    color = androidx.compose.ui.graphics.Color.Transparent,
-    trailingContent = {
+  StageSheetTitle(
+    title = playlist.title,
+    trailing = {
       if (playlist.id != "LM" && !playlist.isEditable) {
         IconButton(
           onClick = {
@@ -253,7 +252,7 @@ fun YouTubePlaylistMenu(
           )
         }
       }
-    }
+    },
   )
   var downloadState by remember { mutableIntStateOf(Download.STATE_STOPPED) }
   LaunchedEffect(songs) {
@@ -285,11 +284,7 @@ fun YouTubePlaylistMenu(
         )
       },
       buttons = {
-        TextButton(onClick = { showRemoveDownloadDialog = false }) {
-          Text(text = stringResource(android.R.string.cancel))
-        }
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             showRemoveDownloadDialog = false
             songs.forEach { song ->
               DownloadService.sendRemoveDownload(
@@ -299,9 +294,11 @@ fun YouTubePlaylistMenu(
                 false
               )
             }
-          }
-        ) {
+          }) {
           Text(text = stringResource(android.R.string.ok))
+        }
+        StagePillButton(onClick = { showRemoveDownloadDialog = false }, primary = false) {
+          Text(text = stringResource(android.R.string.cancel))
         }
       }
     )
@@ -396,7 +393,7 @@ fun YouTubePlaylistMenu(
                       Icon(
                         painter = painterResource(R.drawable.play),
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(22.dp),
                       )
                     },
                     title = { MenuTileLabel(text = stringResource(R.string.play)) },
@@ -414,7 +411,7 @@ fun YouTubePlaylistMenu(
                       Icon(
                         painter = painterResource(R.drawable.shuffle),
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(22.dp),
                       )
                     },
                     title = { MenuTileLabel(text = stringResource(R.string.shuffle)) },
@@ -432,7 +429,7 @@ fun YouTubePlaylistMenu(
                       Icon(
                         painter = painterResource(R.drawable.radio),
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(22.dp),
                       )
                     },
                     title = { MenuTileLabel(text = stringResource(R.string.start_radio)) },

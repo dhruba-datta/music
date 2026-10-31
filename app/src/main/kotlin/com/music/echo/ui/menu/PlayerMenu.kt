@@ -1,5 +1,8 @@
 package echo.music.iad1tya.ui.menu
 
+import echo.music.iad1tya.ui.screens.equalizer.StageQuickEqualizer
+import echo.music.iad1tya.ui.component.StageAlertDialog
+import echo.music.iad1tya.ui.component.StagePillButton
 import android.content.Context
 import android.content.res.Configuration
 import android.widget.Toast
@@ -25,10 +28,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -127,6 +130,7 @@ fun PlayerMenu(
   val context = LocalContext.current
   val database = LocalDatabase.current
   val playerConnection = LocalPlayerConnection.current ?: return
+  val menuState = echo.music.iad1tya.ui.component.LocalMenuState.current
 
   val audioManager = remember {
     context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
@@ -222,13 +226,12 @@ fun PlayerMenu(
   var showReExportDialog by
     androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
   if (showReExportDialog) {
-    androidx.compose.material3.AlertDialog(
+    StageAlertDialog(
       onDismissRequest = { showReExportDialog = false },
       title = { androidx.compose.material3.Text("Re-export") },
       text = { androidx.compose.material3.Text("Wanna re-export it again?") },
       confirmButton = {
-        androidx.compose.material3.Button(
-          onClick = {
+        StagePillButton(onClick = {
             showReExportDialog = false
             if (exportDirectoryUri.isBlank()) {
               android.widget.Toast.makeText(
@@ -250,17 +253,16 @@ fun PlayerMenu(
                 targetDirectoryUri = exportDirectoryUri
               )
             }
-          }
-        ) {
+          }) {
           androidx.compose.material3.Text("Yes")
         }
       },
       dismissButton = {
-        androidx.compose.material3.OutlinedButton(onClick = { showReExportDialog = false }) {
+        StagePillButton(onClick = { showReExportDialog = false }, primary = false) {
           androidx.compose.material3.Text("No")
         }
       }
-    )
+)
   }
 
   var showClearQueueDialog by rememberSaveable { mutableStateOf(false) }
@@ -276,18 +278,15 @@ fun PlayerMenu(
       },
       title = { Text(stringResource(R.string.clear_queue)) },
       buttons = {
-        TextButton(onClick = { showClearQueueDialog = false }) {
-          Text(stringResource(R.string.cancel))
-        }
-        Spacer(Modifier.width(8.dp))
-        Button(
-          onClick = {
+        StagePillButton(onClick = {
             showClearQueueDialog = false
             onDismiss()
             playerConnection.clearQueue()
-          }
-        ) {
+          }) {
           Text(stringResource(R.string.clear))
+        }
+        StagePillButton(onClick = { showClearQueueDialog = false }, primary = false) {
+          Text(stringResource(R.string.cancel))
         }
       }
     ) {
@@ -490,7 +489,7 @@ fun PlayerMenu(
         Text("Song DNA", fontWeight = FontWeight.Bold)
       },
       buttons = {
-        TextButton(onClick = { showSongDnaDialog = false }) { Text(stringResource(android.R.string.ok)) }
+        StagePillButton(onClick = { showSongDnaDialog = false }) { Text(stringResource(android.R.string.ok)) }
       }
     ) {
       LazyColumn(
@@ -573,16 +572,7 @@ fun PlayerMenu(
         bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(),
       ),
   ) {
-    item {
-      Text(
-        text = mediaMetadata.title,
-        style = MaterialTheme.typography.titleLarge,
-        fontWeight = FontWeight.ExtraBold,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        modifier = Modifier.padding(horizontal = 18.dp, vertical = 8.dp),
-      )
-    }
+    item { echo.music.iad1tya.ui.component.StageSheetTitle(title = mediaMetadata.title) }
 
     item {
       val startingRadioText = stringResource(R.string.starting_radio)
@@ -904,8 +894,15 @@ fun PlayerMenu(
               icon = { PlayerMenuTileIcon(R.drawable.equalizer) },
               label = { PlayerMenuTileLabel(stringResource(R.string.equalizer)) },
               onClick = {
-                navController.navigate("equalizer")
-                onDismiss()
+                menuState.show {
+                  StageQuickEqualizer(
+                    onOpenFullEqualizer = {
+                      menuState.dismiss()
+                      playerBottomSheetState.collapseSoft()
+                      navController.navigate("settings/equalizer")
+                    }
+                  )
+                }
               }
             )
           )
@@ -960,7 +957,7 @@ fun PlayerMenu(
       Box(
         modifier =
           Modifier.fillMaxWidth()
-            .padding(horizontal = PlayerMenuTilePadding)
+            .padding(start = PlayerMenuTilePadding, end = PlayerMenuTilePadding, bottom = 18.dp)
             .clip(PlayerMenuTileShape)
             .background(MaterialTheme.colorScheme.surfaceContainerHighest)
       ) {
@@ -981,7 +978,7 @@ private class PlayerMenuTile(
 
 @Composable
 private fun PlayerMenuTileIcon(@DrawableRes icon: Int) {
-  Icon(painter = painterResource(icon), contentDescription = null, modifier = Modifier.size(24.dp))
+  Icon(painter = painterResource(icon), contentDescription = null, modifier = Modifier.size(22.dp))
 }
 
 @Composable
@@ -1007,7 +1004,7 @@ private fun PlayerMenuTileGrid(tiles: List<PlayerMenuTile>) {
   Column(
     verticalArrangement = Arrangement.spacedBy(8.dp),
     modifier =
-      Modifier.fillMaxWidth().padding(horizontal = PlayerMenuTilePadding, vertical = 10.dp),
+      Modifier.fillMaxWidth().padding(start = PlayerMenuTilePadding, top = 10.dp, end = PlayerMenuTilePadding, bottom = 8.dp),
   ) {
     tiles.chunked(3).forEach { row ->
       Row(
@@ -1053,92 +1050,49 @@ fun TempoPitchDialog(onDismiss: () -> Unit) {
   val listenTogetherManager = echo.music.iad1tya.LocalListenTogetherManager.current
   val isInRoom = listenTogetherManager?.isInRoom ?: false
 
-  androidx.compose.ui.window.Dialog(
-    properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
-    onDismissRequest = onDismiss
+  echo.music.iad1tya.ui.component.DefaultDialog(
+    onDismiss = onDismiss,
+    title = { Text(stringResource(R.string.tempo_and_pitch)) },
+    buttons = {
+      echo.music.iad1tya.ui.component.StageButton(
+        text = stringResource(android.R.string.ok),
+        onClick = onDismiss,
+      )
+      echo.music.iad1tya.ui.component.StageButton(
+        text = stringResource(R.string.reset),
+        primary = false,
+        onClick = {
+          tempo = 1f
+          transposeValue = 0
+          updatePlaybackParameters()
+        },
+      )
+    },
   ) {
-    androidx.compose.material3.Card(
-      modifier = Modifier.fillMaxWidth().padding(24.dp),
-      shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
-      colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surface),
-      elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 8.dp)
-    ) {
-      Column(
-        modifier = Modifier.padding(24.dp)
-      ) {
-        Text(
-          text = stringResource(R.string.tempo_and_pitch),
-          style = androidx.compose.material3.MaterialTheme.typography.headlineSmall,
-          fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-          color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-          modifier = Modifier.padding(bottom = 24.dp)
-        )
-
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-          if (!isInRoom) {
-            androidx.compose.material3.Card(
-              shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
-              colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh),
-              elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 0.dp),
-              modifier = Modifier.fillMaxWidth()
-            ) {
-              Box(modifier = Modifier.padding(vertical = 12.dp)) {
-                ValueAdjuster(
-                  icon = R.drawable.speed,
-                  currentValue = tempo,
-                  values = (0..35).map { round((0.25f + it * 0.05f) * 100) / 100 },
-                  onValueUpdate = {
-                    tempo = it
-                    updatePlaybackParameters()
-                  },
-                  valueText = { "x$it" }
-                )
-              }
-            }
-          }
-          androidx.compose.material3.Card(
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
-            colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh),
-            elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 0.dp),
-            modifier = Modifier.fillMaxWidth()
-          ) {
-            Box(modifier = Modifier.padding(vertical = 12.dp)) {
-              ValueAdjuster(
-                icon = R.drawable.discover_tune,
-                currentValue = transposeValue,
-                values = (-12..12).toList(),
-                onValueUpdate = {
-                  transposeValue = it
-                  updatePlaybackParameters()
-                },
-                valueText = { "${if (it > 0) "+" else ""}$it" }
-              )
-            }
-          }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.End
-        ) {
-          TextButton(
-            onClick = {
-              tempo = 1f
-              transposeValue = 0
-              updatePlaybackParameters()
-            }
-          ) {
-            Text(stringResource(R.string.reset))
-          }
-          Spacer(modifier = Modifier.width(8.dp))
-          TextButton(onClick = onDismiss) {
-            Text(stringResource(android.R.string.ok))
-          }
-        }
-      }
+    if (!isInRoom) {
+      ValueAdjuster(
+        icon = R.drawable.speed,
+        label = stringResource(R.string.stage_tempo),
+        currentValue = tempo,
+        values = (0..35).map { round((0.25f + it * 0.05f) * 100) / 100 },
+        onValueUpdate = {
+          tempo = it
+          updatePlaybackParameters()
+        },
+        valueText = { "%.2fx".format(it) },
+      )
     }
+    ValueAdjuster(
+      icon = R.drawable.discover_tune,
+      label = stringResource(R.string.stage_pitch),
+      currentValue = transposeValue,
+      values = (-12..12).toList(),
+      onValueUpdate = {
+        transposeValue = it
+        updatePlaybackParameters()
+      },
+      valueText = { "${if (it > 0) "+" else ""}$it st" },
+    )
   }
 }
 
@@ -1150,45 +1104,47 @@ fun <T> ValueAdjuster(
   onValueUpdate: (T) -> Unit,
   valueText: (T) -> String,
   modifier: Modifier = Modifier,
+  label: String? = null,
 ) {
   Row(
-    horizontalArrangement = Arrangement.spacedBy(8.dp),
     verticalAlignment = Alignment.CenterVertically,
-    modifier = modifier.fillMaxWidth().padding(horizontal = 24.dp),
+    modifier = modifier.fillMaxWidth().heightIn(min = 54.dp),
   ) {
-    Icon(
-      painter = painterResource(icon),
-      contentDescription = null,
-      modifier = Modifier.size(28.dp),
-    )
-
-    Spacer(modifier = Modifier.weight(1f))
+    if (label != null) {
+      Text(
+        text = label,
+        fontSize = 16.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.weight(1f),
+      )
+    } else {
+      Icon(painter = painterResource(icon), contentDescription = null, modifier = Modifier.size(24.dp))
+      Spacer(modifier = Modifier.weight(1f))
+    }
 
     IconButton(
       enabled = currentValue != values.first(),
       onClick = { onValueUpdate(values[values.indexOf(currentValue) - 1]) },
+      modifier = Modifier.size(44.dp),
     ) {
-      Icon(
-        painter = painterResource(R.drawable.remove),
-        contentDescription = null,
-      )
+      Icon(painter = painterResource(R.drawable.remove), contentDescription = null)
     }
 
     Text(
       text = valueText(currentValue),
-      style = MaterialTheme.typography.titleMedium,
+      fontSize = 14.sp,
+      fontWeight = FontWeight.Bold,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
       textAlign = TextAlign.Center,
-      modifier = Modifier.width(80.dp),
+      modifier = Modifier.widthIn(min = 48.dp),
     )
 
     IconButton(
       enabled = currentValue != values.last(),
       onClick = { onValueUpdate(values[values.indexOf(currentValue) + 1]) },
+      modifier = Modifier.size(44.dp),
     ) {
-      Icon(
-        painter = painterResource(R.drawable.add),
-        contentDescription = null,
-      )
+      Icon(painter = painterResource(R.drawable.add), contentDescription = null)
     }
   }
 }
@@ -1654,12 +1610,25 @@ fun ListenTogetherDialog(visible: Boolean, mediaMetadata: MediaMetadata?, onDism
                   remember(room.roomCode) {
                     "https://metroserverx.meowery.eu/listen?code=${room.roomCode}"
                   }
-                Row(
-                  verticalAlignment = Alignment.CenterVertically,
-                  horizontalArrangement = Arrangement.Center
-                ) {
-                  FilledTonalButton(
-                    onClick = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        StagePillButton(onClick = {
+                      val clipboard =
+                        context.getSystemService(Context.CLIPBOARD_SERVICE)
+                          as android.content.ClipboardManager
+                      val clip = android.content.ClipData.newPlainText("Room Code", room.roomCode)
+                      clipboard.setPrimaryClip(clip)
+                      Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT)
+                        .show()
+                    }) {
+                    Icon(
+                      painter = painterResource(R.drawable.content_copy),
+                      contentDescription = stringResource(R.string.copy_code),
+                      modifier = Modifier.size(18.dp)
+                    )
+                    
+                    Text(stringResource(R.string.copy_code))
+                  }
+        StagePillButton(onClick = {
                       val clipboard =
                         context.getSystemService(Context.CLIPBOARD_SERVICE)
                           as android.content.ClipboardManager
@@ -1668,39 +1637,16 @@ fun ListenTogetherDialog(visible: Boolean, mediaMetadata: MediaMetadata?, onDism
                       clipboard.setPrimaryClip(clip)
                       Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT)
                         .show()
-                    }
-                  ) {
+                    }, primary = false) {
                     Icon(
                       painter = painterResource(R.drawable.link),
                       contentDescription = stringResource(R.string.copy_link),
                       modifier = Modifier.size(18.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    
                     Text(stringResource(R.string.copy_link))
                   }
-
-                  Spacer(modifier = Modifier.width(8.dp))
-
-                  FilledTonalButton(
-                    onClick = {
-                      val clipboard =
-                        context.getSystemService(Context.CLIPBOARD_SERVICE)
-                          as android.content.ClipboardManager
-                      val clip = android.content.ClipData.newPlainText("Room Code", room.roomCode)
-                      clipboard.setPrimaryClip(clip)
-                      Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT)
-                        .show()
-                    }
-                  ) {
-                    Icon(
-                      painter = painterResource(R.drawable.content_copy),
-                      contentDescription = stringResource(R.string.copy_code),
-                      modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.copy_code))
-                  }
-                }
+      }
               }
             }
           }
@@ -2002,30 +1948,23 @@ fun ListenTogetherDialog(visible: Boolean, mediaMetadata: MediaMetadata?, onDism
 
         item {
           Spacer(modifier = Modifier.height(20.dp))
-          Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-          ) {
-            TextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) {
-              Text(stringResource(R.string.cancel), fontWeight = FontWeight.Medium)
-            }
-            Button(
-              onClick = {
+          Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        StagePillButton(onClick = {
                 listenTogetherManager.leaveRoom()
                 onDismiss()
-              },
-              modifier = Modifier.weight(1f),
-              colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-            ) {
+              }) {
               Icon(
                 painter = painterResource(R.drawable.logout),
                 contentDescription = null,
                 modifier = Modifier.size(18.dp)
               )
-              Spacer(Modifier.width(8.dp))
+              
               Text(stringResource(R.string.leave_room), fontWeight = FontWeight.SemiBold)
             }
-          }
+        StagePillButton(onClick = onDismiss, primary = false) {
+              Text(stringResource(R.string.cancel), fontWeight = FontWeight.Medium)
+            }
+      }
           Spacer(modifier = Modifier.height(16.dp))
         }
       }
@@ -2274,68 +2213,36 @@ fun SpeedDialog(onDismiss: () -> Unit) {
   val listenTogetherManager = echo.music.iad1tya.LocalListenTogetherManager.current
   val isInRoom = listenTogetherManager?.isInRoom ?: false
 
-  androidx.compose.ui.window.Dialog(
-    properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
-    onDismissRequest = onDismiss
+  echo.music.iad1tya.ui.component.DefaultDialog(
+    onDismiss = onDismiss,
+    title = { Text(stringResource(R.string.speed)) },
+    buttons = {
+      echo.music.iad1tya.ui.component.StageButton(
+        text = stringResource(android.R.string.ok),
+        onClick = onDismiss,
+      )
+      echo.music.iad1tya.ui.component.StageButton(
+        text = stringResource(R.string.reset),
+        primary = false,
+        onClick = {
+          speed = 1f
+          updatePlaybackParameters()
+        },
+      )
+    },
   ) {
-    androidx.compose.material3.Card(
-      modifier = Modifier.fillMaxWidth().padding(24.dp),
-      shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
-      colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surface),
-      elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 8.dp)
-    ) {
-      Column(
-        modifier = Modifier.padding(24.dp)
-      ) {
-        Text(
-          text = stringResource(R.string.speed),
-          style = androidx.compose.material3.MaterialTheme.typography.headlineSmall,
-          fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-          color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-          modifier = Modifier.padding(bottom = 24.dp)
-        )
-
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-          if (!isInRoom) {
-            androidx.compose.material3.Card(
-              shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
-              colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh),
-              elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 0.dp),
-              modifier = Modifier.fillMaxWidth()
-            ) {
-              Box(modifier = Modifier.padding(vertical = 12.dp)) {
-                ValueAdjuster(
-                  icon = R.drawable.speed,
-                  currentValue = speed,
-                  values = (0..35).map { round((0.25f + it * 0.05f) * 100) / 100 },
-                  onValueUpdate = {
-                    speed = it
-                    updatePlaybackParameters()
-                  },
-                  valueText = { "x$it" }
-                )
-              }
-            }
-          }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.End
-        ) {
-          TextButton(onClick = {
-            speed = 1f
-            updatePlaybackParameters()
-          }) {
-            Text(stringResource(R.string.reset))
-          }
-          TextButton(onClick = onDismiss) {
-            Text(stringResource(android.R.string.ok))
-          }
-        }
-      }
+    if (!isInRoom) {
+      ValueAdjuster(
+        icon = R.drawable.speed,
+        label = stringResource(R.string.speed),
+        currentValue = speed,
+        values = (0..35).map { round((0.25f + it * 0.05f) * 100) / 100 },
+        onValueUpdate = {
+          speed = it
+          updatePlaybackParameters()
+        },
+        valueText = { "%.2fx".format(it) },
+      )
     }
   }
 }

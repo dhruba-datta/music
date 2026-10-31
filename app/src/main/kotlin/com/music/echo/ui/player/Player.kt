@@ -1,5 +1,7 @@
 package echo.music.iad1tya.ui.player
 
+import echo.music.iad1tya.ui.component.StageAlertDialog
+import echo.music.iad1tya.ui.component.StagePillButton
 import android.content.BroadcastReceiver
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -73,7 +75,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -180,6 +181,8 @@ import echo.music.iad1tya.R
 import echo.music.iad1tya.applecanvas.AppleMusicCanvasProvider
 import echo.music.iad1tya.canvas.CanvasArtwork
 import echo.music.iad1tya.canvas.TidalCanvasProvider
+import echo.music.iad1tya.constants.StageLyricsLineSpacingDefault
+import echo.music.iad1tya.constants.StageLyricsTextSizeDefault
 import echo.music.iad1tya.constants.AudioQuality
 import echo.music.iad1tya.constants.AudioQualityKey
 import echo.music.iad1tya.constants.CanvasThumbnailAnimationKey
@@ -854,25 +857,20 @@ fun BottomSheetPlayer(
 
   var sleepTimerValue by remember { mutableFloatStateOf(30f) }
   if (showSleepTimerDialog) {
-    AlertDialog(
-      properties = DialogProperties(usePlatformDefaultWidth = false),
+    StageAlertDialog(
       onDismissRequest = { showSleepTimerDialog = false },
       icon = { Icon(painter = painterResource(R.drawable.bedtime), contentDescription = null) },
       title = { Text(stringResource(R.string.sleep_timer)) },
       confirmButton = {
-        TextButton(
-          onClick = {
+        StagePillButton(onClick = {
             showSleepTimerDialog = false
             playerConnection.service.sleepTimer.start(sleepTimerValue.roundToInt())
-          },
-        ) {
+          }) {
           Text(stringResource(android.R.string.ok))
         }
       },
       dismissButton = {
-        TextButton(
-          onClick = { showSleepTimerDialog = false },
-        ) {
+        StagePillButton(onClick = { showSleepTimerDialog = false }, primary = false) {
           Text(stringResource(android.R.string.cancel))
         }
       },
@@ -904,8 +902,8 @@ fun BottomSheetPlayer(
             Text(stringResource(R.string.end_of_song))
           }
         }
-      },
-    )
+      }
+)
   }
 
   var showChoosePlaylistDialog by rememberSaveable { mutableStateOf(false) }
@@ -2586,6 +2584,8 @@ fun BottomSheetPlayer(
           mediaMetadata = meta,
           showLyrics = showLyrics,
           positionProvider = { effectivePosition },
+          defaultTextSize = StageLyricsTextSizeDefault,
+          defaultLineSpacing = StageLyricsLineSpacingDefault,
           modifier = Modifier.weight(1f),
         )
 
@@ -3339,7 +3339,9 @@ fun InlineLyricsView(
   mediaMetadata: MediaMetadata?,
   showLyrics: Boolean,
   modifier: Modifier = Modifier,
-  positionProvider: () -> Long
+  positionProvider: () -> Long,
+  defaultTextSize: Float = 24f,
+  defaultLineSpacing: Float = 1.3f,
 ) {
   val playerConnection = LocalPlayerConnection.current ?: return
   val currentLyrics by playerConnection.currentLyrics.collectAsState(initial = null)
@@ -3397,7 +3399,9 @@ fun InlineLyricsView(
           Lyrics(
             sliderPositionProvider = positionProvider,
             modifier = Modifier.padding(horizontal = 24.dp),
-            showLyrics = showLyrics
+            showLyrics = showLyrics,
+            defaultTextSize = defaultTextSize,
+            defaultLineSpacing = defaultLineSpacing,
           )
         }
         ProvideTextStyle(

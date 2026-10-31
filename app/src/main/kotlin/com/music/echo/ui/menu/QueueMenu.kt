@@ -1,5 +1,8 @@
 package echo.music.iad1tya.ui.menu
 
+import echo.music.iad1tya.ui.component.StageSheetTitle
+import echo.music.iad1tya.ui.component.StageAlertDialog
+import echo.music.iad1tya.ui.component.StagePillButton
 import android.content.Intent
 import android.content.res.Configuration
 import androidx.compose.animation.core.animateFloatAsState
@@ -122,7 +125,7 @@ fun QueueMenu(
   var showWhyDialog by rememberSaveable { mutableStateOf(false) }
 
   if (showWhyDialog) {
-    androidx.compose.material3.AlertDialog(
+    StageAlertDialog(
       onDismissRequest = { showWhyDialog = false },
       title = { androidx.compose.material3.Text(text = "Echo Brain Recommendation") },
       text = {
@@ -132,11 +135,11 @@ fun QueueMenu(
         )
       },
       confirmButton = {
-        androidx.compose.material3.TextButton(onClick = { showWhyDialog = false }) {
+        StagePillButton(onClick = { showWhyDialog = false }) {
           androidx.compose.material3.Text("Got it")
         }
       }
-    )
+)
   }
 
   if (showSelectArtistDialog) {
@@ -179,11 +182,9 @@ fun QueueMenu(
     }
   }
 
-  MediaMetadataListItem(
-    mediaMetadata = mediaMetadata,
-    shape = MaterialTheme.shapes.large,
-    color = androidx.compose.ui.graphics.Color.Transparent,
-    trailingContent = {
+  StageSheetTitle(
+    title = mediaMetadata.title,
+    trailing = {
       IconButton(
         onClick = {
           coroutineScope.launch(Dispatchers.IO) {
@@ -216,8 +217,6 @@ fun QueueMenu(
     },
   )
 
-  Spacer(modifier = Modifier.height(12.dp))
-
   val configuration = LocalConfiguration.current
   val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
 
@@ -241,7 +240,7 @@ fun QueueMenu(
                     Icon(
                       painter = painterResource(R.drawable.radio),
                       contentDescription = null,
-                      modifier = Modifier.size(24.dp),
+                      modifier = Modifier.size(22.dp),
                     )
                   },
                   title = { MenuTileLabel(text = stringResource(R.string.start_an_radio)) },
@@ -255,7 +254,7 @@ fun QueueMenu(
                     Icon(
                       painter = painterResource(R.drawable.playlist_add),
                       contentDescription = null,
-                      modifier = Modifier.size(24.dp),
+                      modifier = Modifier.size(22.dp),
                     )
                   },
                   title = { MenuTileLabel(text = stringResource(R.string.add_to_an_playlist)) },
@@ -266,7 +265,7 @@ fun QueueMenu(
                     Icon(
                       painter = painterResource(R.drawable.share),
                       contentDescription = null,
-                      modifier = Modifier.size(24.dp),
+                      modifier = Modifier.size(22.dp),
                     )
                   },
                   title = { MenuTileLabel(text = stringResource(R.string.share)) },
@@ -328,7 +327,7 @@ fun QueueMenu(
                         Icon(
                           painter = painterResource(R.drawable.offline),
                           contentDescription = null,
-                          modifier = Modifier.size(24.dp)
+                          modifier = Modifier.size(22.dp)
                         )
                       },
                       onClick = {
@@ -365,7 +364,7 @@ fun QueueMenu(
                         Icon(
                           painter = painterResource(R.drawable.download),
                           contentDescription = null,
-                          modifier = Modifier.size(24.dp)
+                          modifier = Modifier.size(22.dp)
                         )
                       },
                       onClick = {
@@ -395,7 +394,7 @@ fun QueueMenu(
                     Icon(
                       painter = painterResource(R.drawable.artist),
                       contentDescription = null,
-                      modifier = Modifier.size(24.dp)
+                      modifier = Modifier.size(22.dp)
                     )
                   },
                   onClick = {
@@ -418,7 +417,7 @@ fun QueueMenu(
                     Icon(
                       painter = painterResource(R.drawable.album),
                       contentDescription = null,
-                      modifier = Modifier.size(24.dp)
+                      modifier = Modifier.size(22.dp)
                     )
                   },
                   onClick = {
@@ -474,7 +473,7 @@ fun QueueMenu(
                   Icon(
                     painter = painterResource(R.drawable.info),
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(22.dp)
                   )
                 },
                 onClick = {

@@ -1,5 +1,8 @@
 package echo.music.iad1tya.ui.player
 
+import echo.music.iad1tya.ui.component.StageButton
+import echo.music.iad1tya.ui.component.StageSliderRow
+import echo.music.iad1tya.ui.component.StagePillButton
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -105,6 +108,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -794,17 +798,21 @@ fun Queue(
         Row(
           horizontalArrangement = Arrangement.SpaceBetween,
           verticalAlignment = Alignment.CenterVertically,
-          modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+          modifier = Modifier.fillMaxWidth().padding(start = 22.dp, top = 8.dp, end = 22.dp)
         ) {
-          Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+          Column(modifier = Modifier.weight(1f)) {
             Text(
-              text = stringResource(R.string.continue_playing),
-              style = MaterialTheme.typography.titleMedium,
+              text = stringResource(R.string.next_in_queue),
+              fontSize = 24.sp,
+              lineHeight = 30.sp,
+              fontWeight = FontWeight.ExtraBold,
               color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-              text = stringResource(R.string.next_in_queue),
-              style = MaterialTheme.typography.bodySmall,
+              text =
+                pluralStringResource(R.plurals.n_song, queueWindows.size, queueWindows.size) +
+                  " · " + makeTimeString(queueLength * 1000L),
+              fontSize = 13.sp,
               color = MaterialTheme.colorScheme.onSurfaceVariant
             )
           }
@@ -813,21 +821,6 @@ fun Queue(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
           ) {
-            Column(
-              horizontalAlignment = Alignment.End,
-              verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-              Text(
-                text = pluralStringResource(R.plurals.n_song, queueWindows.size, queueWindows.size),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-              )
-              Text(
-                text = makeTimeString(queueLength * 1000L),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-              )
-            }
 
             val hasUpcomingSongs =
               currentWindowIndex != -1 && currentWindowIndex < queueWindows.lastIndex
@@ -1216,12 +1209,7 @@ fun Queue(
       },
       title = { Text(stringResource(R.string.clear_queue)) },
       buttons = {
-        TextButton(onClick = { showClearQueueDialog = false }) {
-          Text(stringResource(R.string.cancel))
-        }
-        Spacer(Modifier.width(8.dp))
-        Button(
-          onClick = {
+        StagePillButton(onClick = {
             showClearQueueDialog = false
             val clearedState = playerConnection.clearQueue()
             if (clearedState != null && clearedState.removedItems.isNotEmpty()) {
@@ -1239,9 +1227,11 @@ fun Queue(
                   }
                 }
             }
-          }
-        ) {
+          }) {
           Text(stringResource(R.string.clear))
+        }
+        StagePillButton(onClick = { showClearQueueDialog = false }, primary = false) {
+          Text(stringResource(R.string.cancel))
         }
       }
     ) {
@@ -1277,37 +1267,29 @@ internal fun SleepTimerPromptDialog(onDismiss: () -> Unit) {
     onCancel = onDismiss,
     onReset = { sleepTimerValue = 30f },
     content = {
-      Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-          text =
+      Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        StageSliderRow(
+          title = stringResource(R.string.stage_stop_after),
+          valueText =
             pluralStringResource(
               R.plurals.minute,
               sleepTimerValue.roundToInt(),
               sleepTimerValue.roundToInt()
             ),
-          style = MaterialTheme.typography.bodyLarge,
-        )
-
-        Spacer(Modifier.height(16.dp))
-
-        Slider(
           value = sleepTimerValue,
           onValueChange = { sleepTimerValue = it },
           valueRange = 5f..120f,
           steps = (120 - 5) / 5 - 1,
-          modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(Modifier.height(8.dp))
-
-        OutlinedButton(
+        StageButton(
+          text = stringResource(R.string.end_of_song),
+          primary = false,
           onClick = {
             onDismiss()
             playerConnection.service.sleepTimer.start(-1)
-          }
-        ) {
-          Text(stringResource(R.string.end_of_song))
-        }
+          },
+        )
       }
     }
   )

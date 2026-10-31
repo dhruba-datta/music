@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -119,9 +118,7 @@ fun CreatePlaylistDialog(
               color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
           }
-          Switch(
-            checked = syncedPlaylist,
-            onCheckedChange = {
+          StageSwitch(checked = syncedPlaylist, onCheckedChange = {
               val isYtmSyncEnabled = context.isSyncEnabled()
               if (!isSignedIn && !syncedPlaylist) {
                 Toast.makeText(
@@ -140,8 +137,7 @@ fun CreatePlaylistDialog(
               } else {
                 syncedPlaylist = !syncedPlaylist
               }
-            }
-          )
+            })
         }
       }
     }

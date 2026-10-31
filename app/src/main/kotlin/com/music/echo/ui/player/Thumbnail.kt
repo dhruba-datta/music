@@ -420,7 +420,7 @@ fun Thumbnail(
                   if (stage && !isLandscape) StagePlayerPadding else PlayerHorizontalPadding,
                 // Stage rounds the artwork more unless the user chose their own radius.
                 cornerRadius =
-                  if (stage && thumbnailCornerRadius == 3f) 14.dp else thumbnailCornerRadius.dp,
+                  if (stage && thumbnailCornerRadius == 3f) 28.dp else thumbnailCornerRadius.dp,
                 isLandscape = isLandscape,
                 fitHeight = stage && !isLandscape
               )

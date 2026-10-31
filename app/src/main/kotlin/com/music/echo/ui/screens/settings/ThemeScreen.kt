@@ -6,6 +6,10 @@
 
 package echo.music.iad1tya.ui.screens.settings
 
+import echo.music.iad1tya.ui.component.StageSettingsHeading
+import androidx.compose.ui.unit.sp
+import echo.music.iad1tya.ui.component.StageSwitch
+import echo.music.iad1tya.ui.component.StageTopBar
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -29,10 +33,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.BrightnessAuto
-import androidx.compose.material.icons.rounded.Contrast
-import androidx.compose.material.icons.rounded.DarkMode
-import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -44,9 +44,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -104,8 +102,8 @@ fun ThemeScreen(navController: NavController, highlightKey: String? = null) {
 
   Scaffold(
     topBar = {
-      TopAppBar(
-        title = { Text(stringResource(R.string.theme_colors), fontWeight = FontWeight.Bold) },
+      StageTopBar(
+        title = { Text(stringResource(R.string.theme_colors)) },
         navigationIcon = {
           IconButton(onClick = { navController.navigateUp() }) {
             Icon(
@@ -114,48 +112,31 @@ fun ThemeScreen(navController: NavController, highlightKey: String? = null) {
             )
           }
         },
-        colors =
-          TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent,
-            scrolledContainerColor = MaterialTheme.colorScheme.surface
-          )
-      )
+        containerColor = androidx.compose.ui.graphics.Color.Transparent
+)
     }
   ) { innerPadding ->
     LazyColumn(
-      modifier =
-        Modifier.fillMaxSize()
-          .background(
-            Brush.verticalGradient(
-              colors =
-                listOf(
-                  MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
-                  MaterialTheme.colorScheme.surface
-                )
-            )
-          )
-          .padding(innerPadding),
-      contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 120.dp),
-      verticalArrangement = Arrangement.spacedBy(24.dp)
+      modifier = Modifier.fillMaxSize().padding(innerPadding),
+      contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 120.dp),
+      verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
       item {
-        Text(
-          text = stringResource(R.string.theme_mode),
-          style = MaterialTheme.typography.titleMedium,
-          color = MaterialTheme.colorScheme.primary,
-          fontWeight = FontWeight.Bold,
-          modifier = Modifier.padding(bottom = 12.dp, start = 4.dp)
-        )
+        StageSettingsHeading(text = stringResource(R.string.theme_mode))
 
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(
+          verticalArrangement = Arrangement.spacedBy(10.dp),
+          modifier = Modifier.padding(horizontal = 4.dp),
+        ) {
           Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
           ) {
             ThemeModeCard(
               modifier = Modifier.weight(1f),
               title = stringResource(R.string.dark_theme_follow_system),
-              icon = Icons.Rounded.BrightnessAuto,
+              background = Color(0xFF2A2A32),
+              contentColor = Color.White,
               isSelected = darkMode == DarkMode.AUTO,
               onClick = {
                 onDarkModeChange(DarkMode.AUTO)
@@ -165,7 +146,8 @@ fun ThemeScreen(navController: NavController, highlightKey: String? = null) {
             ThemeModeCard(
               modifier = Modifier.weight(1f),
               title = "Light",
-              icon = Icons.Rounded.LightMode,
+              background = Color(0xFFF4F4F6),
+              contentColor = Color(0xFF111111),
               isSelected = darkMode == DarkMode.OFF,
               onClick = {
                 onDarkModeChange(DarkMode.OFF)
@@ -175,12 +157,13 @@ fun ThemeScreen(navController: NavController, highlightKey: String? = null) {
           }
           Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
           ) {
             ThemeModeCard(
               modifier = Modifier.weight(1f),
               title = "Dark",
-              icon = Icons.Rounded.DarkMode,
+              background = Color(0xFF1A1A20),
+              contentColor = Color.White,
               isSelected = darkMode == DarkMode.ON && !pureBlack,
               onClick = {
                 onDarkModeChange(DarkMode.ON)
@@ -190,7 +173,8 @@ fun ThemeScreen(navController: NavController, highlightKey: String? = null) {
             ThemeModeCard(
               modifier = Modifier.weight(1f),
               title = "AMOLED",
-              icon = Icons.Rounded.Contrast,
+              background = Color.Black,
+              contentColor = Color.White,
               isSelected = pureBlack,
               onClick = {
                 onDarkModeChange(DarkMode.ON)
@@ -202,20 +186,7 @@ fun ThemeScreen(navController: NavController, highlightKey: String? = null) {
       }
 
       item {
-        HorizontalDivider(
-          modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp),
-          color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-        )
-      }
-
-      item {
-        Text(
-          text = stringResource(R.string.color_palette),
-          style = MaterialTheme.typography.titleMedium,
-          color = MaterialTheme.colorScheme.primary,
-          fontWeight = FontWeight.Bold,
-          modifier = Modifier.padding(bottom = 16.dp, start = 4.dp)
-        )
+        StageSettingsHeading(text = stringResource(R.string.color_palette))
 
         Card(
           modifier = Modifier.fillMaxWidth(),
@@ -272,16 +243,13 @@ fun ThemeScreen(navController: NavController, highlightKey: String? = null) {
                   color = MaterialTheme.colorScheme.onSurface
                 )
               }
-              Switch(
-                checked = isDynamic,
-                onCheckedChange = { checked ->
+              StageSwitch(checked = isDynamic, onCheckedChange = { checked ->
                   if (checked) {
                     handleColorSelection(DefaultThemeColor)
                   } else {
                     handleColorSelection(Color(0xFF1E88E5))
                   }
-                }
-              )
+                })
             }
 
             AnimatedVisibility(visible = !isDynamic) {
@@ -303,85 +271,29 @@ fun ThemeScreen(navController: NavController, highlightKey: String? = null) {
 fun ThemeModeCard(
   modifier: Modifier = Modifier,
   title: String,
-  icon: ImageVector,
+  background: Color,
+  contentColor: Color,
   isSelected: Boolean,
   onClick: () -> Unit
 ) {
-  val scale by
-    animateFloatAsState(
-      targetValue = if (isSelected) 1.02f else 1f,
-      animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-      label = "scale"
-    )
-  val borderWidth by
-    animateDpAsState(
-      targetValue = if (isSelected) 2.dp else 1.dp,
-      animationSpec = spring(stiffness = Spring.StiffnessMedium),
-      label = "borderWidth"
-    )
-
-  val borderColor =
-    if (isSelected) {
-      MaterialTheme.colorScheme.primary
-    } else {
-      MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-    }
-
-  val backgroundBrush =
-    if (isSelected) {
-      Brush.linearGradient(
-        colors =
-          listOf(
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-          )
-      )
-    } else {
-      Brush.linearGradient(
-        colors =
-          listOf(
-            MaterialTheme.colorScheme.surfaceContainerLow,
-            MaterialTheme.colorScheme.surfaceContainerLow
-          )
-      )
-    }
-
+  val shape = RoundedCornerShape(18.dp)
   Box(
     modifier =
       modifier
-        .graphicsLayer {
-          scaleX = scale
-          scaleY = scale
-        }
-        .clip(RoundedCornerShape(24.dp))
-        .background(backgroundBrush)
-        .border(borderWidth, borderColor, RoundedCornerShape(24.dp))
-        .clickable(onClick = onClick)
-        .padding(vertical = 24.dp, horizontal = 12.dp),
+        .height(72.dp)
+        .then(
+          if (isSelected) Modifier.border(3.dp, MaterialTheme.colorScheme.primary, shape)
+          else Modifier
+        )
+        .clip(shape)
+        .background(background)
+        .clickable(onClick = onClick),
     contentAlignment = Alignment.Center
   ) {
-    Column(
-      horizontalAlignment = Alignment.CenterHorizontally,
-      verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-      Icon(
-        imageVector = icon,
-        contentDescription = null,
-        tint =
-          if (isSelected) MaterialTheme.colorScheme.primary
-          else MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.size(32.dp)
-      )
-      Text(
-        text = title,
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-        color =
-          if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-      )
-    }
+    Text(text = title, color = contentColor, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
   }
 }
+
 
 @Composable
 fun HsvColorPicker(
