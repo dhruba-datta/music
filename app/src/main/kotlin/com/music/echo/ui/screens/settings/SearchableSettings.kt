@@ -544,12 +544,6 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
       "settings/appearance"
     ),
     SearchableSetting(
-      stringResource(R.string.default_lib_chips),
-      stringResource(R.string.default_lib_chips_desc),
-      "Appearance",
-      "settings/appearance"
-    ),
-    SearchableSetting(
       stringResource(R.string.default_open_tab),
       stringResource(R.string.default_open_tab_desc),
       "Appearance",

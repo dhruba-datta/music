@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -19,15 +18,10 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -71,6 +65,7 @@ import echo.music.iad1tya.ui.component.LibraryAlbumGridItem
 import echo.music.iad1tya.ui.component.LibraryAlbumListItem
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.SortHeader
+import echo.music.iad1tya.ui.component.StageLibraryListHeader
 import echo.music.iad1tya.ui.component.StageSectionTitle
 import echo.music.iad1tya.ui.component.stageGridFullWidth
 import echo.music.iad1tya.ui.component.stageGridPadding
@@ -110,20 +105,10 @@ fun LibraryAlbumsScreen(
 
   val filterContent =
     @Composable {
-      Row(verticalAlignment = Alignment.CenterVertically) {
-        Spacer(Modifier.width(12.dp))
-        FilterChip(
-          label = { Text(stringResource(R.string.albums)) },
-          selected = true,
-          colors =
-            FilterChipDefaults.filterChipColors(containerColor = MaterialTheme.colorScheme.surface),
-          onClick = onDeselect,
-          shape = CircleShape,
-          leadingIcon = {
-            Icon(painter = painterResource(R.drawable.close), contentDescription = "")
-          },
-          modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
-        )
+      StageLibraryListHeader(
+        title = stringResource(R.string.albums),
+        onBack = onDeselect,
+        chips = {
         ChipsRow(
           chips =
             listOf(
@@ -133,9 +118,10 @@ fun LibraryAlbumsScreen(
             ),
           currentValue = filter,
           onValueUpdate = { filter = it },
-          modifier = Modifier.weight(1f),
+          modifier = Modifier.fillMaxWidth(),
         )
-      }
+        },
+      )
     }
 
   LaunchedEffect(Unit) {

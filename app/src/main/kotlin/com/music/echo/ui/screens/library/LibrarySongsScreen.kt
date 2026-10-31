@@ -12,19 +12,14 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -65,6 +60,7 @@ import echo.music.iad1tya.ui.component.HideOnScrollFAB
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.SongListItem
 import echo.music.iad1tya.ui.component.SortHeader
+import echo.music.iad1tya.ui.component.StageLibraryListHeader
 import echo.music.iad1tya.ui.component.StageCheckbox
 import echo.music.iad1tya.ui.component.StageSectionTitle
 import echo.music.iad1tya.ui.component.StageTopBar
@@ -105,6 +101,13 @@ fun LibrarySongsScreen(
   val onExitSelectionMode = {
     inSelectMode = false
     selection.clear()
+  }
+
+  // Downloaded and Exported now live on the Library tiles.
+  LaunchedEffect(filter) {
+    if (filter == SongFilter.DOWNLOADED || filter == SongFilter.EXPORTED) {
+      filter = SongFilter.LIKED
+    }
   }
 
   LaunchedEffect(Unit) {
@@ -152,36 +155,23 @@ fun LibrarySongsScreen(
           key = "filter",
           contentType = CONTENT_TYPE_HEADER,
         ) {
-          Row(verticalAlignment = Alignment.CenterVertically) {
-            Spacer(Modifier.width(12.dp))
-            FilterChip(
-              label = { Text(stringResource(R.string.songs)) },
-              selected = true,
-              colors =
-                FilterChipDefaults.filterChipColors(
-                  containerColor = MaterialTheme.colorScheme.surface
-                ),
-              onClick = onDeselect,
-              shape = CircleShape,
-              leadingIcon = {
-                Icon(painter = painterResource(R.drawable.close), contentDescription = "")
-              },
-              modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
-            )
+          StageLibraryListHeader(
+            title = stringResource(R.string.songs),
+            onBack = onDeselect,
+            chips = {
             ChipsRow(
               chips =
                 listOf(
                   SongFilter.LIKED to stringResource(R.string.filter_liked),
                   SongFilter.LIBRARY to stringResource(R.string.filter_library),
                   SongFilter.UPLOADED to stringResource(R.string.filter_uploaded),
-                  SongFilter.DOWNLOADED to stringResource(R.string.filter_downloaded),
-                  SongFilter.EXPORTED to stringResource(R.string.action_exported),
                 ),
               currentValue = filter,
               onValueUpdate = { filter = it },
-              modifier = Modifier.weight(1f),
+              modifier = Modifier.fillMaxWidth(),
             )
-          }
+            },
+          )
         }
 
         item(

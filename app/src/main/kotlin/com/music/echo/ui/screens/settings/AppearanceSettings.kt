@@ -34,7 +34,6 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -61,26 +60,17 @@ import echo.music.iad1tya.constants.AppFont
 import echo.music.iad1tya.constants.AppIconTypeKey
 import echo.music.iad1tya.constants.AppleMusicLyricsBlurKey
 import echo.music.iad1tya.constants.CanvasThumbnailAnimationKey
-import echo.music.iad1tya.constants.ChipSortTypeKey
 import echo.music.iad1tya.constants.CropAlbumArtKey
 import echo.music.iad1tya.constants.DefaultOpenTabKey
 import echo.music.iad1tya.constants.DensityScale
 import echo.music.iad1tya.constants.DensityScaleKey
 import echo.music.iad1tya.constants.DynamicThemeKey
-import echo.music.iad1tya.constants.EnableClickHapticsKey
-import echo.music.iad1tya.constants.EnableHapticsKey
 import echo.music.iad1tya.constants.EnableHighRefreshRateKey
-import echo.music.iad1tya.constants.EnableLongPressHapticsKey
 import echo.music.iad1tya.constants.EnableLyricsThumbnailPlayPauseKey
-import echo.music.iad1tya.constants.EnableScrollEdgeHapticsKey
-import echo.music.iad1tya.constants.EnableSliderHapticsKey
 import echo.music.iad1tya.constants.GridItemSize
 import echo.music.iad1tya.constants.GridItemsSizeKey
-import echo.music.iad1tya.constants.HapticIntensity
-import echo.music.iad1tya.constants.HapticIntensityKey
 import echo.music.iad1tya.constants.HidePlayerThumbnailKey
 import echo.music.iad1tya.constants.HideStatusBarOnFullscreenKey
-import echo.music.iad1tya.constants.LibraryFilter
 import echo.music.iad1tya.constants.ListenTogetherInTopBarKey
 import echo.music.iad1tya.constants.LyricsAnimationStyle
 import echo.music.iad1tya.constants.LyricsAnimationStyleKey
@@ -314,9 +304,6 @@ fun AppearanceSettings(
     availableBackgroundStyles.filter {
       it != PlayerBackgroundStyle.APPLE_MUSIC && it != PlayerBackgroundStyle.GRADIENT
     }
-
-  val (defaultChip, onDefaultChipChange) =
-    rememberEnumPreference(key = ChipSortTypeKey, defaultValue = LibraryFilter.LIBRARY)
 
   var showSliderOptionDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -575,31 +562,6 @@ fun AppearanceSettings(
     )
   }
 
-  var showDefaultChipDialog by rememberSaveable { mutableStateOf(false) }
-
-  if (showDefaultChipDialog) {
-    EnumDialog(
-      onDismiss = { showDefaultChipDialog = false },
-      onSelect = {
-        onDefaultChipChange(it)
-        showDefaultChipDialog = false
-      },
-      title = stringResource(R.string.default_lib_chips),
-      current = defaultChip,
-      values = LibraryFilter.values().toList(),
-      valueText = {
-        when (it) {
-          LibraryFilter.SONGS -> stringResource(R.string.songs)
-          LibraryFilter.ARTISTS -> stringResource(R.string.artists)
-          LibraryFilter.ALBUMS -> stringResource(R.string.albums)
-          LibraryFilter.PLAYLISTS -> stringResource(R.string.playlists)
-          LibraryFilter.LIBRARY -> stringResource(R.string.filter_library)
-          LibraryFilter.LOCAL -> stringResource(R.string.filter_local)
-          LibraryFilter.SPOTIFY -> "Spotify"
-        }
-      }
-    )
-  }
 
 
   var showGridSizeDialog by rememberSaveable { mutableStateOf(false) }
@@ -1497,25 +1459,6 @@ fun AppearanceSettings(
               )
             },
             onClick = { showDefaultOpenTabDialog = true }
-          ),
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == stringResource(R.string.default_lib_chips)),
-            icon = painterResource(R.drawable.tab),
-            title = { Text(stringResource(R.string.default_lib_chips)) },
-            value = {
-              Text(
-                when (defaultChip) {
-                  LibraryFilter.SONGS -> stringResource(R.string.songs)
-                  LibraryFilter.ARTISTS -> stringResource(R.string.artists)
-                  LibraryFilter.ALBUMS -> stringResource(R.string.albums)
-                  LibraryFilter.PLAYLISTS -> stringResource(R.string.playlists)
-                  LibraryFilter.LIBRARY -> stringResource(R.string.filter_library)
-                  LibraryFilter.LOCAL -> stringResource(R.string.filter_local)
-                  LibraryFilter.SPOTIFY -> "Spotify"
-                }
-              )
-            },
-            onClick = { showDefaultChipDialog = true }
           ),
           Material3SettingsItem(
             isHighlighted = (highlightKey == stringResource(R.string.swipe_song_to_add)),

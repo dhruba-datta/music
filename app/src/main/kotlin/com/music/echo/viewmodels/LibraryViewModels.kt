@@ -475,6 +475,11 @@ constructor(
       }
       .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+  val likedSongs =
+    database
+      .likedSongs(SongSortType.CREATE_DATE, true)
+      .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
   init {
     viewModelScope.launch(Dispatchers.IO) {
       albums.collect { albums ->

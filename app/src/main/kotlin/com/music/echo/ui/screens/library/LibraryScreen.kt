@@ -42,9 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.R
-import echo.music.iad1tya.constants.ChipSortTypeKey
 import echo.music.iad1tya.constants.LibraryFilter
-import echo.music.iad1tya.ui.component.ChipsRow
 import echo.music.iad1tya.ui.component.DefaultDialog
 import echo.music.iad1tya.ui.component.StageSheetGroup
 import echo.music.iad1tya.ui.component.StageSheetHandle
@@ -54,11 +52,10 @@ import echo.music.iad1tya.ui.component.StageSheetTitle
 import echo.music.iad1tya.ui.component.TextFieldDialog
 import echo.music.iad1tya.utils.onlinePlaylistIdFromUrl
 import echo.music.iad1tya.utils.onlinePlaylistRoute
-import echo.music.iad1tya.utils.rememberEnumPreference
 
 @Composable
 fun LibraryScreen(navController: NavController) {
-  var filterType by rememberEnumPreference(ChipSortTypeKey, LibraryFilter.LIBRARY)
+  var filterType by rememberSaveable { mutableStateOf(LibraryFilter.LIBRARY) }
   var showFabMenu by remember { mutableStateOf(false) }
   var showImportMenu by remember { mutableStateOf(false) }
   var showYoutubeImportDialog by remember { mutableStateOf(false) }
@@ -69,33 +66,6 @@ fun LibraryScreen(navController: NavController) {
   val context = LocalContext.current
 
   BackHandler(enabled = filterType != LibraryFilter.LIBRARY) { filterType = LibraryFilter.LIBRARY }
-
-  val filterContent =
-    @Composable {
-      Row {
-        ChipsRow(
-          chips =
-            listOf(
-              LibraryFilter.PLAYLISTS to stringResource(R.string.filter_playlists),
-              LibraryFilter.SONGS to stringResource(R.string.filter_songs),
-              LibraryFilter.ALBUMS to stringResource(R.string.filter_albums),
-              LibraryFilter.ARTISTS to stringResource(R.string.filter_artists),
-              LibraryFilter.LOCAL to stringResource(R.string.filter_local),
-              LibraryFilter.SPOTIFY to stringResource(R.string.filter_spotify),
-            ),
-          currentValue = filterType,
-          onValueUpdate = {
-            filterType =
-              if (filterType == it) {
-                LibraryFilter.LIBRARY
-              } else {
-                it
-              }
-          },
-          modifier = Modifier.weight(1f),
-        )
-      }
-    }
 
   val currentInsets = LocalPlayerAwareWindowInsets.current
   val density = LocalDensity.current
@@ -123,23 +93,15 @@ fun LibraryScreen(navController: NavController) {
       modifier = Modifier.fillMaxSize(),
     ) {
       when (filterType) {
-        LibraryFilter.LIBRARY -> LibraryMixScreen(navController, filterContent)
-        LibraryFilter.PLAYLISTS -> LibraryPlaylistsScreen(navController, filterContent)
+        LibraryFilter.LIBRARY -> LibraryMixScreen(navController, { filterType = it })
+        LibraryFilter.PLAYLISTS ->
+          LibraryPlaylistsScreen(navController, { filterType = LibraryFilter.LIBRARY })
         LibraryFilter.SONGS ->
           LibrarySongsScreen(navController, { filterType = LibraryFilter.LIBRARY })
         LibraryFilter.ALBUMS ->
           LibraryAlbumsScreen(navController, { filterType = LibraryFilter.LIBRARY })
         LibraryFilter.ARTISTS ->
           LibraryArtistsScreen(navController, { filterType = LibraryFilter.LIBRARY })
-        LibraryFilter.LOCAL ->
-          LocalSongScreen(
-            navController = navController,
-            onBack = { filterType = LibraryFilter.LIBRARY },
-            isEmbedded = true,
-            filterContent = filterContent,
-          )
-        LibraryFilter.SPOTIFY ->
-          LibrarySpotifyScreen(navController, filterContent)
       }
 
       val bottomPadding = with(density) { currentInsets.getBottom(density).toDp() }

@@ -48,29 +48,18 @@ import echo.music.iad1tya.constants.PlaylistSortDescendingKey
 import echo.music.iad1tya.constants.PlaylistSortType
 import echo.music.iad1tya.constants.PlaylistSortTypeKey
 import echo.music.iad1tya.constants.PlaylistViewTypeKey
-import echo.music.iad1tya.constants.ShowBottomPlaylistKey
-import echo.music.iad1tya.constants.ShowCachedPlaylistKey
-import echo.music.iad1tya.constants.ShowDownloadedPlaylistKey
-import echo.music.iad1tya.constants.ShowExportedPlaylistKey
-import echo.music.iad1tya.constants.ShowLikedPlaylistKey
-import echo.music.iad1tya.constants.ShowTopPlaylistKey
 import echo.music.iad1tya.constants.YtmSyncKey
-import echo.music.iad1tya.db.entities.Playlist
-import echo.music.iad1tya.db.entities.PlaylistEntity
-import echo.music.iad1tya.ui.component.AutoPlaylistGrid
-import echo.music.iad1tya.ui.component.AutoPlaylistTile
 import echo.music.iad1tya.ui.component.LibraryPlaylistGridItem
 import echo.music.iad1tya.ui.component.LibraryPlaylistListItem
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.SortHeader
-import echo.music.iad1tya.ui.component.StageSectionHeader
+import echo.music.iad1tya.ui.component.StageLibraryListHeader
 import echo.music.iad1tya.ui.component.StageSectionTitle
 import echo.music.iad1tya.ui.component.stageGridFullWidth
 import echo.music.iad1tya.ui.component.stageGridPadding
 import echo.music.iad1tya.utils.rememberEnumPreference
 import echo.music.iad1tya.utils.rememberPreference
 import echo.music.iad1tya.viewmodels.LibraryPlaylistsViewModel
-import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -82,7 +71,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun LibraryPlaylistsScreen(
   navController: NavController,
-  filterContent: @Composable () -> Unit,
+  onBack: () -> Unit,
   viewModel: LibraryPlaylistsViewModel = hiltViewModel(),
   initialTextFieldValue: String? = null,
   allowSyncing: Boolean = true,
@@ -99,64 +88,6 @@ fun LibraryPlaylistsScreen(
   val gridItemSize by rememberEnumPreference(GridItemsSizeKey, GridItemSize.BIG)
 
   val playlists by viewModel.allPlaylists.collectAsState()
-
-  val topSize by viewModel.topValue.collectAsState(initial = 50)
-
-  val likedPlaylist =
-    Playlist(
-      playlist =
-        PlaylistEntity(id = UUID.randomUUID().toString(), name = stringResource(R.string.liked)),
-      songCount = 0,
-      songThumbnails = emptyList(),
-    )
-
-  val downloadPlaylist =
-    Playlist(
-      playlist =
-        PlaylistEntity(id = UUID.randomUUID().toString(), name = stringResource(R.string.offline)),
-      songCount = 0,
-      songThumbnails = emptyList(),
-    )
-
-  val topPlaylist =
-    Playlist(
-      playlist =
-        PlaylistEntity(
-          id = UUID.randomUUID().toString(),
-          name = stringResource(R.string.my_top) + " $topSize"
-        ),
-      songCount = 0,
-      songThumbnails = emptyList(),
-    )
-
-  val cachePlaylist =
-    Playlist(
-      playlist =
-        PlaylistEntity(
-          id = UUID.randomUUID().toString(),
-          name = stringResource(R.string.cached_playlist)
-        ),
-      songCount = 0,
-      songThumbnails = emptyList(),
-    )
-
-  val uploadedPlaylist =
-    Playlist(
-      playlist =
-        PlaylistEntity(
-          id = UUID.randomUUID().toString(),
-          name = stringResource(R.string.uploaded_playlist)
-        ),
-      songCount = 0,
-      songThumbnails = emptyList(),
-    )
-
-  val (showLiked) = rememberPreference(ShowLikedPlaylistKey, true)
-  val (showDownloaded) = rememberPreference(ShowDownloadedPlaylistKey, true)
-  val (showExported) = rememberPreference(ShowExportedPlaylistKey, true)
-  val (showTop) = rememberPreference(ShowTopPlaylistKey, true)
-  val (showBottom) = rememberPreference(ShowBottomPlaylistKey, true)
-  val (showCached) = rememberPreference(ShowCachedPlaylistKey, true)
 
   val lazyListState = rememberLazyListState()
   val lazyGridState = rememberLazyGridState()
@@ -185,16 +116,6 @@ fun LibraryPlaylistsScreen(
       backStackEntry?.savedStateHandle?.set("scrollToTop", false)
     }
   }
-  val autoPlaylistTiles =
-    buildList {
-      if (showLiked) add(AutoPlaylistTile(stringResource(R.string.liked), R.drawable.favorite, onClick = { navController.navigate("auto_playlist/liked") }))
-      if (showDownloaded) add(AutoPlaylistTile(stringResource(R.string.offline), R.drawable.offline, onClick = { navController.navigate("auto_playlist/downloaded") }))
-      if (showExported) add(AutoPlaylistTile(stringResource(R.string.action_exported), R.drawable.download, onClick = { navController.navigate("auto_playlist/exported") }))
-      if (showCached) add(AutoPlaylistTile(stringResource(R.string.cached_playlist), R.drawable.cached, onClick = { navController.navigate("cache_playlist/cached") }))
-      if (showTop) add(AutoPlaylistTile(stringResource(R.string.my_top) + " $topSize", R.drawable.trending_up, onClick = { navController.navigate("top_playlist/$topSize") }))
-      if (showBottom) add(AutoPlaylistTile(stringResource(R.string.my_bottom) + " 50", R.drawable.trending_down, onClick = { navController.navigate("bottom_playlist/50") }))
-      add(AutoPlaylistTile("Taste Mix", R.drawable.playlist_play, onClick = { navController.navigate("generate") }))
-    }
 
   val headerContent =
     @Composable {
@@ -237,7 +158,7 @@ fun LibraryPlaylistsScreen(
             key = "filter",
             contentType = CONTENT_TYPE_HEADER,
           ) {
-            filterContent()
+            StageLibraryListHeader(title = stringResource(R.string.filter_playlists), onBack = onBack)
           }
 
           item(
@@ -247,19 +168,6 @@ fun LibraryPlaylistsScreen(
             headerContent()
           }
 
-          item(
-            key = "auto_playlists_grid",
-            contentType = CONTENT_TYPE_HEADER,
-          ) {
-            AutoPlaylistGrid(autoPlaylistTiles, columns = 4, artHeight = 62.dp)
-          }
-
-          item(
-            key = "playlists_header",
-            contentType = CONTENT_TYPE_HEADER,
-          ) {
-            StageSectionHeader(title = "Playlists")
-          }
 
           playlists.let { playlists ->
             if (playlists.isEmpty()) {
@@ -297,7 +205,9 @@ fun LibraryPlaylistsScreen(
             span = { GridItemSpan(maxLineSpan) },
             contentType = CONTENT_TYPE_HEADER,
           ) {
-            Box(Modifier.stageGridFullWidth()) { filterContent() }
+            Box(Modifier.stageGridFullWidth()) {
+              StageLibraryListHeader(title = stringResource(R.string.filter_playlists), onBack = onBack)
+            }
           }
 
           item(
@@ -308,21 +218,6 @@ fun LibraryPlaylistsScreen(
             Box(Modifier.stageGridFullWidth()) { headerContent() }
           }
 
-          item(
-            key = "auto_playlists_grid",
-            span = { GridItemSpan(maxLineSpan) },
-            contentType = CONTENT_TYPE_HEADER,
-          ) {
-            AutoPlaylistGrid(autoPlaylistTiles, columns = 4, artHeight = 62.dp, modifier = Modifier.stageGridFullWidth())
-          }
-
-          item(
-            key = "playlists_header",
-            span = { GridItemSpan(maxLineSpan) },
-            contentType = CONTENT_TYPE_HEADER,
-          ) {
-            StageSectionHeader(title = "Playlists", modifier = Modifier.stageGridFullWidth())
-          }
 
           playlists.let { playlists ->
             if (playlists.isEmpty()) {
