@@ -488,19 +488,6 @@ fun Lyrics(
         mode = translateMode
       )
 
-      kotlinx.coroutines.delay(100)
-
-      val effectiveApiKey = if (aiProvider == "DeepL") deeplApiKey else openRouterApiKey
-      if (
-        autoTranslate &&
-          effectiveApiKey.isNotBlank() &&
-          !LyricsTranslationHelper.hasTranslations(lyricsEntity) &&
-          LyricsTranslationHelper.status.value !is
-            LyricsTranslationHelper.TranslationStatus.Translating &&
-          !LyricsTranslationHelper.hasActiveTranslations.value
-      ) {
-        LyricsTranslationHelper.triggerManualTranslation()
-      }
     }
   }
 

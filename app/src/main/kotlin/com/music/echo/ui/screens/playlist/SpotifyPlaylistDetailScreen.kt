@@ -129,8 +129,16 @@ fun SpotifyPlaylistDetailScreen(
       downloadState =
         if (ids.all { downloads[it]?.state == Download.STATE_COMPLETED }) {
           Download.STATE_COMPLETED
-        } else {
+        } else if (
+          ids.all {
+            downloads[it]?.state == Download.STATE_QUEUED ||
+              downloads[it]?.state == Download.STATE_DOWNLOADING ||
+              downloads[it]?.state == Download.STATE_COMPLETED
+          }
+        ) {
           Download.STATE_DOWNLOADING
+        } else {
+          Download.STATE_STOPPED
         }
     }
   }
@@ -188,14 +196,14 @@ fun SpotifyPlaylistDetailScreen(
               if (uiState.isPreparingDownload) Download.STATE_DOWNLOADING else downloadState,
             onDownload = {
               when {
-                uiState.isPreparingDownload -> Unit
+                uiState.isPreparingDownload || uiState.isLoading -> Unit
                 downloadState == Download.STATE_COMPLETED -> showRemoveDownloadDialog = true
                 downloadState == Download.STATE_DOWNLOADING -> viewModel.removeDownloads()
                 else ->
                   viewModel.downloadAll(
                     onError = {
                       coroutineScope.launch {
-                        snackbarHostState.showSnackbar("Unable to match stream on YouTube/Addon")
+                        snackbarHostState.showSnackbar("Couldn't find this track")
                       }
                     }
                   )
@@ -218,7 +226,7 @@ fun SpotifyPlaylistDetailScreen(
                     },
                     onError = {
                       coroutineScope.launch {
-                        snackbarHostState.showSnackbar("Unable to match stream on YouTube/Addon")
+                        snackbarHostState.showSnackbar("Couldn't find this track")
                       }
                     }
                   )
@@ -240,7 +248,7 @@ fun SpotifyPlaylistDetailScreen(
                   },
                   onError = {
                     coroutineScope.launch {
-                      snackbarHostState.showSnackbar("Unable to match stream on YouTube/Addon")
+                      snackbarHostState.showSnackbar("Couldn't find this track")
                     }
                   }
                 )

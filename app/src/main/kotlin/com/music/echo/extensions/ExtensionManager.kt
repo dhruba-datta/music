@@ -23,6 +23,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.URLEncoder
 
+private const val EXTENSIONS_ENABLED = false
+
 @Serializable
 data class AddonEndpoint(
     val id: String,
@@ -111,6 +113,8 @@ class ExtensionManager @Inject constructor(
     }
 
     suspend fun getAddons(): List<AddonEndpoint> {
+        // Extensions are switched off in this build.
+        if (!EXTENSIONS_ENABLED) return emptyList()
         val jsonStr = context.dataStore.data.map { it[ADDONS_KEY] }.first() ?: "[]"
         return try {
             json.decodeFromString<List<AddonEndpoint>>(jsonStr).map {

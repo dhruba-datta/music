@@ -55,12 +55,15 @@ constructor(
   private val initialTitle: String = savedStateHandle.get<String>("title") ?: "Playlist"
   private val initialCover: String? = savedStateHandle.get<String>("cover")?.takeIf { it.isNotBlank() }
 
+  private val downloadPrefs = context.getSharedPreferences("spotify_downloads", Context.MODE_PRIVATE)
+
   private val _uiState = MutableStateFlow(
     SpotifyPlaylistDetailUiState(
       playlistId = playlistId,
       title = initialTitle,
       coverUrl = initialCover,
       isLoading = true,
+      downloadSongIds = downloadPrefs.getStringSet(playlistId, emptySet()).orEmpty().toList(),
     )
   )
   val uiState: StateFlow<SpotifyPlaylistDetailUiState> = _uiState.asStateFlow()
@@ -126,35 +129,46 @@ constructor(
     if (_uiState.value.isPreparingDownload) return
     viewModelScope.launch(Dispatchers.IO) {
       _uiState.update { it.copy(isPreparingDownload = true) }
-      val songs =
-        spotifyPlaybackResolver
-          .resolveAndFilter(_uiState.value.tracks, hideExplicit = false)
-          .distinctBy { it.id }
-      songs.forEach { song ->
-        database.withTransaction { insert(song.toMediaMetadata()) }
-        val downloadRequest =
-          DownloadRequest.Builder(song.id, song.id.toUri())
-            .setCustomCacheKey(song.id)
-            .setData(song.title.toByteArray())
-            .build()
-        DownloadService.sendAddDownload(
-          context,
-          ExoDownloadService::class.java,
-          downloadRequest,
-          false,
-        )
+      val queuedIds = mutableListOf<String>()
+      try {
+        val songs =
+          spotifyPlaybackResolver
+            .resolveAndFilter(_uiState.value.tracks, hideExplicit = false)
+            .distinctBy { it.id }
+        songs.forEach { song ->
+          database.withTransaction { insert(song.toMediaMetadata()) }
+          val downloadRequest =
+            DownloadRequest.Builder(song.id, song.id.toUri())
+              .setCustomCacheKey(song.id)
+              .setData(song.title.toByteArray())
+              .build()
+          DownloadService.sendAddDownload(
+            context,
+            ExoDownloadService::class.java,
+            downloadRequest,
+            false,
+          )
+          queuedIds.add(song.id)
+        }
+      } catch (e: Exception) {
+        reportException(e)
+      } finally {
+        saveDownloadIds(queuedIds)
+        _uiState.update { it.copy(isPreparingDownload = false, downloadSongIds = queuedIds.toList()) }
       }
-      _uiState.update {
-        it.copy(isPreparingDownload = false, downloadSongIds = songs.map { song -> song.id })
-      }
-      if (songs.isEmpty()) withContext(Dispatchers.Main) { onError() }
+      if (queuedIds.isEmpty()) withContext(Dispatchers.Main) { onError() }
     }
+  }
+
+  private fun saveDownloadIds(ids: List<String>) {
+    downloadPrefs.edit().putStringSet(playlistId, ids.toSet()).apply()
   }
 
   fun removeDownloads() {
     _uiState.value.downloadSongIds.forEach { id ->
       DownloadService.sendRemoveDownload(context, ExoDownloadService::class.java, id, false)
     }
+    saveDownloadIds(emptyList())
     _uiState.update { it.copy(downloadSongIds = emptyList()) }
   }
 

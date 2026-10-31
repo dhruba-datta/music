@@ -654,8 +654,11 @@ fun HomeScreen(
   val (showSpeedDial) = rememberPreference(ShowSpeedDialKey, true)
 
   val isLoggedIn = remember(innerTubeCookie) { "SAPISID" in parseCookieString(innerTubeCookie) }
-  val spotifyConnected by
-    produceState(initialValue = false, isRefreshing) { value = viewModel.isSpotifyConnected() }
+  val spotifyStatus by
+    produceState<Boolean?>(initialValue = null, isRefreshing) {
+      value = viewModel.isSpotifyConnected()
+    }
+  val spotifyConnected = spotifyStatus == true
 
   val scope = rememberCoroutineScope()
 
@@ -1340,7 +1343,7 @@ fun HomeScreen(
                       }
                     )
                   }
-                  if (noAccount || songs.isEmpty()) {
+                  if ((noAccount || !sourceConnected) && spotifyStatus != null) {
                     Column(
                       modifier =
                         Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp)
