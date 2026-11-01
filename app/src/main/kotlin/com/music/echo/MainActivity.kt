@@ -188,6 +188,7 @@ import echo.music.iad1tya.ui.component.shimmer.getShimmerTheme
 import echo.music.iad1tya.ui.menu.YouTubeSongMenu
 import echo.music.iad1tya.ui.player.BottomSheetPlayer
 import echo.music.iad1tya.ui.screens.Screens
+import echo.music.iad1tya.ui.utils.navigateToTab
 import echo.music.iad1tya.ui.screens.SettingDialoge
 import echo.music.iad1tya.ui.screens.StageAccountAvatar
 import echo.music.iad1tya.ui.screens.WelcomeDialog
@@ -1352,7 +1353,8 @@ class MainActivity : ComponentActivity() {
                   navController,
                   coroutineScope,
                   topAppBarScrollBehavior,
-                  playerBottomSheetState
+                  playerBottomSheetState,
+                  selectedTabRoute
                 ) {
                   { screen: Screens, isSelected: Boolean ->
                     if (playerBottomSheetState.isExpanded) {
@@ -1365,11 +1367,7 @@ class MainActivity : ComponentActivity() {
                         ?.set("scrollToTop", true)
                       coroutineScope.launch { topAppBarScrollBehavior.state.resetHeightOffset() }
                     } else {
-                      navController.navigate(screen.route) {
-                        popUpTo(navController.graph.startDestinationId) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                      }
+                      navController.navigateToTab(screen, selectedTabRoute)
                     }
                   }
                 }
@@ -1544,24 +1542,21 @@ class MainActivity : ComponentActivity() {
                   navController,
                   coroutineScope,
                   topAppBarScrollBehavior,
-                  playerBottomSheetState
+                  playerBottomSheetState,
+                  selectedTabRoute
                 ) {
                   { screen: Screens, isSelected: Boolean ->
                     if (playerBottomSheetState.isExpanded) {
                       playerBottomSheetState.collapseSoft()
                     }
 
-                    if (isSelected) {
+                    if (isSelected && currentRoute == screen.route) {
                       navController.currentBackStackEntry
                         ?.savedStateHandle
                         ?.set("scrollToTop", true)
                       coroutineScope.launch { topAppBarScrollBehavior.state.resetHeightOffset() }
                     } else {
-                      navController.navigate(screen.route) {
-                        popUpTo(navController.graph.startDestinationId) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                      }
+                      navController.navigateToTab(screen, selectedTabRoute)
                     }
                   }
                 }
