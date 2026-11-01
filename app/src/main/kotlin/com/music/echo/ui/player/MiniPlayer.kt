@@ -474,7 +474,7 @@ private fun NewMiniPlayer(progressState: ProgressState, modifier: Modifier = Mod
 
         if (isCasting) {
           Icon(
-            painter = painterResource(R.drawable.cast_connected),
+            painter = painterResource(R.drawable.stage_cast),
             contentDescription = "Casting to ${castDeviceName ?: "device"}",
             tint = primaryColor,
             modifier = Modifier.size(20.dp)
@@ -783,7 +783,7 @@ private fun LegacyMiniPlayer(progressState: ProgressState, modifier: Modifier = 
         enabled = canSkipNext && !isListenTogetherGuest,
         onClick = if (isListenTogetherGuest) ({}) else ({ playerConnection.seekToNext() }),
       ) {
-        Icon(painter = painterResource(R.drawable.skip_next), contentDescription = null)
+        Icon(painter = painterResource(R.drawable.stage_skip_next), contentDescription = null)
       }
     }
 
@@ -798,7 +798,7 @@ private fun LegacyMiniPlayer(progressState: ProgressState, modifier: Modifier = 
         Icon(
           painter =
             painterResource(
-              if (offsetXAnimatable.value > 0) R.drawable.skip_previous else R.drawable.skip_next
+              if (offsetXAnimatable.value > 0) R.drawable.stage_skip_previous else R.drawable.stage_skip_next
             ),
           contentDescription = null,
           tint =
@@ -848,10 +848,10 @@ private fun LegacyPlayPauseButton(
       painter =
         painterResource(
           when {
-            isListenTogetherGuest -> if (isMuted) R.drawable.volume_off else R.drawable.volume_up
-            playbackState == Player.STATE_ENDED -> R.drawable.replay
-            effectiveIsPlaying -> R.drawable.pause
-            else -> R.drawable.play
+            isListenTogetherGuest -> if (isMuted) R.drawable.stage_volume_off else R.drawable.stage_volume_up
+            playbackState == Player.STATE_ENDED -> R.drawable.stage_replay
+            effectiveIsPlaying -> R.drawable.stage_pause
+            else -> R.drawable.stage_play
           }
         ),
       contentDescription = null,
@@ -1227,8 +1227,8 @@ private fun MiniPlayerControls(
         painter =
           painterResource(
             when {
-              isListenTogetherGuest -> if (isMuted) R.drawable.volume_off else R.drawable.volume_up
-              playbackState == Player.STATE_ENDED -> R.drawable.replay
+              isListenTogetherGuest -> if (isMuted) R.drawable.stage_volume_off else R.drawable.stage_volume_up
+              playbackState == Player.STATE_ENDED -> R.drawable.stage_replay
               effectiveIsPlaying -> R.drawable.stage_pause
               else -> R.drawable.stage_play
             }

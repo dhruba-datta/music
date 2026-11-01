@@ -191,10 +191,7 @@ constructor(
     session.start(nowPlaying)
 
     val currentId = playerConnection.player.currentMediaItem?.mediaId
-    val playingIndex = session.indexOf(currentId)
-    if (flowCoordinator.ownsPlayback() && playingIndex >= 0) {
-      session.select(playingIndex)
-    }
+    if (currentId != null) followPlayer(currentId)
     canRestore.value = flowCoordinator.canRestorePreviousQueue()
     refreshStatus(currentId, flowCoordinator)
 
@@ -237,7 +234,7 @@ constructor(
 
   private fun moveBy(delta: Int) {
     val target = session.state.value.selectedIndex + delta
-    if (target in session.state.value.items.indices) onPageSettled(target)
+    if (target in session.state.value.items.indices) onPageSettled(target) else prefetchIfNeeded()
   }
 
   fun retryPlayback() {
@@ -305,16 +302,24 @@ constructor(
   }
 
   private fun onActiveMediaChanged(mediaId: String?, flowCoordinator: MusicFlowCoordinator) {
-    if (mediaId != null && flowCoordinator.ownsPlayback()) {
-      val index = session.indexOf(mediaId)
-      val pending = requests.value
-      val awaitingOtherSong = pending != null && pending.songId != mediaId && playbackStatus.value == MusicFlowPlaybackStatus.Switching
-      if (index >= 0 && index != session.state.value.selectedIndex && !awaitingOtherSong) {
-        session.select(index)
-        prefetchIfNeeded()
-      }
-    }
+    if (mediaId != null) followPlayer(mediaId)
     refreshStatus(mediaId, flowCoordinator)
+  }
+
+  /** Keeps the page on the playing song, however it changed: the bottom player, a queue, auto-next. */
+  private fun followPlayer(mediaId: String) {
+    val pending = requests.value
+    val awaitingOtherSong =
+      pending != null && pending.songId != mediaId && playbackStatus.value == MusicFlowPlaybackStatus.Switching
+    if (awaitingOtherSong || mediaId == uiState.value.selectedSongId) return
+    val index = session.indexOf(mediaId)
+    if (index >= 0) {
+      session.select(index)
+    } else {
+      val metadata = connection?.mediaMetadata?.value?.takeIf { it.id == mediaId } ?: return
+      session.showNowPlaying(MusicFlowItem(metadata.toMusicFlowSongItem(), MusicFlowSource.NOW_PLAYING))
+    }
+    prefetchIfNeeded()
   }
 
   private fun refreshStatus(mediaId: String?, flowCoordinator: MusicFlowCoordinator) {

@@ -29,6 +29,7 @@ constructor(
 
   fun logoutAndClearSyncedContent(context: Context, onCookieChange: (String) -> Unit) {
     viewModelScope.launch(Dispatchers.IO) {
+      syncUtils.cancelAllSyncs()
       syncUtils.clearAllSyncedContent()
 
       App.forgetAccount(context)
@@ -39,6 +40,7 @@ constructor(
 
   fun logoutKeepData(context: Context, onCookieChange: (String) -> Unit) {
     viewModelScope.launch(Dispatchers.IO) {
+      syncUtils.cancelAllSyncs()
       App.forgetAccount(context)
       withContext(Dispatchers.Main) { onCookieChange("") }
     }

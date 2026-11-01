@@ -55,7 +55,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
-import com.music.innertube.models.WatchEndpoint
 import androidx.media3.exoplayer.offline.Download
 import echo.music.iad1tya.LocalDownloadUtil
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
@@ -63,8 +62,6 @@ import echo.music.iad1tya.LocalPlayerConnection
 import echo.music.iad1tya.R
 import echo.music.iad1tya.constants.ListThumbnailSize
 import echo.music.iad1tya.constants.ThumbnailCornerRadius
-import echo.music.iad1tya.models.toMediaMetadata
-import echo.music.iad1tya.playback.queues.YouTubeQueue
 import echo.music.iad1tya.spotify.SpotifyMapper
 import echo.music.iad1tya.spotify.models.SpotifyTrack
 import echo.music.iad1tya.ui.component.ListItem
@@ -143,6 +140,13 @@ fun SpotifyPlaylistDetailScreen(
     }
   }
 
+  val shownDownloadState =
+    when {
+      uiState.isPreparingDownload -> Download.STATE_DOWNLOADING
+      uiState.isDownloadStopped -> Download.STATE_STOPPED
+      else -> downloadState
+    }
+
   if (showRemoveDownloadDialog) {
     DefaultDialog(
       onDismiss = { showRemoveDownloadDialog = false },
@@ -192,18 +196,21 @@ fun SpotifyPlaylistDetailScreen(
             tracks = uiState.tracks,
             totalCount = if (uiState.totalCount > 0) uiState.totalCount else uiState.tracks.size,
             isPlaylistPlaying = isPlaylistPlaying,
-            downloadState =
-              if (uiState.isPreparingDownload) Download.STATE_DOWNLOADING else downloadState,
+            downloadState = shownDownloadState,
             onDownload = {
-              when {
-                uiState.isPreparingDownload || uiState.isLoading -> Unit
-                downloadState == Download.STATE_COMPLETED -> showRemoveDownloadDialog = true
-                downloadState == Download.STATE_DOWNLOADING -> viewModel.removeDownloads()
+              when (shownDownloadState) {
+                Download.STATE_COMPLETED -> showRemoveDownloadDialog = true
+                Download.STATE_DOWNLOADING -> viewModel.cancelDownloads()
                 else ->
                   viewModel.downloadAll(
-                    onError = {
-                      coroutineScope.launch {
-                        snackbarHostState.showSnackbar("Couldn't find this track")
+                    onFinished = { queued, missing ->
+                      if (missing > 0 || queued == 0) {
+                        coroutineScope.launch {
+                          snackbarHostState.showSnackbar(
+                            if (queued == 0) "Couldn't find these songs on YouTube"
+                            else "$missing songs couldn't be found on YouTube"
+                          )
+                        }
                       }
                     }
                   )
@@ -213,39 +220,15 @@ fun SpotifyPlaylistDetailScreen(
               if (isPlaylistCurrent) {
                 playerConnection?.togglePlayPause()
               } else {
-                uiState.tracks.firstOrNull()?.let { firstTrack ->
-                  viewModel.playTrack(
-                    track = firstTrack,
-                    onSuccess = { songItem ->
-                      playerConnection?.playQueue(
-                        YouTubeQueue(
-                          endpoint = WatchEndpoint(videoId = songItem.id),
-                          preloadItem = songItem.toMediaMetadata(),
-                        )
-                      )
+                viewModel.playFrom(
+                  startIndex =
+                    if (playerConnection?.player?.shuffleModeEnabled == true) {
+                      uiState.tracks.indices.randomOrNull() ?: 0
+                    } else {
+                      0
                     },
-                    onError = {
-                      coroutineScope.launch {
-                        snackbarHostState.showSnackbar("Couldn't find this track")
-                      }
-                    }
-                  )
-                }
-              }
-            },
-            onShuffle = {
-              val shuffled = uiState.tracks.shuffled()
-              shuffled.firstOrNull()?.let { firstTrack ->
-                viewModel.playTrack(
-                  track = firstTrack,
-                  onSuccess = { songItem ->
-                    playerConnection?.playQueue(
-                      YouTubeQueue(
-                        endpoint = WatchEndpoint(videoId = songItem.id),
-                        preloadItem = songItem.toMediaMetadata(),
-                      )
-                    )
-                  },
+                  shuffle = playerConnection?.player?.shuffleModeEnabled == true,
+                  onSuccess = { queue -> playerConnection?.playQueue(queue) },
                   onError = {
                     coroutineScope.launch {
                       snackbarHostState.showSnackbar("Couldn't find this track")
@@ -253,6 +236,16 @@ fun SpotifyPlaylistDetailScreen(
                   }
                 )
               }
+            },
+            onShuffle = {
+              viewModel.playShuffled(
+                onSuccess = { queue -> playerConnection?.playQueue(queue) },
+                onError = {
+                  coroutineScope.launch {
+                    snackbarHostState.showSnackbar("Couldn't find this track")
+                  }
+                }
+              )
             },
             onShare = {
               val shareUrl = if (playlistId == "liked") {
@@ -376,16 +369,10 @@ fun SpotifyPlaylistDetailScreen(
                 if (isCurrentSong) {
                   playerConnection?.togglePlayPause()
                 } else {
-                  viewModel.playTrack(
-                    track = track,
-                    onSuccess = { songItem ->
-                      playerConnection?.playQueue(
-                        YouTubeQueue(
-                          endpoint = WatchEndpoint(videoId = songItem.id),
-                          preloadItem = songItem.toMediaMetadata(),
-                        )
-                      )
-                    },
+                  viewModel.playFrom(
+                    startIndex = index,
+                    shuffle = playerConnection?.player?.shuffleModeEnabled == true,
+                    onSuccess = { queue -> playerConnection?.playQueue(queue) },
                     onError = {
                       coroutineScope.launch {
                         snackbarHostState.showSnackbar("Could not match \"${track.name}\" to a playable stream")

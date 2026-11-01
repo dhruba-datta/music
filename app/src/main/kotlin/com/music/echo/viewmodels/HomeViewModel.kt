@@ -36,6 +36,7 @@ import echo.music.iad1tya.db.entities.Album
 import echo.music.iad1tya.db.entities.LocalItem
 import echo.music.iad1tya.db.entities.Song
 import echo.music.iad1tya.db.entities.SpeedDialItem
+import echo.music.iad1tya.extensions.filterExplicit
 import echo.music.iad1tya.extensions.filterVideoSongs
 import echo.music.iad1tya.extensions.toEnum
 import echo.music.iad1tya.models.SimilarRecommendation
@@ -144,6 +145,16 @@ constructor(
     combine(context.dataStore.data, database.hiddenFromQuickPicksSongIds()) { preferences, hidden ->
       preferences to hidden.toSet()
     }
+  val likedSongs: StateFlow<List<Song>> =
+    combine(database.likedSongsByCreateDateAsc(), context.dataStore.data) { songs, preferences ->
+      songs
+        .asReversed()
+        .filterExplicit(preferences[HideExplicitKey] ?: false)
+        .filterVideoSongs(preferences[HideVideoSongsKey] ?: false)
+    }
+      .flowOn(Dispatchers.IO)
+      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
   val quickPicks: StateFlow<List<Song>?> =
     combine(quickPicksSource, carouselFilters) { songs, filters ->
       val (preferences, hidden) = filters

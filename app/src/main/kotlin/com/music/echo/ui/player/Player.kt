@@ -110,15 +110,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.Outline
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
@@ -140,9 +137,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -203,7 +198,6 @@ import echo.music.iad1tya.constants.SquigglySliderKey
 import echo.music.iad1tya.constants.SwipeLyricsKey
 import echo.music.iad1tya.constants.ThumbnailCornerRadius
 import echo.music.iad1tya.constants.UseNewPlayerDesignKey
-import echo.music.iad1tya.constants.WavyPlayPauseKey
 import echo.music.iad1tya.db.entities.LyricsEntity
 import echo.music.iad1tya.echomusic.getConnectedBluetoothDeviceName
 import echo.music.iad1tya.echomusic.isBuds
@@ -243,10 +237,8 @@ import echo.music.iad1tya.utils.rememberEnumPreference
 import echo.music.iad1tya.utils.rememberPreference
 import java.io.File
 import java.util.Locale
-import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.roundToInt
-import kotlin.math.sin
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
@@ -255,34 +247,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-
-private data class WavyShape(val sides: Int, val indent: Float, val rotationDegrees: Float) :
-  Shape {
-  override fun createOutline(
-    size: Size,
-    layoutDirection: LayoutDirection,
-    density: Density
-  ): Outline {
-    val path = Path()
-    val maxRadiusX = size.width / 2f
-    val maxRadiusY = size.height / 2f
-    val cx = size.width / 2f
-    val cy = size.height / 2f
-
-    val steps = 120
-    val rotationRad = rotationDegrees * Math.PI / 180.0
-    for (i in 0..steps) {
-      val angle = i * Math.PI * 2 / steps
-      val bumpAngle = angle - rotationRad
-      val r = 1f - indent + indent * cos(sides * bumpAngle)
-      val x = cx + maxRadiusX * r * cos(angle)
-      val y = cy + maxRadiusY * r * sin(angle)
-      if (i == 0) path.moveTo(x.toFloat(), y.toFloat()) else path.lineTo(x.toFloat(), y.toFloat())
-    }
-    path.close()
-    return Outline.Generic(path)
-  }
-}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -447,7 +411,6 @@ fun BottomSheetPlayer(
   val (audioQuality) = rememberEnumPreference(AudioQualityKey, defaultValue = AudioQuality.OPUS)
   val sliderStyle by rememberEnumPreference(SliderStyleKey, SliderStyle.SLIM)
   val squigglySlider by rememberPreference(SquigglySliderKey, defaultValue = false)
-  val wavyPlayPause by rememberPreference(WavyPlayPauseKey, defaultValue = true)
 
   val listenTogetherManager = LocalListenTogetherManager.current
   val isListenTogetherGuest by
@@ -810,21 +773,6 @@ fun BottomSheetPlayer(
       }
     }
 
-  val (sideButtonContainerColor, sideButtonContentColor) =
-    when (playerButtonsStyle) {
-      PlayerButtonsStyle.DEFAULT -> Pair(Color.White.copy(alpha = 0.2f), Color.White)
-      PlayerButtonsStyle.PRIMARY ->
-        Pair(
-          MaterialTheme.colorScheme.primaryContainer,
-          MaterialTheme.colorScheme.onPrimaryContainer
-        )
-      PlayerButtonsStyle.TERTIARY ->
-        Pair(
-          MaterialTheme.colorScheme.tertiaryContainer,
-          MaterialTheme.colorScheme.onTertiaryContainer
-        )
-    }
-
   val download by
     LocalDownloadUtil.current.getDownload(mediaMetadata?.id ?: "").collectAsState(initial = null)
 
@@ -858,7 +806,7 @@ fun BottomSheetPlayer(
   if (showSleepTimerDialog) {
     StageAlertDialog(
       onDismissRequest = { showSleepTimerDialog = false },
-      icon = { Icon(painter = painterResource(R.drawable.bedtime), contentDescription = null) },
+      icon = { Icon(painter = painterResource(R.drawable.stage_moon), contentDescription = null) },
       title = { Text(stringResource(R.string.sleep_timer)) },
       confirmButton = {
         StagePillButton(onClick = {
@@ -1545,8 +1493,8 @@ fun BottomSheetPlayer(
                 Icon(
                   painter =
                     painterResource(
-                      if (playbackState == Player.STATE_ENDED) R.drawable.replay
-                      else R.drawable.play
+                      if (playbackState == Player.STATE_ENDED) R.drawable.stage_replay
+                      else R.drawable.stage_play
                     ),
                   contentDescription = null,
                   tint = Color.White,
@@ -1617,7 +1565,7 @@ fun BottomSheetPlayer(
             modifier = Modifier.padding(vertical = 2.dp)
           ) {
             Icon(
-              painter = painterResource(R.drawable.cast_connected),
+              painter = painterResource(R.drawable.stage_cast),
               contentDescription = null,
               tint = TextBackgroundColor.copy(alpha = 0.7f),
               modifier = Modifier.size(14.dp)
@@ -1987,7 +1935,7 @@ fun BottomSheetPlayer(
                       horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                       Icon(
-                        painter = painterResource(R.drawable.sleep_timer),
+                        painter = painterResource(R.drawable.stage_moon),
                         contentDescription = null,
                         tint = TextBackgroundColor.copy(alpha = 0.8f),
                         modifier = Modifier.size(12.dp)
@@ -2169,10 +2117,6 @@ fun BottomSheetPlayer(
       }
     }
 
-    val stageSideContainerColor =
-      if (playerButtonsStyle == PlayerButtonsStyle.DEFAULT) Color.Transparent
-      else sideButtonContainerColor
-
     val stageTransport: @Composable (Dp) -> Unit = { playSize ->
       Row(
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -2181,7 +2125,7 @@ fun BottomSheetPlayer(
       ) {
         val stageShuffleEnabled by playerConnection.shuffleModeEnabled.collectAsState()
         StageToggleIcon(
-          icon = R.drawable.shuffle,
+          icon = R.drawable.stage_shuffle,
           contentDescription = stringResource(R.string.shuffle),
           active = stageShuffleEnabled,
           enabled = !isListenTogetherGuest,
@@ -2227,10 +2171,10 @@ fun BottomSheetPlayer(
           interactionSource = backInteractionSource,
           colors =
             IconButtonDefaults.filledIconButtonColors(
-              containerColor = stageSideContainerColor,
-              contentColor = sideButtonContentColor,
+              containerColor = Color.Transparent,
+              contentColor = textButtonColor,
               disabledContainerColor = Color.Transparent,
-              disabledContentColor = sideButtonContentColor.copy(alpha = 0.38f),
+              disabledContentColor = textButtonColor.copy(alpha = 0.38f),
             ),
           modifier =
             Modifier.size(44.dp).graphicsLayer {
@@ -2239,31 +2183,11 @@ fun BottomSheetPlayer(
             }
         ) {
           Icon(
-            painter = painterResource(R.drawable.skip_previous),
+            painter = painterResource(R.drawable.stage_skip_previous),
             contentDescription = stringResource(R.string.previous),
             modifier = Modifier.size(24.dp)
           )
         }
-
-                val cookieIndent by
-          animateFloatAsState(
-            targetValue = if (effectiveIsPlaying) 0.08f else 0f,
-            animationSpec = tween(durationMillis = 300, easing = LinearEasing),
-            label = "cookieIndent",
-          )
-
-        val infiniteTransition = rememberInfiniteTransition(label = "rotation")
-        val rotation by
-          infiniteTransition.animateFloat(
-            initialValue = 0f,
-            targetValue = 360f,
-            animationSpec =
-              infiniteRepeatable(
-                animation = tween(8000, easing = LinearEasing),
-                repeatMode = RepeatMode.Restart
-              ),
-            label = "rotation"
-          )
 
         FilledIconButton(
           onClick = {
@@ -2284,13 +2208,12 @@ fun BottomSheetPlayer(
               playerConnection.togglePlayPause()
             }
           },
-          shape =
-            if (wavyPlayPause && cookieIndent > 0f) WavyShape(9, cookieIndent, rotation) else CircleShape,
+          shape = CircleShape,
           interactionSource = playPauseInteractionSource,
           colors =
             IconButtonDefaults.filledIconButtonColors(
-              containerColor = textButtonColor,
-              contentColor = iconButtonColor,
+              containerColor = Color.Transparent,
+              contentColor = textButtonColor,
             ),
           modifier =
             Modifier.size(playSize).graphicsLayer {
@@ -2306,9 +2229,9 @@ fun BottomSheetPlayer(
               painter =
                 painterResource(
                   if (isListenTogetherGuest) {
-                    if (isMuted) R.drawable.volume_off else R.drawable.volume_up
+                    if (isMuted) R.drawable.stage_volume_off else R.drawable.stage_volume_up
                   } else {
-                    if (effectiveIsPlaying) R.drawable.pause else R.drawable.play
+                    if (effectiveIsPlaying) R.drawable.stage_pause else R.drawable.stage_play
                   }
                 ),
               contentDescription =
@@ -2319,7 +2242,7 @@ fun BottomSheetPlayer(
                   if (effectiveIsPlaying) stringResource(R.string.pause)
                   else stringResource(R.string.play)
                 },
-              modifier = Modifier.size(32.dp)
+              modifier = Modifier.size(36.dp)
             )
           }
         }
@@ -2331,10 +2254,10 @@ fun BottomSheetPlayer(
           interactionSource = nextInteractionSource,
           colors =
             IconButtonDefaults.filledIconButtonColors(
-              containerColor = stageSideContainerColor,
-              contentColor = sideButtonContentColor,
+              containerColor = Color.Transparent,
+              contentColor = textButtonColor,
               disabledContainerColor = Color.Transparent,
-              disabledContentColor = sideButtonContentColor.copy(alpha = 0.38f),
+              disabledContentColor = textButtonColor.copy(alpha = 0.38f),
             ),
           modifier =
             Modifier.size(44.dp).graphicsLayer {
@@ -2343,7 +2266,7 @@ fun BottomSheetPlayer(
             }
         ) {
           Icon(
-            painter = painterResource(R.drawable.skip_next),
+            painter = painterResource(R.drawable.stage_skip_next),
             contentDescription = stringResource(R.string.next),
             modifier = Modifier.size(24.dp)
           )
@@ -2351,7 +2274,7 @@ fun BottomSheetPlayer(
 
         StageToggleIcon(
           icon =
-            if (repeatMode == Player.REPEAT_MODE_ONE) R.drawable.repeat_one else R.drawable.repeat,
+            if (repeatMode == Player.REPEAT_MODE_ONE) R.drawable.stage_repeat_one else R.drawable.stage_repeat,
           contentDescription = stringResource(R.string.repeat),
           active = repeatMode != Player.REPEAT_MODE_OFF,
           enabled = !isListenTogetherGuest,
@@ -2372,7 +2295,7 @@ fun BottomSheetPlayer(
             .padding(start = 16.dp, top = 8.dp, end = 16.dp),
       ) {
         StageHeaderButton(
-          icon = R.drawable.expand_more,
+          icon = R.drawable.stage_chevron_down,
           contentDescription = stringResource(R.string.close),
           color = TextBackgroundColor,
           onClick = { state.collapseSoft() },
@@ -2382,7 +2305,7 @@ fun BottomSheetPlayer(
 
         if (showCommentButton) {
           StageHeaderButton(
-            icon = R.drawable.chat_msg,
+            icon = R.drawable.stage_chat,
             contentDescription = stringResource(R.string.comments),
             color = TextBackgroundColor,
             onClick = { showCommentSheet = true },
@@ -2392,7 +2315,7 @@ fun BottomSheetPlayer(
         if (showInlineLyrics) {
           val currentLyrics by playerConnection.currentLyrics.collectAsState(initial = null)
           StageHeaderButton(
-            icon = if (isFullScreen) R.drawable.fullscreen_exit else R.drawable.fullscreen,
+            icon = if (isFullScreen) R.drawable.stage_fullscreen_exit else R.drawable.stage_fullscreen,
             contentDescription =
               stringResource(
                 if (isFullScreen) R.string.exit_fullscreen else R.string.enter_fullscreen
@@ -2401,7 +2324,7 @@ fun BottomSheetPlayer(
             onClick = { isFullScreen = !isFullScreen },
           )
           StageHeaderButton(
-            icon = R.drawable.more_vert,
+            icon = R.drawable.stage_more_row,
             contentDescription = stringResource(R.string.more_options),
             color = TextBackgroundColor,
             onClick = {
@@ -2424,7 +2347,7 @@ fun BottomSheetPlayer(
           )
         } else {
           StageHeaderButton(
-            icon = R.drawable.more_vert,
+            icon = R.drawable.stage_more_row,
             contentDescription = stringResource(R.string.more_options),
             color = TextBackgroundColor,
             onClick = { stagePlayerMenuRequested = true },
@@ -2488,7 +2411,7 @@ fun BottomSheetPlayer(
           when (download?.state) {
             Download.STATE_COMPLETED ->
               Icon(
-                painter = painterResource(R.drawable.offline),
+                painter = painterResource(R.drawable.stage_downloaded),
                 contentDescription = null,
                 tint = TextBackgroundColor,
                 modifier = Modifier.size(StageActionIconSize)
@@ -2501,7 +2424,7 @@ fun BottomSheetPlayer(
               )
             else ->
               Icon(
-                painter = painterResource(R.drawable.download),
+                painter = painterResource(R.drawable.stage_download),
                 contentDescription = null,
                 tint = TextBackgroundColor,
                 modifier = Modifier.size(StageActionIconSize)
@@ -2618,13 +2541,12 @@ fun BottomSheetPlayer(
               modifier =
                 Modifier.size(40.dp)
                   .clip(RoundedCornerShape(24.dp))
-                  .background(textButtonColor.copy(alpha = 0.2f))
                   .clickable { isFullScreen = !isFullScreen },
             ) {
               Icon(
                 painter =
                   painterResource(
-                    if (isFullScreen) R.drawable.fullscreen_exit else R.drawable.fullscreen
+                    if (isFullScreen) R.drawable.stage_fullscreen_exit else R.drawable.stage_fullscreen
                   ),
                 contentDescription =
                   stringResource(
@@ -2639,7 +2561,6 @@ fun BottomSheetPlayer(
               modifier =
                 Modifier.size(40.dp)
                   .clip(RoundedCornerShape(24.dp))
-                  .background(textButtonColor.copy(alpha = 0.2f))
                   .clickable {
                     menuState.show {
                       OldPlayerMenu(
@@ -2655,7 +2576,7 @@ fun BottomSheetPlayer(
                   },
             ) {
               Icon(
-                painter = painterResource(R.drawable.more_vert),
+                painter = painterResource(R.drawable.stage_more_row),
                 contentDescription = null,
                 tint = textButtonColor,
                 modifier = Modifier.align(Alignment.Center).size(24.dp)
@@ -2673,7 +2594,6 @@ fun BottomSheetPlayer(
               modifier =
                 Modifier.size(40.dp)
                   .clip(RoundedCornerShape(24.dp))
-                  .background(textButtonColor.copy(alpha = 0.2f))
                   .clickable {
                     menuState.show {
                       echo.music.iad1tya.ui.menu.LyricsMenu(
@@ -2691,7 +2611,7 @@ fun BottomSheetPlayer(
                   },
             ) {
               Icon(
-                painter = painterResource(R.drawable.more_horiz),
+                painter = painterResource(R.drawable.stage_more_row),
                 contentDescription = null,
                 tint = textButtonColor,
                 modifier = Modifier.align(Alignment.Center).size(24.dp),
@@ -2702,14 +2622,13 @@ fun BottomSheetPlayer(
               modifier =
                 Modifier.size(40.dp)
                   .clip(RoundedCornerShape(24.dp))
-                  .background(textButtonColor.copy(alpha = 0.2f))
                   .clickable(onClick = playerConnection::toggleLike),
             ) {
               Icon(
                 painter =
                   painterResource(
                     if (currentSong?.song?.liked == true) R.drawable.favorite
-                    else R.drawable.favorite_border
+                    else R.drawable.stage_heart
                   ),
                 contentDescription = null,
                 tint = textButtonColor,
@@ -2742,7 +2661,7 @@ fun BottomSheetPlayer(
           ) {
             Box(modifier = Modifier.weight(1f)) {
               ResizableIconButton(
-                icon = R.drawable.apple_skip_previous,
+                icon = R.drawable.stage_skip_previous,
                 enabled = canSkipPrevious && !isListenTogetherGuest,
                 color = TextBackgroundColor,
                 modifier =
@@ -2783,13 +2702,13 @@ fun BottomSheetPlayer(
                 painter =
                   painterResource(
                     if (isListenTogetherGuest) {
-                      if (isMuted) R.drawable.volume_off else R.drawable.volume_up
+                      if (isMuted) R.drawable.stage_volume_off else R.drawable.stage_volume_up
                     } else if (playbackState == STATE_ENDED) {
-                      R.drawable.replay
+                      R.drawable.stage_replay
                     } else if (effectiveIsPlaying) {
-                      R.drawable.pause_applemusic
+                      R.drawable.stage_pause
                     } else {
-                      R.drawable.play_applemusic
+                      R.drawable.stage_play
                     },
                   ),
                 contentDescription = null,
@@ -2802,7 +2721,7 @@ fun BottomSheetPlayer(
 
             Box(modifier = Modifier.weight(1f)) {
               ResizableIconButton(
-                icon = R.drawable.apple_skip_next,
+                icon = R.drawable.stage_skip_next,
                 enabled = canSkipNext && !isListenTogetherGuest,
                 color = TextBackgroundColor,
                 modifier =
@@ -2860,7 +2779,7 @@ fun BottomSheetPlayer(
                 )
 
               Icon(
-                painter = painterResource(R.drawable.volume_mute),
+                painter = painterResource(R.drawable.stage_volume_off),
                 contentDescription = null,
                 tint = textButtonColor,
                 modifier =
@@ -2902,7 +2821,7 @@ fun BottomSheetPlayer(
               Spacer(Modifier.width(12.dp))
 
               Icon(
-                painter = painterResource(R.drawable.volume_up),
+                painter = painterResource(R.drawable.stage_volume_up),
                 contentDescription = null,
                 tint = textButtonColor,
                 modifier =

@@ -51,6 +51,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -210,6 +215,8 @@ private fun NavController.navigateToPlaylistItem(playlist: PlaylistItem) {
 sealed class HomeSection(val id: String, val baseWeight: Int) {
   data object SpeedDial : HomeSection("speed_dial", 100)
 
+  data object LikedSongs : HomeSection("liked_songs", 98)
+
   data object AiRecommendations : HomeSection("ai_recommendations", 95)
 
   data object HeroCarousel : HomeSection("hero_carousel", 90)
@@ -227,9 +234,6 @@ sealed class HomeSection(val id: String, val baseWeight: Int) {
 
   data object Spotify : HomeSection("spotify", 9)
 
-  data class SimilarRecommendation(val index: Int) :
-    HomeSection("similar_recommendation_$index", 10)
-
   data class HomePageSection(val index: Int) : HomeSection("home_page_section_$index", 10)
 
   data object MoodAndGenres : HomeSection("mood_and_genres", 5)
@@ -238,6 +242,9 @@ sealed class HomeSection(val id: String, val baseWeight: Int) {
 private val StageCardShape = RoundedCornerShape(18.dp)
 private val StageCardArtHeight = 92.dp
 private val StageCardTextHeight = 49.dp
+private val HomeRowCardWidth = 160.dp
+private const val HomeRowsPerPage = 5
+private const val HomePagedSongs = 20
 private val StageRowPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 12.dp)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -471,90 +478,67 @@ private fun SpeedDialMenu(
   }
 }
 
-/** A Home section for one music service: suggestions, or a way to connect it. */
-private data class HomeMovingCard(
+private data class HomeRowCard(
   val title: String,
   val subtitle: String?,
   val imageUrl: String?,
   val onClick: () -> Unit,
 )
 
+/** Song rows split into pages you swipe sideways, so a long list keeps a fixed height. */
 @Composable
-private fun HomeMovingCards(
+private fun <T> HomePagedRows(
+  items: List<T>,
+  modifier: Modifier = Modifier,
+  row: @Composable (T) -> Unit,
+) {
+  val pages = remember(items) { items.chunked(HomeRowsPerPage) }
+  val pagerState = rememberPagerState(pageCount = { pages.size })
+
+  HorizontalPager(
+    state = pagerState,
+    verticalAlignment = Alignment.Top,
+    modifier = modifier.fillMaxWidth().animateContentSize(tween(300, easing = FastOutSlowInEasing)),
+  ) { page ->
+    Column(modifier = Modifier.fillMaxWidth()) { pages.getOrNull(page)?.forEach { row(it) } }
+  }
+}
+
+/** A titled row of equal, fixed-width cards that scrolls sideways. */
+@Composable
+private fun HomeCardRow(
   title: String,
-  cards: List<HomeMovingCard>,
+  cards: List<HomeRowCard>,
   modifier: Modifier = Modifier,
 ) {
   if (cards.isEmpty()) return
 
   Column(modifier = modifier) {
     NavigationTitle(title = title)
-    StageHeroStrip(
-      count = cards.size,
-      modifier = Modifier.padding(top = 4.dp).fillMaxWidth().height(200.dp),
-    ) { index, expansion, nextTitleAlpha ->
-      val card = cards.getOrNull(index) ?: return@StageHeroStrip
-      Box(
-        modifier =
-          Modifier.fillMaxSize()
-            .clip(RoundedCornerShape(if (expansion > 0.5f) 28.dp else 18.dp))
-            .clickable(onClick = card.onClick)
-      ) {
-        AsyncImage(
-          model = card.imageUrl,
-          contentDescription = null,
-          contentScale = ContentScale.Crop,
-          modifier = Modifier.fillMaxSize(),
-        )
-        Box(
-          modifier =
-            Modifier.fillMaxSize()
-              .background(
-                Brush.verticalGradient(
-                  colors =
-                    listOf(Color.Transparent, Color.Transparent, Color.Black.copy(alpha = 0.7f))
-                )
-              )
-        )
-        Column(modifier = Modifier.align(Alignment.BottomStart).padding(16.dp).alpha(expansion)) {
-          Text(
-            text = card.title,
-            fontSize = 20.sp,
-            lineHeight = 26.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = Color.White,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+    LazyRow(
+      contentPadding = StageRowPadding,
+      horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+      items(cards) { card ->
+        StageCard(
+          title = card.title,
+          subtitle = card.subtitle,
+          artHeight = HomeRowCardWidth,
+          modifier = Modifier.width(HomeRowCardWidth).clickable(onClick = card.onClick),
+        ) {
+          AsyncImage(
+            model = card.imageUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
           )
-          card.subtitle?.let {
-            Text(
-              text = it,
-              fontSize = 14.sp,
-              lineHeight = 18.sp,
-              color = Color.White,
-              maxLines = 1,
-              overflow = TextOverflow.Ellipsis,
-            )
-          }
         }
-        Text(
-          text = card.title,
-          fontSize = 15.sp,
-          fontWeight = FontWeight.Bold,
-          color = Color.White,
-          maxLines = 1,
-          overflow = TextOverflow.Ellipsis,
-          modifier =
-            Modifier.align(Alignment.BottomCenter)
-              .padding(vertical = 14.dp)
-              .alpha(nextTitleAlpha)
-              .bottomToTopText(),
-        )
       }
     }
   }
 }
 
+/** A Home section for one music service: suggestions, or a way to connect it. */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun HomeSourceSection(
@@ -585,7 +569,7 @@ private fun HomeSourceSection(
       onClick = onOpen,
     )
     if (connected) {
-      songs.forEach { song ->
+      HomePagedRows(items = songs) { song ->
         YouTubeListItem(
           item = song,
           color = Color.Transparent,
@@ -630,7 +614,7 @@ fun HomeScreen(
   val aiRecommendedPlaylist by viewModel.aiRecommendedPlaylist.collectAsState()
   val forgottenFavorites by viewModel.forgottenFavorites.collectAsState()
   val keepListening by viewModel.keepListening.collectAsState()
-  val similarRecommendations by viewModel.similarRecommendations.collectAsState()
+  val likedSongs by viewModel.likedSongs.collectAsState()
   val accountPlaylists by viewModel.accountPlaylists.collectAsState()
   val homePage by viewModel.homePage.collectAsState()
   val explorePage by viewModel.explorePage.collectAsState()
@@ -676,6 +660,38 @@ fun HomeScreen(
     playerConnection?.playQueue(
       YouTubeQueue(song.endpoint ?: WatchEndpoint(videoId = song.id), song.toMediaMetadata())
     )
+  }
+
+  fun showLocalSongMenu(song: Song) {
+    menuState.show {
+      SongMenu(originalSong = song, navController = navController, onDismiss = menuState::dismiss)
+    }
+  }
+
+  fun playLocalSong(song: Song) {
+    if (song.id == mediaMetadata?.id) {
+      playerConnection.togglePlayPause()
+    } else if (song.song.isLocal) {
+      playerConnection.playQueue(ListQueue(title = song.song.title, items = listOf(song.toMediaItem())))
+    } else {
+      playerConnection.playQueue(YouTubeQueue.radio(song.toMediaMetadata()))
+    }
+  }
+
+  val likedSongsTitle = stringResource(R.string.liked_songs)
+
+  fun playLikedSongs(song: Song) {
+    if (song.id == mediaMetadata?.id) {
+      playerConnection.togglePlayPause()
+    } else {
+      playerConnection.playQueue(
+        ListQueue(
+          title = likedSongsTitle,
+          items = likedSongs.map { it.toMediaItem() },
+          startIndex = likedSongs.indexOfFirst { it.id == song.id }.coerceAtLeast(0),
+        )
+      )
+    }
   }
 
   var randomizeJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
@@ -740,26 +756,12 @@ fun HomeScreen(
           modifier =
             Modifier.width(cardWidth)
               .combinedClickable(
-                onClick = {
-                  if (it.id == mediaMetadata?.id) {
-                    playerConnection.togglePlayPause()
-                  } else {
-                    playerConnection.playQueue(
-                      YouTubeQueue.radio(it.toMediaMetadata()),
-                    )
-                  }
-                },
+                onClick = { playLocalSong(it) },
                 onLongClick = {
                   haptic.performHapticFeedback(
                     HapticFeedbackType.LongPress,
                   )
-                  menuState.show {
-                    SongMenu(
-                      originalSong = it,
-                      navController = navController,
-                      onDismiss = menuState::dismiss,
-                    )
-                  }
+                  showLocalSongMenu(it)
                 },
               ),
         ) {
@@ -932,7 +934,7 @@ fun HomeScreen(
       accountPlaylists,
       forgottenFavorites,
       communityPlaylists,
-      similarRecommendations,
+      likedSongs,
       spotifyRecommendations,
       spotifyStatus,
       homePage?.sections,
@@ -943,13 +945,10 @@ fun HomeScreen(
 
       if (showSpeedDial) list.add(HomeSection.SpeedDial)
       if (heroSongs.isNotEmpty()) list.add(HomeSection.HeroCarousel)
-      list.add(HomeSection.YouTubeMusic)
+      if (likedSongs.isNotEmpty()) list.add(HomeSection.LikedSongs)
       list.add(HomeSection.Spotify)
+      list.add(HomeSection.YouTubeMusic)
       if (dailyDiscover?.isNotEmpty() == true) list.add(HomeSection.DailyDiscover)
-
-      if (similarRecommendations?.isNotEmpty() == true) {
-        list.add(HomeSection.SimilarRecommendation(0))
-      }
 
       if (randomizeHomeOrder) {
         list.sortedByDescending { section ->
@@ -959,9 +958,9 @@ fun HomeScreen(
             when (section) {
               HomeSection.HeroCarousel -> 20000
               HomeSection.SpeedDial -> 19000
-              HomeSection.YouTubeMusic -> 18000
+              HomeSection.LikedSongs -> 18000
               HomeSection.Spotify -> 17900
-              is HomeSection.SimilarRecommendation -> if (section.index == 0) 17000 else 100
+              HomeSection.YouTubeMusic -> 17800
               is HomeSection.HomePageSection -> 9000 - (section.index * 10)
               HomeSection.DailyDiscover -> 500
               HomeSection.KeepListening,
@@ -974,8 +973,9 @@ fun HomeScreen(
             when (section) {
               HomeSection.SpeedDial,
               HomeSection.HeroCarousel,
-              HomeSection.YouTubeMusic,
-              HomeSection.Spotify -> 0
+              HomeSection.LikedSongs,
+              HomeSection.Spotify,
+              HomeSection.YouTubeMusic -> 0
               HomeSection.DailyDiscover -> sectionRandom.nextInt(-200, 400)
               HomeSection.KeepListening,
               HomeSection.AccountPlaylists,
@@ -989,8 +989,9 @@ fun HomeScreen(
           mapOf(
             HomeSection.HeroCarousel to 1100,
             HomeSection.SpeedDial to 1000,
-            HomeSection.YouTubeMusic to 990,
+            HomeSection.LikedSongs to 990,
             HomeSection.Spotify to 985,
+            HomeSection.YouTubeMusic to 980,
             HomeSection.DailyDiscover to 970,
             HomeSection.KeepListening to 960,
             HomeSection.AccountPlaylists to 950,
@@ -1001,8 +1002,6 @@ fun HomeScreen(
         list.sortedByDescending { section ->
           when (section) {
             is HomeSection.HomePageSection -> 900 - section.index
-            is HomeSection.SimilarRecommendation ->
-              if (section.index == 0) 975 else 30 - section.index
             else -> defaultOrder[section] ?: 0
           }
         }
@@ -1195,6 +1194,38 @@ fun HomeScreen(
                   }
                 }
             }
+            HomeSection.LikedSongs -> {
+              item(key = "liked_songs_title") {
+                NavigationTitle(
+                  title = stringResource(R.string.liked_songs),
+                  onClick = { navController.navigate("auto_playlist/liked") },
+                  endText = "See all",
+                  modifier = Modifier.animateItem()
+                )
+              }
+
+              item(key = "liked_songs_list") {
+                HomePagedRows(items = likedSongs.take(HomePagedSongs), modifier = Modifier.animateItem()) { song ->
+                  SongListItem(
+                    song = song,
+                    showInLibraryIcon = true,
+                    isActive = song.id == mediaMetadata?.id,
+                    isPlaying = isPlaying,
+                    isSwipeable = false,
+                    trailingContent = { StageRowMoreButton(onClick = { showLocalSongMenu(song) }) },
+                    modifier =
+                      Modifier.fillMaxWidth()
+                        .combinedClickable(
+                          onClick = { playLikedSongs(song) },
+                          onLongClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            showLocalSongMenu(song)
+                          },
+                        ),
+                  )
+                }
+              }
+            }
             HomeSection.AiRecommendations -> {
               aiRecommendedPlaylist?.let { pair ->
                 val (playlist, songs) = pair
@@ -1225,28 +1256,6 @@ fun HomeScreen(
               }
             }
             HomeSection.YouTubeMusic -> {
-              item(key = "youtube_music") {
-                val songs =
-                  remember(similarRecommendations, homePage) {
-                    (similarRecommendations.orEmpty().flatMap { it.items } +
-                        homePage?.sections.orEmpty().flatMap { it.items })
-                      .filterIsInstance<SongItem>()
-                      .distinctBy { it.id }
-                      .take(5)
-                  }
-                HomeSourceSection(
-                  title = stringResource(R.string.stage_youtube_music),
-                  iconRes = R.drawable.stage_youtube_music,
-                  iconTint = Color(0xFFFF4E45),
-                  songs = songs,
-                  connected = isLoggedIn,
-                  connectText = "Sign in to Google",
-                  onOpen = { navController.navigate(if (isLoggedIn) "account" else "login") },
-                  onShowMenu = ::showHomeSongMenu,
-                  onPlay = ::playHomeSong,
-                  modifier = Modifier.animateItem(),
-                )
-              }
               item(key = "youtube_trending_playlists") {
                 val playlists =
                   remember(communityPlaylists, homePage) {
@@ -1255,11 +1264,11 @@ fun HomeScreen(
                       .distinctBy { it.id }
                       .take(8)
                   }
-                HomeMovingCards(
+                HomeCardRow(
                   title = stringResource(R.string.stage_trending_playlists),
                   cards =
                     playlists.map { playlist ->
-                      HomeMovingCard(
+                      HomeRowCard(
                         title = playlist.title,
                         subtitle = playlist.author?.name,
                         imageUrl = playlist.thumbnail,
@@ -1279,7 +1288,7 @@ fun HomeScreen(
                       .flatMap { it.items }
                       .filterIsInstance<SongItem>()
                       .distinctBy { it.id }
-                      .take(5)
+                      .take(HomePagedSongs)
                   }
                 if (spotifyStatus != null) {
                   HomeSourceSection(
@@ -1301,12 +1310,12 @@ fun HomeScreen(
                 }
               }
               item(key = "spotify_popular_albums") {
-                HomeMovingCards(
+                HomeCardRow(
                   title = stringResource(R.string.stage_popular_albums),
                   cards =
                     spotifyAlbums.map { album ->
                       val artistNames = album.artists.joinToString { it.name }
-                      HomeMovingCard(
+                      HomeRowCard(
                         title = album.name,
                         subtitle = artistNames,
                         imageUrl = album.imageUrl,
@@ -1333,7 +1342,7 @@ fun HomeScreen(
                           .fillMaxWidth()
                           .height(236.dp)
                           .animateItem()
-                    ) { index, expansion, nextTitleAlpha ->
+                    ) { index, expansion, nextTitleAlpha, activate ->
                       val originalSong = songs.getOrNull(index) ?: return@StageHeroStrip
                       val localSong by
                         database.song(originalSong.id).collectAsState(initial = null)
@@ -1347,16 +1356,18 @@ fun HomeScreen(
                             .focusable()
                             .combinedClickable(
                               onClick = {
-                                if (isActive) {
-                                  playerConnection.togglePlayPause()
-                                } else if (localSong?.song?.isLocal == true) {
-                                  playerConnection.playQueue(
-                                    ListQueue(title = song.title, items = listOf(song.toMediaItem()))
-                                  )
-                                } else {
-                                  playerConnection.playQueue(
-                                    YouTubeQueue.radio(song)
-                                  )
+                                activate {
+                                  if (isActive) {
+                                    playerConnection.togglePlayPause()
+                                  } else if (localSong?.song?.isLocal == true) {
+                                    playerConnection.playQueue(
+                                      ListQueue(title = song.title, items = listOf(song.toMediaItem()))
+                                    )
+                                  } else {
+                                    playerConnection.playQueue(
+                                      YouTubeQueue.radio(song)
+                                    )
+                                  }
                                 }
                               },
                               onLongClick = {
@@ -1667,39 +1678,6 @@ fun HomeScreen(
                     }
                   }
                 }
-            }
-            is HomeSection.SimilarRecommendation -> {
-              val recommendation = similarRecommendations?.getOrNull(section.index)
-              recommendation?.let {
-                item(key = "similar_to_title_${section.index}") {
-                  NavigationTitle(
-                    title =
-                      stringResource(R.string.similar_to) + " " + recommendation.title.title,
-                    onClick = {
-                      val recTitle = recommendation.title
-                      when (recTitle) {
-                        is Song -> navController.navigate("album/${recTitle.album!!.id}")
-                        is Album -> navController.navigate("album/${recTitle.id}")
-                        is Artist -> navController.navigate("artist/${recTitle.id}")
-                        is Playlist -> {}
-                      }
-                    },
-                    modifier = Modifier.animateItem()
-                  )
-                }
-
-                item(key = "similar_to_list_${section.index}") {
-                  LazyRow(
-                    contentPadding = StageRowPadding,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.animateItem()
-                  ) {
-                    items(recommendation.items.distinctBy { it.id }, key = { it.id }) { item ->
-                      ytGridItem(item, 66.dp)
-                    }
-                  }
-                }
-              }
             }
             is HomeSection.HomePageSection -> {
               val sectionData = homePage?.sections?.getOrNull(section.index)

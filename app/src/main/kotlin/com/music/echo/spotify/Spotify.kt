@@ -548,6 +548,7 @@ object Spotify {
       total = totalCount,
       limit = pagingInfo?.int("limit") ?: limit,
       offset = pagingInfo?.int("offset") ?: offset,
+      rawCount = libraryData.arr("items")?.size ?: 0,
     )
   }
 
@@ -855,6 +856,7 @@ object Spotify {
       total = content.int("totalCount") ?: 0,
       limit = limit,
       offset = offset,
+      rawCount = content.arr("items")?.size ?: 0,
     )
   }
 
@@ -998,6 +1000,7 @@ object Spotify {
       total = tracksData.int("totalCount") ?: 0,
       limit = limit,
       offset = offset,
+      rawCount = tracksData.arr("items")?.size ?: 0,
     )
   }
 

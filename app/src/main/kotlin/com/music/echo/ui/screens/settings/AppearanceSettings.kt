@@ -103,7 +103,6 @@ import echo.music.iad1tya.constants.SwipeToRemoveSongKey
 import echo.music.iad1tya.constants.SwipeToSongKey
 import echo.music.iad1tya.constants.ThumbnailCornerRadiusKey
 import echo.music.iad1tya.constants.UseNewPlayerDesignKey
-import echo.music.iad1tya.constants.WavyPlayPauseKey
 import echo.music.iad1tya.ui.component.DefaultDialog
 import echo.music.iad1tya.ui.component.EnumDialog
 import echo.music.iad1tya.ui.component.IconButton
@@ -202,8 +201,6 @@ fun AppearanceSettings(
     rememberEnumPreference(SliderStyleKey, defaultValue = SliderStyle.SLIM)
   val (squigglySlider, onSquigglySliderChange) =
     rememberPreference(SquigglySliderKey, defaultValue = false)
-  val (wavyPlayPause, onWavyPlayPauseChange) =
-    rememberPreference(WavyPlayPauseKey, defaultValue = true)
   val (swipeThumbnail, onSwipeThumbnailChange) =
     rememberPreference(SwipeThumbnailKey, defaultValue = true)
   val (swipeSensitivity, onSwipeSensitivityChange) =
@@ -1060,16 +1057,6 @@ fun AppearanceSettings(
             },
             onClick = { showSliderOptionDialog = true }
           ),
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == stringResource(R.string.wavy_play_pause)),
-            icon = painterResource(R.drawable.play),
-            title = { Text(stringResource(R.string.wavy_play_pause)) },
-            description = { Text(stringResource(R.string.wavy_play_pause_desc)) },
-            trailingContent = {
-              StageSwitch(checked = wavyPlayPause, onCheckedChange = onWavyPlayPauseChange)
-            },
-            onClick = { onWavyPlayPauseChange(!wavyPlayPause) }
-          )
         )
     )
     Spacer(modifier = Modifier.height(16.dp))

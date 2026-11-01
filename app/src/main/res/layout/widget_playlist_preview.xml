@@ -70,8 +70,7 @@
                     android:layout_width="48dp"
                     android:layout_height="36dp"
                     android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"
-                    android:background="@drawable/widget_play_pill_bg">
+                    android:layout_marginEnd="4dp">
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"

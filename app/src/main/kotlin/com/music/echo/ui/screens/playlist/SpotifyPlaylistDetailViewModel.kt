@@ -1,28 +1,25 @@
 package echo.music.iad1tya.ui.screens.playlist
 
-import android.content.Context
-import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.media3.exoplayer.offline.DownloadRequest
-import androidx.media3.exoplayer.offline.DownloadService
 import com.music.echo.spotify.SpotifyPlaybackResolver
-import com.music.innertube.models.SongItem
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
-import echo.music.iad1tya.db.MusicDatabase
-import echo.music.iad1tya.models.toMediaMetadata
-import echo.music.iad1tya.playback.ExoDownloadService
+import echo.music.iad1tya.playback.SpotifyDownloadQueue
+import echo.music.iad1tya.playback.SpotifyQueue
+import echo.music.iad1tya.playback.queues.Queue
 import echo.music.iad1tya.spotify.Spotify
 import echo.music.iad1tya.spotify.models.SpotifyTrack
 import echo.music.iad1tya.spotifyimport.SpotifyImportRepository
 import echo.music.iad1tya.utils.reportException
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -37,6 +34,7 @@ data class SpotifyPlaylistDetailUiState(
   val resolvingTrackId: String? = null,
   val downloadSongIds: List<String> = emptyList(),
   val isPreparingDownload: Boolean = false,
+  val isDownloadStopped: Boolean = false,
   val error: String? = null,
 )
 
@@ -47,15 +45,12 @@ constructor(
   savedStateHandle: SavedStateHandle,
   private val spotifyImportRepository: SpotifyImportRepository,
   private val spotifyPlaybackResolver: SpotifyPlaybackResolver,
-  private val database: MusicDatabase,
-  @ApplicationContext private val context: Context,
+  private val spotifyDownloadQueue: SpotifyDownloadQueue,
 ) : ViewModel() {
 
   private val playlistId: String = savedStateHandle.get<String>("playlistId").orEmpty()
   private val initialTitle: String = savedStateHandle.get<String>("title") ?: "Playlist"
   private val initialCover: String? = savedStateHandle.get<String>("cover")?.takeIf { it.isNotBlank() }
-
-  private val downloadPrefs = context.getSharedPreferences("spotify_downloads", Context.MODE_PRIVATE)
 
   private val _uiState = MutableStateFlow(
     SpotifyPlaylistDetailUiState(
@@ -63,13 +58,33 @@ constructor(
       title = initialTitle,
       coverUrl = initialCover,
       isLoading = true,
-      downloadSongIds = downloadPrefs.getStringSet(playlistId, emptySet()).orEmpty().toList(),
     )
   )
   val uiState: StateFlow<SpotifyPlaylistDetailUiState> = _uiState.asStateFlow()
 
+  private var pendingDownload: Job? = null
+
   init {
+    spotifyDownloadQueue.load(playlistId)
     loadTracks()
+    viewModelScope.launch {
+      combine(
+          spotifyDownloadQueue.songIds,
+          spotifyDownloadQueue.preparing,
+          spotifyDownloadQueue.stopped,
+        ) { songIds, preparing, stopped ->
+          Triple(songIds[playlistId].orEmpty().toList(), playlistId in preparing, playlistId in stopped)
+        }
+        .collect { (ids, preparing, stopped) ->
+          _uiState.update {
+            it.copy(
+              downloadSongIds = ids,
+              isPreparingDownload = preparing,
+              isDownloadStopped = stopped,
+            )
+          }
+        }
+    }
   }
 
   fun refresh() {
@@ -92,14 +107,14 @@ constructor(
             val page = Spotify.likedSongs(limit = PAGE_SIZE, offset = offset).getOrThrow()
             tracksList.addAll(page.items.map { it.track })
             total = page.total
-            pageSize = page.items.size
+            pageSize = page.rawCount
           } else {
             val page =
               Spotify.playlistTracks(playlistId = playlistId, limit = PAGE_SIZE, offset = offset)
                 .getOrThrow()
             tracksList.addAll(page.items.mapNotNull { it.track })
             total = page.total
-            pageSize = page.items.size
+            pageSize = page.rawCount
           }
           offset += pageSize
           _uiState.update { it.copy(tracks = tracksList.toList(), totalCount = total) }
@@ -125,72 +140,93 @@ constructor(
     }
   }
 
-  fun downloadAll(onError: () -> Unit) {
+  /** Waits for the track list if it is still loading, then hands it to the download queue. */
+  fun downloadAll(onFinished: (queued: Int, missing: Int) -> Unit) {
     if (_uiState.value.isPreparingDownload) return
-    viewModelScope.launch(Dispatchers.IO) {
-      _uiState.update { it.copy(isPreparingDownload = true) }
-      val queuedIds = mutableListOf<String>()
-      try {
-        val songs =
-          spotifyPlaybackResolver
-            .resolveAndFilter(_uiState.value.tracks, hideExplicit = false)
-            .distinctBy { it.id }
-        songs.forEach { song ->
-          database.withTransaction { insert(song.toMediaMetadata()) }
-          val downloadRequest =
-            DownloadRequest.Builder(song.id, song.id.toUri())
-              .setCustomCacheKey(song.id)
-              .setData(song.title.toByteArray())
-              .build()
-          DownloadService.sendAddDownload(
-            context,
-            ExoDownloadService::class.java,
-            downloadRequest,
-            false,
-          )
-          queuedIds.add(song.id)
-        }
-      } catch (e: Exception) {
-        reportException(e)
-      } finally {
-        saveDownloadIds(queuedIds)
-        _uiState.update { it.copy(isPreparingDownload = false, downloadSongIds = queuedIds.toList()) }
+    _uiState.update { it.copy(isPreparingDownload = true) }
+    pendingDownload =
+      viewModelScope.launch {
+        val tracks = _uiState.first { !it.isLoading }.tracks
+        spotifyDownloadQueue.download(playlistId, tracks, onFinished)
+        syncPreparingDownload()
       }
-      if (queuedIds.isEmpty()) withContext(Dispatchers.Main) { onError() }
-    }
   }
 
-  private fun saveDownloadIds(ids: List<String>) {
-    downloadPrefs.edit().putStringSet(playlistId, ids.toSet()).apply()
+  /** Stops what is still in progress and keeps the songs that have finished. */
+  fun cancelDownloads() {
+    pendingDownload?.cancel()
+    spotifyDownloadQueue.cancel(playlistId)
+    syncPreparingDownload()
   }
 
   fun removeDownloads() {
-    _uiState.value.downloadSongIds.forEach { id ->
-      DownloadService.sendRemoveDownload(context, ExoDownloadService::class.java, id, false)
-    }
-    saveDownloadIds(emptyList())
-    _uiState.update { it.copy(downloadSongIds = emptyList()) }
+    pendingDownload?.cancel()
+    spotifyDownloadQueue.remove(playlistId)
+    syncPreparingDownload()
   }
 
-  fun playTrack(
-    track: SpotifyTrack,
-    onSuccess: (SongItem) -> Unit,
+  private fun syncPreparingDownload() {
+    _uiState.update {
+      it.copy(isPreparingDownload = playlistId in spotifyDownloadQueue.preparing.value)
+    }
+  }
+
+  /** Plays the list in order from [startIndex], skipping ahead past tracks YouTube doesn't have. */
+  fun playFrom(
+    startIndex: Int,
+    shuffle: Boolean,
+    onSuccess: (Queue) -> Unit,
     onError: () -> Unit = {},
   ) {
-    viewModelScope.launch {
-      _uiState.update { it.copy(resolvingTrackId = track.id) }
-      val resolved = withContext(Dispatchers.IO) {
-        spotifyPlaybackResolver.resolveTrack(track)
-      }
-      _uiState.update { it.copy(resolvingTrackId = null) }
+    if (!shuffle) {
+      play({ _uiState.value.tracks }, startIndex, onSuccess, onError)
+      return
+    }
+    // The queue only matches a few songs ahead, so with shuffle on the order is drawn up here.
+    val picked = _uiState.value.tracks.getOrNull(startIndex) ?: return
+    play(shuffledOrder(picked), 0, onSuccess, onError)
+  }
 
-      if (resolved != null) {
-        onSuccess(resolved)
-      } else {
-        onError()
+  fun playShuffled(onSuccess: (Queue) -> Unit, onError: () -> Unit = {}) {
+    play(shuffledOrder(), 0, onSuccess, onError)
+  }
+
+  /** A random order that takes in tracks loaded later, without moving those it already holds. */
+  private fun shuffledOrder(first: SpotifyTrack? = null): () -> List<SpotifyTrack> {
+    val order = ArrayList<SpotifyTrack>(listOfNotNull(first))
+    val seen = order.mapTo(HashSet()) { it.id }
+    return {
+      synchronized(order) {
+        order += _uiState.value.tracks.filter { seen.add(it.id) }.shuffled()
+        order.toList()
       }
+    }
+  }
+
+  private fun play(
+    tracks: () -> List<SpotifyTrack>,
+    startIndex: Int,
+    onSuccess: (Queue) -> Unit,
+    onError: () -> Unit,
+  ) {
+    val list = tracks()
+    val startTrack = list.getOrNull(startIndex) ?: return
+    viewModelScope.launch {
+      _uiState.update { it.copy(resolvingTrackId = startTrack.id) }
+      val queue =
+        withContext(Dispatchers.IO) {
+          (startIndex until minOf(startIndex + MAX_START_ATTEMPTS, list.size)).firstNotNullOfOrNull {
+            index ->
+            spotifyPlaybackResolver.resolveTrack(list[index])?.let { song ->
+              SpotifyQueue(_uiState.value.title, tracks, index + 1, song, spotifyPlaybackResolver)
+            }
+          }
+        }
+      _uiState.update { it.copy(resolvingTrackId = null) }
+      if (queue != null) onSuccess(queue) else onError()
     }
   }
 }
 
+private const val MAX_START_ATTEMPTS = 5
 private const val PAGE_SIZE = 50

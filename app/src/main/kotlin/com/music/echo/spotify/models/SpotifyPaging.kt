@@ -8,6 +8,7 @@
 package echo.music.iad1tya.spotify.models
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 @Serializable
 data class SpotifyPaging<T>(
@@ -18,4 +19,6 @@ data class SpotifyPaging<T>(
   val next: String? = null,
   val previous: String? = null,
   val href: String? = null,
+  /** How many entries the response held. [items] can be shorter once unusable ones are dropped. */
+  @Transient val rawCount: Int = items.size,
 )

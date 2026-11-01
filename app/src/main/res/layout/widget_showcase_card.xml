@@ -165,8 +165,7 @@
         <FrameLayout
             android:id="@+id/widget_like_button"
             android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:background="@drawable/widget_circle_button_bg">
+            android:layout_height="44dp">
 
             <ImageView
                 android:id="@+id/widget_like_icon"
@@ -186,8 +185,7 @@
         <FrameLayout
             android:id="@+id/widget_prev_button"
             android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:background="@drawable/widget_circle_button_bg">
+            android:layout_height="44dp">
 
             <ImageView
                 android:layout_width="22dp"
@@ -209,12 +207,6 @@
             android:layout_height="54dp">
 
             <ImageView
-                android:id="@+id/widget_play_bg"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:src="@drawable/widget_circle_play_accent_bg" />
-
-            <ImageView
                 android:id="@+id/widget_play_pause"
                 android:layout_width="28dp"
                 android:layout_height="28dp"
@@ -232,8 +224,7 @@
         <FrameLayout
             android:id="@+id/widget_next_button"
             android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:background="@drawable/widget_circle_button_bg">
+            android:layout_height="44dp">
 
             <ImageView
                 android:layout_width="22dp"
@@ -252,8 +243,7 @@
         <FrameLayout
             android:id="@+id/widget_options_button"
             android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:background="@drawable/widget_circle_button_bg">
+            android:layout_height="44dp">
 
             <ImageView
                 android:layout_width="20dp"

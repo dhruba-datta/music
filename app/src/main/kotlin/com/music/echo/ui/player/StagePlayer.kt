@@ -314,14 +314,14 @@ internal fun StageDock(
       onClick = onUpNext,
     )
     StageDockAction(
-      icon = R.drawable.lyrics,
+      icon = R.drawable.stage_lyrics,
       label = stringResource(R.string.lyrics),
       active = lyricsActive,
       color = color,
       onClick = onLyrics,
     )
     StageDockAction(
-      icon = R.drawable.bedtime,
+      icon = R.drawable.stage_moon,
       label = "Timer",
       active = timerActive,
       enabled = timerEnabled,
@@ -329,7 +329,7 @@ internal fun StageDock(
       onClick = onTimer,
     )
     StageDockAction(
-      icon = R.drawable.playlist_add,
+      icon = R.drawable.stage_playlist_add,
       label = "Playlist",
       color = color,
       onClick = onPlaylist,

@@ -433,21 +433,20 @@ fun LocalPlaylistScreen(
   LaunchedEffect(reorderableState.isAnyItemDragging) {
     if (!reorderableState.isAnyItemDragging) {
       dragInfo?.let { (from, to) ->
-        database.transaction { move(viewModel.playlistId, from, to) }
+        val browseId = viewModel.playlist.value?.playlist?.browseId
+        viewModel.viewModelScope.launch(Dispatchers.IO) {
+          // Read before moving: from and to are positions in the old order.
+          val playlistSongMap =
+            if (browseId != null) database.playlistSongMaps(viewModel.playlistId, 0)
+            else emptyList()
 
-        if (viewModel.playlist.value?.playlist?.browseId != null) {
-          viewModel.viewModelScope.launch(Dispatchers.IO) {
-            val playlistSongMap = database.playlistSongMaps(viewModel.playlistId, 0)
-            val successorIndex = if (from > to) to else to + 1
-            val successorSetVideoId = playlistSongMap.getOrNull(successorIndex)?.setVideoId
+          database.transaction { move(viewModel.playlistId, from, to) }
 
-            playlistSongMap.getOrNull(from)?.setVideoId?.let { setVideoId ->
-              YouTube.moveSongPlaylist(
-                viewModel.playlist.value?.playlist?.browseId!!,
-                setVideoId,
-                successorSetVideoId
-              )
-            }
+          val successorIndex = if (from > to) to else to + 1
+          val successorSetVideoId = playlistSongMap.getOrNull(successorIndex)?.setVideoId
+
+          playlistSongMap.getOrNull(from)?.setVideoId?.let { setVideoId ->
+            YouTube.moveSongPlaylist(browseId!!, setVideoId, successorSetVideoId)
           }
         }
 

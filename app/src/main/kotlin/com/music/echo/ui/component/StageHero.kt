@@ -53,6 +53,7 @@ import androidx.media3.exoplayer.offline.Download
 import coil3.compose.AsyncImage
 import echo.music.iad1tya.R
 import echo.music.iad1tya.constants.AppBarHeight
+import echo.music.iad1tya.ui.utils.resize
 
 private val HeroGutter = 22.dp
 private val HeroActionSize = 44.dp
@@ -61,6 +62,9 @@ private val HeroPlaySize = 52.dp
 private val HeroTitleOffset = 52.dp
 private val HeroActionsOffset = 58.dp
 private val HeroBottomPadding = 14.dp
+
+/** The size `ItemThumbnail` loads, so the hero can reuse what a list already fetched. */
+private const val HeroPreviewSize = 544
 
 /**
  * Stage collection header: full-width artwork that runs under the status bar and top bar, a fade
@@ -172,21 +176,32 @@ fun StageHero(
   }
 }
 
-/** A cropped [thumbnailUrl] for the [StageHero] artwork slot, or a plain tile when there is none. */
+/**
+ * A cropped [thumbnailUrl] for the [StageHero] artwork slot, or a plain tile when there is none.
+ *
+ * The list thumbnail is usually cached already, so it fills the hero at once and the full-size image
+ * fades in over it, instead of the page sitting black until that image arrives.
+ */
 @Composable
 fun BoxScope.StageHeroArtwork(thumbnailUrl: String?) {
-  if (thumbnailUrl.isNullOrEmpty()) {
-    Box(
-      modifier = Modifier.matchParentSize().background(MaterialTheme.colorScheme.surfaceVariant)
-    )
-  } else {
+  Box(modifier = Modifier.matchParentSize().background(MaterialTheme.colorScheme.surfaceVariant))
+  if (thumbnailUrl.isNullOrEmpty()) return
+
+  val preview = thumbnailUrl.resize(HeroPreviewSize, HeroPreviewSize)
+  if (preview != thumbnailUrl) {
     AsyncImage(
-      model = thumbnailUrl,
+      model = preview,
       contentDescription = null,
       contentScale = ContentScale.Crop,
       modifier = Modifier.matchParentSize(),
     )
   }
+  AsyncImage(
+    model = thumbnailUrl,
+    contentDescription = null,
+    contentScale = ContentScale.Crop,
+    modifier = Modifier.matchParentSize(),
+  )
 }
 
 /** Round action on the hero's row. Use for anything that is not a plain icon. */

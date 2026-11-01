@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -22,6 +23,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
@@ -45,25 +47,45 @@ private fun lerp(values: List<Float>, position: Float): Float {
  * Home's card strip: a thin card before the wide active card and one card after it.
  *
  * [item] gets the card index, how open the card is, from 0 (a peek) to 1 (active), and how visible
- * the small title of the next card should be.
+ * the small title of the next card should be. Its last argument runs a tap's action, sliding the
+ * card into the active spot first if it is only peeking.
  */
 @Composable
 fun StageHeroStrip(
   count: Int,
   modifier: Modifier = Modifier,
   autoAdvanceMillis: Long = 3500,
-  item: @Composable BoxScope.(index: Int, expansion: Float, nextTitleAlpha: Float) -> Unit,
+  item:
+    @Composable
+    BoxScope.(
+      index: Int,
+      expansion: Float,
+      nextTitleAlpha: Float,
+      activate: (action: () -> Unit) -> Unit,
+    ) -> Unit,
 ) {
   val position = remember { Animatable(if (count > 1) 1f else 0f) }
   val scope = rememberCoroutineScope()
   var dragging by remember { mutableStateOf(false) }
+  var activations by remember { mutableIntStateOf(0) }
   val looping = count >= MIN_LOOPING_CARDS
 
   fun settled(target: Float): Float =
     if (looping) target else target.coerceIn(0f, (count - 1).coerceAtLeast(0).toFloat())
 
+  fun distanceTo(index: Int): Float {
+    val distance = index - position.value
+    if (!looping) return distance
+    val wrapped = ((distance % count) + count) % count
+    return if (wrapped > count / 2f) wrapped - count else wrapped
+  }
+
   LaunchedEffect(count) {
     if (!looping) position.snapTo(settled(position.value))
+  }
+
+  // Restarted by each activation, so the card just tapped gets its full time in the active spot.
+  LaunchedEffect(count, activations) {
     while (true) {
       delay(autoAdvanceMillis)
       if (!dragging && count > 1) {
@@ -116,11 +138,7 @@ fun StageHeroStrip(
         }
     ) {
       for (index in 0 until count) {
-        var distance = index - position.value
-        if (looping) {
-          distance = ((distance % count) + count) % count
-          if (distance > count / 2f) distance -= count
-        }
+        val distance = distanceTo(index)
         if (distance < -2f || distance > 2f) continue
 
         val slot = distance + 2f
@@ -133,7 +151,18 @@ fun StageHeroStrip(
             modifier =
               Modifier.offset(x = lerp(xValues, slot).dp).width(width.dp).fillMaxHeight()
           ) {
-            item(index, expansion, (1f - expansion) * distance.coerceIn(0f, 1f))
+            item(index, expansion, (1f - expansion) * distance.coerceIn(0f, 1f)) { action ->
+              val offset = distanceTo(index)
+              if (abs(offset) < 0.5f) {
+                action()
+              } else {
+                activations++
+                scope.launch {
+                  position.animateTo((position.value + offset).roundToInt().toFloat())
+                  action()
+                }
+              }
+            }
           }
         }
       }

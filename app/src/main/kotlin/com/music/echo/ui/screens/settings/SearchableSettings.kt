@@ -802,12 +802,6 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
       "settings/player"
     ),
     SearchableSetting(
-      stringResource(R.string.persistent_shuffle_title),
-      stringResource(R.string.persistent_shuffle_title_desc),
-      "Player and audio",
-      "settings/player"
-    ),
-    SearchableSetting(
       stringResource(R.string.playback_logs),
       stringResource(R.string.playback_logs_desc),
       "Content",
@@ -1175,12 +1169,6 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
       "settings/appearance"
     ),
     SearchableSetting(
-      stringResource(R.string.wavy_play_pause),
-      stringResource(R.string.wavy_play_pause_desc),
-      "Appearance",
-      "settings/appearance"
-    ),
-    SearchableSetting(
       stringResource(R.string.yt_sync),
       stringResource(R.string.yt_sync_desc),
       "Account",
@@ -1337,12 +1325,6 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
     ),
     SearchableSetting(
       stringResource(R.string.google_cast_description),
-      null,
-      "Player and audio",
-      "settings/player"
-    ),
-    SearchableSetting(
-      stringResource(R.string.persistent_shuffle_desc),
       null,
       "Player and audio",
       "settings/player"

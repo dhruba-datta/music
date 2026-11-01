@@ -4,7 +4,11 @@
     "Local Taste Engine (Slice 2): Multi-source Last.fm recommendation pipeline (similar tracks, similar artists, top genres) with 1-hour taste snapshot caching and additive scoring bonuses",
     "Local Taste Engine (Slice 3): Genre awareness with additive scoring bonus (+1.0), YouTube taste signals extraction, cross-screen generation status synchronization, and 'From Taste' quick action",
     "Music Flow: optional full-screen vertical swipe discovery (Home shortcut) that plays personalized songs through the existing player, with like/playlist/share/lyrics actions, Not interested / Less like this feedback, Restore previous queue, offline downloaded-song fallback and settings under Settings → Music Flow",
-    "Android Auto: optional autoplay of the restored queue on automotive connect (Settings → Player, default off) and Home browse node with YouTube Home sections, suggested and recent content alongside local library"
+    "Android Auto: optional autoplay of the restored queue on automotive connect (Settings → Player, default off) and Home browse node with YouTube Home sections, suggested and recent content alongside local library",
+    "Home: Liked, Spotify and YouTube sections after Speed Dial, sideways paging for song sections, fixed-width playlist and album cards, and tapping a side card activates it before playing",
+    "Controls: one outline icon style across the player, notifications and widgets, with no circular backgrounds",
+    "Shuffle: the last on or off choice now carries across every playlist",
+    "Music Flow: reliable swipes in all directions, sync with the bottom player and a cleaner button layout"
   ],
   "bug_fixes": [
     "Stats: fix NullPointerException crash when opening Stats by making SongWithStats thumbnailUrl and play counts safely nullable, removing unsafe forced unwraps, and guarding date sequence boundaries (#646)",
@@ -19,7 +23,16 @@
     "Lyrics: time out stalled providers so other lyrics sources can be tried",
     "Android Auto: deliver artwork as signed content URIs, cache cluster covers, stabilize Home shelves across reconnects, and fall back to hqdefault when maxresdefault 404s (#677)",
     "Playback: fix downloaded track playback mismatch when filtering explicit/video songs, and recognize completed offline downloads when contentLength is unset (#666, #674)",
-    "Playlists: allow removing duplicate songs from a playlist directly from the 'Add to playlist' dialog and fix premature dialog dismissal (#655, #675)"
+    "Playlists: allow removing duplicate songs from a playlist directly from the 'Add to playlist' dialog and fix premature dialog dismissal (#655, #675)",
+    "Playlists: play in list order when shuffle is off, and fix the black area on playlist heroes",
+    "Downloads: make Spotify list downloads work, keep finished songs when cancelling, and keep songs shared with other lists",
+    "Playback: stop slow queue requests and Start radio from overriding newer actions, and keep long shuffled queues from running out or repeating",
+    "Security: leave sign-ins and API keys out of backup zips and Android backup",
+    "Backup: refuse to restore a damaged or foreign database",
+    "Sync: stop partial YouTube results or signing out from removing likes and library songs, and send the correct move when reordering synced playlists",
+    "Spotify import: fix playlists and playlist lists stopping early, and stop failed searches from shrinking a playlist",
+    "Listen Together: fix reconnect crashes, and block guests from controlling playback in the floating mini player",
+    "Fix the crash when creating a synced playlist offline, launch actions repeating after rotation, and What's New reading from the wrong repository"
   ],
   "contributors": []
 }

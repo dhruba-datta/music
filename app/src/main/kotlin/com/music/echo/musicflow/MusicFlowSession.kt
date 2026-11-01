@@ -22,8 +22,8 @@ data class MusicFlowFeedState(
 )
 
 /**
- * Process-scoped Music Flow feed. Pages are append-only so a page index, once shown, always maps
- * to the same song for the lifetime of the session; swiping back is therefore exact history.
+ * Process-scoped Music Flow feed. Pages only ever grow after the selected one, so everything already
+ * swiped past keeps its index for the lifetime of the session and swiping back is exact history.
  */
 @Singleton
 class MusicFlowSession @Inject constructor(private val source: MusicFlowFeedSource) {
@@ -137,6 +137,23 @@ class MusicFlowSession @Inject constructor(private val source: MusicFlowFeedSour
     _state.update { current ->
       if (current.items.isEmpty()) current
       else current.copy(selectedIndex = index.coerceIn(0, current.items.lastIndex))
+    }
+  }
+
+  /** Moves to [item], placing it right after the current page if the feed doesn't have it yet. */
+  fun showNowPlaying(item: MusicFlowItem) {
+    markSeen(item)
+    _state.update { current ->
+      val existing = current.items.indexOfFirst { it.songId == item.songId }
+      if (existing >= 0) {
+        current.copy(selectedIndex = existing)
+      } else {
+        val insertAt = (current.selectedIndex + 1).coerceAtMost(current.items.size)
+        current.copy(
+          items = current.items.take(insertAt) + item + current.items.drop(insertAt),
+          selectedIndex = insertAt,
+        )
+      }
     }
   }
 

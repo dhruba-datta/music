@@ -58,7 +58,6 @@ import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -452,7 +451,7 @@ fun Queue(
                 horizontalArrangement = Arrangement.Center
               ) {
                 Icon(
-                  painter = painterResource(id = R.drawable.sleep_timer),
+                  painter = painterResource(id = R.drawable.stage_moon),
                   contentDescription = null,
                   modifier = Modifier.size(30.dp)
                 )
@@ -638,7 +637,7 @@ fun Queue(
             modifier = Modifier.fillMaxWidth().padding(start = 12.dp, top = 4.dp, end = 12.dp),
           ) {
             StageToggleIcon(
-              icon = if (locked) R.drawable.lock else R.drawable.lock_open,
+              icon = if (locked) R.drawable.stage_lock else R.drawable.stage_lock_open,
               contentDescription =
                 stringResource(if (locked) R.string.unlock_queue else R.string.lock_queue),
               active = false,
@@ -649,7 +648,7 @@ fun Queue(
               onClick = { locked = !locked },
             )
             StageToggleIcon(
-              icon = R.drawable.radio,
+              icon = R.drawable.stage_radio,
               contentDescription = stringResource(R.string.start_an_radio),
               active = false,
               enabled = !isListenTogetherGuest,
@@ -667,7 +666,7 @@ fun Queue(
               },
             )
             StageToggleIcon(
-              icon = R.drawable.shuffle,
+              icon = R.drawable.stage_shuffle,
               contentDescription = stringResource(R.string.shuffle),
               active = shuffleModeEnabled,
               enabled = !isListenTogetherGuest,
@@ -678,8 +677,8 @@ fun Queue(
             )
             StageToggleIcon(
               icon =
-                if (repeatMode == Player.REPEAT_MODE_ONE) R.drawable.repeat_one
-                else R.drawable.repeat,
+                if (repeatMode == Player.REPEAT_MODE_ONE) R.drawable.stage_repeat_one
+                else R.drawable.stage_repeat,
               contentDescription = stringResource(R.string.repeat),
               active = repeatMode != Player.REPEAT_MODE_OFF,
               enabled = !isListenTogetherGuest,
@@ -690,7 +689,7 @@ fun Queue(
             )
             val isLiked = currentSong?.song?.liked == true
             StageToggleIcon(
-              icon = if (isLiked) R.drawable.favorite else R.drawable.favorite_border,
+              icon = if (isLiked) R.drawable.favorite else R.drawable.stage_heart,
               contentDescription =
                 stringResource(if (isLiked) R.string.action_remove_like else R.string.action_like),
               active = false,
@@ -701,7 +700,7 @@ fun Queue(
               onClick = playerConnection::toggleLike,
             )
             StageHeaderButton(
-              icon = R.drawable.more_vert,
+              icon = R.drawable.stage_more_row,
               contentDescription = stringResource(R.string.more_options),
               color = iconColor,
               onClick = {
@@ -724,7 +723,7 @@ fun Queue(
             val hasUpcomingSongs =
               currentWindowIndex != -1 && currentWindowIndex < queueWindows.lastIndex
             StageToggleIcon(
-              icon = R.drawable.delete,
+              icon = R.drawable.stage_delete,
               contentDescription = stringResource(R.string.clear_queue),
               active = false,
               enabled = !locked && !isListenTogetherGuest && !inSelectMode && hasUpcomingSongs,
@@ -773,7 +772,7 @@ fun Queue(
             tooltip = { PlainTooltip { Text(likeDescription) } },
             state = rememberTooltipState(),
           ) {
-            FilledTonalIconButton(
+            IconButton(
               onClick = playerConnection::toggleLike,
               modifier = Modifier.padding(end = 8.dp)
             ) {
@@ -781,7 +780,7 @@ fun Queue(
                 painter =
                   painterResource(
                     if (currentSong?.song?.liked == true) R.drawable.favorite
-                    else R.drawable.favorite_border
+                    else R.drawable.stage_heart
                   ),
                 contentDescription = likeDescription,
                 tint =
@@ -800,12 +799,12 @@ fun Queue(
             tooltip = { PlainTooltip { Text(lockDescription) } },
             state = rememberTooltipState(),
           ) {
-            FilledTonalIconButton(
+            IconButton(
               onClick = { locked = !locked },
               modifier = Modifier.padding(end = 8.dp)
             ) {
               Icon(
-                painter = painterResource(if (locked) R.drawable.lock else R.drawable.lock_open),
+                painter = painterResource(if (locked) R.drawable.stage_lock else R.drawable.stage_lock_open),
                 contentDescription = lockDescription,
               )
             }
@@ -818,7 +817,7 @@ fun Queue(
             tooltip = { PlainTooltip { Text(moreDescription) } },
             state = rememberTooltipState(),
           ) {
-            FilledTonalIconButton(
+            IconButton(
               onClick = {
                 menuState.show {
                   PlayerMenu(
@@ -837,7 +836,7 @@ fun Queue(
               }
             ) {
               Icon(
-                painter = painterResource(R.drawable.more_vert),
+                painter = painterResource(R.drawable.stage_more_row),
                 contentDescription = moreDescription,
               )
             }
@@ -864,7 +863,7 @@ fun Queue(
             modifier = Modifier.weight(1f).height(56.dp),
           ) {
             Icon(
-              painter = painterResource(R.drawable.shuffle),
+              painter = painterResource(R.drawable.stage_shuffle),
               contentDescription = null,
               modifier = Modifier.size(22.dp)
             )
@@ -895,9 +894,9 @@ fun Queue(
               painter =
                 painterResource(
                   when (repeatMode) {
-                    Player.REPEAT_MODE_ALL -> R.drawable.repeat
-                    Player.REPEAT_MODE_ONE -> R.drawable.repeat_one
-                    else -> R.drawable.repeat
+                    Player.REPEAT_MODE_ALL -> R.drawable.stage_repeat
+                    Player.REPEAT_MODE_ONE -> R.drawable.stage_repeat_one
+                    else -> R.drawable.stage_repeat
                   }
                 ),
               contentDescription = null,
@@ -936,7 +935,7 @@ fun Queue(
           ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
               Icon(
-                painter = painterResource(R.drawable.radio),
+                painter = painterResource(R.drawable.stage_radio),
                 contentDescription = null,
                 modifier = Modifier.size(22.dp)
               )
@@ -987,12 +986,12 @@ fun Queue(
                 tooltip = { PlainTooltip { Text(stringResource(R.string.clear_queue)) } },
                 state = rememberTooltipState(),
               ) {
-                FilledTonalIconButton(
+                IconButton(
                   onClick = { showClearQueueDialog = true },
                   modifier = Modifier.size(36.dp)
                 ) {
                   Icon(
-                    painter = painterResource(R.drawable.clear_all),
+                    painter = painterResource(R.drawable.stage_clear_all),
                     contentDescription = stringResource(R.string.clear_queue),
                     modifier = Modifier.size(20.dp)
                   )
@@ -1027,7 +1026,7 @@ fun Queue(
               onClick = onExitSelectionMode,
             ) {
               Icon(
-                painter = painterResource(R.drawable.close),
+                painter = painterResource(R.drawable.stage_close),
                 contentDescription = null,
               )
             }
@@ -1060,7 +1059,7 @@ fun Queue(
               },
             ) {
               Icon(
-                painter = painterResource(R.drawable.more_vert),
+                painter = painterResource(R.drawable.stage_more_row),
                 contentDescription = null,
                 tint = LocalContentColor.current,
               )
@@ -1213,7 +1212,7 @@ fun Queue(
                     leading = {
                       if (!inSelectMode && !locked && !isListenTogetherGuest) {
                         Icon(
-                          painter = painterResource(R.drawable.drag_handle),
+                          painter = painterResource(R.drawable.stage_drag_handle),
                           contentDescription = null,
                           tint = MaterialTheme.colorScheme.onSurfaceVariant,
                           modifier = Modifier.draggableHandle().size(20.dp),
@@ -1228,7 +1227,7 @@ fun Queue(
                         )
                       } else if (!isListenTogetherGuest) {
                         StageHeaderButton(
-                          icon = R.drawable.more_vert,
+                          icon = R.drawable.stage_more_row,
                           contentDescription = stringResource(R.string.more_options),
                           color = MaterialTheme.colorScheme.onSurface,
                           onClick = onRowMenu,
@@ -1262,14 +1261,14 @@ fun Queue(
                         if (!isListenTogetherGuest) {
                           IconButton(onClick = onRowMenu) {
                             Icon(
-                              painter = painterResource(R.drawable.more_vert),
+                              painter = painterResource(R.drawable.stage_more_row),
                               contentDescription = null,
                             )
                           }
                         }
                         if (!locked && !isListenTogetherGuest) {
                           Icon(
-                            painter = painterResource(R.drawable.drag_handle),
+                            painter = painterResource(R.drawable.stage_drag_handle),
                             contentDescription = null,
                             modifier = Modifier.draggableHandle().padding(12.dp)
                           )
@@ -1343,13 +1342,13 @@ fun Queue(
                   trailing = {
                     if (!isListenTogetherGuest) {
                       StageHeaderButton(
-                        icon = R.drawable.play,
+                        icon = R.drawable.stage_play,
                         contentDescription = stringResource(R.string.play_next),
                         color = MaterialTheme.colorScheme.onSurface,
                         onClick = { playerConnection.service.playNextAutomix(item, index) },
                       )
                       StageHeaderButton(
-                        icon = R.drawable.queue_music,
+                        icon = R.drawable.stage_queue,
                         contentDescription = stringResource(R.string.add_to_queue),
                         color = MaterialTheme.colorScheme.onSurface,
                         onClick = { playerConnection.service.addToQueueAutomix(item, index) },
@@ -1380,7 +1379,7 @@ fun Queue(
                         },
                       ) {
                         Icon(
-                          painter = painterResource(R.drawable.playlist_play),
+                          painter = painterResource(R.drawable.stage_queue),
                           contentDescription = null,
                         )
                       }
@@ -1393,7 +1392,7 @@ fun Queue(
                         },
                       ) {
                         Icon(
-                          painter = painterResource(R.drawable.queue_music),
+                          painter = painterResource(R.drawable.stage_queue),
                           contentDescription = null,
                         )
                       }
@@ -1432,7 +1431,7 @@ fun Queue(
       onDismiss = { showClearQueueDialog = false },
       icon = {
         Icon(
-          painter = painterResource(R.drawable.clear_all),
+          painter = painterResource(R.drawable.stage_clear_all),
           contentDescription = null,
           modifier = Modifier.size(24.dp)
         )

@@ -14,6 +14,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
@@ -74,18 +75,15 @@ import echo.music.iad1tya.ui.component.shimmer.TextPlaceholder
 import echo.music.iad1tya.ui.screens.ambient.AmbientCanvasBackground
 import echo.music.iad1tya.ui.utils.resize
 
+private val FlowActionSize = 46.dp
+
 data class MusicFlowPageActions(
   val onTogglePlay: () -> Unit,
   val onLike: () -> Unit,
-  val onAddToPlaylist: () -> Unit,
   val onLyrics: () -> Unit,
-  val onShare: () -> Unit,
   val onDownload: () -> Unit,
   val onMore: () -> Unit,
   val onArtist: (String) -> Unit,
-  val onSeek: (Float) -> Unit,
-  val onPrevious: () -> Unit = {},
-  val onNext: () -> Unit = {},
 )
 
 @Composable
@@ -185,21 +183,12 @@ fun MusicFlowPage(
       exit = fadeOut() + scaleOut(targetScale = 0.8f),
       modifier = Modifier.align(Alignment.Center),
     ) {
-      Box(
-        contentAlignment = Alignment.Center,
-        modifier =
-          Modifier.size(76.dp)
-            .clip(CircleShape)
-            .background(Color.Black.copy(alpha = 0.55f))
-            .border(1.5.dp, Color.White.copy(alpha = 0.30f), CircleShape),
-      ) {
-        Icon(
-          painter = painterResource(R.drawable.play),
-          contentDescription = playPauseLabel,
-          tint = Color.White,
-          modifier = Modifier.size(38.dp).offset(x = 2.dp),
-        )
-      }
+      Icon(
+        painter = painterResource(R.drawable.stage_play),
+        contentDescription = playPauseLabel,
+        tint = Color.White.copy(alpha = 0.65f),
+        modifier = Modifier.size(56.dp),
+      )
     }
 
     // 4. CENTER DOUBLE-TAP HEART BURST
@@ -219,39 +208,45 @@ fun MusicFlowPage(
       )
     }
 
-    // 5. BOTTOM OVERLAY (Title, Artist, Action Buttons)
-    Column(
+    // 5. BOTTOM OVERLAY: title on the left, the song's actions in a rail on the right. Play and skip
+    // live in the bottom player, and share and add to playlist in the more menu.
+    Row(
+      verticalAlignment = Alignment.Bottom,
       modifier =
         Modifier.align(Alignment.BottomCenter)
           .fillMaxWidth()
           .background(
             Brush.verticalGradient(
               0f to Color.Transparent,
-              0.18f to Color.Black.copy(alpha = 0.40f),
-              0.55f to Color.Black.copy(alpha = 0.80f),
-              1f to Color.Black.copy(alpha = 0.96f),
+              0.35f to Color.Black.copy(alpha = 0.45f),
+              1f to Color.Black.copy(alpha = 0.92f),
             )
           )
           .windowInsetsPadding(WindowInsets.safeDrawing)
-          .padding(bottom = 20.dp),
+          .padding(start = 22.dp, end = 10.dp, top = 56.dp, bottom = 16.dp),
     ) {
-      // Song Title + Artist + "View artist" Pill
       MetadataSection(
         title = song.title,
         artistName = artistName,
         primaryArtistId = primaryArtistId,
         onArtist = actions.onArtist,
+        modifier = Modifier.weight(1f).padding(end = 12.dp, bottom = 10.dp),
       )
-
-      Spacer(Modifier.height(16.dp))
-
-      // 6 Evenly Distributed Nothing OS Circular Glass Action Buttons
-      ActionButtonsRow(
+      ActionRail(
         isLiked = isLiked,
         lyricsAvailable = lyricsAvailable,
         downloadState = downloadState,
         actions = actions,
       )
+    }
+
+    // 6. PROGRESS HAIRLINE
+    if (isCurrentPlayback) {
+      val trackColor = Color.White.copy(alpha = 0.18f)
+      Canvas(modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(2.dp)) {
+        drawRect(trackColor)
+        drawRect(Color.White, size = size.copy(width = size.width * progress().coerceIn(0f, 1f)))
+      }
     }
   }
 }
@@ -302,7 +297,7 @@ private fun LyricPreviewCapsule(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
       ) {
         Icon(
-          painter = painterResource(R.drawable.lyrics),
+          painter = painterResource(R.drawable.stage_lyrics),
           contentDescription = null,
           tint = Color.White.copy(alpha = 0.9f),
           modifier = Modifier.size(16.dp),
@@ -338,103 +333,70 @@ private fun MetadataSection(
   onArtist: (String) -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  Column(
-    modifier = modifier.fillMaxWidth().padding(horizontal = 24.dp),
-  ) {
+  Column(modifier = modifier) {
     Text(
       text = title,
-      fontSize = 30.sp,
-      lineHeight = 34.sp,
+      fontSize = 26.sp,
+      lineHeight = 31.sp,
       fontWeight = FontWeight.ExtraBold,
       color = Color.White,
       maxLines = 1,
       modifier = Modifier.fillMaxWidth().basicMarquee(initialDelayMillis = 1500, velocity = 30.dp),
     )
     Spacer(Modifier.height(4.dp))
-    Row(
-      verticalAlignment = Alignment.CenterVertically,
-      modifier = Modifier.fillMaxWidth(),
-    ) {
-      Text(
-        text = artistName,
-        style = MaterialTheme.typography.bodyLarge,
-        fontWeight = FontWeight.Medium,
-        color = Color.White.copy(alpha = 0.75f),
-        maxLines = 1,
-        modifier = Modifier.weight(1f).basicMarquee(initialDelayMillis = 1500, velocity = 30.dp),
-      )
-      if (primaryArtistId != null) {
-        Spacer(Modifier.width(12.dp))
-        Box(
-          modifier =
-            Modifier.clip(RoundedCornerShape(16.dp))
-              .background(Color.Black.copy(alpha = 0.40f))
-              .border(1.dp, Color.White.copy(alpha = 0.22f), RoundedCornerShape(16.dp))
-              .clickable(role = Role.Button) { onArtist(primaryArtistId) }
-              .padding(horizontal = 12.dp, vertical = 4.dp),
-          contentAlignment = Alignment.Center,
-        ) {
-          Text(
-            text = stringResource(R.string.view_artist),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = Color.White.copy(alpha = 0.95f),
+    Text(
+      text = artistName,
+      style = MaterialTheme.typography.bodyLarge,
+      fontWeight = FontWeight.Medium,
+      color = Color.White.copy(alpha = 0.75f),
+      maxLines = 1,
+      modifier =
+        Modifier.fillMaxWidth()
+          .then(
+            if (primaryArtistId != null) {
+              Modifier.clickable(
+                role = Role.Button,
+                onClickLabel = stringResource(R.string.view_artist),
+              ) {
+                onArtist(primaryArtistId)
+              }
+            } else {
+              Modifier
+            }
           )
-        }
-      }
-    }
+          .basicMarquee(initialDelayMillis = 1500, velocity = 30.dp),
+    )
   }
 }
 
 @Composable
-private fun ActionButtonsRow(
+private fun ActionRail(
   isLiked: Boolean,
   lyricsAvailable: Boolean,
   downloadState: Int?,
   actions: MusicFlowPageActions,
   modifier: Modifier = Modifier,
 ) {
-  Row(
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.SpaceBetween,
-    modifier = modifier.fillMaxWidth().padding(horizontal = 20.dp),
+  Column(
+    horizontalAlignment = Alignment.CenterHorizontally,
+    verticalArrangement = Arrangement.spacedBy(6.dp),
+    modifier = modifier,
   ) {
-    // 1. Like
-    FlowGlassIconButton(
-      icon = if (isLiked) R.drawable.favorite else R.drawable.favorite_border,
+    FlowActionButton(
+      icon = if (isLiked) R.drawable.favorite else R.drawable.stage_heart,
       label = stringResource(if (isLiked) R.string.music_flow_unlike else R.string.action_like),
       tint = if (isLiked) MaterialTheme.colorScheme.error else Color.White,
-      active = isLiked,
       onClick = actions.onLike,
     )
-    // 2. Lyrics
-    FlowGlassIconButton(
-      icon = R.drawable.lyrics,
+    FlowActionButton(
+      icon = R.drawable.stage_lyrics,
       label = stringResource(R.string.lyrics),
-      tint = if (lyricsAvailable) Color.White else Color.White.copy(alpha = 0.4f),
       enabled = lyricsAvailable,
       onClick = actions.onLyrics,
     )
-    // 3. Add to Playlist
-    FlowGlassIconButton(
-      icon = R.drawable.playlist_add,
-      label = stringResource(R.string.add_to_playlist),
-      onClick = actions.onAddToPlaylist,
-    )
-    // 4. Download
-    DownloadGlassButton(
-      downloadState = downloadState,
-      onClick = actions.onDownload,
-    )
-    // 5. Share
-    FlowGlassIconButton(
-      icon = R.drawable.share,
-      label = stringResource(R.string.share),
-      onClick = actions.onShare,
-    )
-    // 6. More Options
-    FlowGlassIconButton(
-      icon = R.drawable.more_vert,
+    FlowDownloadButton(downloadState = downloadState, onClick = actions.onDownload)
+    FlowActionButton(
+      icon = R.drawable.stage_more_row,
       label = stringResource(R.string.more_options),
       onClick = actions.onMore,
     )
@@ -442,74 +404,66 @@ private fun ActionButtonsRow(
 }
 
 @Composable
-private fun FlowGlassIconButton(
-  icon: Int,
+private fun FlowActionTarget(
   label: String,
-  tint: Color = Color.White,
   enabled: Boolean = true,
-  active: Boolean = false,
   onClick: () -> Unit,
+  content: @Composable () -> Unit,
 ) {
   Box(
     contentAlignment = Alignment.Center,
     modifier =
-      Modifier.size(46.dp)
+      Modifier.size(FlowActionSize)
         .clip(CircleShape)
-        .background(if (active) tint.copy(alpha = 0.22f) else Color.Black.copy(alpha = 0.45f))
-        .border(1.dp, if (active) tint.copy(alpha = 0.45f) else Color.White.copy(alpha = 0.20f), CircleShape)
         .clickable(enabled = enabled, role = Role.Button, onClickLabel = label, onClick = onClick)
         .semantics { contentDescription = label },
   ) {
+    content()
+  }
+}
+
+@Composable
+private fun FlowActionButton(
+  icon: Int,
+  label: String,
+  tint: Color = Color.White,
+  enabled: Boolean = true,
+  onClick: () -> Unit,
+) {
+  FlowActionTarget(label = label, enabled = enabled, onClick = onClick) {
     Icon(
       painter = painterResource(icon),
       contentDescription = null,
       tint = if (enabled) tint else tint.copy(alpha = 0.35f),
-      modifier = Modifier.size(22.dp),
+      modifier = Modifier.size(26.dp),
     )
   }
 }
 
 @Composable
-private fun DownloadGlassButton(
-  downloadState: Int?,
-  onClick: () -> Unit,
-) {
+private fun FlowDownloadButton(downloadState: Int?, onClick: () -> Unit) {
   when (downloadState) {
-    Download.STATE_COMPLETED -> {
-      FlowGlassIconButton(
-        icon = R.drawable.offline,
+    Download.STATE_COMPLETED ->
+      FlowActionButton(
+        icon = R.drawable.stage_downloaded,
         label = stringResource(R.string.remove_download),
-        active = true,
         onClick = onClick,
       )
-    }
     Download.STATE_QUEUED,
-    Download.STATE_DOWNLOADING -> {
-      val label = stringResource(R.string.downloading)
-      Box(
-        contentAlignment = Alignment.Center,
-        modifier =
-          Modifier.size(46.dp)
-            .clip(CircleShape)
-            .background(Color.Black.copy(alpha = 0.45f))
-            .border(1.dp, Color.White.copy(alpha = 0.20f), CircleShape)
-            .clickable(role = Role.Button, onClickLabel = label, onClick = onClick)
-            .semantics { contentDescription = label },
-      ) {
+    Download.STATE_DOWNLOADING ->
+      FlowActionTarget(label = stringResource(R.string.downloading), onClick = onClick) {
         CircularProgressIndicator(
-          modifier = Modifier.size(20.dp),
+          modifier = Modifier.size(22.dp),
           strokeWidth = 2.dp,
           color = Color.White,
         )
       }
-    }
-    else -> {
-      FlowGlassIconButton(
-        icon = R.drawable.download,
+    else ->
+      FlowActionButton(
+        icon = R.drawable.stage_download,
         label = stringResource(R.string.action_download),
         onClick = onClick,
       )
-    }
   }
 }
 
@@ -538,22 +492,6 @@ fun MusicFlowPagePlaceholder(modifier: Modifier = Modifier) {
           shape = RoundedCornerShape(8.dp),
           modifier = Modifier.padding(horizontal = 24.dp).fillMaxWidth(0.40f),
         )
-
-        Spacer(Modifier.height(18.dp))
-
-        Row(
-          horizontalArrangement = Arrangement.SpaceBetween,
-          modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-        ) {
-          repeat(6) {
-            Box(
-              modifier =
-                Modifier.size(46.dp)
-                  .clip(CircleShape)
-                  .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f))
-            )
-          }
-        }
       }
     }
   }

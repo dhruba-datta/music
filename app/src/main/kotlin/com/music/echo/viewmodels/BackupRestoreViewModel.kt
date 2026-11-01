@@ -2,12 +2,33 @@ package echo.music.iad1tya.viewmodels
 
 import android.content.Context
 import android.content.Intent
+import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
 import android.widget.Toast
+import androidx.datastore.preferences.core.MutablePreferences
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.PreferencesFileSerializer
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import echo.music.iad1tya.MainActivity
 import echo.music.iad1tya.R
+import echo.music.iad1tya.constants.AccountChannelHandleKey
+import echo.music.iad1tya.constants.AccountEmailKey
+import echo.music.iad1tya.constants.AccountNameKey
+import echo.music.iad1tya.constants.DataSyncIdKey
+import echo.music.iad1tya.constants.DeeplApiKey
+import echo.music.iad1tya.constants.InnerTubeCookieKey
+import echo.music.iad1tya.constants.ListenTogetherSessionTokenKey
+import echo.music.iad1tya.constants.OpenRouterApiKey
+import echo.music.iad1tya.constants.ProxyPasswordKey
+import echo.music.iad1tya.constants.SavedAccountsKey
+import echo.music.iad1tya.constants.SpotifyAccessTokenExpiresAtKey
+import echo.music.iad1tya.constants.SpotifyAccessTokenKey
+import echo.music.iad1tya.constants.SpotifyAccountEmailKey
+import echo.music.iad1tya.constants.SpotifyAccountNameKey
+import echo.music.iad1tya.constants.SpotifySpDcKey
+import echo.music.iad1tya.constants.SpotifySpKeyKey
+import echo.music.iad1tya.constants.VisitorDataKey
 import echo.music.iad1tya.db.InternalDatabase
 import echo.music.iad1tya.db.MusicDatabase
 import echo.music.iad1tya.db.entities.ArtistEntity
@@ -19,13 +40,18 @@ import echo.music.iad1tya.extensions.zipInputStream
 import echo.music.iad1tya.extensions.zipOutputStream
 import echo.music.iad1tya.playback.MusicService
 import echo.music.iad1tya.playback.MusicService.Companion.PERSISTENT_QUEUE_FILE
+import echo.music.iad1tya.utils.dataStore
 import echo.music.iad1tya.utils.reportException
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.util.zip.ZipEntry
 import javax.inject.Inject
 import kotlin.system.exitProcess
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -54,11 +80,12 @@ constructor(
       runCatching {
           context.applicationContext.contentResolver.openOutputStream(uri)?.use {
             it.buffered().zipOutputStream().use { outputStream ->
-              (context.filesDir / "datastore" / SETTINGS_FILENAME).inputStream().buffered().use {
-                inputStream ->
-                outputStream.putNextEntry(ZipEntry(SETTINGS_FILENAME))
-                inputStream.copyTo(outputStream)
-              }
+              val settings = context.dataStore.data.first().toMutablePreferences()
+              AccountKeys.forEach { settings.remove(it) }
+              val settingsBytes =
+                ByteArrayOutputStream().also { PreferencesFileSerializer.writeTo(settings, it) }
+              outputStream.putNextEntry(ZipEntry(SETTINGS_FILENAME))
+              settingsBytes.writeTo(outputStream)
               database.checkpoint()
               FileInputStream(database.openHelper.writableDatabase.path).use { inputStream ->
                 outputStream.putNextEntry(ZipEntry(InternalDatabase.DB_NAME))
@@ -94,9 +121,17 @@ constructor(
                   SETTINGS_FILENAME -> {
                     Timber.tag("RESTORE").i("Restoring settings to datastore")
                     foundAny = true
+                    val restored =
+                      PreferencesFileSerializer.readFrom(
+                          ByteArrayInputStream(inputStream.readBytes())
+                        )
+                        .toMutablePreferences()
+                    // Backups leave out sign-ins, so a restore must not end the current ones.
+                    val current = context.dataStore.data.first()
+                    AccountKeys.forEach { restored.keepFrom(current, it) }
                     (context.filesDir / "datastore" / SETTINGS_FILENAME).outputStream().use {
                       outputStream ->
-                      inputStream.copyTo(outputStream)
+                      PreferencesFileSerializer.writeTo(restored, outputStream)
                     }
                     java.io.File(context.filesDir, "clear_export_state").createNewFile()
                   }
@@ -107,6 +142,15 @@ constructor(
                     val tempFile = java.io.File(context.cacheDir, "temp_restore.db")
                     java.io.FileOutputStream(tempFile).use { outputStream ->
                       inputStream.copyTo(outputStream)
+                    }
+
+                    if (!isUsableDatabase(tempFile)) {
+                      Timber.tag("RESTORE").e("Backup database is not usable")
+                      withContext(Dispatchers.Main) {
+                        Toast.makeText(context, R.string.restore_failed, Toast.LENGTH_LONG).show()
+                      }
+                      tempFile.delete()
+                      return@withContext
                     }
 
                     var backupVersion = 0
@@ -207,6 +251,42 @@ constructor(
           }
         }
     }
+
+  private fun <T> MutablePreferences.keepFrom(current: Preferences, key: Preferences.Key<T>) {
+    current[key]?.let { this[key] = it }
+  }
+
+  /** Checks a copy, because opening a database can change its file. */
+  private fun isUsableDatabase(file: File): Boolean {
+    val header = file.inputStream().use { it.readNBytes(SQLITE_HEADER.size) }
+    if (!header.contentEquals(SQLITE_HEADER)) return false
+
+    val copy = File(file.parentFile, "${file.name}.check")
+    return try {
+      file.copyTo(copy, overwrite = true)
+      SQLiteDatabase.openDatabase(
+          copy.path,
+          null,
+          SQLiteDatabase.OPEN_READWRITE or SQLiteDatabase.NO_LOCALIZED_COLLATORS,
+        )
+        .use { database ->
+          val intact =
+            database.rawQuery("PRAGMA quick_check(1)", null).use {
+              it.moveToFirst() && it.getString(0) == "ok"
+            }
+          val hasSongs =
+            database
+              .rawQuery("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'song'", null)
+              .use { it.moveToFirst() }
+          intact && hasSongs
+        }
+    } catch (e: Exception) {
+      Timber.tag("RESTORE").e(e, "Could not open backup database")
+      false
+    } finally {
+      SQLiteDatabase.deleteDatabase(copy)
+    }
+  }
 
   suspend fun previewCsvFile(context: Context, uri: Uri): CsvImportState =
     withContext(Dispatchers.IO) {
@@ -424,5 +504,29 @@ constructor(
 
   companion object {
     const val SETTINGS_FILENAME = "settings.preferences_pb"
+
+    private val SQLITE_HEADER = "SQLite format 3\u0000".toByteArray()
+
+    /** Sign-ins and secrets. A backup zip is an ordinary file, so these never go into one. */
+    private val AccountKeys: List<Preferences.Key<*>> =
+      listOf(
+        InnerTubeCookieKey,
+        VisitorDataKey,
+        DataSyncIdKey,
+        AccountNameKey,
+        AccountEmailKey,
+        AccountChannelHandleKey,
+        SavedAccountsKey,
+        SpotifySpDcKey,
+        SpotifySpKeyKey,
+        SpotifyAccountNameKey,
+        SpotifyAccountEmailKey,
+        SpotifyAccessTokenKey,
+        SpotifyAccessTokenExpiresAtKey,
+        ProxyPasswordKey,
+        ListenTogetherSessionTokenKey,
+        OpenRouterApiKey,
+        DeeplApiKey,
+      )
   }
 }

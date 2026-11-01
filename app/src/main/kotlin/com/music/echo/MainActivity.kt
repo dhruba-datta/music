@@ -1076,8 +1076,13 @@ class MainActivity : ComponentActivity() {
           }
         }
 
+        // The launch intent stays on the activity, so it must not run again after a rotation.
+        var launchIntentHandled by rememberSaveable { mutableStateOf(false) }
+
         LaunchedEffect(Unit) {
-          val activeIntent = pendingIntent ?: intent
+          val launchIntent = intent.takeUnless { launchIntentHandled }
+          launchIntentHandled = true
+          val activeIntent = pendingIntent ?: launchIntent
           if (activeIntent != null) {
             handleWidgetAction(activeIntent)
           }
@@ -1087,17 +1092,19 @@ class MainActivity : ComponentActivity() {
             handleAssistantSearchIntent(pendingIntent!!, navController)
             pendingIntent = null
           } else if (
-            intent != null &&
-              (intent.action == Intent.ACTION_VIEW || intent.action == Intent.ACTION_SEND)
+            launchIntent != null &&
+              (launchIntent.action == Intent.ACTION_VIEW ||
+                launchIntent.action == Intent.ACTION_SEND)
           ) {
-            handleDeepLinkIntent(intent, navController)
-          } else if (intent != null && intent.action == ACTION_RECOGNITION) {
-            handleRecognitionIntent(intent, navController)
+            handleDeepLinkIntent(launchIntent, navController)
+          } else if (launchIntent != null && launchIntent.action == ACTION_RECOGNITION) {
+            handleRecognitionIntent(launchIntent, navController)
           } else if (
-            intent != null &&
-              intent.action == android.provider.MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH
+            launchIntent != null &&
+              launchIntent.action ==
+                android.provider.MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH
           ) {
-            handleAssistantSearchIntent(intent, navController)
+            handleAssistantSearchIntent(launchIntent, navController)
           }
         }
 

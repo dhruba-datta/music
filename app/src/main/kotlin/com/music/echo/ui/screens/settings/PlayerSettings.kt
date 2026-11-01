@@ -60,7 +60,6 @@ import echo.music.iad1tya.constants.HistoryDuration
 import echo.music.iad1tya.constants.KeepScreenOn
 import echo.music.iad1tya.constants.PauseOnMute
 import echo.music.iad1tya.constants.PersistentQueueKey
-import echo.music.iad1tya.constants.PersistentShuffleAcrossQueuesKey
 import echo.music.iad1tya.constants.PreloadLyricsEnabledKey
 import echo.music.iad1tya.constants.PreloadNextSongEnabledKey
 import echo.music.iad1tya.constants.PreloadNextSongLimitKey
@@ -187,8 +186,6 @@ fun PlayerSettings(
     rememberPreference(key = SimilarContent, defaultValue = true)
   val (autoSkipNextOnError, onAutoSkipNextOnErrorChange) =
     rememberPreference(AutoSkipNextOnErrorKey, defaultValue = false)
-  val (persistentShuffleAcrossQueues, onPersistentShuffleAcrossQueuesChange) =
-    rememberPreference(PersistentShuffleAcrossQueuesKey, defaultValue = false)
   val (rememberShuffleAndRepeat, onRememberShuffleAndRepeatChange) =
     rememberPreference(RememberShuffleAndRepeatKey, defaultValue = true)
   val (shufflePlaylistFirst, onShufflePlaylistFirstChange) =
@@ -895,16 +892,6 @@ fun PlayerSettings(
               StageSwitch(checked = similarContentEnabled, onCheckedChange = similarContentEnabledChange)
             },
             onClick = { similarContentEnabledChange(!similarContentEnabled) }
-          ),
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == stringResource(R.string.persistent_shuffle_title)),
-            icon = painterResource(R.drawable.shuffle),
-            title = { Text(stringResource(R.string.persistent_shuffle_title)) },
-            description = { Text(stringResource(R.string.persistent_shuffle_desc)) },
-            trailingContent = {
-              StageSwitch(checked = persistentShuffleAcrossQueues, onCheckedChange = onPersistentShuffleAcrossQueuesChange)
-            },
-            onClick = { onPersistentShuffleAcrossQueuesChange(!persistentShuffleAcrossQueues) }
           ),
           Material3SettingsItem(
             isHighlighted = (highlightKey == stringResource(R.string.remember_shuffle_and_repeat)),

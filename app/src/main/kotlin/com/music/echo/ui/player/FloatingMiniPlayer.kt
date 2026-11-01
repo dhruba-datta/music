@@ -278,10 +278,11 @@ fun FloatingMiniPlayer(
 
       IconButton(
         onClick = { playerConnection.player.togglePlayPause() },
+        enabled = !isListenTogetherGuest,
         modifier = Modifier.size(controlSize),
       ) {
         Icon(
-          painter = painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
+          painter = painterResource(if (isPlaying) R.drawable.stage_pause else R.drawable.stage_play),
           contentDescription = null,
           tint = effectiveContentColor,
         )
@@ -290,10 +291,11 @@ fun FloatingMiniPlayer(
       if (!isInline) {
         IconButton(
           onClick = { playerConnection.player.seekToNext() },
+          enabled = !isListenTogetherGuest,
           modifier = Modifier.size(controlSize),
         ) {
           Icon(
-            painter = painterResource(R.drawable.skip_next),
+            painter = painterResource(R.drawable.stage_skip_next),
             contentDescription = null,
             tint = effectiveContentColor,
           )

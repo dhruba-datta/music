@@ -37,6 +37,8 @@ class SpotifyPlaybackResolver @Inject constructor() {
             }
             firstSong
         }
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         null
     }
@@ -69,6 +71,8 @@ class SpotifyPlaybackResolver @Inject constructor() {
                             }
                             firstSong
                         }
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) { null }
                 }
             }.awaitAll().filterNotNull()

@@ -57,7 +57,15 @@ fun CreatePlaylistDialog(
       coroutineScope.launch(Dispatchers.IO) {
         val browseId =
           if (syncedPlaylist && isSignedIn) {
-            YouTube.createPlaylist(playlistName)
+            try {
+              YouTube.createPlaylist(playlistName)
+            } catch (e: Exception) {
+              Logger.getLogger("CreatePlaylistDialog").warning("Create failed: ${e.message}")
+              withContext(Dispatchers.Main) {
+                Toast.makeText(context, R.string.error_no_internet, Toast.LENGTH_SHORT).show()
+              }
+              return@launch
+            }
           } else if (syncedPlaylist) {
             Logger.getLogger("CreatePlaylistDialog").warning("Not signed in")
             return@launch

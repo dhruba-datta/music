@@ -66,8 +66,7 @@
             <!-- Like Button -->
             <FrameLayout
                 android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="@drawable/widget_like_button_bg">
+                android:layout_height="48dp">
 
                 <ImageButton
                     android:id="@+id/widget_like_button"
@@ -86,8 +85,7 @@
                 android:layout_width="0dp"
                 android:layout_height="48dp"
                 android:layout_weight="1"
-                android:layout_marginStart="12dp"
-                android:background="@drawable/widget_play_pill_bg">
+                android:layout_marginStart="12dp">
 
                 <ImageView
                     android:id="@+id/widget_play_pause"

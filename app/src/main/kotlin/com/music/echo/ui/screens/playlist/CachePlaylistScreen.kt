@@ -32,6 +32,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -68,6 +69,7 @@ import androidx.navigation.NavController
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.LocalPlayerConnection
 import echo.music.iad1tya.R
+import echo.music.iad1tya.LocalDownloadUtil
 import echo.music.iad1tya.constants.HideExplicitKey
 import echo.music.iad1tya.constants.SongSortDescendingKey
 import echo.music.iad1tya.constants.SongSortType
@@ -194,8 +196,35 @@ fun CachePlaylistScreen(
 
   val heroUnderBar by rememberStageHeroUnderBar(lazyListState)
 
+  val downloadUtil = LocalDownloadUtil.current
+  var downloadState by remember { mutableIntStateOf(Download.STATE_STOPPED) }
+  LaunchedEffect(filteredSongs) {
+    if (filteredSongs.isEmpty()) {
+      downloadState = Download.STATE_STOPPED
+      return@LaunchedEffect
+    }
+    downloadUtil.downloads.collect { downloads ->
+      downloadState =
+        if (filteredSongs.all { downloads[it.id]?.state == Download.STATE_COMPLETED }) {
+          Download.STATE_COMPLETED
+        } else if (
+          filteredSongs.all {
+            downloads[it.id]?.state == Download.STATE_QUEUED ||
+              downloads[it.id]?.state == Download.STATE_DOWNLOADING ||
+              downloads[it.id]?.state == Download.STATE_COMPLETED
+          }
+        ) {
+          Download.STATE_DOWNLOADING
+        } else {
+          Download.STATE_STOPPED
+        }
+    }
+  }
+
   val downloadAllSongs: () -> Unit = {
-    filteredSongs.forEach { song ->
+    val pending =
+      filteredSongs.filter { downloadUtil.downloads.value[it.id]?.state != Download.STATE_COMPLETED }
+    pending.forEach { song ->
       val downloadRequest =
         DownloadRequest.Builder(song.id, song.id.toUri())
           .setCustomCacheKey(song.id)
@@ -212,7 +241,7 @@ fun CachePlaylistScreen(
   val showPlaylistMenu: () -> Unit = {
     menuState.show {
       CachePlaylistMenu(
-        downloadState = Download.STATE_STOPPED,
+        downloadState = downloadState,
         onQueue = { playerConnection.addToQueue(filteredSongs.map { it.toMediaItem() }) },
         onDownload = downloadAllSongs,
         onDismiss = { menuState.dismiss() }
@@ -251,6 +280,7 @@ fun CachePlaylistScreen(
             CachePlaylistHeader(
               songs = filteredSongs,
               context = context,
+              downloadState = downloadState,
               onDownload = downloadAllSongs,
               modifier = Modifier.animateItem()
             )
@@ -333,8 +363,8 @@ fun CachePlaylistScreen(
                       playerConnection.playQueue(
                         ListQueue(
                           title = "Cache Songs",
-                          items = cachedSongs.map { it.toMediaItem() },
-                          startIndex = cachedSongs.indexOfFirst { it.id == song.id }
+                          items = filteredSongs.map { it.toMediaItem() },
+                          startIndex = index
                         )
                       )
                     }
@@ -492,6 +522,7 @@ fun CachePlaylistScreen(
 private fun CachePlaylistHeader(
   songs: List<Song>,
   context: android.content.Context,
+  downloadState: Int,
   onDownload: () -> Unit,
   modifier: Modifier = Modifier
 ) {
@@ -511,7 +542,7 @@ private fun CachePlaylistHeader(
         },
       artwork = { StageHeroArtwork(songs.firstOrNull()?.thumbnailUrl?.resize(1200, 1200)) },
       leadingActions = {
-        StageHeroDownloadButton(downloadState = Download.STATE_STOPPED, onClick = onDownload)
+        StageHeroDownloadButton(downloadState = downloadState, onClick = onDownload)
       },
       trailingActions = {
         StageHeroShuffleButton(

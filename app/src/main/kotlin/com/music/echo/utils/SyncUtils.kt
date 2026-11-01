@@ -418,8 +418,12 @@ constructor(
 
                 val lastSync = context.dataStore.get(LastFullSyncKey, 0L)
 
+                // Only a full list from a signed-in account can say a song was unliked.
+                val canRemove =
+                  page.songsContinuation == null && remoteSongs.isNotEmpty() && isLoggedIn()
+
                 localSongs
-                  .filterNot { it.id in remoteIds || it.song.isLocal }
+                  .filterNot { !canRemove || it.id in remoteIds || it.song.isLocal }
                   .forEach { song ->
                     try {
                       val likedDate = song.song.likedDate
@@ -506,8 +510,12 @@ constructor(
                 val remoteIds = remoteSongs.map { it.id }.toSet()
                 val localSongs = database.songsByNameAsc().first()
 
+                // Only a full list from a signed-in account can say a song left the library.
+                val canRemove =
+                  page.continuation == null && remoteSongs.isNotEmpty() && isLoggedIn()
+
                 localSongs
-                  .filterNot { it.id in remoteIds }
+                  .filterNot { !canRemove || it.id in remoteIds }
                   .forEach { song ->
                     try {
                       database.update(song.song.toggleLibrary())

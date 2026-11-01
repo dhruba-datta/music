@@ -2,7 +2,6 @@ package echo.music.iad1tya.ui.screens.musicflow
 
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.net.ConnectivityManager
 import android.provider.Settings
 import android.widget.Toast
@@ -13,6 +12,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +30,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -59,7 +61,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -78,7 +82,6 @@ import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.music.innertube.YouTube
 import com.music.innertube.models.SongItem
 import echo.music.iad1tya.LocalDatabase
 import echo.music.iad1tya.LocalDownloadUtil
@@ -106,7 +109,6 @@ import echo.music.iad1tya.ui.component.musicflow.MusicFlowPage
 import echo.music.iad1tya.ui.component.musicflow.MusicFlowPageActions
 import echo.music.iad1tya.ui.component.musicflow.MusicFlowPagePlaceholder
 import echo.music.iad1tya.ui.component.musicflow.MusicFlowTopMenu
-import echo.music.iad1tya.ui.menu.AddToPlaylistDialog
 import echo.music.iad1tya.ui.menu.YouTubeSongMenu
 import echo.music.iad1tya.ui.player.InlineLyricsView
 import echo.music.iad1tya.utils.SyncUtils
@@ -114,6 +116,7 @@ import echo.music.iad1tya.viewmodels.MusicFlowViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -166,29 +169,51 @@ fun MusicFlowScreen(
   val lyricsReady = currentLyrics.isUsableFor(currentMediaId)
 
   var lyricsExpanded by rememberSaveable { mutableStateOf(false) }
-  var playlistTarget by remember { mutableStateOf<SongItem?>(null) }
   BackHandler(enabled = lyricsExpanded) { lyricsExpanded = false }
 
   val items = state.items
-  val hasTrailingPage = items.isNotEmpty() && (state.isLoadingMore || !state.hasMore || state.error != null)
-  val pageCount = items.size + if (hasTrailingPage) 1 else 0
+  // Always one page past the feed, so a swipe off the last song moves even before more have loaded.
+  val pageCount = if (items.isEmpty()) 0 else items.size + 1
   val pagerState = rememberPagerState(initialPage = state.selectedIndex) { pageCount }
+  val flingBehavior =
+    PagerDefaults.flingBehavior(state = pagerState, snapPositionalThreshold = SWIPE_THRESHOLD)
+  val swipeDistancePx = with(LocalDensity.current) { HORIZONTAL_SWIPE_DISTANCE.toPx() }
+
+  // Where the pager is headed on its own, to follow the player. Pages it stops on along the way, when
+  // the song changes again mid-scroll, are not choices and must not start playing.
+  var followTarget by remember { mutableStateOf<Int?>(null) }
 
   LaunchedEffect(pagerState) {
-    snapshotFlow { pagerState.settledPage }.distinctUntilChanged().collect(viewModel::onPageSettled)
+    pagerState.interactionSource.interactions.collect {
+      if (it is DragInteraction.Start) followTarget = null
+    }
+  }
+  LaunchedEffect(pagerState) {
+    snapshotFlow { pagerState.settledPage }
+      .distinctUntilChanged()
+      .collect { page ->
+        val target = followTarget
+        if (target == null || target == page) {
+          followTarget = null
+          viewModel.onPageSettled(page)
+        }
+      }
   }
   var shownItemCount by remember { mutableIntStateOf(items.size) }
   LaunchedEffect(state.selectedIndex, items.size) {
     val settled = pagerState.settledPage
     val wasOnTrailingPage = shownItemCount > 0 && settled >= shownItemCount
     shownItemCount = items.size
-    if (pagerState.isScrollInProgress || items.isEmpty()) return@LaunchedEffect
+    if (items.isEmpty()) return@LaunchedEffect
+    // A swipe in progress wins; a page move already following the player is simply replaced.
+    if (followTarget == null) snapshotFlow { pagerState.isScrollInProgress }.first { !it }
     if (wasOnTrailingPage && settled in items.indices) {
       viewModel.onPageSettled(settled)
       return@LaunchedEffect
     }
     val target = state.selectedIndex
-    if (target < pageCount && settled != target) {
+    if (target < pageCount && pagerState.settledPage != target) {
+      followTarget = target
       if (reduceMotion) pagerState.scrollToPage(target) else pagerState.animateScrollToPage(target)
     }
   }
@@ -254,15 +279,31 @@ fun MusicFlowScreen(
           state = pagerState,
           beyondViewportPageCount = if (allowArtPrefetch) 1 else 0,
           userScrollEnabled = !lyricsExpanded,
+          flingBehavior = flingBehavior,
           key = { page -> items.getOrNull(page)?.songId ?: "music_flow_trailing_$page" },
           modifier =
-            Modifier.fillMaxSize().semantics {
-              customActions =
-                listOf(
-                  CustomAccessibilityAction(previousLabel) { viewModel.previous(); true },
-                  CustomAccessibilityAction(nextLabel) { viewModel.next(); true },
+            Modifier.fillMaxSize()
+              .pointerInput(viewModel, swipeDistancePx) {
+                var dragged = 0f
+                detectHorizontalDragGestures(
+                  onDragStart = { dragged = 0f },
+                  onDragEnd = {
+                    if (dragged <= -swipeDistancePx) viewModel.next()
+                    else if (dragged >= swipeDistancePx) viewModel.previous()
+                  },
+                  onHorizontalDrag = { change, amount ->
+                    change.consume()
+                    dragged += amount
+                  },
                 )
-            },
+              }
+              .semantics {
+                customActions =
+                  listOf(
+                    CustomAccessibilityAction(previousLabel) { viewModel.previous(); true },
+                    CustomAccessibilityAction(nextLabel) { viewModel.next(); true },
+                  )
+              },
         ) { page ->
           val item = items.getOrNull(page)
           when {
@@ -290,9 +331,7 @@ fun MusicFlowScreen(
                   MusicFlowPageActions(
                     onTogglePlay = viewModel::togglePlayPause,
                     onLike = { toggleLike(database, syncUtils, item.song, librarySong) },
-                    onAddToPlaylist = { playlistTarget = item.song },
                     onLyrics = { lyricsExpanded = true },
-                    onShare = { context.shareSong(item.song) },
                     onDownload = { toggleDownload(context, database, item.song, download?.state) },
                     onMore = {
                       menuState.show {
@@ -305,19 +344,10 @@ fun MusicFlowScreen(
                       }
                     },
                     onArtist = { navController.navigate("artist/$it") },
-                    onSeek = { fraction ->
-                      val (_, duration) = playerConnection.positionAndDuration()
-                      if (duration > 0) {
-                        progress = fraction
-                        playerConnection.seekTo((duration * fraction).toLong())
-                      }
-                    },
-                    onPrevious = viewModel::previous,
-                    onNext = viewModel::next,
                   ),
               )
             }
-            state.isLoadingMore -> MusicFlowPagePlaceholder()
+            state.isLoadingMore || (state.hasMore && state.error == null) -> MusicFlowPagePlaceholder()
             state.error != null ->
               FeedMessage(
                 message = stringResource(state.error!!.messageRes()),
@@ -375,20 +405,6 @@ fun MusicFlowScreen(
         }
       }
     }
-  }
-
-  playlistTarget?.let { song ->
-    AddToPlaylistDialog(
-      isVisible = true,
-      onGetSong = { playlist ->
-        database.withTransaction { insert(song.toMediaMetadata()) }
-        scope.launch(Dispatchers.IO) {
-          playlist.playlist.browseId?.let { browseId -> YouTube.addToPlaylist(browseId, song.id) }
-        }
-        listOf(song.id)
-      },
-      onDismiss = { playlistTarget = null },
-    )
   }
 }
 
@@ -523,16 +539,6 @@ private fun toggleDownload(context: Context, database: MusicDatabase, song: Song
   }
 }
 
-private fun Context.shareSong(song: SongItem) {
-  val intent =
-    Intent().apply {
-      action = Intent.ACTION_SEND
-      type = "text/plain"
-      putExtra(Intent.EXTRA_TEXT, song.shareLink)
-    }
-  startActivity(Intent.createChooser(intent, null))
-}
-
 private fun PlayerConnection.positionAndDuration(): Pair<Long, Long> {
   val castHandler = service.castConnectionHandler
   return if (castHandler?.isCasting?.value == true) {
@@ -549,3 +555,5 @@ private fun Context.isActiveNetworkMetered(): Boolean =
   (getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)?.isActiveNetworkMetered ?: true
 
 private const val POSITION_POLL_MS = 50L
+private const val SWIPE_THRESHOLD = 0.15f
+private val HORIZONTAL_SWIPE_DISTANCE = 56.dp

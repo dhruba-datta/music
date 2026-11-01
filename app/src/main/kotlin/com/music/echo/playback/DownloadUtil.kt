@@ -282,6 +282,13 @@ constructor(
       .apply {
         maxParallelDownloads = 3
         addListener(
+          ExoDownloadService.TerminalStateNotificationHelper(
+            context,
+            downloadNotificationHelper,
+            ExoDownloadService.FAILED_NOTIFICATION_ID,
+          )
+        )
+        addListener(
           object : DownloadManager.Listener {
             override fun onDownloadChanged(
               downloadManager: DownloadManager,

@@ -317,8 +317,8 @@ class ListenTogetherClient @Inject constructor(private val context: Context) {
     try {
       scope.launch {
         context.dataStore.edit { preferences ->
-          if (sessionToken != null) {
-            preferences[ListenTogetherSessionTokenKey] = sessionToken!!
+          sessionToken?.let { token ->
+            preferences[ListenTogetherSessionTokenKey] = token
             preferences[ListenTogetherRoomCodeKey] = storedRoomCode ?: ""
             preferences[ListenTogetherUserIdKey] = _userId.value ?: ""
             preferences[ListenTogetherIsHostKey] = wasHost
@@ -455,13 +455,14 @@ class ListenTogetherClient @Inject constructor(private val context: Context) {
             reconnectAttempts = 0
             startPingJob()
 
-            if (sessionToken != null && storedRoomCode != null) {
+            val token = sessionToken
+            if (token != null && storedRoomCode != null) {
               log(
                 LogLevel.INFO,
                 "Attempting to reconnect to previous session",
                 "Room: $storedRoomCode"
               )
-              sendMessage(MessageTypes.RECONNECT, ReconnectPayload(sessionToken!!))
+              sendMessage(MessageTypes.RECONNECT, ReconnectPayload(token))
             } else {
 
               executePendingAction()
@@ -1156,7 +1157,9 @@ class ListenTogetherClient @Inject constructor(private val context: Context) {
 
                 scope.launch {
                   delay(500)
-                  joinRoom(storedRoomCode!!, storedUsername!!)
+                  val roomCode = storedRoomCode ?: return@launch
+                  val username = storedUsername ?: return@launch
+                  joinRoom(roomCode, username)
                 }
               } else if (storedRoomCode != null && storedUsername != null) {
 

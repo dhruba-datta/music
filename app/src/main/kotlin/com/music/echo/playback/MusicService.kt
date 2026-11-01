@@ -98,7 +98,6 @@ import echo.music.iad1tya.constants.MediaSessionConstants.CommandToggleStartRadi
 import echo.music.iad1tya.constants.PauseListenHistoryKey
 import echo.music.iad1tya.constants.PauseOnMute
 import echo.music.iad1tya.constants.PersistentQueueKey
-import echo.music.iad1tya.constants.PersistentShuffleAcrossQueuesKey
 import echo.music.iad1tya.constants.PlayerVolumeKey
 import echo.music.iad1tya.constants.PreferExtensionAudioKey
 import echo.music.iad1tya.constants.PreloadLyricsEnabledKey
@@ -511,6 +510,7 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
   private var originalQueueSize: Int = 0
   private var queueGeneration = 0L
   private var loadMoreJob: Job? = null
+  private var shuffleHeld = false
 
   private var consecutivePlaybackErr = 0
   private var retryJob: Job? = null
@@ -658,6 +658,7 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
     if (dataStore.get(RememberShuffleAndRepeatKey, true)) {
       player.shuffleModeEnabled = dataStore.get(ShuffleModeKey, false)
     }
+    listenTogetherManager.guestPlaybackRestricted.collect(scope) { matchShuffleToQueue() }
 
     val sessionToken = SessionToken(this, ComponentName(this, MusicService::class.java))
     val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
@@ -1478,7 +1479,7 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
           )
           .setIconResId(
             if (currentSong.value?.song?.liked == true) R.drawable.ic_heart
-            else R.drawable.ic_heart_outline
+            else R.drawable.stage_heart
           )
           .setSessionCommand(CommandToggleLike)
           .setEnabled(currentSong.value != null)
@@ -1496,9 +1497,9 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
           )
           .setIconResId(
             when (player.repeatMode) {
-              REPEAT_MODE_OFF -> R.drawable.repeat
-              REPEAT_MODE_ONE -> R.drawable.repeat_one_on
-              REPEAT_MODE_ALL -> R.drawable.repeat_on
+              REPEAT_MODE_OFF -> R.drawable.stage_repeat
+              REPEAT_MODE_ONE -> R.drawable.stage_repeat_one
+              REPEAT_MODE_ALL -> R.drawable.stage_repeat_on
               else -> throw IllegalStateException()
             },
           )
@@ -1512,13 +1513,13 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
             )
           )
           .setIconResId(
-            if (player.shuffleModeEnabled) R.drawable.shuffle_on else R.drawable.shuffle
+            if (player.shuffleModeEnabled) R.drawable.stage_shuffle_on else R.drawable.stage_shuffle
           )
           .setSessionCommand(CommandToggleShuffle)
           .build(),
         CommandButton.Builder()
           .setDisplayName(getString(R.string.start_radio))
-          .setIconResId(R.drawable.radio)
+          .setIconResId(R.drawable.stage_radio)
           .setSessionCommand(CommandToggleStartRadio)
           .setEnabled(currentSong.value != null)
           .build(),
@@ -1573,6 +1574,21 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
     }
   }
 
+  /**
+   * Music Flow's pages and a Listen Together guest's queue have a set order, so shuffle is held off
+   * for them without touching the saved choice, and comes back with the next ordinary queue.
+   */
+  private fun matchShuffleToQueue() {
+    val keepsOrder =
+      currentQueue is MusicFlowQueue || listenTogetherManager.isGuestPlaybackRestricted
+    if (keepsOrder && player.shuffleModeEnabled) {
+      shuffleHeld = true
+      player.shuffleModeEnabled = false
+    } else if (!keepsOrder && shuffleHeld) {
+      player.shuffleModeEnabled = true
+    }
+  }
+
   fun playQueue(
     queue: Queue,
     playWhenReady: Boolean = true,
@@ -1589,15 +1605,12 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
     }
 
     queueGeneration++
+    val generation = queueGeneration
     loadMoreJob?.cancel()
     loadMoreJob = null
     currentQueue = queue
+    matchShuffleToQueue()
     queueTitle = null
-    val persistShuffleAcrossQueues = dataStore.get(PersistentShuffleAcrossQueuesKey, false)
-    val previousShuffleEnabled = player.shuffleModeEnabled
-    if (!persistShuffleAcrossQueues) {
-      player.shuffleModeEnabled = false
-    }
 
     originalQueueSize = 0
     if (queue.preloadItem != null) {
@@ -1619,6 +1632,7 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
                 dataStore.get(echo.music.iad1tya.constants.DataSaverEnabledKey, false)
             )
         }
+      if (queueGeneration != generation || currentQueue !== queue) return@launch
       if (queue.preloadItem != null && player.playbackState == STATE_IDLE) return@launch
       if (initialStatus.title != null) {
         queueTitle = initialStatus.title
@@ -1684,6 +1698,19 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
     }
   }
 
+  private fun replaceUpcoming(items: List<MediaItem>) {
+    val index = player.currentMediaItemIndex
+    val itemCount = player.mediaItemCount
+    if (itemCount > index + 1) {
+      player.removeMediaItems(index + 1, itemCount)
+    }
+    player.addMediaItems(index + 1, items)
+    if (player.shuffleModeEnabled) {
+      val shufflePlaylistFirst = dataStore.get(ShufflePlaylistFirstKey, false)
+      applyShuffleOrder(player.currentMediaItemIndex, player.mediaItemCount, shufflePlaylistFirst)
+    }
+  }
+
   fun startRadioSeamlessly() {
 
     if (!playerInitialized.value) {
@@ -1693,8 +1720,12 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
 
     val currentMediaMetadata = player.currentMetadata ?: return
 
-    val currentIndex = player.currentMediaItemIndex
     val currentMediaId = currentMediaMetadata.id
+    val startGeneration = queueGeneration
+
+    // Radio takes a moment to load, and by then the listener may have moved on.
+    fun playbackMoved() =
+      queueGeneration != startGeneration || player.currentMetadata?.id != currentMediaId
 
     scope.launch(SilentHandler) {
       val radioQueue = YouTubeQueue(endpoint = WatchEndpoint(videoId = currentMediaId))
@@ -1711,29 +1742,15 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
               )
           }
 
+        if (playbackMoved()) return@launch
+
         if (initialStatus.title != null) {
           queueTitle = initialStatus.title
         }
 
         val radioItems = initialStatus.items.filter { item -> item.mediaId != currentMediaId }
 
-        if (radioItems.isNotEmpty()) {
-          val itemCount = player.mediaItemCount
-
-          if (itemCount > currentIndex + 1) {
-            player.removeMediaItems(currentIndex + 1, itemCount)
-          }
-
-          player.addMediaItems(currentIndex + 1, radioItems)
-          if (player.shuffleModeEnabled) {
-            val shufflePlaylistFirst = dataStore.get(ShufflePlaylistFirstKey, false)
-            applyShuffleOrder(
-              player.currentMediaItemIndex,
-              player.mediaItemCount,
-              shufflePlaylistFirst
-            )
-          }
-        }
+        if (radioItems.isNotEmpty()) replaceUpcoming(radioItems)
 
         queueGeneration++
         loadMoreJob?.cancel()
@@ -1760,21 +1777,7 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
                       dataStore.get(echo.music.iad1tya.constants.DataSaverEnabledKey, false)
                   )
 
-              if (radioItems.isNotEmpty()) {
-                val itemCount = player.mediaItemCount
-                if (itemCount > currentIndex + 1) {
-                  player.removeMediaItems(currentIndex + 1, itemCount)
-                }
-                player.addMediaItems(currentIndex + 1, radioItems)
-                if (player.shuffleModeEnabled) {
-                  val shufflePlaylistFirst = dataStore.get(ShufflePlaylistFirstKey, false)
-                  applyShuffleOrder(
-                    player.currentMediaItemIndex,
-                    player.mediaItemCount,
-                    shufflePlaylistFirst
-                  )
-                }
-              }
+              if (radioItems.isNotEmpty() && !playbackMoved()) replaceUpcoming(radioItems)
             }
           }
         } catch (_: Exception) {}
@@ -2449,7 +2452,7 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
     if (
       dataStore.get(AutoLoadMoreKey, true) &&
         reason != Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT &&
-        player.mediaItemCount - player.currentMediaItemIndex <= 5 &&
+        upcomingInPlayOrder() < LOAD_MORE_THRESHOLD &&
         currentQueue.hasNextPage() &&
         !(dataStore.get(DisableLoadMoreWhenRepeatAllKey, false) &&
           player.repeatMode == REPEAT_MODE_ALL)
@@ -2477,13 +2480,15 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
               currentQueue === queueAtStart &&
               currentQueue != EmptyQueue
           ) {
+            val shuffled = player.shuffleModeEnabled
+            val order = if (shuffled) playOrder() else emptyList()
+            val addedFrom = player.mediaItemCount
             player.addMediaItems(mediaItems)
-            if (player.shuffleModeEnabled) {
-              val shufflePlaylistFirst = dataStore.get(ShufflePlaylistFirstKey, false)
-              applyShuffleOrder(
-                player.currentMediaItemIndex,
-                player.mediaItemCount,
-                shufflePlaylistFirst
+            if (shuffled) {
+              // New songs go last, so the ones already played don't come round again.
+              val added = (addedFrom until player.mediaItemCount).shuffled()
+              player.setShuffleOrder(
+                DefaultShuffleOrder((order + added).toIntArray(), System.currentTimeMillis())
               )
             }
           }
@@ -2495,6 +2500,28 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
     }
 
     prefetchQueueArtwork()
+  }
+
+  private fun upcomingInPlayOrder(): Int {
+    val timeline = player.currentTimeline
+    if (timeline.isEmpty) return 0
+    var index = player.currentMediaItemIndex
+    var upcoming = 0
+    while (upcoming < LOAD_MORE_THRESHOLD) {
+      index = timeline.getNextWindowIndex(index, REPEAT_MODE_OFF, player.shuffleModeEnabled)
+      if (index == C.INDEX_UNSET) break
+      upcoming++
+    }
+    return upcoming
+  }
+
+  private fun playOrder(): List<Int> {
+    val timeline = player.currentTimeline
+    val first = timeline.getFirstWindowIndex(true).takeIf { it != C.INDEX_UNSET }
+    return generateSequence(first) { index ->
+        timeline.getNextWindowIndex(index, REPEAT_MODE_OFF, true).takeIf { it != C.INDEX_UNSET }
+      }
+      .toList()
   }
 
   /**
@@ -2671,6 +2698,8 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
 
   override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
     updateNotification()
+    if (shuffleModeEnabled) shuffleHeld = false
+
     if (shuffleModeEnabled) {
 
       if (player.mediaItemCount == 0) return
@@ -2682,7 +2711,7 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
       applyShuffleOrder(currentIndex, totalCount, shufflePlaylistFirst)
     }
 
-    if (dataStore.get(RememberShuffleAndRepeatKey, true)) {
+    if (!shuffleHeld && dataStore.get(RememberShuffleAndRepeatKey, true)) {
       scope.launch { dataStore.edit { settings -> settings[ShuffleModeKey] = shuffleModeEnabled } }
     }
 
@@ -4848,6 +4877,7 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
   companion object {
     /** Upcoming queue items whose covers are kept ready for the car. */
     private const val ARTWORK_PREFETCH_COUNT = 2
+    private const val LOAD_MORE_THRESHOLD = 5
     const val ROOT = "root"
     const val SONG = "song"
     const val ARTIST = "artist"

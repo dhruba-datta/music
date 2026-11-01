@@ -57,7 +57,8 @@ suspend fun Result<PlaylistPage>.completed(): Result<PlaylistPage> =
       PlaylistPage(
         playlist = page.playlist,
         songs = songs,
-        songsContinuation = null,
+        // Still set if paging stopped early, so callers can tell the list may be incomplete.
+        songsContinuation = continuation,
         continuation = page.continuation
       )
     }
@@ -99,7 +100,8 @@ suspend fun Result<LibraryPage>.completed(): Result<LibraryPage> =
 
         continuation = continuationPage.continuation
       }
-      LibraryPage(items = items, continuation = null)
+      // Still set if paging stopped early, so callers can tell the list may be incomplete.
+      LibraryPage(items = items, continuation = continuation)
     }
     .rethrowCancellation()
 

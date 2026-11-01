@@ -229,16 +229,22 @@ constructor(
           return@forEachIndexed
         }
 
+        val searchFailures = AtomicInteger(0)
         val matched =
           matchTracks(
             sourceIndex = sourceIndex,
             sourceCount = sources.size,
             sourceTitle = source.title,
             tracks = tracks,
+            searchFailures = searchFailures,
             onProgress = onProgress,
           )
 
-        mirrorPlaylist(source, matched.map { it.metadata })
+        // Searches that failed must not shrink a playlist that already holds more songs.
+        val existingSongs = database.playlistSongs(source.localPlaylistId).first().size
+        if (searchFailures.get() == 0 || matched.size >= existingSongs) {
+          mirrorPlaylist(source, matched.map { it.metadata })
+        }
         summaries +=
           SpotifyImportSourceSummaryUi(
             title = source.title,
@@ -379,10 +385,10 @@ constructor(
       val page = spotifyCallWithTokenRetry {
         Spotify.myPlaylists(limit = limit, offset = offset).getOrThrow()
       }
-      if (page.items.isEmpty()) break
+      if (page.rawCount == 0) break
       playlists += enrichPlaylistTrackCounts(page.items)
-      offset += page.items.size
-      if (offset >= page.total || page.items.size < limit) break
+      offset += page.rawCount
+      if (offset >= page.total || page.rawCount < limit) break
     }
 
     return playlists
@@ -442,6 +448,7 @@ constructor(
             SpotifyTrackPage(
               items = paging.items.map { it.track },
               total = paging.total,
+              rawCount = paging.rawCount,
             )
           }
           is SpotifyImportSource.Playlist -> {
@@ -456,14 +463,15 @@ constructor(
             SpotifyTrackPage(
               items = paging.items.mapNotNull { it.track },
               total = paging.total,
+              rawCount = paging.rawCount,
             )
           }
         }
 
-      if (page.items.isEmpty()) break
+      if (page.rawCount == 0) break
       tracks += page.items.filter { it.name.isNotBlank() }
-      offset += page.items.size
-      if (offset >= page.total || page.items.size < limit) break
+      offset += page.rawCount
+      if (offset >= page.total || page.rawCount < limit) break
     }
 
     return tracks
@@ -506,6 +514,7 @@ constructor(
     sourceCount: Int,
     sourceTitle: String,
     tracks: List<SpotifyTrack>,
+    searchFailures: AtomicInteger,
     onProgress: (SpotifyImportProgressUi) -> Unit,
   ): List<MatchedTrack> = coroutineScope {
     val semaphore = Semaphore(MAX_CONCURRENT_MATCHES)
@@ -522,6 +531,7 @@ constructor(
                 throw error
               } catch (error: Throwable) {
                 reportException(error)
+                searchFailures.incrementAndGet()
                 null
               }
             val completedCount = completed.incrementAndGet()
@@ -544,6 +554,7 @@ constructor(
       .sortedBy { it.index }
   }
 
+  /** Null means YouTube has no such song. A failed search throws, as it says nothing either way. */
   private suspend fun matchTrack(
     track: SpotifyTrack,
     index: Int,
@@ -553,12 +564,7 @@ constructor(
           query = SpotifyMapper.buildSearchQuery(track),
           filter = YouTube.SearchFilter.FILTER_SONG,
         )
-        .getOrElse { error ->
-          if (error is CancellationException) {
-            throw error
-          }
-          return null
-        }
+        .getOrThrow()
     val candidates = searchResult.items.filterIsInstance<SongItem>().distinctBy { it.id }
 
     val best =
@@ -648,6 +654,7 @@ constructor(
   private data class SpotifyTrackPage(
     val items: List<SpotifyTrack>,
     val total: Int,
+    val rawCount: Int,
   )
 
   private data class MatchedTrack(
