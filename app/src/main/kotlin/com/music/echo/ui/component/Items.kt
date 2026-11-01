@@ -411,8 +411,12 @@ fun SongListItem(
   modifier: Modifier = Modifier,
   albumIndex: Int? = null,
   showDownloadIcon: Boolean = true,
+  showLikedIcon: Boolean = true,
   showSize: Boolean = false,
   badges: @Composable RowScope.() -> Unit = {
+    if (showLikedIcon && song.song.liked) {
+      Icon.Favorite()
+    }
     if (song.song.explicit) {
       Icon.Explicit()
     }

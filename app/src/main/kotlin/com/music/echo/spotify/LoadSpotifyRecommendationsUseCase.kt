@@ -35,7 +35,7 @@ class LoadSpotifyRecommendationsUseCase @Inject constructor(
                 async {
                     try {
                         val spotifyArtistId = getSpotifyArtistId(artist.artist.name) ?: return@async null
-                        val result = Spotify.recommendations(seedArtistIds = listOf(spotifyArtistId), limit = 8).getOrNull()
+                        val result = Spotify.recommendations(seedArtistIds = listOf(spotifyArtistId), limit = 20).getOrNull()
                         val tracks = result?.tracks.orEmpty()
                         if (tracks.isEmpty()) return@async null
                         val resolved = spotifyPlaybackResolver.resolveAndFilter(tracks, hideExplicit)
@@ -51,7 +51,7 @@ class LoadSpotifyRecommendationsUseCase @Inject constructor(
                 async {
                     try {
                         val spotifyTrackId = getSpotifyTrackId(song.song.title, song.artists.firstOrNull()?.name) ?: return@async null
-                        val result = Spotify.recommendations(seedTrackIds = listOf(spotifyTrackId), limit = 8).getOrNull()
+                        val result = Spotify.recommendations(seedTrackIds = listOf(spotifyTrackId), limit = 20).getOrNull()
                         val tracks = result?.tracks.orEmpty()
                         if (tracks.isEmpty()) return@async null
                         val resolved = spotifyPlaybackResolver.resolveAndFilter(tracks, hideExplicit)
@@ -69,7 +69,7 @@ class LoadSpotifyRecommendationsUseCase @Inject constructor(
                 topArtists.map { topArtist ->
                     async {
                         try {
-                            val result = Spotify.recommendations(seedArtistIds = listOf(topArtist.id), limit = 8).getOrNull()
+                            val result = Spotify.recommendations(seedArtistIds = listOf(topArtist.id), limit = 20).getOrNull()
                             val tracks = result?.tracks.orEmpty()
                             if (tracks.isEmpty()) return@async null
                             val resolved = spotifyPlaybackResolver.resolveAndFilter(tracks, hideExplicit)

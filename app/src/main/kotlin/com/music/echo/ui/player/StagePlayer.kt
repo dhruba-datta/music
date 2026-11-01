@@ -71,8 +71,8 @@ private val StageActionTargetSize = 29.dp
 /**
  * Lays out the artwork and the sections below it, top to bottom. The artwork stays square and takes
  * what the sections leave, up to the full width. Height left over goes evenly between the sections
- * and below the last one, up to [maxGap] each so they stay together, and the rest goes above the
- * artwork.
+ * and below the last one, up to [maxGap] each so they stay together. A third of the rest goes above
+ * the artwork and the remainder below the last section, which keeps the artwork high.
  */
 @Composable
 internal fun StageEvenLayout(
@@ -110,7 +110,7 @@ internal fun StageEvenLayout(
     val gap = (freeHeight / gapCount.coerceAtLeast(1)).coerceAtMost(maxGap.roundToPx())
 
     layout(width, height) {
-      var y = minGap.roundToPx() + freeHeight - gap * gapCount
+      var y = minGap.roundToPx() + (freeHeight - gap * gapCount) / 3
       artworkPlaceable.place(0, y)
       y += artworkPlaceable.height + gap
       sectionPlaceables.forEach {

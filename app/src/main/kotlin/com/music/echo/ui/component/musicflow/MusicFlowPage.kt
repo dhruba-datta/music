@@ -68,7 +68,6 @@ import androidx.compose.ui.unit.sp
 import androidx.media3.exoplayer.offline.Download
 import coil3.compose.AsyncImage
 import echo.music.iad1tya.R
-import echo.music.iad1tya.lyrics.LyricsUtils.parseLyrics
 import echo.music.iad1tya.musicflow.MusicFlowItem
 import echo.music.iad1tya.ui.component.shimmer.ShimmerHost
 import echo.music.iad1tya.ui.component.shimmer.TextPlaceholder
@@ -95,8 +94,6 @@ fun MusicFlowPage(
   downloadState: Int?,
   showCanvas: Boolean,
   lyricsAvailable: Boolean,
-  showLyrics: Boolean,
-  lyricsText: String?,
   bottomPadding: Dp,
   position: () -> Long,
   duration: () -> Long,
@@ -159,24 +156,7 @@ fun MusicFlowPage(
       AmbientCanvasBackground(modifier = Modifier.fillMaxSize())
     }
 
-    // 2. TOP FLOATING LYRIC PREVIEW CAPSULE (Reel Style)
-    Box(
-      modifier =
-        Modifier.align(Alignment.TopCenter)
-          .fillMaxWidth()
-          .padding(top = 12.dp),
-      contentAlignment = Alignment.Center,
-    ) {
-      if (showLyrics && lyricsAvailable && !lyricsText.isNullOrBlank()) {
-        LyricPreviewCapsule(
-          lyricsText = lyricsText,
-          position = position,
-          onClick = actions.onLyrics,
-        )
-      }
-    }
-
-    // 3. CENTER PLAY/PAUSE INDICATOR (Visible when paused, fades out on play)
+    // 2. CENTER PLAY/PAUSE INDICATOR (Visible when paused, fades out on play)
     AnimatedVisibility(
       visible = isCurrentPlayback && !isPlaying,
       enter = fadeIn() + scaleIn(initialScale = 0.8f),
@@ -237,80 +217,6 @@ fun MusicFlowPage(
         downloadState = downloadState,
         actions = actions,
       )
-    }
-  }
-}
-
-@Composable
-private fun LyricPreviewCapsule(
-  lyricsText: String?,
-  position: () -> Long,
-  onClick: () -> Unit,
-  modifier: Modifier = Modifier,
-) {
-  val parsedLines = remember(lyricsText) {
-    if (lyricsText?.startsWith("[") == true) {
-      parseLyrics(lyricsText).filter { it.text.isNotBlank() }
-    } else {
-      emptyList()
-    }
-  }
-
-  val currentPosition = position()
-  val activeLine = remember(currentPosition, parsedLines, lyricsText) {
-    if (parsedLines.isNotEmpty()) {
-      val idx = parsedLines.indexOfLast { it.time <= currentPosition }
-      parsedLines.getOrNull(if (idx >= 0) idx else 0)?.text.orEmpty()
-    } else {
-      lyricsText?.lines()?.firstOrNull { it.isNotBlank() }.orEmpty()
-    }
-  }
-
-  AnimatedVisibility(
-    visible = activeLine.isNotBlank(),
-    enter = fadeIn() + slideInVertically { -it / 2 },
-    exit = fadeOut() + slideOutVertically { -it / 2 },
-    modifier = modifier,
-  ) {
-    Box(
-      modifier =
-        Modifier.padding(horizontal = 28.dp)
-          .clip(RoundedCornerShape(22.dp))
-          .background(Color.Black.copy(alpha = 0.50f))
-          .border(1.dp, Color.White.copy(alpha = 0.20f), RoundedCornerShape(22.dp))
-          .clickable(role = Role.Button, onClickLabel = stringResource(R.string.lyrics), onClick = onClick)
-          .padding(horizontal = 16.dp, vertical = 8.dp),
-      contentAlignment = Alignment.Center,
-    ) {
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-      ) {
-        Icon(
-          painter = painterResource(R.drawable.stage_lyrics),
-          contentDescription = null,
-          tint = Color.White.copy(alpha = 0.9f),
-          modifier = Modifier.size(16.dp),
-        )
-        AnimatedContent(
-          targetState = activeLine,
-          transitionSpec = {
-            (fadeIn() + slideInVertically { it / 2 })
-              .togetherWith(fadeOut() + slideOutVertically { -it / 2 })
-              .using(SizeTransform(clip = false))
-          },
-          label = "LyricPreviewText",
-        ) { line ->
-          Text(
-            text = line,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = Color.White,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-          )
-        }
-      }
     }
   }
 }

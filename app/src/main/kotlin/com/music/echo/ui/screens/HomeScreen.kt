@@ -249,6 +249,7 @@ private val HomeRowCardWidth = 160.dp
 private const val HomeRowsPerPage = 5
 private const val HomeMaxDots = 8
 private const val HomePagedSongs = 20
+private const val HomeRowCards = 20
 private val StageRowPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 12.dp)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -496,7 +497,12 @@ private fun <T> HomePagedRows(
   modifier: Modifier = Modifier,
   row: @Composable (T) -> Unit,
 ) {
-  val pages = remember(items) { items.chunked(HomeRowsPerPage) }
+  // Only the first page may be short, so every page you swipe to is full.
+  val pages =
+    remember(items) {
+      val fullRows = (items.size / HomeRowsPerPage * HomeRowsPerPage).takeIf { it > 0 } ?: items.size
+      items.take(fullRows).chunked(HomeRowsPerPage)
+    }
   val pagerState = rememberPagerState(pageCount = { pages.size })
 
   Column(modifier = modifier.fillMaxWidth()) {
@@ -552,6 +558,7 @@ private fun HomeScrollDots(state: LazyGridState) {
 private fun HomeCardRow(
   title: String,
   cards: List<HomeRowCard>,
+  showDots: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
   if (cards.isEmpty()) return
@@ -581,7 +588,7 @@ private fun HomeCardRow(
         }
       }
     }
-    HomeScrollDots(rowState)
+    if (showDots) HomeScrollDots(rowState)
   }
 }
 
@@ -675,6 +682,18 @@ fun HomeScreen(
   val selectedChip by viewModel.selectedChip.collectAsState()
   val spotifyRecommendations by viewModel.spotifyRecommendations.collectAsState()
   val spotifyAlbums by viewModel.spotifyAlbums.collectAsState()
+
+  // Short YouTube sections pull in further pages of Home until they fill up or YouTube runs out.
+  LaunchedEffect(homePage?.continuation) {
+    val items = homePage?.sections.orEmpty().flatMap { it.items }
+    if (
+      items.filterIsInstance<SongItem>().size < HomePagedSongs ||
+        items.filterIsInstance<PlaylistItem>().size < HomeRowCards ||
+        items.filterIsInstance<AlbumItem>().size < HomeRowCards
+    ) {
+      viewModel.loadMoreYouTubeItems(homePage?.continuation)
+    }
+  }
 
   val isLoading: Boolean by viewModel.isLoading.collectAsState()
   val isMoodAndGenresLoading = isLoading && explorePage?.moodAndGenres == null
@@ -1256,6 +1275,7 @@ fun HomeScreen(
                 HomePagedRows(items = likedSongs.take(HomePagedSongs), modifier = Modifier.animateItem()) { song ->
                   SongListItem(
                     song = song,
+                    showLikedIcon = false,
                     isActive = song.id == mediaMetadata?.id,
                     isPlaying = isPlaying,
                     isSwipeable = false,
@@ -1334,7 +1354,7 @@ fun HomeScreen(
                     (communityPlaylists.orEmpty().map { it.playlist } +
                         homePage?.sections.orEmpty().flatMap { it.items }.filterIsInstance<PlaylistItem>())
                       .distinctBy { it.id }
-                      .take(8)
+                      .take(HomeRowCards)
                   }
                 HomeCardRow(
                   title = stringResource(R.string.stage_trending_playlists),
@@ -1347,6 +1367,31 @@ fun HomeScreen(
                         onClick = { navController.navigateToPlaylistItem(playlist) },
                       )
                     },
+                  modifier = Modifier.animateItem(),
+                )
+              }
+              item(key = "youtube_popular_albums") {
+                val albums =
+                  remember(explorePage, similarRecommendations, homePage) {
+                    (explorePage?.newReleaseAlbums.orEmpty() +
+                        (similarRecommendations.orEmpty().flatMap { it.items } +
+                            homePage?.sections.orEmpty().flatMap { it.items })
+                          .filterIsInstance<AlbumItem>())
+                      .distinctBy { it.id }
+                      .take(HomeRowCards)
+                  }
+                HomeCardRow(
+                  title = stringResource(R.string.stage_youtube_albums),
+                  cards =
+                    albums.map { album ->
+                      HomeRowCard(
+                        title = album.title,
+                        subtitle = album.artists?.joinToString { it.name },
+                        imageUrl = album.thumbnail,
+                        onClick = { navController.navigate("album/${album.id}") },
+                      )
+                    },
+                  showDots = false,
                   modifier = Modifier.animateItem(),
                 )
               }
@@ -1398,6 +1443,7 @@ fun HomeScreen(
                         },
                       )
                     },
+                  showDots = false,
                   modifier = Modifier.animateItem(),
                 )
               }

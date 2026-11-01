@@ -756,6 +756,7 @@
     <string name="stage_sign_in">Sign in</string>
     <string name="stage_trending_playlists">Trending playlists</string>
     <string name="stage_popular_albums">Popular albums</string>
+    <string name="stage_youtube_albums">YouTube Music albums</string>
     <string name="stage_connect_spotify">Connect Spotify</string>
     <string name="stage_connected">Connected</string>
     <string name="stage_spotify_recommendations">Sign in for your library and recommendations</string>

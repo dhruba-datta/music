@@ -314,7 +314,6 @@ fun MusicFlowScreen(
               val librarySong by database.song(item.songId).collectAsState(initial = null)
               val download by downloadUtil.getDownload(item.songId).collectAsState(initial = null)
               val isCurrent = item.songId == currentMediaId
-              val currentLyricsText = if (isCurrent) currentLyrics?.lyrics else null
               val songDuration = remember(item.song.duration) { (item.song.duration ?: 0) * 1000L }
 
               MusicFlowPage(
@@ -325,8 +324,6 @@ fun MusicFlowScreen(
                 downloadState = download?.state,
                 showCanvas = showCanvas && page == state.selectedIndex,
                 lyricsAvailable = isCurrent && lyricsReady,
-                showLyrics = isCurrent && preferences.lyrics,
-                lyricsText = currentLyricsText,
                 bottomPadding = miniPlayerSpace,
                 position = { if (isCurrent) positionMs else 0L },
                 duration = { if (isCurrent && durationMs > 0) durationMs else songDuration },

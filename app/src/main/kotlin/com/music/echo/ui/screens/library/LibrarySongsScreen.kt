@@ -224,6 +224,7 @@ fun LibrarySongsScreen(
             isActive = song.id == mediaMetadata?.id,
             isPlaying = isPlaying,
             showDownloadIcon = filter != SongFilter.DOWNLOADED,
+            showLikedIcon = filter != SongFilter.LIKED,
             showSize = filter == SongFilter.DOWNLOADED,
             shape = listItemShape(index, filteredSongs.size),
             trailingContent = {

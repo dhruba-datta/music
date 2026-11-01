@@ -621,7 +621,7 @@ constructor(
           null
         }
       spotifyAlbums.value =
-        Spotify.home(sectionItemsLimit = 12)
+        Spotify.home(sectionItemsLimit = 30)
           .getOrNull()
           ?.sections
           .orEmpty()
@@ -629,7 +629,7 @@ constructor(
           .flatMap { it.items }
           .filterIsInstance<SpotifyHomeFeedItem.Album>()
           .distinctBy { it.id }
-          .take(8)
+          .take(20)
     } else {
       spotifyRecommendations.value = null
       spotifyAlbums.value = emptyList()

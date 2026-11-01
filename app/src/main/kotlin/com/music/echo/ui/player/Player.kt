@@ -2256,28 +2256,7 @@ fun BottomSheetPlayer(
           onClick = { state.collapseSoft() },
         )
 
-        val headerSong = mediaMetadata
-        if (headerSong == null || isFullScreen) {
-          StageNowPlayingTitle(textColor = TextBackgroundColor, modifier = Modifier.weight(1f))
-        } else {
-          Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.weight(1f),
-          ) {
-            StageNowPlayingLabel(textColor = TextBackgroundColor)
-            songTitleBlock(
-              headerSong,
-              Modifier,
-              MaterialTheme.typography.titleLarge.copy(
-                fontSize = 20.sp,
-                lineHeight = 24.sp,
-                fontWeight = FontWeight.ExtraBold,
-              ),
-              14.sp,
-              Alignment.CenterHorizontally,
-            )
-          }
-        }
+        StageNowPlayingTitle(textColor = TextBackgroundColor, modifier = Modifier.weight(1f))
 
         if (showCommentButton) {
           StageHeaderButton(
@@ -2398,6 +2377,17 @@ fun BottomSheetPlayer(
               )
           }
         }
+        songTitleBlock(
+          meta,
+          Modifier.weight(1f).padding(horizontal = 8.dp),
+          MaterialTheme.typography.titleLarge.copy(
+            fontSize = 20.sp,
+            lineHeight = 24.sp,
+            fontWeight = FontWeight.ExtraBold,
+          ),
+          14.sp,
+          Alignment.CenterHorizontally,
+        )
         val isLiked = currentSong?.song?.liked == true
         Box(
           contentAlignment = Alignment.Center,

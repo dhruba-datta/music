@@ -21,10 +21,10 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 
 /** How much of the blend each of two covers takes. They overlap by the part over one half. */
-private const val CoverSpan = 0.7f
+private const val CoverSpan = 0.56f
 
-/** Where a cover finishes fading in, as a fraction of its own length. */
-private const val CoverFadeEnd = 0.42f
+/** Where a cover finishes fading in, as a fraction of its own length: the end of the overlap. */
+private const val CoverFadeEnd = (2 * CoverSpan - 1) / CoverSpan
 
 /** The most covers one blend can show. */
 const val MaxBlendedCovers = 4
@@ -34,7 +34,7 @@ fun blendedCovers(thumbnails: List<String?>): List<String> =
   thumbnails.filterNotNull().filter { it.isNotBlank() }.distinct().take(MaxBlendedCovers)
 
 /**
- * Up to [MaxBlendedCovers] covers melting into each other, with no hard line between them. One
+ * Up to [MaxBlendedCovers] covers side by side, softened only along the seams between them. One
  * cover fills the space, two sit side by side, three put two on the right, and four form a square.
  */
 @Composable
