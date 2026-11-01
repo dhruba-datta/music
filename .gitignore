@@ -40,4 +40,4 @@ ArchiveTune-main/
 # Mod signing material
 keystore.jks
 .secrets/
-EchoMusicMod-*.apk
+Music-*.apk

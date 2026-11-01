@@ -39,7 +39,7 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     vectorDrawables.useSupportLibrary = true
 
-    buildConfigField("String", "UPDATE_REPOSITORY", "\"dhruba-datta/EchoMusicMod\"")
+    buildConfigField("String", "UPDATE_REPOSITORY", "\"dhruba-datta/music\"")
 
     // GitHub OAuth keys
     val githubClientId =
