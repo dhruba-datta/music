@@ -166,16 +166,6 @@ fun LibrarySpotifyScreen(
           )
         }
       } else {
-        // Authenticated Spotify Profile Header
-        item(key = "profile_header") {
-          SpotifyProfileHeader(
-            accountName = uiState.accountName ?: "Spotify User",
-            avatarUrl = uiState.avatarUrl,
-            onRefresh = { viewModel.refresh() },
-            modifier = Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 4.dp),
-          )
-        }
-
         if (seeAll == null) {
           item(key = "liked_songs") {
             StageSourcePinnedCard(
@@ -440,83 +430,3 @@ private fun SpotifyConnectBanner(
   }
 }
 
-@Composable
-private fun SpotifyProfileHeader(
-  accountName: String,
-  avatarUrl: String?,
-  onRefresh: () -> Unit,
-  modifier: Modifier = Modifier,
-) {
-  Surface(
-    shape = RoundedCornerShape(18.dp),
-    color = Color(0xFF16321F),
-    modifier = modifier.fillMaxWidth(),
-  ) {
-    Row(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(14.dp),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.weight(1f),
-      ) {
-        if (!avatarUrl.isNullOrBlank()) {
-          AsyncImage(
-            model = avatarUrl,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-              .size(44.dp)
-              .clip(CircleShape),
-          )
-        } else {
-          Box(
-            modifier = Modifier
-              .size(44.dp)
-              .clip(CircleShape)
-              .background(MaterialTheme.colorScheme.surfaceContainerHighest),
-            contentAlignment = Alignment.Center,
-          ) {
-            Icon(
-              painter = painterResource(R.drawable.person),
-              contentDescription = null,
-              tint = MaterialTheme.colorScheme.onSurfaceVariant,
-              modifier = Modifier.size(24.dp),
-            )
-          }
-        }
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        Column {
-          Text(
-            text = "Spotify Connected",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-          )
-          Text(
-            text = accountName,
-            fontSize = 13.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-          )
-        }
-      }
-
-      IconButton(onClick = onRefresh) {
-        Icon(
-          painter = painterResource(R.drawable.cached),
-          contentDescription = "Refresh",
-          tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-      }
-    }
-  }
-}

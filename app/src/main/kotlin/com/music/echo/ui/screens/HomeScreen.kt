@@ -145,7 +145,10 @@ import echo.music.iad1tya.ui.component.LocalBottomSheetPageState
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.NavigationTitle
 import echo.music.iad1tya.ui.component.SpeedDialShortcut
+import echo.music.iad1tya.ui.component.SPEED_DIAL_COLUMNS
+import echo.music.iad1tya.ui.component.SPEED_DIAL_PAGES
 import echo.music.iad1tya.ui.component.StageHeroStrip
+import echo.music.iad1tya.ui.component.StageSpeedDialPager
 import echo.music.iad1tya.ui.component.RandomizeGridItem
 import echo.music.iad1tya.ui.component.SongListItem
 import echo.music.iad1tya.ui.component.SpeedDialGridItem
@@ -1141,17 +1144,11 @@ fun HomeScreen(
                   }
 
                   item(key = "speed_dial_list") {
-                    val tileSize = 74.dp
-
-                    LazyRow(
-                      contentPadding = PaddingValues(horizontal = 18.dp),
-                      horizontalArrangement = Arrangement.spacedBy(10.dp),
-                      modifier = Modifier.fillMaxWidth().animateItem(),
-                    ) {
-                      item(key = "speed_dial_shuffle") {
+                    val tiles = buildList<@Composable (Modifier) -> Unit> {
+                      add { tileModifier ->
                         RandomizeGridItem(
                             isLoading = isRandomizing,
-                            modifier = Modifier.size(tileSize),
+                            modifier = tileModifier,
                             onClick = {
                               if (isRandomizing) {
                                 randomizeJob?.cancel()
@@ -1182,33 +1179,34 @@ fun HomeScreen(
                             }
                           )
                       }
-                      item(key = "speed_dial_downloads") {
+                      add { tileModifier ->
                         SpeedDialShortcut(
                           iconRes = R.drawable.download,
                           contentDescription = stringResource(R.string.downloaded_songs),
                           onClick = { navController.navigate("auto_playlist/downloaded") },
-                          modifier = Modifier.size(tileSize),
+                          modifier = tileModifier,
                         )
                       }
-                      item(key = "speed_dial_youtube_music") {
+                      add { tileModifier ->
                         SpeedDialShortcut(
                           iconRes = R.drawable.stage_youtube_music,
                           contentDescription = stringResource(R.string.stage_youtube_music),
                           colors = listOf(Color(0xFFFF4E45), Color(0xFF7A0F1E)),
                           onClick = { navController.navigate(if (isLoggedIn) "account" else "login") },
-                          modifier = Modifier.size(tileSize),
+                          modifier = tileModifier,
                         )
                       }
-                      item(key = "speed_dial_spotify") {
+                      add { tileModifier ->
                         SpeedDialShortcut(
                           iconRes = R.drawable.ic_spotify,
                           contentDescription = stringResource(R.string.stage_spotify),
                           colors = listOf(Color(0xFF1DB954), Color(0xFF0B3B20)),
                           onClick = { navController.navigate("spotify_library") },
-                          modifier = Modifier.size(tileSize),
+                          modifier = tileModifier,
                         )
                       }
-                      items(items = items, key = { "speed_dial_${it.id}" }) { item ->
+                      items.forEach { item ->
+                        add { tileModifier ->
                         val isPinned by
                           database.speedDialDao
                             .isPinned(item.id)
@@ -1222,7 +1220,7 @@ fun HomeScreen(
                               listOf(mediaMetadata?.album?.id, mediaMetadata?.id),
                           isPlaying = isPlaying,
                           modifier =
-                            Modifier.size(tileSize)
+                            tileModifier
                               .combinedClickable(
                                 onClick = {
                                   when (item) {
@@ -1258,7 +1256,14 @@ fun HomeScreen(
                               )
                         )
                       }
-                    }
+                        }
+                      }
+
+                    StageSpeedDialPager(
+                      pages =
+                        tiles.chunked(SPEED_DIAL_COLUMNS).take(SPEED_DIAL_PAGES),
+                      modifier = Modifier.fillMaxWidth().animateItem(),
+                    )
                   }
                 }
             }
