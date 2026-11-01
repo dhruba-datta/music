@@ -13,11 +13,15 @@ import echo.music.iad1tya.playback.PlayerConnection
 import echo.music.iad1tya.playback.queues.YouTubeQueue
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+private const val FALLBACK_REGION = "us"
 
 @HiltViewModel
 class SuggestionsViewModel @Inject constructor() : ViewModel() {
@@ -44,7 +48,7 @@ class SuggestionsViewModel @Inject constructor() : ViewModel() {
   fun refresh(countryCode: String = "system", force: Boolean = false) {
     val resolvedCode =
       if (countryCode == "system") {
-        java.util.Locale.getDefault().country.lowercase()
+        java.util.Locale.getDefault().country.lowercase().ifEmpty { FALLBACK_REGION }
       } else {
         countryCode.lowercase()
       }
@@ -66,10 +70,16 @@ class SuggestionsViewModel @Inject constructor() : ViewModel() {
         coroutineScope {
           launch {
             try {
-              val tracks = AppleMusicScraper.fetchTopSongs(resolvedCode)
+              // Apple has no chart for some regions; show the US one instead of nothing.
+              val tracks =
+                AppleMusicScraper.fetchTopSongs(resolvedCode).ifEmpty {
+                  AppleMusicScraper.fetchTopSongs(FALLBACK_REGION)
+                }
               if (tracks.isNotEmpty()) {
                 _suggestionTracks.value = tracks
-                _suggestionArtists.value = AppleMusicScraper.getTrendingArtists(tracks)
+                val artists = AppleMusicScraper.getTrendingArtists(tracks)
+                _suggestionArtists.value = artists
+                _suggestionArtists.value = withArtistPhotos(artists)
               }
             } catch (e: Exception) {
               Log.e("SuggestionsViewModel", "Failed to fetch songs", e)
@@ -78,7 +88,9 @@ class SuggestionsViewModel @Inject constructor() : ViewModel() {
 
           launch {
             try {
-              val albums = AppleMusicScraper.fetchTopAlbums(resolvedCode)
+              val albums = AppleMusicScraper.fetchTopAlbums(resolvedCode).ifEmpty {
+                  AppleMusicScraper.fetchTopAlbums(FALLBACK_REGION)
+                }
               if (albums.isNotEmpty()) {
                 _suggestionAlbums.value = albums
               }
@@ -89,7 +101,9 @@ class SuggestionsViewModel @Inject constructor() : ViewModel() {
 
           launch {
             try {
-              val videos = AppleMusicScraper.fetchTopVideos(resolvedCode)
+              val videos = AppleMusicScraper.fetchTopVideos(resolvedCode).ifEmpty {
+                  AppleMusicScraper.fetchTopVideos(FALLBACK_REGION)
+                }
               if (videos.isNotEmpty()) {
                 _suggestionVideos.value = videos
               }
@@ -108,6 +122,25 @@ class SuggestionsViewModel @Inject constructor() : ViewModel() {
       }
     }
   }
+
+  /** Swaps the song covers Apple gives us for the artists' own photos where YouTube has one. */
+  private suspend fun withArtistPhotos(artists: List<SuggestionArtist>): List<SuggestionArtist> =
+    coroutineScope {
+      artists
+        .map { artist ->
+          async {
+            val photo =
+              YouTube.search(artist.name, YouTube.SearchFilter.FILTER_ARTIST)
+                .getOrNull()
+                ?.items
+                ?.filterIsInstance<ArtistItem>()
+                ?.firstOrNull()
+                ?.thumbnail
+            if (photo != null) artist.copy(thumbnailUrl = photo) else artist
+          }
+        }
+        .awaitAll()
+    }
 
   private fun artistMatches(ytArtistName: String, appleMusicArtist: String): Boolean {
     val ytNorm = ytArtistName.trim().lowercase()

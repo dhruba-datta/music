@@ -166,8 +166,7 @@ fun MusicFlowPage(
       modifier =
         Modifier.align(Alignment.TopCenter)
           .fillMaxWidth()
-          .windowInsetsPadding(WindowInsets.safeDrawing)
-          .padding(top = TOP_BAR_HEIGHT + 8.dp),
+          .padding(top = 12.dp),
       contentAlignment = Alignment.Center,
     ) {
       if (showLyrics && lyricsAvailable && !lyricsText.isNullOrBlank()) {
@@ -257,7 +256,6 @@ fun MusicFlowPage(
   }
 }
 
-private val TOP_BAR_HEIGHT = 56.dp
 @Composable
 private fun LyricPreviewCapsule(
   lyricsText: String?,

@@ -2442,8 +2442,8 @@ fun BottomSheetPlayer(
           meta,
           Modifier.weight(1f),
           MaterialTheme.typography.headlineSmall.copy(
-            fontSize = 27.sp,
-            lineHeight = 30.sp,
+            fontSize = 24.sp,
+            lineHeight = 28.sp,
             fontWeight = FontWeight.ExtraBold,
           ),
           16.sp,
@@ -3177,14 +3177,14 @@ fun BottomSheetPlayer(
                         {
                           Column {
                             stageSongRow(meta)
-                            Spacer(Modifier.height(6.dp))
+                            Spacer(Modifier.height(10.dp))
                             progressBlock()
                           }
                         },
                         {
                           Column {
                             seekButtonsBlock()
-                            stageTransport(84.dp)
+                            stageTransport(72.dp)
                           }
                         },
                       ),

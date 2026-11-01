@@ -70,8 +70,8 @@ private val StageActionTargetSize = 29.dp
 
 /**
  * Lays out the artwork and the sections below it, top to bottom. The artwork stays square and takes
- * what the sections leave, up to the full width, and any height left over is shared equally between
- * the gaps. This keeps the player free of empty bands on tall phones and on short ones.
+ * what the sections leave, up to the full width. Height left over goes evenly between the sections,
+ * up to [maxGap] each so they stay together, and the rest goes above the artwork.
  */
 @Composable
 internal fun StageEvenLayout(
@@ -80,6 +80,7 @@ internal fun StageEvenLayout(
   modifier: Modifier = Modifier,
   horizontalPadding: Dp = StagePlayerPadding,
   minGap: Dp = 8.dp,
+  maxGap: Dp = 32.dp,
 ) {
   Layout(
     content = {
@@ -95,19 +96,20 @@ internal fun StageEvenLayout(
         it.measure(Constraints(minWidth = width, maxWidth = width, maxHeight = height))
       }
     val sectionsHeight = sectionPlaceables.sumOf { it.height }
-    val gapCount = sectionPlaceables.size + 1
+    val gapCount = sectionPlaceables.size
     val artworkSide =
       minOf(
           width - horizontalPadding.roundToPx() * 2,
-          height - sectionsHeight - minGap.roundToPx() * gapCount,
+          height - sectionsHeight - minGap.roundToPx() * (gapCount + 1),
         )
         .coerceAtLeast(0)
     val artworkPlaceable =
       measurables.first().measure(Constraints.fixed(width, artworkSide))
-    val gap = ((height - sectionsHeight - artworkSide) / gapCount).coerceAtLeast(0)
+    val freeHeight = (height - sectionsHeight - artworkSide - minGap.roundToPx()).coerceAtLeast(0)
+    val gap = (freeHeight / gapCount.coerceAtLeast(1)).coerceAtMost(maxGap.roundToPx())
 
     layout(width, height) {
-      var y = gap
+      var y = minGap.roundToPx() + freeHeight - gap * gapCount
       artworkPlaceable.place(0, y)
       y += artworkPlaceable.height + gap
       sectionPlaceables.forEach {

@@ -42,7 +42,7 @@ object AppleMusicScraper {
     val tracks = mutableListOf<SuggestionTrack>()
     try {
       val url =
-        "https://rss.applemarketingtools.com/api/v2/$countryCode/music/most-played/100/songs.json"
+        "https://rss.marketingtools.apple.com/api/v2/$countryCode/music/most-played/100/songs.json"
       val response = executeGet(url) ?: return tracks
 
       val json = JSONObject(response)
@@ -68,7 +68,7 @@ object AppleMusicScraper {
     val albums = mutableListOf<SuggestionAlbum>()
     try {
       val url =
-        "https://rss.applemarketingtools.com/api/v2/$countryCode/music/most-played/20/albums.json"
+        "https://rss.marketingtools.apple.com/api/v2/$countryCode/music/most-played/20/albums.json"
       val response = executeGet(url) ?: return albums
 
       val json = JSONObject(response)
@@ -94,7 +94,7 @@ object AppleMusicScraper {
     val videos = mutableListOf<SuggestionTrack>()
     try {
       val url =
-        "https://rss.applemarketingtools.com/api/v2/$countryCode/music/most-played/20/music-videos.json"
+        "https://rss.marketingtools.apple.com/api/v2/$countryCode/music/most-played/20/music-videos.json"
       val response = executeGet(url) ?: return videos
 
       val json = JSONObject(response)

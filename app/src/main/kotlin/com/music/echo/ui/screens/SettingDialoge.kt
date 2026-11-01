@@ -102,6 +102,51 @@ fun SettingDialoge(
 
     StageSheetCards {
       StageSheetRow(
+        text = stringResource(R.string.downloaded_songs),
+        icon = R.drawable.download,
+        onClick = {
+          onDismissRequest()
+          onNavigate("auto_playlist/downloaded")
+        }
+      )
+      StageSheetRow(
+        text = stringResource(R.string.liked),
+        icon = R.drawable.favorite,
+        onClick = {
+          onDismissRequest()
+          onNavigate("auto_playlist/liked")
+        }
+      )
+      StageSheetRow(
+        text = stringResource(R.string.history),
+        icon = R.drawable.stage_history,
+        onClick = {
+          onDismissRequest()
+          onNavigate("history")
+        }
+      )
+      StageSheetRow(
+        text = stringResource(R.string.listening_summary),
+        icon = R.drawable.trending_up,
+        onClick = {
+          onDismissRequest()
+          onNavigate("settings/listening_summary")
+        }
+      )
+      StageSheetRow(
+        text = stringResource(R.string.equalizer),
+        icon = R.drawable.equalizer,
+        onClick = {
+          onDismissRequest()
+          onNavigate("settings/equalizer")
+        }
+      )
+    }
+
+    Spacer(Modifier.height(12.dp))
+
+    StageSheetCards {
+      StageSheetRow(
         text = stringResource(R.string.settings),
         icon = R.drawable.stage_settings,
         onClick = {

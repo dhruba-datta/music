@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import echo.music.iad1tya.LocalDatabase
 import kotlinx.coroutines.flow.map
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -45,6 +44,8 @@ import androidx.navigation.NavController
 import coil3.compose.SubcomposeAsyncImage
 import com.valentinilk.shimmer.shimmer
 import echo.music.iad1tya.R
+import echo.music.iad1tya.ui.screens.MoodAndGenresButton
+import echo.music.iad1tya.viewmodels.MoodAndGenresViewModel
 import echo.music.iad1tya.constants.GridThumbnailCornerRadius
 import echo.music.iad1tya.constants.SuggestionRegionKey
 import echo.music.iad1tya.constants.ThumbnailCornerRadius
@@ -59,6 +60,7 @@ fun SuggestionsTabContent(
   navController: NavController,
   onSearch: (String) -> Unit,
   viewModel: SuggestionsViewModel = hiltViewModel(),
+  moodViewModel: MoodAndGenresViewModel = hiltViewModel(),
   contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
   val suggestionTracks by viewModel.suggestionTracks.collectAsState()
@@ -66,10 +68,8 @@ fun SuggestionsTabContent(
   val suggestionAlbums by viewModel.suggestionAlbums.collectAsState()
   val suggestionVideos by viewModel.suggestionVideos.collectAsState()
   val isLoading by viewModel.isLoading.collectAsState()
-  val database = LocalDatabase.current
-  val recentSearches by
-    remember { database.searchHistory().map { it.distinctBy { search -> search.query }.take(10) } }
-      .collectAsState(initial = emptyList())
+  val moodSections by moodViewModel.moodAndGenres.collectAsState()
+  val moodTiles = remember(moodSections) { moodSections.orEmpty().flatMap { it.items }.take(6) }
   val isManualLoading by viewModel.isManualLoading.collectAsState()
   val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
   val playerConnection = echo.music.iad1tya.LocalPlayerConnection.current
@@ -95,38 +95,34 @@ fun SuggestionsTabContent(
     modifier = Modifier.fillMaxSize()
   ) {
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
-      if (recentSearches.isNotEmpty()) {
-        item(key = "recent_searches") {
-          StageSectionHeader(title = stringResource(R.string.stage_recent_searches))
-          LazyRow(
-            contentPadding = PaddingValues(horizontal = 18.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+      if (moodTiles.isNotEmpty()) {
+        item(key = "moods_and_genres") {
+          StageSectionHeader(
+            title = stringResource(R.string.mood_and_genres),
+            onMore = { navController.navigate("mood_and_genres") },
+          )
+          Column(
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.padding(horizontal = 18.dp),
           ) {
-            items(items = recentSearches, key = { it.query }) { search ->
-              Text(
-                text = search.query,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier =
-                  Modifier.widthIn(max = 180.dp)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                    .clickable { onSearch(search.query) }
-                    .padding(horizontal = 14.dp, vertical = 9.dp),
-              )
+            moodTiles.chunked(2).forEach { row ->
+              Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                row.forEach { tile ->
+                  MoodAndGenresButton(
+                    title = tile.title,
+                    onClick = {
+                      navController.navigate(
+                        "youtube_browse/${tile.endpoint.browseId}?params=${tile.endpoint.params}"
+                      )
+                    },
+                    modifier = Modifier.weight(1f),
+                  )
+                }
+                if (row.size == 1) Spacer(Modifier.weight(1f))
+              }
             }
           }
         }
-      }
-
-      item(key = "moods_and_genres") {
-        StageSectionHeader(
-          title = stringResource(R.string.mood_and_genres),
-          onMore = { navController.navigate("mood_and_genres") },
-        )
       }
 
       if (
@@ -144,6 +140,23 @@ fun SuggestionsTabContent(
           ) {
             CircularWavyProgressIndicator()
           }
+        }
+      }
+
+      suggestionArtists?.let { artists ->
+        item {
+          TopArtistsSection(
+            artists = artists,
+            onArtistClick = { artist ->
+              android.widget.Toast.makeText(
+                  context,
+                  "Loading ${artist.name}...",
+                  android.widget.Toast.LENGTH_SHORT
+                )
+                .show()
+              viewModel.navigateToArtist(artist, navController)
+            }
+          )
         }
       }
 
@@ -166,23 +179,6 @@ fun SuggestionsTabContent(
                 if (regionCode == "system") java.util.Locale.getDefault().country.lowercase()
                 else regionCode.lowercase()
               uriHandler.openUri("https://music.apple.com/$code/charts")
-            }
-          )
-        }
-      }
-
-      suggestionArtists?.let { artists ->
-        item {
-          TopArtistsSection(
-            artists = artists,
-            onArtistClick = { artist ->
-              android.widget.Toast.makeText(
-                  context,
-                  "Loading ${artist.name}...",
-                  android.widget.Toast.LENGTH_SHORT
-                )
-                .show()
-              viewModel.navigateToArtist(artist, navController)
             }
           )
         }
