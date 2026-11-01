@@ -688,8 +688,7 @@ fun HomeScreen(
     val items = homePage?.sections.orEmpty().flatMap { it.items }
     if (
       items.filterIsInstance<SongItem>().size < HomePagedSongs ||
-        items.filterIsInstance<PlaylistItem>().size < HomeRowCards ||
-        items.filterIsInstance<AlbumItem>().size < HomeRowCards
+        items.filterIsInstance<PlaylistItem>().size < HomeRowCards
     ) {
       viewModel.loadMoreYouTubeItems(homePage?.continuation)
     }
@@ -1367,31 +1366,6 @@ fun HomeScreen(
                         onClick = { navController.navigateToPlaylistItem(playlist) },
                       )
                     },
-                  modifier = Modifier.animateItem(),
-                )
-              }
-              item(key = "youtube_popular_albums") {
-                val albums =
-                  remember(explorePage, similarRecommendations, homePage) {
-                    (explorePage?.newReleaseAlbums.orEmpty() +
-                        (similarRecommendations.orEmpty().flatMap { it.items } +
-                            homePage?.sections.orEmpty().flatMap { it.items })
-                          .filterIsInstance<AlbumItem>())
-                      .distinctBy { it.id }
-                      .take(HomeRowCards)
-                  }
-                HomeCardRow(
-                  title = stringResource(R.string.stage_youtube_albums),
-                  cards =
-                    albums.map { album ->
-                      HomeRowCard(
-                        title = album.title,
-                        subtitle = album.artists?.joinToString { it.name },
-                        imageUrl = album.thumbnail,
-                        onClick = { navController.navigate("album/${album.id}") },
-                      )
-                    },
-                  showDots = false,
                   modifier = Modifier.animateItem(),
                 )
               }
