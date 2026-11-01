@@ -1,6 +1,4 @@
 [versions]
-retrofit = "3.0.0"
-haze = "1.0.2"
 androidGradlePlugin = "9.0.0"
 json = "20251224"
 kotlin = "2.3.10"
@@ -40,7 +38,6 @@ tinypinyin = "2.0.3"
 protobuf = "4.36.2"
 protobufPlugin = "0.10.0"
 smoothCorner = "v1.0.0"
-lottie = "6.7.1"
 work = "2.12.0"
 coreSplashscreen = "1.2.0"
 ffmpegKit = "6.0-2"
@@ -50,9 +47,6 @@ coroutinesTest = "1.10.2"
 robolectric = "4.14.1"
 
 [libraries]
-retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
-retrofit-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }
-haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", version.ref = "coroutinesGuava" }
 concurrent-futures = { module = "androidx.concurrent:concurrent-futures-ktx", version.ref = "concurrentFutures" }
@@ -140,7 +134,6 @@ tinypinyin = { module = "com.github.promeG:tinypinyin", version.ref = "tinypinyi
 protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobuf" }
 protobuf-kotlin-lite = { module = "com.google.protobuf:protobuf-kotlin-lite", version.ref = "protobuf" }
 smoothCorner = { module = "com.github.racra:smooth-corner-rect-android-compose", version.ref = "smoothCorner" }
-lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "lottie" }
 work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
 ffmpeg-kit-audio = { module = "com.arthenica:ffmpeg-kit-audio", version.ref = "ffmpegKit" }

@@ -218,7 +218,6 @@ dependencies {
   // GMS Location Services for high-accuracy weather AI context
   "gmsImplementation"(libs.play.services.location)
 
-  implementation(libs.haze)
   implementation(libs.guava)
   implementation(libs.coroutines.guava)
   implementation(libs.concurrent.futures)
@@ -267,11 +266,9 @@ dependencies {
   "gmsImplementation"(libs.cast.framework)
 
   implementation(libs.room.runtime)
-  implementation(libs.tinypinyin)
 
   implementation(libs.room.ktx)
 
-  implementation(libs.apache.lang3)
 
   implementation(libs.hilt)
   ksp(libs.hilt.compiler)
@@ -296,8 +293,6 @@ dependencies {
   implementation(project(":unison"))
 
   implementation(libs.ktor.client.core)
-  implementation(libs.retrofit)
-  implementation(libs.retrofit.gson)
   implementation(libs.ktor.client.okhttp)
   implementation(libs.ktor.client.content.negotiation)
   implementation(libs.ktor.serialization.json)
@@ -309,7 +304,6 @@ dependencies {
   coreLibraryDesugaring(libs.desugaring)
   implementation(libs.timber)
   implementation(libs.smoothCorner)
-  implementation(libs.lottie.compose)
   implementation("androidx.compose.material:material-icons-extended:1.7.8")
   implementation(libs.work.runtime.ktx)
   implementation(libs.androidx.core.splashscreen)
