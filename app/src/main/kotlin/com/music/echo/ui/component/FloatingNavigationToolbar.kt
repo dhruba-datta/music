@@ -27,8 +27,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -40,46 +38,28 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.FloatingToolbarScrollBehavior
-import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import echo.music.iad1tya.R
 import echo.music.iad1tya.ui.screens.Screens
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,18 +70,8 @@ fun FloatingNavigationToolbar(
   onFabClick: (() -> Unit)? = null,
   fabIconRes: Int? = null,
   fabContentDescription: String = "",
-  onMusicFlowClick: (() -> Unit)? = null,
-  musicFlowIconRes: Int? = R.drawable.swipe,
-  musicFlowContentDescription: String = "",
-  onShuffleClick: (() -> Unit)? = null,
-  shuffleEnabled: Boolean = false,
-  shuffleIconRes: Int? = null,
-  shuffleContentDescription: String = "",
   onMusicRecognitionClick: (() -> Unit)? = null,
   musicRecognitionContentDescription: String = "",
-  onAiHubClick: (() -> Unit)? = null,
-  aiHubIconRes: Int? = null,
-  aiHubContentDescription: String = "",
   scrollBehavior: FloatingToolbarScrollBehavior? = null,
   onSearchLongClick: (() -> Unit)? = null,
   isSelected: (Screens) -> Boolean,
@@ -144,8 +114,6 @@ fun FloatingNavigationToolbar(
         }
       )
 
-  val hasOverflowMenu =
-    onMusicFlowClick != null || (onShuffleClick != null && shuffleIconRes != null) || onAiHubClick != null
   val hasFabAction = onFabClick != null && fabIconRes != null
 
   Box(
@@ -163,16 +131,6 @@ fun FloatingNavigationToolbar(
         musicRecognitionContentDescription = musicRecognitionContentDescription,
         isSelected = isSelected,
         onItemClick = onItemClick,
-        hasOverflowMenu = hasOverflowMenu,
-        onMusicFlowClick = onMusicFlowClick,
-        musicFlowIconRes = musicFlowIconRes,
-        musicFlowContentDescription = musicFlowContentDescription,
-        onShuffleClick = onShuffleClick,
-        shuffleEnabled = shuffleEnabled,
-        shuffleIconRes = shuffleIconRes,
-        onAiHubClick = onAiHubClick,
-        aiHubIconRes = aiHubIconRes,
-        aiHubContentDescription = aiHubContentDescription,
         hasFabAction = hasFabAction,
         onFabClick = onFabClick,
         fabIconRes = fabIconRes,
@@ -192,16 +150,6 @@ private fun ToolbarItemsContainer(
   musicRecognitionContentDescription: String,
   isSelected: (Screens) -> Boolean,
   onItemClick: (Screens, Boolean) -> Unit,
-  hasOverflowMenu: Boolean = false,
-  onMusicFlowClick: (() -> Unit)? = null,
-  musicFlowIconRes: Int? = null,
-  musicFlowContentDescription: String = "",
-  onShuffleClick: (() -> Unit)? = null,
-  shuffleEnabled: Boolean = false,
-  shuffleIconRes: Int? = null,
-  onAiHubClick: (() -> Unit)? = null,
-  aiHubIconRes: Int? = null,
-  aiHubContentDescription: String = "",
   hasFabAction: Boolean = false,
   onFabClick: (() -> Unit)? = null,
   fabIconRes: Int? = null,
@@ -211,7 +159,7 @@ private fun ToolbarItemsContainer(
   val slotCount =
     items.size +
       (if (onMusicRecognitionClick != null) 1 else 0) +
-      (if (hasOverflowMenu || (hasFabAction && fabIconRes != null && onFabClick != null)) 1 else 0)
+      (if (hasFabAction && fabIconRes != null && onFabClick != null) 1 else 0)
   val activeScreen = items.find { isSelected(it) }
   val activeSlot =
     activeScreen?.let { screen ->
@@ -220,9 +168,8 @@ private fun ToolbarItemsContainer(
     }
 
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-    // The three dots sit at the side at a fixed width; the tabs share the rest, active one widest.
-    val hasSideAction =
-      hasOverflowMenu || (hasFabAction && fabIconRes != null && onFabClick != null)
+    // A side action keeps a fixed width; the tabs share the rest, active one widest.
+    val hasSideAction = hasFabAction && fabIconRes != null && onFabClick != null
     val sideWidth = if (hasSideAction) 44.dp else 0.dp
     val tabCount = slotCount - (if (hasSideAction) 1 else 0)
     val tabsWidth = maxWidth - sideWidth
@@ -287,21 +234,7 @@ private fun ToolbarItemsContainer(
         )
       }
 
-      if (hasOverflowMenu) {
-        FloatingToolbarOverflowMenuButton(
-          modifier = sideModifier,
-          pureBlack = pureBlack,
-          onMusicFlowClick = onMusicFlowClick,
-          musicFlowIconRes = musicFlowIconRes,
-          musicFlowContentDescription = musicFlowContentDescription,
-          onShuffleClick = onShuffleClick,
-          shuffleEnabled = shuffleEnabled,
-          shuffleIconRes = shuffleIconRes,
-          onAiHubClick = onAiHubClick,
-          aiHubIconRes = aiHubIconRes,
-          aiHubContentDescription = aiHubContentDescription
-        )
-      } else if (hasFabAction && fabIconRes != null && onFabClick != null) {
+      if (hasFabAction && fabIconRes != null && onFabClick != null) {
         FloatingToolbarFabAction(
           pureBlack = pureBlack,
           onClick = onFabClick,
@@ -309,100 +242,6 @@ private fun ToolbarItemsContainer(
           contentDescription = fabContentDescription,
           modifier = sideModifier
         )
-      }
-    }
-  }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun FloatingToolbarOverflowMenuButton(
-  pureBlack: Boolean,
-  modifier: Modifier = Modifier,
-  onMusicFlowClick: (() -> Unit)? = null,
-  musicFlowIconRes: Int? = null,
-  musicFlowContentDescription: String = "",
-  onShuffleClick: (() -> Unit)?,
-  shuffleEnabled: Boolean,
-  shuffleIconRes: Int?,
-  onAiHubClick: (() -> Unit)?,
-  aiHubIconRes: Int?,
-  aiHubContentDescription: String,
-) {
-  var showSheet by rememberSaveable { mutableStateOf(false) }
-  val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-  val scope = rememberCoroutineScope()
-
-  Box(modifier = modifier) {
-    FloatingNavigationToolbarActionItem(
-      iconRes = R.drawable.stage_more,
-      contentDescription = stringResource(R.string.more_label),
-      pureBlack = pureBlack,
-      onClick = { showSheet = true },
-      modifier = Modifier.fillMaxSize(),
-    )
-
-    if (showSheet) {
-      ModalBottomSheet(
-        onDismissRequest = { showSheet = false },
-        sheetState = sheetState,
-        shape = StageSheetShape,
-        dragHandle = { StageSheetHandle() },
-        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-      ) {
-        StageSheetTitle(stringResource(R.string.more_label))
-        StageSheetCards {
-          if (onMusicFlowClick != null && musicFlowIconRes != null) {
-            StageSheetRow(
-              text =
-                if (musicFlowContentDescription.isNotEmpty()) musicFlowContentDescription
-                else stringResource(R.string.music_flow),
-              icon = R.drawable.stage_flow,
-              onClick = {
-                scope.launch {
-                  sheetState.hide()
-                  showSheet = false
-                  onMusicFlowClick()
-                }
-              }
-            )
-          }
-
-          if (onShuffleClick != null && shuffleIconRes != null) {
-            StageSheetRow(
-              text = stringResource(R.string.shuffle),
-              icon = R.drawable.stage_shuffle,
-              onClick = { onShuffleClick() },
-              trailing = {
-                Switch(
-                  checked = shuffleEnabled,
-                  onCheckedChange = { onShuffleClick() },
-                  colors =
-                    androidx.compose.material3.SwitchDefaults.colors(
-                      checkedThumbColor = MaterialTheme.colorScheme.surface,
-                      checkedTrackColor = MaterialTheme.colorScheme.onSurface,
-                      uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                      uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                    )
-                )
-              }
-            )
-          }
-
-          if (onAiHubClick != null && aiHubIconRes != null) {
-            StageSheetRow(
-              text = aiHubContentDescription,
-              icon = R.drawable.stage_ai,
-              onClick = {
-                scope.launch {
-                  sheetState.hide()
-                  showSheet = false
-                  onAiHubClick()
-                }
-              }
-            )
-          }
-        }
       }
     }
   }

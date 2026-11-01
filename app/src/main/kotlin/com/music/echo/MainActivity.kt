@@ -9,10 +9,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
-import android.provider.Settings
-import android.util.Log
 import echo.music.iad1tya.echomusic.AudioDeviceBottomSheet
-import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -45,10 +42,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialogDefaults
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -79,12 +74,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
@@ -121,7 +111,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import coil3.compose.AsyncImage
 import coil3.imageLoader
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
@@ -175,11 +164,7 @@ import echo.music.iad1tya.constants.UseFloatingNavBarKey
 import echo.music.iad1tya.constants.UseNewMiniPlayerDesignKey
 import echo.music.iad1tya.db.MusicDatabase
 import echo.music.iad1tya.db.entities.SearchHistory
-import echo.music.iad1tya.echomusic.UpdateNotificationHelper
-import echo.music.iad1tya.echomusic.updater.checkForUpdate
 import echo.music.iad1tya.echomusic.updater.getAutoUpdateCheckSetting
-import echo.music.iad1tya.echomusic.updater.getUpdateNotificationsSetting
-import echo.music.iad1tya.echomusic.updater.saveUpdateAvailableState
 import echo.music.iad1tya.extensions.toEnum
 import echo.music.iad1tya.models.toMediaMetadata
 import echo.music.iad1tya.playback.DownloadUtil
@@ -202,6 +187,7 @@ import echo.music.iad1tya.ui.menu.YouTubeSongMenu
 import echo.music.iad1tya.ui.player.BottomSheetPlayer
 import echo.music.iad1tya.ui.screens.Screens
 import echo.music.iad1tya.ui.screens.SettingDialoge
+import echo.music.iad1tya.ui.screens.StageAccountAvatar
 import echo.music.iad1tya.ui.screens.WelcomeDialog
 import echo.music.iad1tya.ui.screens.navigationBuilder
 import echo.music.iad1tya.ui.screens.settings.DarkMode
@@ -218,8 +204,6 @@ import echo.music.iad1tya.utils.dataStore
 import echo.music.iad1tya.ai.AiRecommendationHelper
 import echo.music.iad1tya.constants.AiRecommendationsKey
 import echo.music.iad1tya.constants.LastAiRecommendationUpdateDayKey
-import echo.music.iad1tya.constants.CreateFromTasteDailyKey
-import echo.music.iad1tya.constants.LastCreateFromTasteUpdateDayKey
 import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -968,21 +952,6 @@ class MainActivity : ComponentActivity() {
           }
         }
 
-        val onShuffleClick: (() -> Unit)? =
-          remember(playerConnection, playerBottomSheetState) {
-            playerConnection?.let { connection ->
-              {
-                if (playerBottomSheetState.isExpanded) {
-                  playerBottomSheetState.collapseSoft()
-                }
-                connection.player.shuffleModeEnabled = !connection.player.shuffleModeEnabled
-              }
-            }
-          }
-        val shuffleEnabled by
-          playerConnection?.shuffleModeEnabled?.collectAsState()
-            ?: remember { mutableStateOf(false) }
-
         val onMusicRecognitionClick: (() -> Unit) =
           remember(navController, playerBottomSheetState) {
             {
@@ -1319,6 +1288,20 @@ class MainActivity : ComponentActivity() {
                           modifier = Modifier.padding(top = 14.dp, end = 8.dp),
                           verticalAlignment = Alignment.CenterVertically
                         ) {
+                          if (musicFlowEnabled) {
+                            IconButton(
+                              onClick = {
+                                navController.navigate("music_flow") { launchSingleTop = true }
+                              },
+                              modifier = Modifier.size(44.dp)
+                            ) {
+                              Icon(
+                                painter = painterResource(R.drawable.stage_flow),
+                                contentDescription = stringResource(R.string.music_flow),
+                                modifier = Modifier.size(24.dp)
+                              )
+                            }
+                          }
                           if (historyRoute != "history" || showHistoryButton) {
                             IconButton(
                               onClick = { navController.navigate(historyRoute) },
@@ -1335,34 +1318,10 @@ class MainActivity : ComponentActivity() {
                             onClick = { showSettingDialoge = true },
                             modifier = Modifier.size(44.dp)
                           ) {
-                            if (accountImageUrl != null) {
-                              AsyncImage(
-                                model = accountImageUrl,
-                                contentDescription = stringResource(R.string.account),
-                                modifier = Modifier.size(30.dp).clip(CircleShape)
-                              )
-                            } else {
-                              val accountLabel = stringResource(R.string.account)
-                              Box(
-                                modifier =
-                                  Modifier.size(30.dp)
-                                    .clip(CircleShape)
-                                    .semantics { contentDescription = accountLabel }
-                                    .drawBehind {
-                                      // CSS linear-gradient(145deg, #e04f7f, #6a4c93).
-                                      val half = size.width * 0.6965f
-                                      val dx = 0.5736f * half
-                                      val dy = 0.8192f * half
-                                      drawRect(
-                                        Brush.linearGradient(
-                                          colors = listOf(Color(0xFFE04F7F), Color(0xFF6A4C93)),
-                                          start = Offset(center.x - dx, center.y - dy),
-                                          end = Offset(center.x + dx, center.y + dy)
-                                        )
-                                      )
-                                    }
-                              )
-                            }
+                            StageAccountAvatar(
+                              imageUrl = accountImageUrl,
+                              modifier = Modifier.size(30.dp)
+                            )
                           }
                         }
                       }
@@ -1497,16 +1456,6 @@ class MainActivity : ComponentActivity() {
                       FloatingNavigationToolbar(
                         items = navigationItems,
                         pureBlack = pureBlack,
-                        onMusicFlowClick =
-                          if (musicFlowEnabled) {
-                            { navController.navigate("music_flow") { launchSingleTop = true } }
-                          } else null,
-                        musicFlowIconRes = R.drawable.swipe,
-                        musicFlowContentDescription = stringResource(R.string.music_flow),
-                        onShuffleClick = onShuffleClick,
-                        shuffleEnabled = shuffleEnabled,
-                        shuffleIconRes = R.drawable.shuffle,
-                        shuffleContentDescription = stringResource(R.string.shuffle),
                         onSearchLongClick = onRailSearchLongClick,
                         isSelected = { screen ->
                           selectedTabRoute == screen.route ||
@@ -1635,17 +1584,7 @@ class MainActivity : ComponentActivity() {
                   pureBlack = pureBlack,
                   onSearchLongClick = onRailSearchLongClick,
                   onMusicRecognitionClick = onMusicRecognitionClick,
-                  musicRecognitionContentDescription = stringResource(R.string.recognition),
-                  onMusicFlowClick =
-                    if (musicFlowEnabled) {
-                      { navController.navigate("music_flow") { launchSingleTop = true } }
-                    } else null,
-                  musicFlowIconRes = R.drawable.swipe,
-                  musicFlowContentDescription = stringResource(R.string.music_flow),
-                  onShuffleClick = onShuffleClick,
-                  shuffleEnabled = shuffleEnabled,
-                  shuffleIconRes = R.drawable.shuffle,
-                  shuffleContentDescription = stringResource(R.string.shuffle),
+                  musicRecognitionContentDescription = stringResource(R.string.recognition)
                 )
               }
               Box(Modifier.weight(1f)) {
