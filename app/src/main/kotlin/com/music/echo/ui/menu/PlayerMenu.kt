@@ -590,24 +590,12 @@ fun PlayerMenu(
           label = "dnaColor"
         )
       val isInLibrary = librarySong?.song?.inLibrary != null
-      val (queueLockedPref) = rememberPreference(QueueEditLockKey, defaultValue = false)
-      val effectiveQueueLocked = isQueueLocked ?: queueLockedPref
-
-      val timeline = playerConnection.player.currentTimeline
-      val currentIdx = playerConnection.player.currentMediaItemIndex
-      val hasUpcomingSongs =
-        !timeline.isEmpty &&
-          currentIdx != C.INDEX_UNSET &&
-          timeline.getNextWindowIndex(
-            currentIdx,
-            Player.REPEAT_MODE_OFF,
-            playerConnection.player.shuffleModeEnabled
-          ) != C.INDEX_UNSET
 
       val tiles = buildList {
         if (artists.isNotEmpty()) {
           add(
             PlayerMenuTile(
+              order = 13,
               icon = { PlayerMenuTileIcon(R.drawable.artist) },
               label = { PlayerMenuTileLabel(stringResource(R.string.view_artist)) },
               onClick = {
@@ -625,6 +613,7 @@ fun PlayerMenu(
         if (mediaMetadata.album != null) {
           add(
             PlayerMenuTile(
+              order = 14,
               icon = { PlayerMenuTileIcon(R.drawable.album) },
               label = { PlayerMenuTileLabel(stringResource(R.string.view_album)) },
               onClick = {
@@ -638,6 +627,7 @@ fun PlayerMenu(
         if (!isListenTogetherGuest) {
           add(
             PlayerMenuTile(
+              order = 10,
               icon = { PlayerMenuTileIcon(R.drawable.radio) },
               label = { PlayerMenuTileLabel(stringResource(R.string.start_an_radio)) },
               onClick = {
@@ -650,13 +640,7 @@ fun PlayerMenu(
         }
         add(
           PlayerMenuTile(
-            icon = { PlayerMenuTileIcon(R.drawable.playlist_add) },
-            label = { PlayerMenuTileLabel(stringResource(R.string.add_to_an_playlist)) },
-            onClick = { showChoosePlaylistDialog = true }
-          )
-        )
-        add(
-          PlayerMenuTile(
+            order = 11,
             icon = {
               PlayerMenuTileIcon(
                 if (isInLibrary) R.drawable.library_add_check else R.drawable.library_add
@@ -677,6 +661,7 @@ fun PlayerMenu(
         )
         add(
           PlayerMenuTile(
+            order = 30,
             icon = {
               androidx.compose.foundation.Image(
                 painter = painterResource(R.drawable.songdna),
@@ -690,6 +675,7 @@ fun PlayerMenu(
         )
         add(
           PlayerMenuTile(
+            order = 22,
             icon = { PlayerMenuTileIcon(R.drawable.fullscreen) },
             label = { PlayerMenuTileLabel("Ambient Mode") },
             onClick = {
@@ -701,6 +687,7 @@ fun PlayerMenu(
         )
         add(
           PlayerMenuTile(
+            order = 23,
             icon = { PlayerMenuTileIcon(R.drawable.lyrics) },
             label = {
               PlayerMenuTileLabel(if (showLyricsOnPlayer) "Hide Lyrics" else "Show Lyrics")
@@ -710,74 +697,6 @@ fun PlayerMenu(
               onDismiss()
             }
           )
-        )
-        if (!isListenTogetherGuest && !effectiveQueueLocked && !inSelectMode && hasUpcomingSongs) {
-          add(
-            PlayerMenuTile(
-              icon = { PlayerMenuTileIcon(R.drawable.clear_all) },
-              label = { PlayerMenuTileLabel(stringResource(R.string.clear_queue)) },
-              onClick = {
-                if (onClearQueue != null) {
-                  onClearQueue()
-                  onDismiss()
-                } else {
-                  showClearQueueDialog = true
-                }
-              }
-            )
-          )
-        }
-        add(
-          when (download?.state) {
-            Download.STATE_COMPLETED ->
-              PlayerMenuTile(
-                icon = { PlayerMenuTileIcon(R.drawable.offline) },
-                label = { PlayerMenuTileLabel(stringResource(R.string.remove_download)) },
-                onClick = {
-                  DownloadService.sendRemoveDownload(
-                    context,
-                    ExoDownloadService::class.java,
-                    mediaMetadata.id,
-                    false,
-                  )
-                }
-              )
-            Download.STATE_QUEUED,
-            Download.STATE_DOWNLOADING ->
-              PlayerMenuTile(
-                icon = {
-                  CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                },
-                label = { PlayerMenuTileLabel(stringResource(R.string.downloading)) },
-                onClick = {
-                  DownloadService.sendRemoveDownload(
-                    context,
-                    ExoDownloadService::class.java,
-                    mediaMetadata.id,
-                    false,
-                  )
-                }
-              )
-            else ->
-              PlayerMenuTile(
-                icon = { PlayerMenuTileIcon(R.drawable.download) },
-                label = { PlayerMenuTileLabel(stringResource(R.string.action_download)) },
-                onClick = {
-                  database.transaction { insert(mediaMetadata) }
-                  val downloadRequest =
-                    DownloadRequest.Builder(mediaMetadata.id, mediaMetadata.id.toUri())
-                      .setCustomCacheKey(mediaMetadata.id)
-                      .setData(mediaMetadata.title.toByteArray())
-                      .build()
-                  DownloadService.sendAddDownload(
-                    context,
-                    ExoDownloadService::class.java,
-                    downloadRequest,
-                    false,
-                  )
-                }
-              )
-          }
         )
         if (enableExportAsMp3) {
           add(
@@ -833,50 +752,33 @@ fun PlayerMenu(
             }
           )
         }
-        add(
-          PlayerMenuTile(
-            icon = { PlayerMenuTileIcon(R.drawable.notification) },
-            label = { PlayerMenuTileLabel("Set as Ringtone") },
-            onClick = {
-              if (ringtoneViewModel.hasSettingsPermission(context)) {
-                ringtoneViewModel.showTrimmer(
-                  mediaMetadata.id,
-                  mediaMetadata.title,
-                  mediaMetadata.artists.joinToString { it.name },
-                  mediaMetadata.duration
-                )
-              } else {
-                ringtoneViewModel.requestSettingsPermission(context)
-              }
-              onDismiss()
-            }
-          )
-        )
-        add(
-          PlayerMenuTile(
-            icon = {
-              Box {
-                PlayerMenuTileIcon(R.drawable.group)
-                if (pendingSuggestions.isNotEmpty()) {
-                  Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.offset(x = 8.dp, y = (-6).dp).align(Alignment.TopEnd)
-                  ) {
-                    Text(
-                      text = pendingSuggestions.size.toString(),
-                      color = MaterialTheme.colorScheme.onPrimary,
-                      modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                      style = MaterialTheme.typography.labelSmall
-                    )
+        if (isListenTogetherGuest || pendingSuggestions.isNotEmpty()) {
+          add(
+            PlayerMenuTile(
+              icon = {
+                Box {
+                  PlayerMenuTileIcon(R.drawable.group)
+                  if (pendingSuggestions.isNotEmpty()) {
+                    Surface(
+                      shape = RoundedCornerShape(12.dp),
+                      color = MaterialTheme.colorScheme.primary,
+                      modifier = Modifier.offset(x = 8.dp, y = (-6).dp).align(Alignment.TopEnd)
+                    ) {
+                      Text(
+                        text = pendingSuggestions.size.toString(),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        style = MaterialTheme.typography.labelSmall
+                      )
+                    }
                   }
                 }
-              }
-            },
-            label = { PlayerMenuTileLabel(stringResource(R.string.listen_together)) },
-            onClick = { showListenTogetherDialog = true }
+              },
+              label = { PlayerMenuTileLabel(stringResource(R.string.listen_together)) },
+              onClick = { showListenTogetherDialog = true }
+            )
           )
-        )
+        }
         if (isListenTogetherGuest) {
           add(
             PlayerMenuTile(
@@ -892,6 +794,7 @@ fun PlayerMenu(
         if (isQueueTrigger != true) {
           add(
             PlayerMenuTile(
+              order = 20,
               icon = { PlayerMenuTileIcon(R.drawable.equalizer) },
               label = { PlayerMenuTileLabel(stringResource(R.string.equalizer)) },
               onClick = {
@@ -910,6 +813,7 @@ fun PlayerMenu(
         }
         add(
           PlayerMenuTile(
+            order = 31,
             icon = { PlayerMenuTileIcon(R.drawable.info) },
             label = { PlayerMenuTileLabel(stringResource(R.string.details)) },
             onClick = {
@@ -921,6 +825,7 @@ fun PlayerMenu(
         if (isQueueTrigger != true) {
           add(
             PlayerMenuTile(
+              order = 21,
               icon = { PlayerMenuTileIcon(R.drawable.tune) },
               label = { PlayerMenuTileLabel(stringResource(R.string.advanced)) },
               onClick = {
@@ -931,6 +836,7 @@ fun PlayerMenu(
         }
         add(
           PlayerMenuTile(
+            order = 12,
             icon = { PlayerMenuTileIcon(R.drawable.share) },
             label = { PlayerMenuTileLabel(stringResource(R.string.share)) },
             onClick = {
@@ -952,19 +858,6 @@ fun PlayerMenu(
 
       PlayerMenuTileGrid(tiles = tiles)
     }
-
-    item {
-      // Draws nothing where Cast is unavailable, so the tile collapses with it.
-      Box(
-        modifier =
-          Modifier.fillMaxWidth()
-            .padding(start = PlayerMenuTilePadding, end = PlayerMenuTilePadding, bottom = 18.dp)
-            .clip(PlayerMenuTileShape)
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-      ) {
-        echo.music.iad1tya.ui.component.CastButton(asMenuItem = true)
-      }
-    }
   }
 }
 
@@ -972,6 +865,8 @@ private val PlayerMenuTileShape = RoundedCornerShape(18.dp)
 private val PlayerMenuTilePadding = 18.dp
 
 private class PlayerMenuTile(
+  /** Rows sort by this; each ten starts a new group. */
+  val order: Int = 40,
   val icon: @Composable () -> Unit,
   val label: @Composable () -> Unit,
   val onClick: () -> Unit,
@@ -990,10 +885,9 @@ private fun PlayerMenuTileLabel(
   Text(
     text = text,
     color = color,
-    fontSize = 13.sp,
-    lineHeight = 16.sp,
-    fontWeight = FontWeight.Bold,
-    textAlign = TextAlign.Center,
+    fontSize = 15.sp,
+    lineHeight = 20.sp,
+    fontWeight = FontWeight.SemiBold,
     maxLines = 2,
     overflow = TextOverflow.Ellipsis,
   )
@@ -1003,35 +897,32 @@ private fun PlayerMenuTileLabel(
 @Composable
 private fun PlayerMenuTileGrid(tiles: List<PlayerMenuTile>) {
   Column(
-    verticalArrangement = Arrangement.spacedBy(8.dp),
+    verticalArrangement = Arrangement.spacedBy(12.dp),
     modifier =
-      Modifier.fillMaxWidth().padding(start = PlayerMenuTilePadding, top = 10.dp, end = PlayerMenuTilePadding, bottom = 8.dp),
+      Modifier.fillMaxWidth().padding(start = PlayerMenuTilePadding, top = 10.dp, end = PlayerMenuTilePadding),
   ) {
-    tiles.chunked(3).forEach { row ->
-      Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+    tiles.sortedBy { it.order }.groupBy { it.order / 10 }.values.forEach { group ->
+      Column(
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+        modifier = Modifier.fillMaxWidth().clip(PlayerMenuTileShape),
       ) {
-        row.forEach { tile ->
+        group.forEach { tile ->
           Surface(
             onClick = tile.onClick,
-            shape = PlayerMenuTileShape,
             color = MaterialTheme.colorScheme.surfaceContainerHighest,
             contentColor = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f).fillMaxHeight(),
+            modifier = Modifier.fillMaxWidth(),
           ) {
-            Column(
-              horizontalAlignment = Alignment.CenterHorizontally,
-              verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
-              modifier =
-                Modifier.heightIn(min = 76.dp).padding(horizontal = 6.dp, vertical = 8.dp),
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(16.dp),
+              modifier = Modifier.heightIn(min = 54.dp).padding(horizontal = 18.dp, vertical = 8.dp),
             ) {
               tile.icon()
               tile.label()
             }
           }
         }
-        repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
       }
     }
   }

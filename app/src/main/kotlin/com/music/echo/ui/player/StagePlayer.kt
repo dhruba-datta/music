@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.player
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,8 +42,8 @@ import echo.music.iad1tya.ui.component.CastButton
 
 internal val StagePlayerPadding = 24.dp
 
-/** Height the Up next and Lyrics dock takes at the bottom: the 52dp dock and 16dp under it. */
-internal val StageDockPeekHeight = 68.dp
+/** Height the player bar takes at the bottom: the 66dp bar and 16dp under it. */
+internal val StageDockPeekHeight = 82.dp
 
 /** The size of the icons in the action row. */
 internal val StageActionIconSize = 23.dp
@@ -267,74 +268,77 @@ internal fun StageHeaderButton(
   }
 }
 
-/** The two labelled tabs at the bottom of the player. */
+/** The player's one bottom bar. Cast leaves its slot empty where it is unavailable. */
 @Composable
 internal fun StageDock(
   upNextActive: Boolean,
   lyricsActive: Boolean,
+  timerActive: Boolean,
+  timerEnabled: Boolean,
   onUpNext: () -> Unit,
   onLyrics: () -> Unit,
+  onTimer: () -> Unit,
+  onPlaylist: () -> Unit,
   color: Color,
-  activeColor: Color,
-  activeContentColor: Color,
   modifier: Modifier = Modifier,
 ) {
   Row(
+    horizontalArrangement = Arrangement.SpaceEvenly,
+    verticalAlignment = Alignment.CenterVertically,
     modifier =
       modifier
         .fillMaxWidth()
-        .height(52.dp)
-        .clip(CircleShape)
-        .background(color.copy(alpha = 0.12f))
-        .padding(4.dp),
+        .height(66.dp)
+        .clip(RoundedCornerShape(24.dp))
+        .background(color.copy(alpha = 0.12f)),
   ) {
-    StageDockTab(
-      text = "Up next",
+    StageCastAction(color = color)
+    StageDockAction(
+      icon = R.drawable.stage_queue,
+      label = "Up next",
       active = upNextActive,
+      color = color,
       onClick = onUpNext,
-      color = color,
-      activeColor = activeColor,
-      activeContentColor = activeContentColor,
-      modifier = Modifier.weight(1f),
     )
-    StageDockTab(
-      text = stringResource(R.string.lyrics),
+    StageDockAction(
+      icon = R.drawable.lyrics,
+      label = stringResource(R.string.lyrics),
       active = lyricsActive,
-      onClick = onLyrics,
       color = color,
-      activeColor = activeColor,
-      activeContentColor = activeContentColor,
-      modifier = Modifier.weight(1f),
+      onClick = onLyrics,
+    )
+    StageDockAction(
+      icon = R.drawable.bedtime,
+      label = "Timer",
+      active = timerActive,
+      enabled = timerEnabled,
+      color = color,
+      onClick = onTimer,
+    )
+    StageDockAction(
+      icon = R.drawable.playlist_add,
+      label = "Playlist",
+      color = color,
+      onClick = onPlaylist,
     )
   }
 }
 
 @Composable
-private fun StageDockTab(
-  text: String,
-  active: Boolean,
-  onClick: () -> Unit,
+private fun StageDockAction(
+  @DrawableRes icon: Int,
+  label: String,
   color: Color,
-  activeColor: Color,
-  activeContentColor: Color,
-  modifier: Modifier = Modifier,
+  onClick: () -> Unit,
+  active: Boolean = false,
+  enabled: Boolean = true,
 ) {
-  Box(
-    contentAlignment = Alignment.Center,
-    modifier =
-      modifier
-        .fillMaxHeight()
-        .clip(CircleShape)
-        .clickable(role = Role.Tab, onClick = onClick)
-        .semantics { selected = active },
-  ) {
-    Text(
-      text = text,
-      color = if (active) color else color.copy(alpha = 0.6f),
-      fontSize = 14.sp,
-      fontWeight = if (active) FontWeight.ExtraBold else FontWeight.Bold,
-      maxLines = 1,
-      overflow = TextOverflow.Ellipsis,
+  StageAction(label = label, color = color, onClick = onClick, enabled = enabled, active = active) {
+    Icon(
+      painter = painterResource(icon),
+      contentDescription = null,
+      tint = color,
+      modifier = Modifier.size(StageActionIconSize),
     )
   }
 }

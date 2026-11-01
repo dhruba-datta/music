@@ -183,6 +183,9 @@ fun Queue(
   showInlineLyrics: Boolean,
   playerBackground: PlayerBackgroundStyle = PlayerBackgroundStyle.DEFAULT,
   onToggleLyrics: () -> Unit = {},
+  onStageTimer: () -> Unit = {},
+  stageTimerEnabled: Boolean = true,
+  onStagePlaylist: () -> Unit = {},
   playerMenuRequested: Boolean = false,
   onPlayerMenuRequestHandled: () -> Unit = {},
   stageSheetColor: Color = background,
@@ -359,11 +362,13 @@ fun Queue(
         StageDock(
           upNextActive = state.isExpanded,
           lyricsActive = showInlineLyrics,
+          timerActive = sleepTimerEnabled,
+          timerEnabled = stageTimerEnabled,
           onUpNext = { state.expandSoft() },
           onLyrics = { onToggleLyrics() },
+          onTimer = onStageTimer,
+          onPlaylist = onStagePlaylist,
           color = TextBackgroundColor,
-          activeColor = textButtonColor,
-          activeContentColor = iconButtonColor,
           modifier =
             Modifier.padding(horizontal = StagePlayerPadding)
               .padding(bottom = 16.dp)

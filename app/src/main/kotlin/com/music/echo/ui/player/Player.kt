@@ -2364,124 +2364,6 @@ fun BottomSheetPlayer(
       }
     }
 
-    val stageActions: @Composable (MediaMetadata) -> Unit = { meta ->
-      StageActionRow(modifier = Modifier.padding(horizontal = playerPadding)) {
-        StageAction(
-          label = stringResource(R.string.action_download),
-          color = TextBackgroundColor,
-          onClick = {
-            when (download?.state) {
-              Download.STATE_COMPLETED,
-              Download.STATE_QUEUED,
-              Download.STATE_DOWNLOADING -> {
-                DownloadService.sendRemoveDownload(
-                  context,
-                  ExoDownloadService::class.java,
-                  meta.id,
-                  false,
-                )
-              }
-              else -> {
-                database.transaction { insert(meta) }
-                val downloadRequest =
-                  DownloadRequest.Builder(meta.id, meta.id.toUri())
-                    .setCustomCacheKey(meta.id)
-                    .setData(meta.title.toByteArray())
-                    .build()
-                DownloadService.sendAddDownload(
-                  context,
-                  ExoDownloadService::class.java,
-                  downloadRequest,
-                  false,
-                )
-              }
-            }
-          },
-        ) {
-          when (download?.state) {
-            Download.STATE_COMPLETED ->
-              Icon(
-                painter = painterResource(R.drawable.offline),
-                contentDescription = null,
-                tint = TextBackgroundColor,
-                modifier = Modifier.size(StageActionIconSize)
-              )
-            Download.STATE_QUEUED,
-            Download.STATE_DOWNLOADING ->
-              CircularWavyProgressIndicator(
-                color = TextBackgroundColor,
-                modifier = Modifier.size(StageActionIconSize),
-              )
-            else ->
-              Icon(
-                painter = painterResource(R.drawable.download),
-                contentDescription = null,
-                tint = TextBackgroundColor,
-                modifier = Modifier.size(StageActionIconSize)
-              )
-          }
-        }
-
-        StageAction(
-          label = "Playlist",
-          color = TextBackgroundColor,
-          onClick = { showChoosePlaylistDialog = true },
-        ) {
-          Icon(
-            painter = painterResource(R.drawable.playlist_add),
-            contentDescription = null,
-            tint = TextBackgroundColor,
-            modifier = Modifier.size(StageActionIconSize)
-          )
-        }
-
-        StageAction(
-          label = stringResource(R.string.share),
-          color = TextBackgroundColor,
-          onClick = {
-            val intent =
-              Intent().apply {
-                action = Intent.ACTION_SEND
-                type = "text/plain"
-                putExtra(Intent.EXTRA_TEXT, "https://share.echomusic.fun/watch?v=${meta.id}")
-              }
-            context.startActivity(Intent.createChooser(intent, null))
-          },
-        ) {
-          Icon(
-            painter = painterResource(R.drawable.share),
-            contentDescription = null,
-            tint = TextBackgroundColor,
-            modifier = Modifier.size(StageActionIconSize)
-          )
-        }
-
-        StageAction(
-          label = "Timer",
-          color = TextBackgroundColor,
-          enabled = !isListenTogetherGuest,
-          active = sleepTimerEnabled,
-          activeColor = textButtonColor,
-          onClick = {
-            if (sleepTimerEnabled) {
-              playerConnection.service.sleepTimer.clear()
-            } else {
-              showStageSleepTimerDialog = true
-            }
-          },
-        ) {
-          Icon(
-            painter = painterResource(R.drawable.bedtime),
-            contentDescription = null,
-            tint = TextBackgroundColor,
-            modifier = Modifier.size(StageActionIconSize)
-          )
-        }
-
-        StageCastAction(color = TextBackgroundColor)
-      }
-    }
-
     val stageHeader: @Composable () -> Unit = {
       Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -2567,6 +2449,66 @@ fun BottomSheetPlayer(
           ),
           16.sp,
         )
+        Box(
+          contentAlignment = Alignment.Center,
+          modifier =
+            Modifier.size(44.dp)
+              .clip(CircleShape)
+              .clickable(
+                onClickLabel = stringResource(R.string.action_download),
+                onClick = {
+                  when (download?.state) {
+                    Download.STATE_COMPLETED,
+                    Download.STATE_QUEUED,
+                    Download.STATE_DOWNLOADING -> {
+                      DownloadService.sendRemoveDownload(
+                        context,
+                        ExoDownloadService::class.java,
+                        meta.id,
+                        false,
+                      )
+                    }
+                    else -> {
+                      database.transaction { insert(meta) }
+                      val downloadRequest =
+                        DownloadRequest.Builder(meta.id, meta.id.toUri())
+                          .setCustomCacheKey(meta.id)
+                          .setData(meta.title.toByteArray())
+                          .build()
+                      DownloadService.sendAddDownload(
+                        context,
+                        ExoDownloadService::class.java,
+                        downloadRequest,
+                        false,
+                      )
+                    }
+                  }
+                },
+              ),
+        ) {
+          when (download?.state) {
+            Download.STATE_COMPLETED ->
+              Icon(
+                painter = painterResource(R.drawable.offline),
+                contentDescription = null,
+                tint = TextBackgroundColor,
+                modifier = Modifier.size(StageActionIconSize)
+              )
+            Download.STATE_QUEUED,
+            Download.STATE_DOWNLOADING ->
+              CircularWavyProgressIndicator(
+                color = TextBackgroundColor,
+                modifier = Modifier.size(StageActionIconSize),
+              )
+            else ->
+              Icon(
+                painter = painterResource(R.drawable.download),
+                contentDescription = null,
+                tint = TextBackgroundColor,
+                modifier = Modifier.size(StageActionIconSize)
+              )
+          }
+        }
         val isLiked = currentSong?.song?.liked == true
         Box(
           contentAlignment = Alignment.Center,
@@ -3106,7 +3048,6 @@ fun BottomSheetPlayer(
                       seekButtonsBlock()
                       stageTransport(64.dp)
                     }
-                    if (!showInlineLyrics) stageActions(meta)
                   }
                 }
               }
@@ -3247,7 +3188,6 @@ fun BottomSheetPlayer(
                             stageTransport(84.dp)
                           }
                         },
-                        { stageActions(meta) },
                       ),
                   )
               }
@@ -3337,6 +3277,15 @@ fun BottomSheetPlayer(
         showInlineLyrics = showInlineLyrics,
         playerBackground = playerBackground,
         onToggleLyrics = { showInlineLyrics = !showInlineLyrics },
+        onStageTimer = {
+          if (playerConnection.service.sleepTimer.isActive) {
+            playerConnection.service.sleepTimer.clear()
+          } else {
+            showStageSleepTimerDialog = true
+          }
+        },
+        stageTimerEnabled = !isListenTogetherGuest,
+        onStagePlaylist = { showChoosePlaylistDialog = true },
         playerMenuRequested = stagePlayerMenuRequested,
         onPlayerMenuRequestHandled = { stagePlayerMenuRequested = false },
         stageSheetColor =
