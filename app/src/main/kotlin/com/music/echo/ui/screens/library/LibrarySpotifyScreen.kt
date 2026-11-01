@@ -64,6 +64,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import echo.music.iad1tya.spotify.models.SpotifyHomeFeedItem
 import echo.music.iad1tya.ui.component.StageSourceCard
 import echo.music.iad1tya.ui.component.StageSourcePinnedCard
 import echo.music.iad1tya.ui.component.stageSourceSection
@@ -240,6 +241,50 @@ fun LibrarySpotifyScreen(
                 navController.navigate("search/${Uri.encode(artist.name)}")
               },
             )
+          }
+
+          uiState.feedSections.forEachIndexed { index, section ->
+            stageSourceSection(
+              key = "spotify_feed_$index",
+              title = section.title.orEmpty(),
+              items = section.items.distinctBy { it.uri },
+              itemKey = { it.uri },
+            ) { item ->
+              when (item) {
+                is SpotifyHomeFeedItem.Playlist ->
+                  StageSourceCard(
+                    title = item.name,
+                    subtitle = item.description ?: item.ownerName,
+                    imageUrl = item.imageUrl,
+                    onClick = {
+                      val titleEnc = Uri.encode(item.name)
+                      val coverEnc = Uri.encode(item.imageUrl.orEmpty())
+                      navController.navigate(
+                        "spotify_playlist/${item.id}?title=$titleEnc&cover=$coverEnc"
+                      )
+                    },
+                  )
+                is SpotifyHomeFeedItem.Album -> {
+                  val artistNames = item.artists.joinToString { it.name }
+                  StageSourceCard(
+                    title = item.name,
+                    subtitle = artistNames,
+                    imageUrl = item.imageUrl,
+                    onClick = {
+                      navController.navigate("search/${Uri.encode("${item.name} $artistNames")}")
+                    },
+                  )
+                }
+                is SpotifyHomeFeedItem.Artist ->
+                  StageSourceCard(
+                    title = item.name,
+                    subtitle = null,
+                    imageUrl = item.imageUrl,
+                    circular = true,
+                    onClick = { navController.navigate("search/${Uri.encode(item.name)}") },
+                  )
+              }
+            }
           }
         } else if (seeAll == SPOTIFY_ARTISTS) {
           items(items = uiState.artists, key = { it.id }) { artist ->

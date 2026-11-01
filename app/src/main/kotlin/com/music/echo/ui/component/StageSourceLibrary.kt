@@ -210,17 +210,18 @@ fun <T> LazyListScope.stageSourceSection(
   title: String,
   items: List<T>,
   itemKey: (T) -> Any,
-  seeAllLabel: String,
-  onSeeAll: () -> Unit,
-  alwaysShowTitle: Boolean = false,
+  seeAllLabel: String? = null,
+  onSeeAll: (() -> Unit)? = null,
+  showTitle: Boolean = true,
   card: @Composable (T) -> Unit,
 ) {
-  if (items.isEmpty() && !alwaysShowTitle) return
-
-  item(key = "${key}_title") {
-    NavigationTitle(title = title, onClick = onSeeAll, endText = seeAllLabel)
-  }
   if (items.isEmpty()) return
+
+  if (showTitle) {
+    item(key = "${key}_title") {
+      NavigationTitle(title = title, onClick = onSeeAll, endText = seeAllLabel)
+    }
+  }
   item(key = "${key}_list") {
     LazyRow(
       contentPadding = PaddingValues(horizontal = 18.dp),

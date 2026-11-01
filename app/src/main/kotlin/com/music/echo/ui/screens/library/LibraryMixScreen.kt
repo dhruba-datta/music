@@ -198,8 +198,21 @@ fun LibraryMixScreen(
         }
       }
 
+      item(key = "playlists_title") {
+        NavigationTitle(
+          title = playlistsTitle,
+          onClick = { onOpenList(LibraryFilter.PLAYLISTS) },
+          endText = seeAllLabel,
+        )
+      }
+
       item(key = "auto_playlists_grid") {
-        AutoPlaylistGrid(autoPlaylistTiles, columns = 4, artHeight = 62.dp)
+        AutoPlaylistGrid(
+          autoPlaylistTiles,
+          columns = 4,
+          artHeight = 62.dp,
+          modifier = Modifier.padding(bottom = 12.dp),
+        )
       }
 
       stageSourceSection(
@@ -209,7 +222,7 @@ fun LibraryMixScreen(
         itemKey = { it.id },
         seeAllLabel = seeAllLabel,
         onSeeAll = { onOpenList(LibraryFilter.PLAYLISTS) },
-        alwaysShowTitle = true,
+        showTitle = false,
       ) { item ->
         StageSourceCard(
           title = item.playlist.name,
@@ -236,7 +249,6 @@ fun LibraryMixScreen(
         itemKey = { it.id },
         seeAllLabel = seeAllLabel,
         onSeeAll = { onOpenList(LibraryFilter.ARTISTS) },
-        alwaysShowTitle = true,
       ) { item ->
         StageSourceCard(
           title = item.artist.name,
@@ -264,7 +276,6 @@ fun LibraryMixScreen(
         itemKey = { it.id },
         seeAllLabel = seeAllLabel,
         onSeeAll = { onOpenList(LibraryFilter.ALBUMS) },
-        alwaysShowTitle = true,
       ) { item ->
         StageSourceCard(
           title = item.album.title,

@@ -1,5 +1,14 @@
 package echo.music.iad1tya.ui.screens
 
+import com.music.innertube.models.AlbumItem
+import com.music.innertube.models.ArtistItem
+import com.music.innertube.models.SongItem
+import com.music.innertube.models.WatchEndpoint
+import com.music.innertube.models.YTItem
+import echo.music.iad1tya.LocalPlayerConnection
+import echo.music.iad1tya.models.toMediaMetadata
+import echo.music.iad1tya.playback.queues.YouTubeQueue
+import echo.music.iad1tya.ui.menu.YouTubeSongMenu
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.asPaddingValues
@@ -80,6 +89,8 @@ fun AccountScreen(
   val selectedContentType by viewModel.selectedContentType.collectAsState()
   val gridItemSize by rememberEnumPreference(GridItemsSizeKey, GridItemSize.BIG)
 
+  val mixSections by viewModel.mixSections.collectAsState()
+  val playerConnection = LocalPlayerConnection.current
   var showAll by rememberSaveable { mutableStateOf(false) }
   val seeAllLabel = stringResource(R.string.stage_see_all)
   val playlistsTitle = stringResource(R.string.filter_playlists)
@@ -99,6 +110,45 @@ fun AccountScreen(
         coroutineScope = coroutineScope,
         onDismiss = menuState::dismiss,
       )
+    }
+  }
+
+  fun mixItemMenu(item: YTItem) {
+    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+    menuState.show {
+      when (item) {
+        is SongItem ->
+          YouTubeSongMenu(
+            song = item,
+            navController = navController,
+            onDismiss = menuState::dismiss,
+          )
+        is AlbumItem ->
+          YouTubeAlbumMenu(
+            albumItem = item,
+            navController = navController,
+            onDismiss = menuState::dismiss,
+          )
+        is ArtistItem -> YouTubeArtistMenu(artist = item, onDismiss = menuState::dismiss)
+        is PlaylistItem ->
+          YouTubePlaylistMenu(
+            playlist = item,
+            coroutineScope = coroutineScope,
+            onDismiss = menuState::dismiss,
+          )
+      }
+    }
+  }
+
+  fun openMixItem(item: YTItem) {
+    when (item) {
+      is SongItem ->
+        playerConnection?.playQueue(
+          YouTubeQueue(item.endpoint ?: WatchEndpoint(videoId = item.id), item.toMediaMetadata())
+        )
+      is AlbumItem -> navController.navigate("album/${item.id}")
+      is ArtistItem -> navController.navigate("artist/${item.id}")
+      is PlaylistItem -> navController.navigate("online_playlist/${item.id.removePrefix("VL")}")
     }
   }
 
@@ -176,6 +226,29 @@ fun AccountScreen(
             menuState.show { YouTubeArtistMenu(artist = item, onDismiss = menuState::dismiss) }
           },
         )
+      }
+      mixSections.forEachIndexed { index, section ->
+        stageSourceSection(
+          key = "mix_$index",
+          title = section.title,
+          items = section.items.distinctBy { it.id },
+          itemKey = { it.id },
+        ) { item ->
+          StageSourceCard(
+            title = item.title,
+            subtitle =
+              when (item) {
+                is SongItem -> item.artists.joinToString { it.name }
+                is AlbumItem -> item.artists?.joinToString { it.name }
+                is PlaylistItem -> item.author?.name
+                else -> null
+              },
+            imageUrl = item.thumbnail,
+            circular = item is ArtistItem,
+            onClick = { openMixItem(item) },
+            onLongClick = { mixItemMenu(item) },
+          )
+        }
       }
       if (playlists == null) {
         item(key = "loading") {

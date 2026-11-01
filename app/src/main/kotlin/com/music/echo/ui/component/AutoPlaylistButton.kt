@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -54,7 +55,10 @@ fun AutoPlaylistButton(
   artHeight: Dp,
   modifier: Modifier = Modifier,
 ) {
-  Column(modifier = modifier.clip(RoundedCornerShape(GridThumbnailCornerRadius)).clickable(onClick = onClick)) {
+  Column(
+    horizontalAlignment = Alignment.CenterHorizontally,
+    modifier = modifier.clickable(onClick = onClick),
+  ) {
     Box(
       contentAlignment = Alignment.Center,
       modifier =
@@ -79,11 +83,12 @@ fun AutoPlaylistButton(
     Spacer(Modifier.height(8.dp))
     Text(
       text = title,
-      fontSize = 15.sp,
-      lineHeight = 19.sp,
+      fontSize = 13.sp,
+      lineHeight = 17.sp,
       fontWeight = FontWeight.Bold,
       color = MaterialTheme.colorScheme.onSurface,
-      maxLines = 1,
+      textAlign = TextAlign.Center,
+      maxLines = 2,
       overflow = TextOverflow.Ellipsis,
     )
   }

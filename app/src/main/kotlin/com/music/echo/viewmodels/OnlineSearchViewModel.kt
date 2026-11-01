@@ -105,6 +105,7 @@ private fun alternate(first: List<SearchRow>, second: List<SearchRow>): List<Sea
   return (0 until maxOf(first.size, second.size))
     .flatMap { index -> listOfNotNull(first.getOrNull(index), second.getOrNull(index)) }
     .filter { row -> row.matchKey()?.let(seen::add) ?: true }
+    .distinctBy { it.key }
 }
 
 @HiltViewModel

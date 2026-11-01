@@ -8,6 +8,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import echo.music.iad1tya.constants.SpotifySpDcKey
 import echo.music.iad1tya.spotify.Spotify
 import echo.music.iad1tya.spotify.models.SpotifyArtist
+import echo.music.iad1tya.spotify.models.SpotifyHomeFeedSection
 import echo.music.iad1tya.spotify.models.SpotifyPlaylist
 import echo.music.iad1tya.spotifyimport.SpotifyImportRepository
 import echo.music.iad1tya.utils.dataStore
@@ -28,6 +29,7 @@ data class SpotifyLibraryUiState(
   val avatarUrl: String? = null,
   val playlists: List<SpotifyPlaylist> = emptyList(),
   val artists: List<SpotifyArtist> = emptyList(),
+  val feedSections: List<SpotifyHomeFeedSection> = emptyList(),
   val likedSongsCount: Int? = null,
   val isLoading: Boolean = false,
   val error: String? = null,
@@ -91,14 +93,19 @@ constructor(
         } while (pageItems.isNotEmpty() && playlists.size < (page?.total ?: 0))
 
         val artists = Spotify.myArtists(limit = 50, offset = 0).getOrNull()?.items.orEmpty()
+        val feedSections =
+          Spotify.home(sectionItemsLimit = 12).getOrNull()?.sections.orEmpty().filter {
+            !it.title.isNullOrBlank() && it.items.isNotEmpty()
+          }
 
         _uiState.update {
           it.copy(
             isAuthenticated = true,
             accountName = session.accountName,
             avatarUrl = session.accountAvatarUrl,
-            playlists = playlists.toList(),
-            artists = artists,
+            playlists = playlists.distinctBy { playlist -> playlist.id },
+            artists = artists.distinctBy { artist -> artist.id },
+            feedSections = feedSections,
             likedSongsCount = likedCount,
             isLoading = false,
             error = null,

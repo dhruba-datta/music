@@ -1,5 +1,7 @@
 package echo.music.iad1tya.viewmodels
 
+import echo.music.iad1tya.constants.HideExplicitKey
+import com.music.innertube.pages.HomePage
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -29,6 +31,8 @@ enum class AccountContentType {
   ARTISTS
 }
 
+private const val MIX_SECTION_PAGES = 3
+
 @HiltViewModel
 class AccountViewModel
 @Inject
@@ -38,6 +42,8 @@ constructor(
   val playlists = MutableStateFlow<List<PlaylistItem>?>(null)
   val albums = MutableStateFlow<List<AlbumItem>?>(null)
   val artists = MutableStateFlow<List<ArtistItem>?>(null)
+
+  val mixSections = MutableStateFlow<List<HomePage.Section>>(emptyList())
 
   val selectedContentType = MutableStateFlow(AccountContentType.PLAYLISTS)
 
@@ -55,7 +61,25 @@ constructor(
       .onFailure { reportException(it) }
   }
 
+  /** The shelves YouTube Music builds for this account, such as mixes and daily playlists. */
+  private suspend fun loadMixSections() {
+    val hideExplicit = context.dataStore.get(HideExplicitKey, false)
+    var page = YouTube.home().onFailure { reportException(it) }.getOrNull()
+    val sections = mutableListOf<HomePage.Section>()
+    var pagesLeft = MIX_SECTION_PAGES
+    while (page != null) {
+      sections += page.filterExplicit(hideExplicit).sections
+      mixSections.value = sections.filter { it.items.isNotEmpty() }.distinctBy { it.title }
+      val continuation = page.continuation
+      pagesLeft -= 1
+      if (continuation == null || pagesLeft == 0) break
+      page = YouTube.home(continuation).getOrNull()
+    }
+  }
+
   init {
+    viewModelScope.launch(Dispatchers.IO) { loadMixSections() }
+
     viewModelScope.launch {
       loadPlaylists()
       YouTube.library("FEmusic_liked_albums")

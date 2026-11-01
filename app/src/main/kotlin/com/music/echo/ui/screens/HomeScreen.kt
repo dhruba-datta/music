@@ -88,6 +88,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -172,6 +173,27 @@ import kotlin.random.Random
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+/** Turns text a quarter to the left, so it reads from the bottom of the card to the top. */
+private fun Modifier.bottomToTopText(): Modifier = layout { measurable, constraints ->
+  val placeable =
+    measurable.measure(
+      constraints.copy(
+        minWidth = 0,
+        maxWidth = constraints.maxHeight,
+        minHeight = 0,
+        maxHeight = constraints.maxWidth,
+      )
+    )
+  layout(placeable.height, placeable.width) {
+    placeable.placeWithLayer(
+      x = (placeable.height - placeable.width) / 2,
+      y = (placeable.width - placeable.height) / 2,
+    ) {
+      rotationZ = -90f
+    }
+  }
+}
 
 private fun NavController.navigateToPlaylistItem(playlist: PlaylistItem) {
   when (val playlistId = playlist.id.removePrefix("VL")) {
@@ -1054,6 +1076,13 @@ fun HomeScreen(
       }
     }
 
+  // The cards load after the speed dial, so keep the page on them when they arrive.
+  LaunchedEffect(heroSongs.isNotEmpty()) {
+    if (heroSongs.isNotEmpty() && lazylistState.firstVisibleItemIndex <= 2) {
+      lazylistState.scrollToItem(0)
+    }
+  }
+
   LaunchedEffect(quickPicks) { quickPicksLazyGridState.scrollToItem(0) }
 
   LaunchedEffect(forgottenFavorites) { forgottenFavoritesLazyGridState.scrollToItem(0) }
@@ -1265,10 +1294,9 @@ fun HomeScreen(
             HomeSection.YouTubeMusic -> {
               item(key = "youtube_music") {
                 val songs =
-                  remember(similarRecommendations) {
-                    similarRecommendations
-                      .orEmpty()
-                      .flatMap { it.items }
+                  remember(similarRecommendations, homePage) {
+                    (similarRecommendations.orEmpty().flatMap { it.items } +
+                        homePage?.sections.orEmpty().flatMap { it.items })
                       .filterIsInstance<SongItem>()
                       .distinctBy { it.id }
                       .take(5)
@@ -1445,16 +1473,16 @@ fun HomeScreen(
 
                         Text(
                           text = song.title,
-                          fontSize = 12.sp,
-                          lineHeight = 15.sp,
+                          fontSize = 15.sp,
                           fontWeight = FontWeight.Bold,
                           color = Color.White,
-                          maxLines = 3,
+                          maxLines = 1,
                           overflow = TextOverflow.Ellipsis,
                           modifier =
-                            Modifier.align(Alignment.BottomStart)
-                              .padding(8.dp)
+                            Modifier.align(Alignment.BottomCenter)
+                              .padding(vertical = 14.dp)
                               .alpha(nextTitleAlpha)
+                              .bottomToTopText()
                         )
                       }
                     }
