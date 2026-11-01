@@ -53,6 +53,7 @@ import java.time.LocalDateTime
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -475,9 +476,13 @@ constructor(
       }
       .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-  val likedSongs =
-    database
-      .likedSongs(SongSortType.CREATE_DATE, true)
+  val allSongs =
+    combine(
+        database.likedSongs(SongSortType.CREATE_DATE, true),
+        database.songs(SongSortType.CREATE_DATE, true),
+      ) { liked, library ->
+        (liked + library).distinctBy { it.id }
+      }
       .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
   init {

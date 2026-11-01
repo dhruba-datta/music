@@ -70,8 +70,6 @@ import echo.music.iad1tya.viewmodels.LibraryMixViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private const val SONG_PREVIEW_COUNT = 3
-
 @OptIn(
   ExperimentalFoundationApi::class,
   ExperimentalMaterial3Api::class,
@@ -107,15 +105,15 @@ fun LibraryMixScreen(
   val albums by viewModel.albums.collectAsState()
   val artists by viewModel.artists.collectAsState()
   val playlists by viewModel.playlists.collectAsState()
-  val likedSongs by viewModel.likedSongs.collectAsState()
+  val allSongs by viewModel.allSongs.collectAsState()
 
   val orderedPlaylists =
     remember(playlists) {
       playlists.distinctBy { it.id }.sortedByDescending { it.playlist.isPinned }
     }
   val songs =
-    remember(likedSongs, hideExplicit) {
-      if (hideExplicit) likedSongs.filter { !it.song.explicit } else likedSongs
+    remember(allSongs, hideExplicit) {
+      if (hideExplicit) allSongs.filter { !it.song.explicit } else allSongs
     }
 
   val coroutineScope = rememberCoroutineScope()
@@ -303,9 +301,8 @@ fun LibraryMixScreen(
         )
       }
 
-      val previewSongs = songs.take(SONG_PREVIEW_COUNT)
       itemsIndexed(
-        items = previewSongs,
+        items = songs,
         key = { _, item -> "song_${item.song.id}" },
       ) { index, song ->
         SongListItem(
@@ -314,7 +311,7 @@ fun LibraryMixScreen(
           isActive = song.id == mediaMetadata?.id,
           isPlaying = isPlaying,
           showLikedIcon = true,
-          shape = listItemShape(index, previewSongs.size),
+          shape = listItemShape(index, songs.size),
           trailingContent = {
             IconButton(
               onClick = {
