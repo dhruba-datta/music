@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,6 +44,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -83,11 +83,11 @@ import com.music.innertube.models.SongItem
 import echo.music.iad1tya.LocalDatabase
 import echo.music.iad1tya.LocalDownloadUtil
 import echo.music.iad1tya.LocalExpandPlayer
+import echo.music.iad1tya.LocalPlayerAwareWindowInsets
+import echo.music.iad1tya.LocalSetTabMenu
 import echo.music.iad1tya.LocalPlayerConnection
 import echo.music.iad1tya.LocalSyncUtils
 import echo.music.iad1tya.R
-import echo.music.iad1tya.constants.FloatingToolbarBottomPadding
-import echo.music.iad1tya.constants.NavigationBarHeight
 import echo.music.iad1tya.db.MusicDatabase
 import echo.music.iad1tya.db.entities.LyricsEntity
 import echo.music.iad1tya.db.entities.Song
@@ -135,7 +135,6 @@ fun MusicFlowScreen(
     viewModel.attach(playerConnection)
     onDispose { viewModel.detach() }
   }
-  KeepLightSystemBarIcons()
 
   val state by viewModel.uiState.collectAsState()
   val preferences by viewModel.preferences.collectAsState()
@@ -198,13 +197,49 @@ fun MusicFlowScreen(
   val previousLabel = stringResource(R.string.music_flow_previous)
   val nextLabel = stringResource(R.string.music_flow_next)
 
-  // A tab like the others: everything stops above the bottom bar.
+  val openMenu by rememberUpdatedState<() -> Unit> {
+    menuState.show {
+      MusicFlowTopMenu(
+        state = state,
+        selectedItem = selectedItem,
+        onPrevious = viewModel::previous,
+        onNext = viewModel::next,
+        onOpenPlayer = expandPlayer,
+        onRestoreQueue = {
+          val restored = viewModel.restorePreviousQueue()
+          Toast.makeText(
+              context,
+              if (restored) R.string.music_flow_queue_restored else R.string.music_flow_queue_restore_unavailable,
+              Toast.LENGTH_SHORT,
+            )
+            .show()
+        },
+        onNotInterested = { item, persist ->
+          viewModel.notInterested(item, persist)
+          Toast.makeText(context, R.string.music_flow_feedback_saved, Toast.LENGTH_SHORT).show()
+        },
+        onLessLikeThis = { item ->
+          viewModel.lessLikeThis(item)
+          Toast.makeText(context, R.string.music_flow_feedback_saved, Toast.LENGTH_SHORT).show()
+        },
+        onSettings = { navController.navigate("settings/music_flow") },
+        onDismiss = menuState::dismiss,
+      )
+    }
+  }
+  val setTabMenu = LocalSetTabMenu.current
+  DisposableEffect(setTabMenu) {
+    setTabMenu { openMenu() }
+    onDispose { setTabMenu(null) }
+  }
+
+  // A tab like the others: the page sits between the shared top bar and the bottom bars.
   Box(
     modifier =
       Modifier.fillMaxSize()
+        .background(MaterialTheme.colorScheme.surface)
+        .windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Vertical))
         .background(Color.Black)
-        .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
-        .padding(bottom = NavigationBarHeight + FloatingToolbarBottomPadding)
   ) {
     when {
       items.isEmpty() && state.error != null && !state.isInitialLoading ->
@@ -299,34 +334,8 @@ fun MusicFlowScreen(
         }
     }
 
-    TopBar(
+    PlaybackStatus(
       state = state,
-      selectedItem = selectedItem,
-      onBack = navController::navigateUp,
-      onPrevious = viewModel::previous,
-      onNext = viewModel::next,
-      onOpenPlayer = {
-        navController.navigateUp()
-        expandPlayer()
-      },
-      onRestoreQueue = {
-        val restored = viewModel.restorePreviousQueue()
-        Toast.makeText(
-            context,
-            if (restored) R.string.music_flow_queue_restored else R.string.music_flow_queue_restore_unavailable,
-            Toast.LENGTH_SHORT,
-          )
-          .show()
-      },
-      onNotInterested = { item, persist ->
-        viewModel.notInterested(item, persist)
-        Toast.makeText(context, R.string.music_flow_feedback_saved, Toast.LENGTH_SHORT).show()
-      },
-      onLessLikeThis = { item ->
-        viewModel.lessLikeThis(item)
-        Toast.makeText(context, R.string.music_flow_feedback_saved, Toast.LENGTH_SHORT).show()
-      },
-      onSettings = { navController.navigate("settings/music_flow") },
       onStatusAction = viewModel::togglePlayPause,
       onRetryPlayback = viewModel::retryPlayback,
       onSkip = viewModel::next,
@@ -383,113 +392,26 @@ fun MusicFlowScreen(
   }
 }
 
+/** The offline note and playback problems, over the top of the page. */
 @Composable
-private fun TopBar(
+private fun PlaybackStatus(
   state: MusicFlowUiState,
-  selectedItem: MusicFlowItem?,
-  onBack: () -> Unit,
-  onPrevious: () -> Unit,
-  onNext: () -> Unit,
-  onOpenPlayer: () -> Unit,
-  onRestoreQueue: () -> Unit,
-  onNotInterested: (MusicFlowItem, Boolean) -> Unit,
-  onLessLikeThis: (MusicFlowItem) -> Unit,
-  onSettings: () -> Unit,
   onStatusAction: () -> Unit,
   onRetryPlayback: () -> Unit,
   onSkip: () -> Unit,
   hasPlaybackError: Boolean,
 ) {
-  val menuState = LocalMenuState.current
-  Box(
-    modifier =
-      Modifier.fillMaxWidth()
-        .background(
-          Brush.verticalGradient(
-            0f to Color.Black.copy(alpha = 0.85f),
-            0.65f to Color.Black.copy(alpha = 0.40f),
-            1f to Color.Transparent,
-          )
-        )
-        .windowInsetsPadding(WindowInsets.safeDrawing)
-  ) {
+  Box(modifier = Modifier.fillMaxWidth()) {
     Column(
-      modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 16.dp, top = 14.dp, bottom = 8.dp)
+      horizontalAlignment = Alignment.CenterHorizontally,
+      modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth(),
-      ) {
-        Box(
-          contentAlignment = Alignment.Center,
-          modifier =
-            Modifier.size(44.dp)
-              .clip(CircleShape)
-              .background(Color.Black.copy(alpha = 0.3f))
-              .clickable(role = Role.Button, onClickLabel = stringResource(R.string.back_button_desc), onClick = onBack),
-        ) {
-          Icon(
-            painter = painterResource(R.drawable.arrow_back),
-            contentDescription = null,
-            tint = Color.White,
-            modifier = Modifier.size(20.dp),
-          )
-        }
-
-        Spacer(Modifier.width(14.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-          Text(
-            text = stringResource(R.string.music_flow),
-            fontSize = 24.sp,
-            lineHeight = 28.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = Color.White,
-          )
-          if (state.isOfflineFeed) {
-            Text(
-              text = stringResource(R.string.music_flow_offline_banner),
-              style = MaterialTheme.typography.labelSmall,
-              color = Color.White.copy(alpha = 0.65f),
-            )
-          }
-        }
-
-        Box(
-          contentAlignment = Alignment.Center,
-          modifier =
-            Modifier.size(40.dp)
-              .clip(CircleShape)
-              .background(Color.White.copy(alpha = 0.10f))
-              .border(1.dp, Color.White.copy(alpha = 0.15f), CircleShape)
-              .clickable(
-                role = Role.Button,
-                onClickLabel = stringResource(R.string.more_options),
-                onClick = {
-                  menuState.show {
-                    MusicFlowTopMenu(
-                      state = state,
-                      selectedItem = selectedItem,
-                      onPrevious = onPrevious,
-                      onNext = onNext,
-                      onOpenPlayer = onOpenPlayer,
-                      onRestoreQueue = onRestoreQueue,
-                      onNotInterested = onNotInterested,
-                      onLessLikeThis = onLessLikeThis,
-                      onSettings = onSettings,
-                      onDismiss = menuState::dismiss,
-                    )
-                  }
-                },
-              ),
-        ) {
-          Icon(
-            painter = painterResource(R.drawable.more_vert),
-            contentDescription = null,
-            tint = Color.White,
-            modifier = Modifier.size(20.dp),
-          )
-        }
+      if (state.isOfflineFeed) {
+        Text(
+          text = stringResource(R.string.music_flow_offline_banner),
+          style = MaterialTheme.typography.labelSmall,
+          color = Color.White.copy(alpha = 0.65f),
+        )
       }
 
       val status = statusMessage(state.playbackStatus, hasPlaybackError)
@@ -556,23 +478,6 @@ private fun FeedMessage(message: String, action: String, onAction: () -> Unit) {
       elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
     ) {
       Text(action)
-    }
-  }
-}
-
-@Composable
-private fun KeepLightSystemBarIcons() {
-  val view = LocalView.current
-  DisposableEffect(view) {
-    val window = (view.context as? Activity)?.window
-    val controller = window?.let { WindowCompat.getInsetsController(it, view) }
-    val previousStatus = controller?.isAppearanceLightStatusBars
-    val previousNavigation = controller?.isAppearanceLightNavigationBars
-    controller?.isAppearanceLightStatusBars = false
-    controller?.isAppearanceLightNavigationBars = false
-    onDispose {
-      previousStatus?.let { controller.isAppearanceLightStatusBars = it }
-      previousNavigation?.let { controller.isAppearanceLightNavigationBars = it }
     }
   }
 }

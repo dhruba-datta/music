@@ -809,6 +809,7 @@ class MainActivity : ComponentActivity() {
           listOf(
             Screens.Home.route,
             Screens.Search.route,
+            Screens.MusicFlow.route,
             Screens.Recognize.route,
             Screens.Library.route,
             Screens.ListenTogether.route,
@@ -872,7 +873,7 @@ class MainActivity : ComponentActivity() {
         val isLandscape = configuration.containerDpSize.width > configuration.containerDpSize.height
 
         val showRail =
-          isLandscape && !inSearchScreen && currentRoute != "ambient_mode" && currentRoute != "music_flow"
+          isLandscape && !inSearchScreen && currentRoute != "ambient_mode"
 
         val navPadding =
           if (shouldShowNavigationBar && !showRail) {
@@ -999,6 +1000,7 @@ class MainActivity : ComponentActivity() {
           appBarScrollBehavior(
             canScroll = {
               !inSearchScreen &&
+                currentRoute != Screens.MusicFlow.route &&
                 (playerBottomSheetState.isCollapsed || playerBottomSheetState.isDismissed)
             },
           )
@@ -1061,6 +1063,8 @@ class MainActivity : ComponentActivity() {
         val snackbarHostState = remember { SnackbarHostState() }
         var showSettingDialoge by remember { mutableStateOf(false) }
         var showUpdateDialog by remember { mutableStateOf(false) }
+        var tabMenuAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+        val setTabMenuAction = remember { { action: (() -> Unit)? -> tabMenuAction = action } }
 
         var showWelcomeDialog by remember { mutableStateOf(false) }
 
@@ -1120,6 +1124,7 @@ class MainActivity : ComponentActivity() {
           when (navBackStackEntry?.destination?.route) {
             Screens.Home.route -> stringResource(R.string.home)
             Screens.Search.route -> stringResource(R.string.search)
+            Screens.MusicFlow.route -> stringResource(R.string.music_flow)
             Screens.Recognize.route -> stringResource(R.string.recognition)
             Screens.Library.route -> stringResource(R.string.filter_library)
             Screens.ListenTogether.route -> stringResource(R.string.together)
@@ -1239,6 +1244,7 @@ class MainActivity : ComponentActivity() {
           LocalSyncUtils provides syncUtils,
           LocalListenTogetherManager provides listenTogetherManager,
           LocalExpandPlayer provides expandPlayer,
+          LocalSetTabMenu provides setTabMenuAction,
         ) {
           Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -1289,6 +1295,15 @@ class MainActivity : ComponentActivity() {
                           modifier = Modifier.padding(top = 14.dp, end = 8.dp),
                           verticalAlignment = Alignment.CenterVertically
                         ) {
+                          tabMenuAction?.let { openMenu ->
+                            IconButton(onClick = openMenu, modifier = Modifier.size(44.dp)) {
+                              Icon(
+                                painter = painterResource(R.drawable.more_vert),
+                                contentDescription = stringResource(R.string.more_options),
+                                modifier = Modifier.size(24.dp)
+                              )
+                            }
+                          }
                           if (historyRoute != "history" || showHistoryButton) {
                             IconButton(
                               onClick = { navController.navigate(historyRoute) },
@@ -1365,7 +1380,6 @@ class MainActivity : ComponentActivity() {
               if (
                 !showRail &&
                   currentRoute != "ambient_mode" &&
-                  currentRoute != "music_flow" &&
                   currentRoute?.startsWith("settings") != true
               ) {
                 Box {
@@ -1452,7 +1466,6 @@ class MainActivity : ComponentActivity() {
               } else {
                 if (
                     currentRoute != "ambient_mode" &&
-                    currentRoute != "music_flow" &&
                     currentRoute?.startsWith("settings") != true
                 ) {
                   BottomSheetPlayer(
@@ -1956,3 +1969,6 @@ val LocalListenTogetherManager =
   staticCompositionLocalOf<echo.music.iad1tya.listentogether.ListenTogetherManager?> { null }
 val LocalIsPlayerExpanded = compositionLocalOf { false }
 val LocalExpandPlayer = staticCompositionLocalOf<() -> Unit> { {} }
+
+/** Lets a tab put its own menu in the shared top bar; null takes it away. */
+val LocalSetTabMenu = staticCompositionLocalOf<((() -> Unit)?) -> Unit> { {} }
