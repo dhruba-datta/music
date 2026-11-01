@@ -385,11 +385,7 @@ fun OldPlayerMenu(
     DefaultDialog(
       onDismiss = { showSongDnaDialog = false },
       icon = {
-        androidx.compose.foundation.Image(
-          painter = painterResource(R.drawable.songdna),
-          contentDescription = null,
-          modifier = Modifier.size(22.dp).clip(androidx.compose.foundation.shape.CircleShape)
-        )
+        Icon(painter = painterResource(R.drawable.info), contentDescription = null)
       },
       title = {
         Text("Song DNA", fontWeight = FontWeight.Bold)
@@ -404,19 +400,19 @@ fun OldPlayerMenu(
       ) {
         item {
             Column {
-                Text("Movie / Album", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Text("Movie / Album", fontWeight = FontWeight.Bold)
                 Text(dnaAlbum, style = MaterialTheme.typography.bodyMedium)
             }
         }
         item {
             Column {
-                Text("About the Song", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Text("About the Song", fontWeight = FontWeight.Bold)
                 Text(dnaMeaning, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         item {
             Column {
-                Text("About the Artist", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Text("About the Artist", fontWeight = FontWeight.Bold)
                 Text(dnaBio, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
@@ -529,7 +525,6 @@ fun OldPlayerMenu(
               }
             )
           ),
-        columns = if (isListenTogetherGuest) 2 else 3,
         modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
       )
     }
@@ -540,26 +535,12 @@ fun OldPlayerMenu(
       Material3MenuGroup(
         items =
           buildList {
-            val infiniteTransition = rememberInfiniteTransition()
-            val animatedColor by infiniteTransition.animateColor(
-                initialValue = MaterialTheme.colorScheme.primary,
-                targetValue = MaterialTheme.colorScheme.tertiary,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(400, easing = LinearEasing),
-                    repeatMode = RepeatMode.Reverse
-                ),
-                label = "dnaColor"
-            )
 
             add(
               Material3MenuItemData(
-                title = { Text(text = "Song DNA", color = animatedColor, fontWeight = FontWeight.Bold) },
+                title = { Text(text = "Song DNA") },
                 icon = {
-                  androidx.compose.foundation.Image(
-                    painter = painterResource(R.drawable.songdna),
-                    contentDescription = null,
-                    modifier = Modifier.size(22.dp).clip(androidx.compose.foundation.shape.CircleShape)
-                  )
+                  Icon(painter = painterResource(R.drawable.info), contentDescription = null)
                 },
                 onClick = {
                   showSongDnaDialog = true

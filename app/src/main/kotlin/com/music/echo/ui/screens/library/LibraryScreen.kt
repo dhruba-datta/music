@@ -203,7 +203,7 @@ fun LibraryScreen(navController: NavController) {
           title = stringResource(R.string.import_from_spotify),
           onClick = {
             showImportMenu = false
-            navController.navigate("settings/spotify_import")
+            navController.navigate("settings/account?highlightKey=Spotify")
           }
         )
         StageSheetRow(

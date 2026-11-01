@@ -30,7 +30,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -77,7 +76,7 @@ fun Material3MenuGroup(items: List<Material3MenuItemData>, modifier: Modifier = 
 private fun Material3MenuItemRow(item: Material3MenuItemData) {
   Row(
     modifier =
-      Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 16.dp, vertical = 8.dp),
+      Modifier.fillMaxWidth().heightIn(min = 54.dp).padding(horizontal = 18.dp, vertical = 8.dp),
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(16.dp),
   ) {
@@ -88,7 +87,7 @@ private fun Material3MenuItemRow(item: Material3MenuItemData) {
     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
       ProvideTextStyle(
         TextStyle(
-          fontSize = 16.sp,
+          fontSize = 15.sp,
           lineHeight = 20.sp,
           fontWeight = FontWeight.SemiBold,
           color = LocalContentColor.current,
@@ -113,56 +112,47 @@ private fun Material3MenuItemRow(item: Material3MenuItemData) {
   }
 }
 
-/** The Stage quick grid: every action is a rounded tile with its icon over its label. */
+/** The Stage menu list: icon and label rows in rounded groups, as in the player's menu. */
 @Composable
-fun MenuActionGrid(
-  items: List<Material3MenuItemData>,
-  modifier: Modifier = Modifier,
-  columns: Int = 3,
-) {
+fun MenuActionGrid(items: List<Material3MenuItemData>, modifier: Modifier = Modifier) {
+  // Groups of four, never leaving a single row alone at the end.
+  val groupSize = if (items.size % 4 == 1) 3 else 4
   Column(
-    modifier =
-      modifier.fillMaxWidth().padding(start = 18.dp, top = 10.dp, end = 18.dp, bottom = 18.dp),
-    verticalArrangement = Arrangement.spacedBy(8.dp),
+    modifier = modifier.fillMaxWidth().padding(start = 18.dp, top = 10.dp, end = 18.dp, bottom = 8.dp),
+    verticalArrangement = Arrangement.spacedBy(12.dp),
   ) {
-    items.chunked(columns).forEach { rowItems ->
-      Row(
-        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    items.chunked(groupSize).forEach { group ->
+      Column(
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)),
       ) {
-        rowItems.forEach { item ->
-          MenuActionTile(item = item, modifier = Modifier.weight(1f).fillMaxHeight())
-        }
-        repeat(columns - rowItems.size) { Spacer(modifier = Modifier.weight(1f)) }
+        group.forEach { item -> MenuActionRow(item = item) }
       }
     }
   }
 }
 
 @Composable
-private fun MenuActionTile(item: Material3MenuItemData, modifier: Modifier = Modifier) {
-  val shape = RoundedCornerShape(18.dp)
+private fun MenuActionRow(item: Material3MenuItemData) {
   val onClick = item.onClick
-
   CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
-    Column(
+    Row(
       modifier =
-        modifier
-          .clip(shape)
+        Modifier.fillMaxWidth()
           .background(
-            item.cardColors?.containerColor ?: MaterialTheme.colorScheme.surfaceContainerHighest,
-            shape,
+            item.cardColors?.containerColor ?: MaterialTheme.colorScheme.surfaceContainerHighest
           )
           .let { mod -> if (onClick != null) mod.clickable(onClick = onClick) else mod }
-          .heightIn(min = 76.dp)
-          .padding(horizontal = 6.dp, vertical = 8.dp),
-      horizontalAlignment = Alignment.CenterHorizontally,
-      verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
+          .heightIn(min = 54.dp)
+          .padding(horizontal = 18.dp, vertical = 8.dp),
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
       item.icon?.let { icon ->
-        Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) { icon() }
+        Box(modifier = Modifier.size(22.dp), contentAlignment = Alignment.Center) { icon() }
       }
-      item.title?.invoke()
+      Box(modifier = Modifier.weight(1f)) { item.title?.invoke() }
+      item.trailingContent?.invoke()
     }
   }
 }
@@ -205,16 +195,15 @@ fun StageSheetTitle(
   }
 }
 
-/** A tile label, kept to the two lines a [MenuActionGrid] tile has room for. */
+/** A row label for a [MenuActionGrid]. */
 @Composable
 fun MenuTileLabel(text: String, color: Color = Color.Unspecified) {
   Text(
     text = text,
     color = color,
-    fontSize = 13.sp,
-    lineHeight = 16.sp,
-    fontWeight = FontWeight.Bold,
-    textAlign = TextAlign.Center,
+    fontSize = 15.sp,
+    lineHeight = 20.sp,
+    fontWeight = FontWeight.SemiBold,
     maxLines = 2,
     overflow = TextOverflow.Ellipsis,
   )

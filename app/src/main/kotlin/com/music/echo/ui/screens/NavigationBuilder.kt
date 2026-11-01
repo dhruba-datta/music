@@ -44,7 +44,6 @@ import echo.music.iad1tya.ui.screens.recognition.RecognitionScreen
 import echo.music.iad1tya.ui.screens.search.OnlineSearchResult
 import echo.music.iad1tya.ui.screens.search.SearchHistoryScreen
 import echo.music.iad1tya.ui.screens.search.SearchScreen
-import echo.music.iad1tya.ui.screens.settings.AboutScreen
 import echo.music.iad1tya.ui.screens.settings.AccountSettingsScreen
 import echo.music.iad1tya.ui.screens.settings.AppearanceSettings
 import echo.music.iad1tya.ui.screens.settings.BackupAndRestore
@@ -489,27 +488,9 @@ fun NavGraphBuilder.navigationBuilder(
     )
   }
 
-  composable("settings/spotify_import") { SpotifyImportScreen(navController) }
 
   composable(route = "settings/integrations/listen_together") {
     ListenTogetherSettings(navController, scrollBehavior)
-  }
-
-  composable(
-    route = "settings/about?highlightKey={highlightKey}",
-    arguments =
-      listOf(
-        navArgument("highlightKey") {
-          type = NavType.StringType
-          nullable = true
-        }
-      )
-  ) { backStackEntry ->
-    AboutScreen(
-      navController,
-      scrollBehavior,
-      highlightKey = backStackEntry.arguments?.getString("highlightKey")
-    )
   }
 
   composable("login") { LoginScreen(navController) }

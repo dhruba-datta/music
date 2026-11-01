@@ -39,6 +39,7 @@ import echo.music.iad1tya.viewmodels.HomeViewModel
 fun SettingDialoge(
   onDismissRequest: () -> Unit,
   onNavigate: (String) -> Unit,
+  onCheckForUpdates: () -> Unit,
   homeViewModel: HomeViewModel
 ) {
   val (innerTubeCookie, _) = rememberPreference(InnerTubeCookieKey, "")
@@ -109,12 +110,9 @@ fun SettingDialoge(
         }
       )
       StageSheetRow(
-        text = "About",
-        icon = R.drawable.info,
-        onClick = {
-          onDismissRequest()
-          onNavigate("settings/about")
-        },
+        text = stringResource(R.string.stage_check_updates),
+        icon = R.drawable.update,
+        onClick = onCheckForUpdates,
         trailing = {
           Text(
             BuildConfig.VERSION_NAME,

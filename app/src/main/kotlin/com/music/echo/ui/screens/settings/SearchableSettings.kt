@@ -16,12 +16,6 @@ data class SearchableSetting(
 fun getAllSearchableSettings(): List<SearchableSetting> {
   return listOf(
     SearchableSetting(
-      stringResource(R.string.about),
-      stringResource(R.string.about_desc),
-      "About",
-      "settings/about"
-    ),
-    SearchableSetting(
       stringResource(R.string.account),
       stringResource(R.string.account_desc),
       "Account",
@@ -1552,7 +1546,7 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
       "Account",
       "settings/account"
     ),
-    SearchableSetting("Import from Spotify", null, "Backup & Restore", "settings/spotify_import"),
+    SearchableSetting("Import from Spotify", null, "Backup & Restore", "settings/account?highlightKey=Spotify"),
     SearchableSetting(
       "Import from local file",
       null,
@@ -1940,15 +1934,6 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
       "settings/content"
     ),
     SearchableSetting("Add another account", null, "Account", "settings/account"),
-
-    // About Screen - Social & Support Links
-    SearchableSetting("Website", "Visit the Echo Music website", "About", "settings/about"),
-    SearchableSetting("Instagram", "Follow Echo Music on Instagram", "About", "settings/about"),
-    SearchableSetting("X (Twitter)", "Follow Echo Music on X", "About", "settings/about"),
-    SearchableSetting("Buy Me a Coffee", "Support the developer", "About", "settings/about"),
-    SearchableSetting("Patreon", "Support the developer on Patreon", "About", "settings/about"),
-    SearchableSetting("UPI", "Support the developer via UPI", "About", "settings/about"),
-    SearchableSetting("Discord", "Join the Echo Music community", "About", "settings/about"),
   ) + listOf(
     SearchableSetting(
       "Local Backup",

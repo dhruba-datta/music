@@ -181,7 +181,7 @@ fun BackupAndRestore(
                   iconBackground = StageTile.Slate,
                   description = { Text(stringResource(R.string.spotify_import_desc)) },
                   icon = painterResource(R.drawable.ic_spotify),
-                  onClick = { navController.navigate("settings/spotify_import") }
+                  onClick = { navController.navigate("settings/account?highlightKey=Spotify") }
                 )
               )
           )

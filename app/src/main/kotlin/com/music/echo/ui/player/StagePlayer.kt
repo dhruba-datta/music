@@ -2,6 +2,22 @@ package echo.music.iad1tya.ui.player
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.ripple
+import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,8 +55,8 @@ import echo.music.iad1tya.ui.component.CastButton
 
 internal val StagePlayerPadding = 24.dp
 
-/** Height the player bar takes at the bottom: the 66dp bar and 16dp under it. */
-internal val StageDockPeekHeight = 82.dp
+/** Height the player bar takes at the bottom. */
+internal val StageDockPeekHeight = 66.dp
 
 /** The size of the icons in the action row. */
 internal val StageActionIconSize = 23.dp
@@ -103,12 +119,16 @@ internal fun StageEvenLayout(
 }
 
 @Composable
-private fun StageActionLabel(text: String, color: Color) {
+private fun StageActionLabel(
+  text: String,
+  color: Color,
+  fontWeight: FontWeight = FontWeight.Bold,
+) {
   Text(
     text = text,
     color = color,
     fontSize = 12.sp,
-    fontWeight = FontWeight.Bold,
+    fontWeight = fontWeight,
     maxLines = 1,
     overflow = TextOverflow.Ellipsis,
     textAlign = TextAlign.Center,
@@ -155,11 +175,15 @@ internal fun StageAction(
  * or unavailable, and in that case the label goes too.
  */
 @Composable
-internal fun StageCastAction(color: Color, modifier: Modifier = Modifier) {
+internal fun StageCastAction(
+  color: Color,
+  modifier: Modifier = Modifier,
+  labelWeight: FontWeight = FontWeight.Bold,
+) {
   Layout(
     content = {
       CastButton(modifier = Modifier.size(StageActionTargetSize), tintColor = color)
-      StageActionLabel(text = stringResource(R.string.widget_cast), color = color)
+      StageActionLabel(text = stringResource(R.string.widget_cast), color = color, fontWeight = labelWeight)
     },
     modifier = modifier,
   ) { measurables, constraints ->
@@ -258,17 +282,28 @@ internal fun StageDock(
   color: Color,
   modifier: Modifier = Modifier,
 ) {
+  // The app's bottom bar on the player: fixed to the edge, and what's on rises in a bubble.
   Row(
     horizontalArrangement = Arrangement.SpaceEvenly,
     verticalAlignment = Alignment.CenterVertically,
     modifier =
       modifier
         .fillMaxWidth()
-        .height(66.dp)
-        .clip(RoundedCornerShape(24.dp))
-        .background(color.copy(alpha = 0.12f)),
+        .background(color.copy(alpha = 0.10f))
+        .drawBehind {
+          drawLine(
+            color = color.copy(alpha = 0.18f),
+            start = Offset.Zero,
+            end = Offset(size.width, 0f),
+            strokeWidth = 1.dp.toPx(),
+          )
+        }
+        .windowInsetsPadding(
+          WindowInsets.systemBars.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)
+        )
+        .height(StageDockPeekHeight),
   ) {
-    StageCastAction(color = color)
+    StageCastAction(color = color, labelWeight = FontWeight.Medium)
     StageDockAction(
       icon = R.drawable.stage_queue,
       label = "Up next",
@@ -309,12 +344,52 @@ private fun StageDockAction(
   active: Boolean = false,
   enabled: Boolean = true,
 ) {
-  StageAction(label = label, color = color, onClick = onClick, enabled = enabled, active = active) {
-    Icon(
-      painter = painterResource(icon),
-      contentDescription = null,
-      tint = color,
-      modifier = Modifier.size(StageActionIconSize),
+  val bubbleColor = color
+  Column(
+    horizontalAlignment = Alignment.CenterHorizontally,
+    verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
+    modifier =
+      Modifier.widthIn(min = 56.dp)
+        .fillMaxHeight()
+        .clickable(
+          enabled = enabled,
+          role = Role.Button,
+          interactionSource = remember { MutableInteractionSource() },
+          indication = ripple(bounded = false, radius = 32.dp),
+          onClick = onClick,
+        )
+        .alpha(if (enabled) 1f else 0.35f),
+  ) {
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(StageActionTargetSize)) {
+      if (active) {
+        Box(
+          contentAlignment = Alignment.Center,
+          modifier =
+            Modifier.offset(y = (-14).dp)
+              .requiredSize(46.dp)
+              .shadow(8.dp, CircleShape)
+              .background(bubbleColor, CircleShape),
+        ) {
+          Icon(
+            painter = painterResource(icon),
+            contentDescription = null,
+            tint = if (bubbleColor.luminance() > 0.5f) Color.Black else Color.White,
+            modifier = Modifier.size(StageActionIconSize),
+          )
+        }
+      } else {
+        Icon(
+          painter = painterResource(icon),
+          contentDescription = null,
+          tint = color,
+          modifier = Modifier.size(StageActionIconSize),
+        )
+      }
+    }
+    StageActionLabel(
+      text = label,
+      color = color,
+      fontWeight = if (active) FontWeight.ExtraBold else FontWeight.Medium,
     )
   }
 }

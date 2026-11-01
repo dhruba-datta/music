@@ -134,7 +134,6 @@ import echo.music.iad1tya.constants.DisableScreenshotKey
 import echo.music.iad1tya.constants.DynamicThemeKey
 import echo.music.iad1tya.constants.EnableHighRefreshRateKey
 import echo.music.iad1tya.constants.FloatingToolbarBottomPadding
-import echo.music.iad1tya.constants.FloatingToolbarHorizontalPadding
 import echo.music.iad1tya.constants.LastAiRecommendationUpdateDayKey
 import echo.music.iad1tya.constants.LiquidGlassBlurRadiusKey
 import echo.music.iad1tya.constants.LiquidGlassChromaticAberrationKey
@@ -786,11 +785,15 @@ class MainActivity : ComponentActivity() {
         val (previousTab, setPreviousTab) = rememberSaveable { mutableStateOf("home") }
 
         val listenTogetherInTopBar = true
-        val navigationItems = Screens.MainScreens
         val (useNewMiniPlayerDesign) =
           rememberPreference(UseNewMiniPlayerDesignKey, defaultValue = true)
         val (musicFlowEnabled) =
           rememberPreference(MusicFlowEnabledKey, defaultValue = true)
+        val navigationItems =
+          remember(musicFlowEnabled) {
+            if (musicFlowEnabled) Screens.MainScreens
+            else Screens.MainScreens - Screens.MusicFlow
+          }
         val defaultOpenTab = remember {
           dataStore[DefaultOpenTabKey].toEnum(defaultValue = NavigationTab.HOME)
         }
@@ -885,7 +888,7 @@ class MainActivity : ComponentActivity() {
             label = "navBarHeight",
           )
 
-        val (useFloatingNavBar) = rememberPreference(UseFloatingNavBarKey, defaultValue = false)
+        val useFloatingNavBar = false
         val floatingNavBarScrollConnection = rememberFloatingTabBarScrollConnection()
 
         val playerBottomSheetState =
@@ -1057,6 +1060,7 @@ class MainActivity : ComponentActivity() {
         var sharedSong: SongItem? by remember { mutableStateOf(null) }
         val snackbarHostState = remember { SnackbarHostState() }
         var showSettingDialoge by remember { mutableStateOf(false) }
+        var showUpdateDialog by remember { mutableStateOf(false) }
 
         var showWelcomeDialog by remember { mutableStateOf(false) }
 
@@ -1285,20 +1289,6 @@ class MainActivity : ComponentActivity() {
                           modifier = Modifier.padding(top = 14.dp, end = 8.dp),
                           verticalAlignment = Alignment.CenterVertically
                         ) {
-                          if (musicFlowEnabled) {
-                            IconButton(
-                              onClick = {
-                                navController.navigate("music_flow") { launchSingleTop = true }
-                              },
-                              modifier = Modifier.size(44.dp)
-                            ) {
-                              Icon(
-                                painter = painterResource(R.drawable.stage_flow),
-                                contentDescription = stringResource(R.string.music_flow),
-                                modifier = Modifier.size(24.dp)
-                              )
-                            }
-                          }
                           if (historyRoute != "history" || showHistoryButton) {
                             IconButton(
                               onClick = { navController.navigate(historyRoute) },
@@ -1447,42 +1437,16 @@ class MainActivity : ComponentActivity() {
                       FloatingNavigationToolbar(
                         items = navigationItems,
                         pureBlack = pureBlack,
+                        bottomInset = bottomInset,
                         onSearchLongClick = onRailSearchLongClick,
                         isSelected = { screen ->
                           selectedTabRoute == screen.route ||
                             currentRoute?.startsWith("${screen.route}/") == true
                         },
                         onItemClick = onNavItemClick,
-                        modifier =
-                          Modifier.align(Alignment.BottomCenter)
-                            .padding(
-                              start = FloatingToolbarHorizontalPadding,
-                              end = FloatingToolbarHorizontalPadding,
-                              bottom = bottomInset + FloatingToolbarBottomPadding,
-                            )
-                            .height(NavigationBarHeight)
+                        modifier = Modifier.align(Alignment.BottomCenter).fillMaxSize(),
                       )
                     }
-
-                    Box(
-                      modifier =
-                        Modifier.fillMaxWidth()
-                          .align(Alignment.BottomCenter)
-                          .height(bottomInsetDp)
-                          .graphicsLayer {
-                            val progress = playerBottomSheetState.progress
-                            alpha =
-                              if (
-                                progress > 0f ||
-                                  useFloatingNavBar ||
-                                  !shouldShowNavigationBar ||
-                                  (useNewMiniPlayerDesign && !shouldShowNavigationBar)
-                              )
-                                0f
-                              else 1f
-                          }
-                          .background(baseBg)
-                    )
                   }
                 }
               } else {
@@ -1722,9 +1686,19 @@ class MainActivity : ComponentActivity() {
             )
           }
 
+          if (showUpdateDialog) {
+            echo.music.iad1tya.echomusic.updater.SelfUpdateDialog(
+              onDismiss = { showUpdateDialog = false }
+            )
+          }
+
           if (showSettingDialoge) {
             SettingDialoge(
               onDismissRequest = { showSettingDialoge = false },
+              onCheckForUpdates = {
+                showSettingDialoge = false
+                showUpdateDialog = true
+              },
               onNavigate = { route ->
                 showSettingDialoge = false
                 navController.navigate(route)

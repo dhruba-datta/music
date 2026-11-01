@@ -37,12 +37,9 @@ import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.R
 import echo.music.iad1tya.constants.*
 import echo.music.iad1tya.constants.SavedAccountsKey
-import echo.music.iad1tya.constants.SpotifyAccountAvatarUrlKey
-import echo.music.iad1tya.constants.SpotifyAccountEmailKey
-import echo.music.iad1tya.constants.SpotifyAccountNameKey
-import echo.music.iad1tya.constants.SpotifySpDcKey
 import echo.music.iad1tya.models.AccountData
 import echo.music.iad1tya.ui.component.*
+import echo.music.iad1tya.ui.screens.SpotifyAccountSection
 import echo.music.iad1tya.ui.utils.backToMain
 import echo.music.iad1tya.utils.rememberPreference
 import echo.music.iad1tya.viewmodels.AccountSettingsViewModel
@@ -70,12 +67,6 @@ fun AccountSettingsScreen(
   val (visitorData, _) = rememberPreference(VisitorDataKey, "")
   val (dataSyncId, _) = rememberPreference(DataSyncIdKey, "")
   val (savedAccountsJson, onSavedAccountsJsonChange) = rememberPreference(SavedAccountsKey, "[]")
-
-  val (spotifySpDc) = rememberPreference(SpotifySpDcKey, "")
-  val (spotifyName) = rememberPreference(SpotifyAccountNameKey, "")
-  val (spotifyEmail) = rememberPreference(SpotifyAccountEmailKey, "")
-  val (spotifyAvatarUrl) = rememberPreference(SpotifyAccountAvatarUrlKey, "")
-  val spotifyConnected = spotifySpDc.isNotBlank()
 
   val isLoggedIn = remember(innerTubeCookie) { "SAPISID" in parseCookieString(innerTubeCookie) }
   val (useLoginForBrowse, onUseLoginForBrowseChange) = rememberPreference(UseLoginForBrowse, true)
@@ -337,56 +328,13 @@ fun AccountSettingsScreen(
         Spacer(modifier = Modifier.height(16.dp))
       }
 
-      Material3SettingsGroup(
-        scrollState = scrollState,
-        title = stringResource(R.string.stage_spotify),
-        items =
-          listOf(
-            Material3SettingsItem(
-              isHighlighted = (highlightKey == "Spotify"),
-              icon =
-                if (spotifyConnected && spotifyAvatarUrl.isNotBlank()) null
-                else painterResource(R.drawable.ic_spotify),
-              title = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                  if (spotifyConnected && spotifyAvatarUrl.isNotBlank()) {
-                    AsyncImage(
-                      model = spotifyAvatarUrl,
-                      contentDescription = null,
-                      contentScale = ContentScale.Crop,
-                      modifier = Modifier.size(40.dp).clip(CircleShape)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                  }
-                  Column {
-                    Text(
-                      text =
-                        when {
-                          !spotifyConnected -> stringResource(R.string.stage_connect_spotify)
-                          spotifyName.isNotBlank() -> spotifyName
-                          else -> stringResource(R.string.stage_spotify)
-                        },
-                      color =
-                        if (spotifyConnected) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurface,
-                      style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
-                    )
-                    Text(
-                      text =
-                        when {
-                          !spotifyConnected ->
-                            stringResource(R.string.stage_spotify_recommendations)
-                          spotifyEmail.isNotBlank() -> spotifyEmail
-                          else -> stringResource(R.string.stage_connected)
-                        },
-                      style = MaterialTheme.typography.bodySmall
-                    )
-                  }
-                }
-              },
-              onClick = { navController.navigate("settings/spotify_import") }
-            )
-          )
+      SpotifyAccountSection(scrollState = scrollState, highlighted = highlightKey == "Spotify")
+
+      Spacer(modifier = Modifier.height(24.dp))
+      Spacer(
+        Modifier.windowInsetsPadding(
+          LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Bottom)
+        )
       )
     }
 
@@ -431,11 +379,5 @@ fun AccountSettingsScreen(
       }
     }
 
-    Spacer(Modifier.height(100.dp))
-    Spacer(
-      Modifier.windowInsetsPadding(
-        LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Bottom)
-      )
-    )
   }
 }

@@ -158,7 +158,7 @@ fun LibrarySpotifyScreen(
         item(key = "connect_card") {
           SpotifyConnectBanner(
             onConnect = {
-              navController.navigate("settings/spotify_import")
+              navController.navigate("settings/account?highlightKey=Spotify")
             },
             onRefresh = {
               viewModel.refresh()

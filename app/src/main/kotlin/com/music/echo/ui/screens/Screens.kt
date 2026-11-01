@@ -28,6 +28,14 @@ sealed class Screens(
       route = "search_input"
     )
 
+  object MusicFlow :
+    Screens(
+      titleId = R.string.music_flow,
+      iconIdInactive = R.drawable.stage_flow,
+      iconIdActive = R.drawable.stage_flow,
+      route = "music_flow"
+    )
+
   object Recognize :
     Screens(
       titleId = R.string.recognition,
@@ -61,6 +69,6 @@ sealed class Screens(
     )
 
   companion object {
-    val MainScreens = listOf(Home, Search, Recognize, Library)
+    val MainScreens = listOf(Home, Search, MusicFlow, Recognize, Library)
   }
 }

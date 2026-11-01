@@ -1313,7 +1313,7 @@ fun HomeScreen(
                     connectText = "Connect Spotify",
                     onOpen = {
                       navController.navigate(
-                        if (spotifyConnected) "spotify_library" else "settings/spotify_import"
+                        if (spotifyConnected) "spotify_library" else "settings/account?highlightKey=Spotify"
                       )
                     },
                     onShowMenu = ::showHomeSongMenu,

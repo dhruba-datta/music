@@ -369,14 +369,6 @@ fun Queue(
           onTimer = onStageTimer,
           onPlaylist = onStagePlaylist,
           color = TextBackgroundColor,
-          modifier =
-            Modifier.padding(horizontal = StagePlayerPadding)
-              .padding(bottom = 16.dp)
-              .windowInsetsPadding(
-                WindowInsets.systemBars.only(
-                  WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal
-                ),
-              ),
         )
       } else {
 

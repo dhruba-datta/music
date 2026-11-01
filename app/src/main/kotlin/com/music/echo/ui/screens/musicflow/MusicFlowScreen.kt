@@ -19,6 +19,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -83,6 +86,8 @@ import echo.music.iad1tya.LocalExpandPlayer
 import echo.music.iad1tya.LocalPlayerConnection
 import echo.music.iad1tya.LocalSyncUtils
 import echo.music.iad1tya.R
+import echo.music.iad1tya.constants.FloatingToolbarBottomPadding
+import echo.music.iad1tya.constants.NavigationBarHeight
 import echo.music.iad1tya.db.MusicDatabase
 import echo.music.iad1tya.db.entities.LyricsEntity
 import echo.music.iad1tya.db.entities.Song
@@ -193,7 +198,14 @@ fun MusicFlowScreen(
   val previousLabel = stringResource(R.string.music_flow_previous)
   val nextLabel = stringResource(R.string.music_flow_next)
 
-  Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+  // A tab like the others: everything stops above the bottom bar.
+  Box(
+    modifier =
+      Modifier.fillMaxSize()
+        .background(Color.Black)
+        .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
+        .padding(bottom = NavigationBarHeight + FloatingToolbarBottomPadding)
+  ) {
     when {
       items.isEmpty() && state.error != null && !state.isInitialLoading ->
         FeedMessage(
