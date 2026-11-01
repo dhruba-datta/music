@@ -100,6 +100,7 @@ import androidx.navigation.NavController
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.LocalPlayerConnection
 import echo.music.iad1tya.R
+import echo.music.iad1tya.ui.component.stageEmptyHeight
 import echo.music.iad1tya.constants.CONTENT_TYPE_HEADER
 import echo.music.iad1tya.constants.CONTENT_TYPE_SONG
 import echo.music.iad1tya.constants.LocalSongsExcludedFoldersKey
@@ -849,6 +850,7 @@ private fun LocalSongEmptyState(
     verticalArrangement = Arrangement.Center,
     modifier = Modifier
       .fillMaxWidth()
+      .stageEmptyHeight()
       .padding(horizontal = 24.dp, vertical = 40.dp),
   ) {
     Icon(

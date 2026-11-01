@@ -49,6 +49,7 @@ import echo.music.iad1tya.constants.PlaylistSortType
 import echo.music.iad1tya.constants.PlaylistSortTypeKey
 import echo.music.iad1tya.constants.PlaylistViewTypeKey
 import echo.music.iad1tya.constants.YtmSyncKey
+import echo.music.iad1tya.ui.component.EmptyPlaceholder
 import echo.music.iad1tya.ui.component.LibraryPlaylistGridItem
 import echo.music.iad1tya.ui.component.LibraryPlaylistListItem
 import echo.music.iad1tya.ui.component.LocalMenuState
@@ -171,7 +172,12 @@ fun LibraryPlaylistsScreen(
 
           playlists.let { playlists ->
             if (playlists.isEmpty()) {
-              item(key = "empty_placeholder") {}
+              item(key = "empty_placeholder") {
+                EmptyPlaceholder(
+                  icon = R.drawable.playlist_play,
+                  text = stringResource(R.string.library_playlist_empty),
+                )
+              }
             }
 
             items(
@@ -221,7 +227,12 @@ fun LibraryPlaylistsScreen(
 
           playlists.let { playlists ->
             if (playlists.isEmpty()) {
-              item(span = { GridItemSpan(maxLineSpan) }) {}
+              item(span = { GridItemSpan(maxLineSpan) }) {
+                EmptyPlaceholder(
+                  icon = R.drawable.playlist_play,
+                  text = stringResource(R.string.library_playlist_empty),
+                )
+              }
             }
 
             items(
