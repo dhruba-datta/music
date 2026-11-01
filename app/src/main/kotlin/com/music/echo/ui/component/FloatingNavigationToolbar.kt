@@ -152,7 +152,7 @@ fun FloatingNavigationToolbar(
     modifier = modifier.fillMaxWidth(),
     contentAlignment = Alignment.Center,
   ) {
-    val showSelectedLabels = false
+    val showSelectedLabels = true
 
     Box(modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth().height(64.dp).then(toolbarModifier)) {
       ToolbarItemsContainer(
@@ -220,10 +220,19 @@ private fun ToolbarItemsContainer(
     }
 
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-    val slotWidth = maxWidth / slotCount
+    // The three dots sit at the side at a fixed width; the tabs share the rest, active one widest.
+    val hasSideAction =
+      hasOverflowMenu || (hasFabAction && fabIconRes != null && onFabClick != null)
+    val sideWidth = if (hasSideAction) 44.dp else 0.dp
+    val tabCount = slotCount - (if (hasSideAction) 1 else 0)
+    val tabsWidth = maxWidth - sideWidth
+    val activeWidth = minOf(132.dp, tabsWidth * 0.45f)
+    val otherWidth =
+      if (activeSlot != null && tabCount > 1) (tabsWidth - activeWidth) / (tabCount - 1)
+      else tabsWidth / tabCount
     val slidingPillOffset by
       animateDpAsState(
-        targetValue = slotWidth * (activeSlot ?: 0) + (slotWidth - 56.dp) / 2,
+        targetValue = otherWidth * (activeSlot ?: 0) + 4.dp,
         animationSpec =
           spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow),
         label = "pillOffset"
@@ -234,7 +243,7 @@ private fun ToolbarItemsContainer(
         modifier =
           Modifier.align(Alignment.CenterStart)
             .offset(x = slidingPillOffset)
-            .size(width = 56.dp, height = 44.dp)
+            .size(width = activeWidth - 8.dp, height = 44.dp)
             .background(
               color = floatingToolbarSelectedItemContainerColor(pureBlack),
               shape = RoundedCornerShape(22.dp)
@@ -242,7 +251,7 @@ private fun ToolbarItemsContainer(
       )
     }
 
-    val slotModifier = Modifier.width(slotWidth).fillMaxHeight()
+    val sideModifier = Modifier.width(sideWidth).fillMaxHeight()
 
     Row(modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
       items.forEach { screen ->
@@ -252,11 +261,21 @@ private fun ToolbarItemsContainer(
             contentDescription = musicRecognitionContentDescription,
             pureBlack = pureBlack,
             onClick = onMusicRecognitionClick,
-            modifier = slotModifier
+            modifier = Modifier.width(otherWidth).fillMaxHeight()
           )
         }
 
         val selected = isSelected(screen)
+        val tabWidth by
+          animateDpAsState(
+            targetValue = if (selected) activeWidth else otherWidth,
+            animationSpec =
+              spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessMediumLow,
+              ),
+            label = "tabWidth",
+          )
         FloatingNavigationToolbarItem(
           screen = screen,
           selected = selected,
@@ -264,13 +283,13 @@ private fun ToolbarItemsContainer(
           pureBlack = pureBlack,
           onClick = { onItemClick(screen, selected) },
           onLongClick = if (screen == Screens.Search) onSearchLongClick else null,
-          modifier = slotModifier
+          modifier = Modifier.width(tabWidth).fillMaxHeight()
         )
       }
 
       if (hasOverflowMenu) {
         FloatingToolbarOverflowMenuButton(
-          modifier = slotModifier,
+          modifier = sideModifier,
           pureBlack = pureBlack,
           onMusicFlowClick = onMusicFlowClick,
           musicFlowIconRes = musicFlowIconRes,
@@ -288,7 +307,7 @@ private fun ToolbarItemsContainer(
           onClick = onFabClick,
           iconRes = fabIconRes,
           contentDescription = fabContentDescription,
-          modifier = slotModifier
+          modifier = sideModifier
         )
       }
     }
@@ -454,7 +473,7 @@ private fun FloatingNavigationToolbarItem(
       },
       label = "horizontalPadding",
     ) { isSelected ->
-      if (isSelected && showSelectedLabel) 16.dp else 12.dp
+      if (isSelected && showSelectedLabel) 10.dp else 8.dp
     }
 
   val interactionSource = remember { MutableInteractionSource() }
