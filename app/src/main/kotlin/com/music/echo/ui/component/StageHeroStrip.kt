@@ -51,7 +51,7 @@ private fun lerp(values: List<Float>, position: Float): Float {
 fun StageHeroStrip(
   count: Int,
   modifier: Modifier = Modifier,
-  autoAdvanceMillis: Long = 5000,
+  autoAdvanceMillis: Long = 3500,
   item: @Composable BoxScope.(index: Int, expansion: Float, nextTitleAlpha: Float) -> Unit,
 ) {
   val position = remember { Animatable(if (count > 1) 1f else 0f) }

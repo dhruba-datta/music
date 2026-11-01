@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.music.echo.spotify.LoadSpotifyRecommendationsUseCase
+import echo.music.iad1tya.spotify.Spotify
+import echo.music.iad1tya.spotify.models.SpotifyHomeFeedItem
 import echo.music.iad1tya.spotifyimport.SpotifyImportRepository
 import com.music.innertube.YouTube
 import com.music.innertube.models.AlbumItem
@@ -120,6 +122,7 @@ constructor(
   val keepListening = MutableStateFlow<List<LocalItem>?>(null)
   val similarRecommendations = MutableStateFlow<List<SimilarRecommendation>?>(null)
   val spotifyRecommendations = MutableStateFlow<List<SimilarRecommendation>?>(null)
+  val spotifyAlbums = MutableStateFlow<List<SpotifyHomeFeedItem.Album>>(emptyList())
   val accountPlaylists = MutableStateFlow<List<PlaylistItem>?>(null)
   val homePage = MutableStateFlow<HomePage?>(null)
   val explorePage = MutableStateFlow<ExplorePage?>(null)
@@ -606,8 +609,19 @@ constructor(
         } catch (e: Exception) {
           null
         }
+      spotifyAlbums.value =
+        Spotify.home(sectionItemsLimit = 12)
+          .getOrNull()
+          ?.sections
+          .orEmpty()
+          .sortedByDescending { it.title.orEmpty().contains("popular", ignoreCase = true) }
+          .flatMap { it.items }
+          .filterIsInstance<SpotifyHomeFeedItem.Album>()
+          .distinctBy { it.id }
+          .take(8)
     } else {
       spotifyRecommendations.value = null
+      spotifyAlbums.value = emptyList()
     }
 
     coroutineScope {
