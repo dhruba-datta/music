@@ -3,20 +3,11 @@ package echo.music.iad1tya.utils
 import android.content.Context
 import android.webkit.CookieManager
 import android.webkit.WebStorage
-import android.webkit.WebView
 import android.webkit.WebViewDatabase
 import kotlin.coroutines.resume
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-
-fun clearPlaybackWebAuthSession(context: Context) {
-  clearWebAuthStorage(context)
-  val cookieManager = CookieManager.getInstance()
-  cookieManager.removeSessionCookies(null)
-  cookieManager.removeAllCookies(null)
-  cookieManager.flush()
-}
 
 suspend fun clearWebAuthSession(context: Context) {
   withContext(Dispatchers.Main.immediate) {
@@ -31,36 +22,6 @@ suspend fun clearWebAuthSession(context: Context) {
           }
         }
       }
-    }
-  }
-}
-
-fun resetAuthWebViewSession(
-  context: Context,
-  webView: WebView,
-  clearCookies: Boolean = true,
-  onReady: () -> Unit,
-) {
-  webView.stopLoading()
-  webView.clearHistory()
-  webView.clearFormData()
-  webView.clearCache(true)
-  clearWebAuthStorage(context)
-
-  val cookieManager = CookieManager.getInstance()
-  cookieManager.setAcceptCookie(true)
-  cookieManager.setAcceptThirdPartyCookies(webView, true)
-  if (!clearCookies) {
-    onReady()
-    return
-  }
-
-  cookieManager.removeSessionCookies {
-    cookieManager.removeAllCookies {
-      cookieManager.flush()
-      cookieManager.setAcceptCookie(true)
-      cookieManager.setAcceptThirdPartyCookies(webView, true)
-      onReady()
     }
   }
 }

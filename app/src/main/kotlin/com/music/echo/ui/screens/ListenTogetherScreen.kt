@@ -3,9 +3,6 @@ package echo.music.iad1tya.ui.screens
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -47,7 +44,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton as MaterialIconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -525,124 +521,6 @@ private fun NotConfiguredContent() {
         textAlign = TextAlign.Center,
         color = MaterialTheme.colorScheme.onSurfaceVariant
       )
-    }
-  }
-}
-
-@Composable
-private fun ConnectionStatusCard(
-  connectionState: ConnectionState,
-  onConnect: () -> Unit,
-  onDisconnect: () -> Unit,
-  onReconnect: () -> Unit
-) {
-  Card(
-    modifier =
-      Modifier.fillMaxWidth()
-        .animateContentSize(
-          animationSpec =
-            spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
-        ),
-    shape = RoundedCornerShape(18.dp),
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-  ) {
-    Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-        modifier = Modifier.fillMaxWidth()
-      ) {
-        Box(
-          modifier =
-            Modifier.size(10.dp)
-              .clip(CircleShape)
-              .background(
-                color =
-                  when (connectionState) {
-                    ConnectionState.CONNECTED -> MaterialTheme.colorScheme.onSurface
-                    ConnectionState.CONNECTING,
-                    ConnectionState.RECONNECTING -> MaterialTheme.colorScheme.tertiary
-                    ConnectionState.ERROR -> MaterialTheme.colorScheme.error
-                    ConnectionState.DISCONNECTED -> MaterialTheme.colorScheme.outline
-                  }
-              )
-        )
-        Spacer(modifier = Modifier.width(10.dp))
-        Text(
-          text =
-            when (connectionState) {
-              ConnectionState.CONNECTED -> stringResource(R.string.listen_together_connected)
-              ConnectionState.CONNECTING -> stringResource(R.string.listen_together_connecting)
-              ConnectionState.RECONNECTING -> stringResource(R.string.listen_together_reconnecting)
-              ConnectionState.ERROR -> stringResource(R.string.listen_together_error)
-              ConnectionState.DISCONNECTED -> stringResource(R.string.listen_together_disconnected)
-            },
-          style = MaterialTheme.typography.titleMedium,
-          fontWeight = FontWeight.ExtraBold,
-          color =
-            when (connectionState) {
-              ConnectionState.CONNECTED -> MaterialTheme.colorScheme.onSurface
-              ConnectionState.CONNECTING,
-              ConnectionState.RECONNECTING -> MaterialTheme.colorScheme.tertiary
-              ConnectionState.ERROR -> MaterialTheme.colorScheme.error
-              ConnectionState.DISCONNECTED -> MaterialTheme.colorScheme.onSurfaceVariant
-            }
-        )
-      }
-
-      if (
-        connectionState == ConnectionState.CONNECTING ||
-          connectionState == ConnectionState.RECONNECTING
-      ) {
-        Spacer(modifier = Modifier.height(12.dp))
-        LinearProgressIndicator(
-          modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)),
-          color = MaterialTheme.colorScheme.onSurface
-        )
-      }
-
-      Spacer(modifier = Modifier.height(12.dp))
-
-      Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-        if (
-          connectionState == ConnectionState.DISCONNECTED ||
-            connectionState == ConnectionState.ERROR
-        ) {
-          Button(
-            onClick = onConnect,
-            modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(25.dp),
-            colors =
-              ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onSurface)
-          ) {
-            Icon(
-              painter = painterResource(R.drawable.link),
-              contentDescription = null,
-              modifier = Modifier.size(18.dp)
-            )
-            Spacer(Modifier.width(6.dp))
-            Text(stringResource(R.string.connect), fontWeight = FontWeight.SemiBold)
-          }
-        } else {
-          Button(
-            onClick = onDisconnect,
-            modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(25.dp),
-            colors =
-              ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onSurface)
-          ) {
-            Text(stringResource(R.string.disconnect), fontWeight = FontWeight.SemiBold)
-          }
-          FilledTonalButton(
-            onClick = onReconnect,
-            modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(25.dp)
-          ) {
-            Text("Reconnect", fontWeight = FontWeight.SemiBold)
-          }
-        }
-      }
     }
   }
 }

@@ -1,6 +1,5 @@
 package echo.music.iad1tya.ui.component
 
-import androidx.compose.material3.LocalTextStyle
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
@@ -34,9 +33,9 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.add
@@ -64,6 +63,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -82,6 +82,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -107,7 +108,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.Lifecycle
@@ -149,13 +149,13 @@ import echo.music.iad1tya.constants.LyricsScrollKey
 import echo.music.iad1tya.constants.LyricsStandardBlurKey
 import echo.music.iad1tya.constants.LyricsTextPositionKey
 import echo.music.iad1tya.constants.LyricsTextSizeKey
-import echo.music.iad1tya.constants.StageLyricsLineSpacingDefault
-import echo.music.iad1tya.constants.StageLyricsTextSizeDefault
 import echo.music.iad1tya.constants.OpenRouterApiKey
 import echo.music.iad1tya.constants.OpenRouterBaseUrlKey
 import echo.music.iad1tya.constants.OpenRouterModelKey
 import echo.music.iad1tya.constants.PlayerBackgroundStyle
 import echo.music.iad1tya.constants.PlayerBackgroundStyleKey
+import echo.music.iad1tya.constants.StageLyricsLineSpacingDefault
+import echo.music.iad1tya.constants.StageLyricsTextSizeDefault
 import echo.music.iad1tya.constants.TranslateLanguageKey
 import echo.music.iad1tya.constants.TranslateModeKey
 import echo.music.iad1tya.db.entities.LyricsEntity.Companion.LYRICS_NOT_FOUND
@@ -2588,10 +2588,5 @@ fun Lyrics(
     }
   }
 }
-
-private const val echomusic_AUTO_SCROLL_DURATION = 1500L
-private const val echomusic_INITIAL_SCROLL_DURATION = 1000L
-private const val echomusic_SEEK_DURATION = 800L
-private const val echomusic_FAST_SEEK_DURATION = 600L
 
 val LyricsPreviewTime = 2.seconds

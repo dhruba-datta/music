@@ -16,31 +16,20 @@ val FloatingToolbarHeight = 64.dp
 val FloatingToolbarHorizontalPadding = 16.dp
 val FloatingToolbarBottomPadding = 14.dp
 val NavigationBarHeight = FloatingToolbarHeight
-val SlimNavBarHeight = 64.dp
 val MiniPlayerHeight = 60.dp
-val MinMiniPlayerHeight = 16.dp
 val MiniPlayerBottomSpacing = 14.dp
 val QueuePeekHeight = 64.dp
 val AppBarHeight = 64.dp
 
 val ListItemHeight = 64.dp
 val SuggestionItemHeight = 56.dp
-val SearchFilterHeight = 48.dp
 val ListThumbnailSize = 52.dp
 val SmallGridThumbnailHeight = 104.dp
 val GridThumbnailHeight = 128.dp
-val AlbumThumbnailSize = 144.dp
-
 val ThumbnailCornerRadius = 12.dp
 val GridThumbnailCornerRadius = 18.dp
 
 val PlayerHorizontalPadding = 32.dp
 
 val NavigationBarAnimationSpec =
-  spring<Dp>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow)
-
-val BottomSheetAnimationSpec =
-  spring<Dp>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow)
-
-val BottomSheetSoftAnimationSpec =
   spring<Dp>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow)

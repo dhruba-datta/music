@@ -258,8 +258,6 @@ fun MusicFlowPage(
 }
 
 private val TOP_BAR_HEIGHT = 56.dp
-private val ZeroProgress: () -> Float = { 0f }
-
 @Composable
 private fun LyricPreviewCapsule(
   lyricsText: String?,

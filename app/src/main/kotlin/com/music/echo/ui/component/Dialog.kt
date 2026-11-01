@@ -1,6 +1,5 @@
 package echo.music.iad1tya.ui.component
 
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,7 +17,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -36,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -234,25 +231,6 @@ fun ListDialog(
     }
   }
 }
-
-@Composable
-fun InfoLabel(text: String) =
-  Row(
-    verticalAlignment = Alignment.CenterVertically,
-    modifier = Modifier.padding(horizontal = 8.dp)
-  ) {
-    Icon(
-      painter = painterResource(id = R.drawable.info),
-      contentDescription = null,
-      tint = MaterialTheme.colorScheme.secondary,
-      modifier = Modifier.padding(4.dp)
-    )
-    Text(
-      text = text,
-      style = MaterialTheme.typography.bodySmall,
-      modifier = Modifier.padding(horizontal = 4.dp)
-    )
-  }
 
 /** The filled, borderless look of a Stage text field on a dialog. */
 @Composable

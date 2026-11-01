@@ -21,7 +21,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.music.echo.ui.components.ExpressiveBarChart
 import com.music.echo.viewmodels.DayUsageData
 import com.music.echo.viewmodels.ListeningSummaryViewModel
 import echo.music.iad1tya.R

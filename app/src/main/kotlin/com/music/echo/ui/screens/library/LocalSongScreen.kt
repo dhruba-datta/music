@@ -89,7 +89,6 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -100,7 +99,6 @@ import androidx.navigation.NavController
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.LocalPlayerConnection
 import echo.music.iad1tya.R
-import echo.music.iad1tya.ui.component.stageEmptyHeight
 import echo.music.iad1tya.constants.CONTENT_TYPE_HEADER
 import echo.music.iad1tya.constants.CONTENT_TYPE_SONG
 import echo.music.iad1tya.constants.LocalSongsExcludedFoldersKey
@@ -124,6 +122,7 @@ import echo.music.iad1tya.ui.component.StageSectionTitle
 import echo.music.iad1tya.ui.component.StageSheetHandle
 import echo.music.iad1tya.ui.component.StageSheetShape
 import echo.music.iad1tya.ui.component.StageTopBar
+import echo.music.iad1tya.ui.component.stageEmptyHeight
 import echo.music.iad1tya.ui.menu.SelectionSongMenu
 import echo.music.iad1tya.ui.menu.SongMenu
 import echo.music.iad1tya.utils.launchSafely
@@ -742,37 +741,6 @@ fun LocalSongScreen(
       topBar = topBarContent,
     ) { paddingValues ->
       mainContent(paddingValues)
-    }
-  }
-}
-
-@Composable
-private fun LocalSongBadge(
-  iconRes: Int,
-  text: String,
-) {
-  Surface(
-    shape = AbsoluteSmoothCornerShape(20.dp, 60),
-    color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.92f),
-  ) {
-    Row(
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(8.dp),
-      modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-    ) {
-      Icon(
-        painter = painterResource(iconRes),
-        contentDescription = null,
-        tint = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.size(18.dp),
-      )
-      Text(
-        text = text,
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onSurface,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-      )
     }
   }
 }

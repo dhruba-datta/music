@@ -1,37 +1,28 @@
 package echo.music.iad1tya.ui.screens.search
 
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -39,7 +30,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,26 +38,20 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavController
@@ -78,21 +62,11 @@ import echo.music.iad1tya.LocalIsPlayerExpanded
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.LocalPlayerConnection
 import echo.music.iad1tya.R
-import echo.music.iad1tya.constants.GridItemSize
-import echo.music.iad1tya.constants.GridItemsSizeKey
-import echo.music.iad1tya.constants.GridThumbnailHeight
 import echo.music.iad1tya.constants.PauseSearchHistoryKey
 import echo.music.iad1tya.db.entities.SearchHistory
 import echo.music.iad1tya.playback.queues.YouTubeQueue
-import echo.music.iad1tya.ui.component.LocalMenuState
-import echo.music.iad1tya.ui.component.NavigationTitle
-import echo.music.iad1tya.ui.component.YouTubeGridItem
-import echo.music.iad1tya.ui.menu.YouTubeAlbumMenu
 import echo.music.iad1tya.ui.screens.search.suggestions.SuggestionsTabContent
-import echo.music.iad1tya.utils.rememberEnumPreference
 import echo.music.iad1tya.utils.rememberPreference
-import echo.music.iad1tya.viewmodels.ExploreViewModel
-import echo.music.iad1tya.viewmodels.MoodAndGenresViewModel
 import java.net.URLEncoder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -334,131 +308,5 @@ fun SearchScreen(navController: NavController, pureBlack: Boolean) {
     }
 
     onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-  }
-}
-
-@Composable
-fun ExploreTabContent(
-  navController: NavController,
-  viewModel: MoodAndGenresViewModel = hiltViewModel(),
-  contentPadding: PaddingValues = PaddingValues(0.dp)
-) {
-  val moodAndGenresList by viewModel.moodAndGenres.collectAsState()
-
-  LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
-    moodAndGenresList?.forEach { section ->
-      item { NavigationTitle(title = section.title) }
-
-      val rows = section.items.chunked(2)
-      items(rows) { row ->
-        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp)) {
-          row.forEach { item ->
-            Box(
-              contentAlignment = Alignment.Center,
-              modifier =
-                Modifier.weight(1f)
-                  .padding(6.dp)
-                  .height(72.dp)
-                  .clip(RoundedCornerShape(18.dp))
-                  .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                  .clickable {
-                    navController.navigate(
-                      "youtube_browse/${item.endpoint.browseId}?params=${item.endpoint.params}"
-                    )
-                  }
-            ) {
-              Text(
-                text = item.title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.ExtraBold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-              )
-            }
-          }
-
-          repeat(2 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
-        }
-      }
-    }
-
-    if (moodAndGenresList == null) {
-      item {
-        Box(
-          modifier = Modifier.fillMaxWidth().height(200.dp),
-          contentAlignment = Alignment.Center
-        ) {
-          CircularWavyProgressIndicator()
-        }
-      }
-    }
-
-    item { Spacer(modifier = Modifier.height(16.dp)) }
-  }
-}
-
-@Composable
-fun AlbumsTabContent(
-  navController: NavController,
-  viewModel: ExploreViewModel = hiltViewModel(),
-  contentPadding: PaddingValues = PaddingValues(0.dp)
-) {
-  val menuState = LocalMenuState.current
-  val haptic = LocalHapticFeedback.current
-  val playerConnection = LocalPlayerConnection.current
-  val mediaMetadata by
-    (playerConnection?.mediaMetadata?.collectAsState() ?: remember { mutableStateOf(null) })
-  val isPlaying by
-    (playerConnection?.isEffectivelyPlaying?.collectAsState() ?: remember { mutableStateOf(false) })
-  val coroutineScope = rememberCoroutineScope()
-
-  val explorePage by viewModel.explorePage.collectAsState()
-  val newReleaseAlbums = explorePage?.newReleaseAlbums
-
-  val gridItemSize by rememberEnumPreference(GridItemsSizeKey, GridItemSize.BIG)
-
-  if (newReleaseAlbums == null) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-      CircularWavyProgressIndicator()
-    }
-  } else {
-    LazyVerticalGrid(
-      columns =
-        GridCells.Adaptive(
-          minSize = GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp
-        ),
-      contentPadding =
-        PaddingValues(
-          start = 12.dp,
-          top = 12.dp,
-          end = 12.dp,
-          bottom = 12.dp + contentPadding.calculateBottomPadding()
-        ),
-      modifier = Modifier.fillMaxSize()
-    ) {
-      items(items = newReleaseAlbums.distinctBy { it.id }, key = { it.id }) { album ->
-        YouTubeGridItem(
-          item = album,
-          isActive = mediaMetadata?.album?.id == album.id,
-          isPlaying = isPlaying,
-          coroutineScope = coroutineScope,
-          fillMaxWidth = true,
-          modifier =
-            Modifier.combinedClickable(
-              onClick = { navController.navigate("album/${album.id}") },
-              onLongClick = {
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                menuState.show {
-                  YouTubeAlbumMenu(
-                    albumItem = album,
-                    navController = navController,
-                    onDismiss = menuState::dismiss,
-                  )
-                }
-              },
-            )
-        )
-      }
-    }
   }
 }

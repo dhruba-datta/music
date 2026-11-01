@@ -26,10 +26,10 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -407,25 +407,6 @@ private fun FloatingNavigationToolbarItem(
       }
     }
   }
-}
-
-@Composable
-private fun floatingToolbarContainerColor(pureBlack: Boolean): Color {
-  return if (pureBlack) {
-    Color.Black
-  } else {
-    MaterialTheme.colorScheme.surfaceContainer
-  }
-}
-
-@Composable
-private fun floatingToolbarFabContainerColor(pureBlack: Boolean): Color {
-  return MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
-}
-
-@Composable
-private fun floatingToolbarFabContentColor(pureBlack: Boolean): Color {
-  return MaterialTheme.colorScheme.onSurface
 }
 
 @Composable

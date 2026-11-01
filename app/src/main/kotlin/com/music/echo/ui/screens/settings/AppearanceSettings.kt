@@ -1,15 +1,11 @@
 package echo.music.iad1tya.ui.screens.settings
 
-import androidx.compose.runtime.LaunchedEffect
-import androidx.activity.compose.BackHandler
-import echo.music.iad1tya.ui.component.StagePillButton
-import echo.music.iad1tya.ui.component.StageSwitch
-import echo.music.iad1tya.ui.component.StageTopBar
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -32,10 +28,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -98,16 +94,16 @@ import echo.music.iad1tya.constants.ShowTopPlaylistKey
 import echo.music.iad1tya.constants.SliderStyle
 import echo.music.iad1tya.constants.SliderStyleKey
 import echo.music.iad1tya.constants.SquigglySliderKey
-import echo.music.iad1tya.constants.WavyPlayPauseKey
+import echo.music.iad1tya.constants.StageLyricsLineSpacingDefault
+import echo.music.iad1tya.constants.StageLyricsTextSizeDefault
 import echo.music.iad1tya.constants.SwipeLyricsKey
 import echo.music.iad1tya.constants.SwipeSensitivityKey
 import echo.music.iad1tya.constants.SwipeThumbnailKey
 import echo.music.iad1tya.constants.SwipeToRemoveSongKey
 import echo.music.iad1tya.constants.SwipeToSongKey
 import echo.music.iad1tya.constants.ThumbnailCornerRadiusKey
-import echo.music.iad1tya.constants.StageLyricsLineSpacingDefault
-import echo.music.iad1tya.constants.StageLyricsTextSizeDefault
 import echo.music.iad1tya.constants.UseNewPlayerDesignKey
+import echo.music.iad1tya.constants.WavyPlayPauseKey
 import echo.music.iad1tya.ui.component.DefaultDialog
 import echo.music.iad1tya.ui.component.EnumDialog
 import echo.music.iad1tya.ui.component.IconButton
@@ -115,6 +111,9 @@ import echo.music.iad1tya.ui.component.Material3SettingsGroup
 import echo.music.iad1tya.ui.component.Material3SettingsItem
 import echo.music.iad1tya.ui.component.PlayerSliderTrack
 import echo.music.iad1tya.ui.component.SquigglySlider
+import echo.music.iad1tya.ui.component.StagePillButton
+import echo.music.iad1tya.ui.component.StageSwitch
+import echo.music.iad1tya.ui.component.StageTopBar
 import echo.music.iad1tya.ui.component.ThumbnailCornerRadiusModal
 import echo.music.iad1tya.ui.component.WavySlider
 import echo.music.iad1tya.ui.theme.DefaultThemeColor
@@ -123,7 +122,6 @@ import echo.music.iad1tya.ui.utils.backToMain
 import echo.music.iad1tya.utils.rememberEnumPreference
 import echo.music.iad1tya.utils.rememberPreference
 import kotlin.math.roundToInt
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -157,7 +155,6 @@ fun AppearanceSettings(
 
   val isUsingCustomColor = selectedThemeColorInt != DefaultThemeColor.toArgb()
   val coroutineScope = rememberCoroutineScope()
-
 
   val (useNewPlayerDesign, onUseNewPlayerDesignChange) =
     rememberPreference(UseNewPlayerDesignKey, defaultValue = true)
@@ -533,8 +530,6 @@ fun AppearanceSettings(
     )
   }
 
-
-
   var showGridSizeDialog by rememberSaveable { mutableStateOf(false) }
 
   if (showGridSizeDialog) {
@@ -851,7 +846,6 @@ fun AppearanceSettings(
       Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Top))
     )
 
-
     if (inSection(null)) {
     Material3SettingsGroup(
       scrollState = scrollState,
@@ -912,7 +906,6 @@ fun AppearanceSettings(
         }
     )
     }
-
 
     if (highlightKey == null && openSection == null) {
       Material3SettingsGroup(
@@ -986,7 +979,6 @@ fun AppearanceSettings(
 
     var showSensitivityDialog by rememberSaveable { mutableStateOf(false) }
     var showThumbnailCornerRadiusDialog by rememberSaveable { mutableStateOf(false) }
-
 
     if (inSection("player")) {
     Material3SettingsGroup(
@@ -1260,7 +1252,6 @@ fun AppearanceSettings(
       )
     }
 
-
     if (inSection("lyrics")) {
     Material3SettingsGroup(
       scrollState = scrollState,
@@ -1398,7 +1389,6 @@ fun AppearanceSettings(
 
     Spacer(modifier = Modifier.height(16.dp))
 
-
     if (inSection("misc")) {
     Material3SettingsGroup(
       scrollState = scrollState,
@@ -1438,9 +1428,6 @@ fun AppearanceSettings(
             onClick = { navController.navigate("settings/appearance/haptics") }
           ),
 
-
-
-
           Material3SettingsItem(
             isHighlighted = (highlightKey == stringResource(R.string.swipe_song_to_remove)),
             icon = painterResource(R.drawable.swipe),
@@ -1475,7 +1462,6 @@ fun AppearanceSettings(
         )
     )
     }
-
 
     if (inSection("auto")) {
     Material3SettingsGroup(
@@ -1581,9 +1567,4 @@ enum class LyricsPosition {
   LEFT,
   CENTER,
   RIGHT,
-}
-
-enum class PlayerTextAlignment {
-  SIDED,
-  CENTER,
 }

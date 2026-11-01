@@ -58,7 +58,6 @@ import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.outlined.Error
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -1258,60 +1257,6 @@ private fun AudioDeviceRow(
             modifier = Modifier.size(14.dp)
           )
           Text(text = "$value%", style = MaterialTheme.typography.labelSmall, color = onContainer)
-        }
-      }
-    }
-  }
-}
-
-@Composable
-fun DeviceSelector(
-  devices: List<AudioDevice>,
-  onDeviceSelect: (AudioDevice) -> Unit,
-  modifier: Modifier = Modifier
-) {
-  androidx.compose.foundation.layout.FlowRow(
-    modifier = modifier.fillMaxWidth(),
-    horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
-    verticalArrangement = Arrangement.spacedBy(4.dp)
-  ) {
-    devices.forEachIndexed { index, device ->
-      val isSelected = device.isActive
-      val deviceIcon =
-        when (device.type) {
-          AudioDeviceType.BLUETOOTH -> Icons.Filled.Bluetooth
-          AudioDeviceType.WIRED_HEADPHONES -> Icons.Filled.Headphones
-          AudioDeviceType.USB_HEADSET -> Icons.Filled.Usb
-          AudioDeviceType.HDMI -> Icons.Filled.Tv
-          AudioDeviceType.EXTERNAL_SPEAKER -> Icons.Filled.Speaker
-          AudioDeviceType.PHONE_SPEAKER -> Icons.Filled.PhoneAndroid
-          AudioDeviceType.CHROMECAST -> Icons.Filled.Cast
-        }
-
-      ToggleButton(
-        checked = isSelected,
-        onCheckedChange = { if (!isSelected) onDeviceSelect(device) },
-        shapes =
-          when {
-            index == 0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-            index == devices.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-            else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-          },
-        modifier = Modifier.weight(1f).semantics { role = Role.RadioButton }
-      ) {
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-          Icon(imageVector = deviceIcon, contentDescription = null, modifier = Modifier.size(18.dp))
-          Text(
-            text =
-              if (device.type == AudioDeviceType.PHONE_SPEAKER) stringResource(R.string.this_phone)
-              else device.name,
-            style = MaterialTheme.typography.labelLarge,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-          )
         }
       }
     }

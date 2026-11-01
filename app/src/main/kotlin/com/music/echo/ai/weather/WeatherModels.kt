@@ -68,32 +68,3 @@ fun mapWmoCodeToCondition(code: Int, isDay: Boolean): Pair<String, String> {
 fun WeatherInfo.toSnapshotString(): String {
   return "WEATHER_VIBE:${temperature.toInt()}°C • $condition|$weatherEmoji|$condition|$humidity|${temperature.toInt()}"
 }
-
-fun parseWeatherSnapshot(params: String?): WeatherInfo? {
-  if (params == null || !params.startsWith("WEATHER_VIBE:")) return null
-  return try {
-    val payload = params.removePrefix("WEATHER_VIBE:")
-    val parts = payload.split("|")
-    if (parts.size >= 4) {
-      val emoji = parts[1]
-      val condition = parts[2]
-      val humidity = parts[3].toIntOrNull() ?: 50
-      val temp =
-        parts.getOrNull(4)?.toDoubleOrNull()
-          ?: parts[0].substringBefore("°").toDoubleOrNull()
-          ?: 20.0
-      WeatherInfo(
-        temperature = temp,
-        feelsLike = temp,
-        condition = condition,
-        conditionCode = 0,
-        humidity = humidity,
-        windSpeed = 0.0,
-        isDay = true,
-        weatherEmoji = emoji
-      )
-    } else null
-  } catch (e: Exception) {
-    null
-  }
-}

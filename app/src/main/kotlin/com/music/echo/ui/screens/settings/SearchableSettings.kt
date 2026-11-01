@@ -1579,18 +1579,6 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
       "System Update",
       "settings/update"
     ),
-    SearchableSetting(
-      stringResource(R.string.listenbrainz_scrobbling),
-      stringResource(R.string.listenbrainz_scrobbling_desc),
-      "Account",
-      "settings/account"
-    ),
-    SearchableSetting(
-      stringResource(R.string.set_listenbrainz_token),
-      stringResource(R.string.set_listenbrainz_token_desc),
-      "Account",
-      "settings/account"
-    ),
     SearchableSetting("Preload Next Song", null, "Player and audio", "settings/player"),
     SearchableSetting("Preload Limit", null, "Player and audio", "settings/player"),
     SearchableSetting("Preload Lyrics", null, "Player and audio", "settings/player"),

@@ -9,7 +9,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
-import echo.music.iad1tya.echomusic.AudioDeviceBottomSheet
 import android.view.View
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -74,7 +73,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
@@ -88,6 +86,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
@@ -124,6 +123,7 @@ import com.music.innertube.models.SongItem
 import com.music.innertube.models.WatchEndpoint
 import com.valentinilk.shimmer.LocalShimmerTheme
 import dagger.hilt.android.AndroidEntryPoint
+import echo.music.iad1tya.ai.AiRecommendationHelper
 import echo.music.iad1tya.constants.*
 import echo.music.iad1tya.constants.AiRecommendationsKey
 import echo.music.iad1tya.constants.AppBarHeight
@@ -135,6 +135,7 @@ import echo.music.iad1tya.constants.DynamicThemeKey
 import echo.music.iad1tya.constants.EnableHighRefreshRateKey
 import echo.music.iad1tya.constants.FloatingToolbarBottomPadding
 import echo.music.iad1tya.constants.FloatingToolbarHorizontalPadding
+import echo.music.iad1tya.constants.LastAiRecommendationUpdateDayKey
 import echo.music.iad1tya.constants.LiquidGlassBlurRadiusKey
 import echo.music.iad1tya.constants.LiquidGlassChromaticAberrationKey
 import echo.music.iad1tya.constants.LiquidGlassDepthEffectKey
@@ -164,6 +165,7 @@ import echo.music.iad1tya.constants.UseFloatingNavBarKey
 import echo.music.iad1tya.constants.UseNewMiniPlayerDesignKey
 import echo.music.iad1tya.db.MusicDatabase
 import echo.music.iad1tya.db.entities.SearchHistory
+import echo.music.iad1tya.echomusic.AudioDeviceBottomSheet
 import echo.music.iad1tya.echomusic.updater.getAutoUpdateCheckSetting
 import echo.music.iad1tya.extensions.toEnum
 import echo.music.iad1tya.models.toMediaMetadata
@@ -201,19 +203,13 @@ import echo.music.iad1tya.ui.utils.appBarScrollBehavior
 import echo.music.iad1tya.ui.utils.resetHeightOffset
 import echo.music.iad1tya.utils.SyncUtils
 import echo.music.iad1tya.utils.dataStore
-import echo.music.iad1tya.ai.AiRecommendationHelper
-import echo.music.iad1tya.constants.AiRecommendationsKey
-import echo.music.iad1tya.constants.LastAiRecommendationUpdateDayKey
-import androidx.datastore.preferences.core.edit
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import echo.music.iad1tya.utils.get
 import echo.music.iad1tya.utils.onlinePlaylistRoute
-import echo.music.iad1tya.utils.validOnlinePlaylistId
 import echo.music.iad1tya.utils.rememberEnumPreference
 import echo.music.iad1tya.utils.rememberPreference
 import echo.music.iad1tya.utils.reportException
 import echo.music.iad1tya.utils.setAppLocale
+import echo.music.iad1tya.utils.validOnlinePlaylistId
 import echo.music.iad1tya.viewmodels.HomeViewModel
 import java.net.URLDecoder
 import java.net.URLEncoder
@@ -1380,11 +1376,8 @@ class MainActivity : ComponentActivity() {
 
               if (
                 !showRail &&
-                  currentRoute != "update" &&
-                  currentRoute != "listen_together/chat" &&
                   currentRoute != "ambient_mode" &&
                   currentRoute != "music_flow" &&
-                  currentRoute != "uptime" &&
                   currentRoute?.startsWith("settings") != true
               ) {
                 Box {
@@ -1496,11 +1489,8 @@ class MainActivity : ComponentActivity() {
                 }
               } else {
                 if (
-                  currentRoute != "update" &&
-                    currentRoute != "listen_together/chat" &&
                     currentRoute != "ambient_mode" &&
                     currentRoute != "music_flow" &&
-                    currentRoute != "uptime" &&
                     currentRoute?.startsWith("settings") != true
                 ) {
                   BottomSheetPlayer(
@@ -1576,7 +1566,7 @@ class MainActivity : ComponentActivity() {
                   }
                 }
 
-              if (showRail && currentRoute != "update") {
+              if (showRail) {
                 AppNavigationRail(
                   navigationItems = navigationItems,
                   currentRoute = currentRoute,

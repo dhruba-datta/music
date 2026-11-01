@@ -1,8 +1,5 @@
 package echo.music.iad1tya.ui.player
 
-import androidx.compose.material3.LocalTextStyle
-import echo.music.iad1tya.ui.component.StageAlertDialog
-import echo.music.iad1tya.ui.component.StagePillButton
 import android.content.BroadcastReceiver
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -83,13 +80,13 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -124,6 +121,7 @@ import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
@@ -136,7 +134,6 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -150,7 +147,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -204,10 +200,10 @@ import echo.music.iad1tya.constants.ShowLyricsOnPlayerKey
 import echo.music.iad1tya.constants.SliderStyle
 import echo.music.iad1tya.constants.SliderStyleKey
 import echo.music.iad1tya.constants.SquigglySliderKey
-import echo.music.iad1tya.constants.WavyPlayPauseKey
 import echo.music.iad1tya.constants.SwipeLyricsKey
 import echo.music.iad1tya.constants.ThumbnailCornerRadius
 import echo.music.iad1tya.constants.UseNewPlayerDesignKey
+import echo.music.iad1tya.constants.WavyPlayPauseKey
 import echo.music.iad1tya.db.entities.LyricsEntity
 import echo.music.iad1tya.echomusic.getConnectedBluetoothDeviceName
 import echo.music.iad1tya.echomusic.isBuds
@@ -228,6 +224,8 @@ import echo.music.iad1tya.ui.component.Lyrics
 import echo.music.iad1tya.ui.component.PlayerSliderTrack
 import echo.music.iad1tya.ui.component.ResizableIconButton
 import echo.music.iad1tya.ui.component.SquigglySlider
+import echo.music.iad1tya.ui.component.StageAlertDialog
+import echo.music.iad1tya.ui.component.StagePillButton
 import echo.music.iad1tya.ui.component.WavySlider
 import echo.music.iad1tya.ui.component.rememberBottomSheetState
 import echo.music.iad1tya.ui.menu.AddToPlaylistDialog
@@ -3399,77 +3397,6 @@ fun InlineLyricsView(
         }
       }
     }
-  }
-}
-
-@Composable
-fun MoreActionsButton(
-  mediaMetadata: MediaMetadata,
-  navController: NavController,
-  state: BottomSheetState,
-  textButtonColor: Color,
-  iconButtonColor: Color
-) {
-  val menuState = LocalMenuState.current
-  val bottomSheetPageState = LocalBottomSheetPageState.current
-
-  Box(
-    modifier =
-      Modifier.size(40.dp).clip(RoundedCornerShape(24.dp)).background(textButtonColor).clickable {
-        menuState.show {
-          PlayerMenu(
-            mediaMetadata = mediaMetadata,
-            navController = navController,
-            playerBottomSheetState = state,
-            onShowDetailsDialog = {
-              mediaMetadata.id.let { bottomSheetPageState.show { ShowMediaInfo(it) } }
-            },
-            onDismiss = menuState::dismiss
-          )
-        }
-      }
-  ) {
-    Image(
-      painter = painterResource(R.drawable.more_vert),
-      contentDescription = null,
-      colorFilter = ColorFilter.tint(iconButtonColor)
-    )
-  }
-}
-
-@Composable
-private fun PlayerMoreMenuButton(
-  mediaMetadata: MediaMetadata,
-  navController: NavController,
-  state: BottomSheetState,
-  textButtonColor: Color,
-  iconButtonColor: Color,
-) {
-  val menuState = LocalMenuState.current
-  val bottomSheetPageState = LocalBottomSheetPageState.current
-
-  Box(
-    contentAlignment = Alignment.Center,
-    modifier =
-      Modifier.size(40.dp).clip(RoundedCornerShape(24.dp)).background(textButtonColor).clickable {
-        menuState.show {
-          PlayerMenu(
-            mediaMetadata = mediaMetadata,
-            navController = navController,
-            playerBottomSheetState = state,
-            onShowDetailsDialog = {
-              mediaMetadata.id.let { bottomSheetPageState.show { ShowMediaInfo(it) } }
-            },
-            onDismiss = menuState::dismiss,
-          )
-        }
-      },
-  ) {
-    Image(
-      painter = painterResource(R.drawable.more_horiz),
-      contentDescription = null,
-      colorFilter = ColorFilter.tint(iconButtonColor),
-    )
   }
 }
 

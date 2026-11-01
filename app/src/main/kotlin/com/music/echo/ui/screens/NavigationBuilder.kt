@@ -20,9 +20,6 @@ import androidx.navigation.compose.dialog
 import androidx.navigation.navArgument
 import echo.music.iad1tya.constants.DarkModeKey
 import echo.music.iad1tya.constants.PureBlackKey
-import echo.music.iad1tya.echomusic.changelog.ChangelogScreen
-import echo.music.iad1tya.echomusic.commitscreen.CommitScreen
-import echo.music.iad1tya.echomusic.updater.UpdateScreen
 import echo.music.iad1tya.ui.screens.ambient.AmbientModeScreen
 import echo.music.iad1tya.ui.screens.artist.ArtistAlbumsScreen
 import echo.music.iad1tya.ui.screens.artist.ArtistItemsScreen
@@ -32,8 +29,8 @@ import echo.music.iad1tya.ui.screens.equalizer.EqScreen
 import echo.music.iad1tya.ui.screens.equalizer.axion.AxionEqScreen
 import echo.music.iad1tya.ui.screens.generate.GenerateScreen
 import echo.music.iad1tya.ui.screens.library.LibraryScreen
-import echo.music.iad1tya.ui.screens.library.SpotifyLibraryPage
 import echo.music.iad1tya.ui.screens.library.LocalSongScreen
+import echo.music.iad1tya.ui.screens.library.SpotifyLibraryPage
 import echo.music.iad1tya.ui.screens.musicflow.MusicFlowScreen
 import echo.music.iad1tya.ui.screens.playlist.AutoPlaylistScreen
 import echo.music.iad1tya.ui.screens.playlist.BottomPlaylistScreen
@@ -62,7 +59,6 @@ import echo.music.iad1tya.ui.screens.settings.SettingsScreen
 import echo.music.iad1tya.ui.screens.settings.StorageSettings
 import echo.music.iad1tya.ui.screens.settings.ThemeScreen
 import echo.music.iad1tya.ui.screens.settings.UpdateSettings
-import echo.music.iad1tya.ui.screens.settings.UptimeScreen
 import echo.music.iad1tya.ui.screens.settings.integrations.ListenTogetherSettings
 import echo.music.iad1tya.utils.rememberEnumPreference
 import echo.music.iad1tya.utils.rememberPreference
@@ -96,8 +92,6 @@ fun NavGraphBuilder.navigationBuilder(
     ListenTogetherScreen(navController, showTopBar = false)
   }
 
-  composable("listen_together/chat") { CommentTogetherScreen(navController) }
-
   composable("history") { HistoryScreen(navController) }
 
   composable("ambient_mode") { AmbientModeScreen(navController) }
@@ -106,16 +100,11 @@ fun NavGraphBuilder.navigationBuilder(
 
   composable("local_songs") { LocalSongScreen(navController) }
 
-
   composable("mood_and_genres") { MoodAndGenresScreen(navController, scrollBehavior) }
 
   composable("account") { AccountScreen(navController, scrollBehavior) }
 
   composable("spotify_library") { SpotifyLibraryPage(navController) }
-
-  composable("new_release") { NewReleaseScreen(navController, scrollBehavior) }
-
-  composable("charts_screen") { ChartsScreen(navController) }
 
   composable(
     route = "browse/{browseId}",
@@ -423,8 +412,6 @@ fun NavGraphBuilder.navigationBuilder(
     )
   }
 
-  composable("uptime") { UptimeScreen(navController, scrollBehavior) }
-
   composable(
     route = "settings/player?highlightKey={highlightKey}",
     arguments =
@@ -525,8 +512,6 @@ fun NavGraphBuilder.navigationBuilder(
     )
   }
 
-  composable("update") { UpdateScreen(navController) }
-
   composable("login") { LoginScreen(navController) }
 
   dialog("equalizer") {
@@ -542,7 +527,5 @@ fun NavGraphBuilder.navigationBuilder(
 
   composable("recognition_history") { RecognitionHistoryScreen(navController) }
   composable("search_history") { SearchHistoryScreen(navController) }
-  composable("settings/changelog") { ChangelogScreen(navController, scrollBehavior) }
-  composable("settings/commits") { CommitScreen(navController, scrollBehavior) }
   composable("generate") { GenerateScreen(navController) }
 }

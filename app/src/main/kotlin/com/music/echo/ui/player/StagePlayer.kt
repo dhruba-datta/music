@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -28,8 +27,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -100,27 +97,6 @@ internal fun StageEvenLayout(
       sectionPlaceables.forEach {
         it.place(0, y)
         y += it.height + gap
-      }
-    }
-  }
-}
-
-/**
- * Splits the width equally between the actions. An action that draws nothing, such as Cast where
- * Cast is unavailable, gives its slot to the others.
- */
-@Composable
-internal fun StageActionRow(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-  Layout(content = content, modifier = modifier.fillMaxWidth()) { measurables, constraints ->
-    val width = constraints.maxWidth
-    val childConstraints = Constraints(maxWidth = width / measurables.size.coerceAtLeast(1))
-    val placeables = measurables.map { it.measure(childConstraints) }.filter { it.width > 0 }
-    val height = placeables.maxOfOrNull { it.height } ?: 0
-    val slot = if (placeables.isEmpty()) 0 else width / placeables.size
-
-    layout(width, height) {
-      placeables.forEachIndexed { index, placeable ->
-        placeable.place(slot * index + (slot - placeable.width) / 2, 0)
       }
     }
   }

@@ -27,7 +27,6 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -78,10 +77,6 @@ fun AccountSettingsScreen(
   val (spotifyAvatarUrl) = rememberPreference(SpotifyAccountAvatarUrlKey, "")
   val spotifyConnected = spotifySpDc.isNotBlank()
 
-  val (listenBrainzEnabled, onListenBrainzEnabledChange) =
-    rememberPreference(ListenBrainzEnabledKey, false)
-  val (listenBrainzToken, onListenBrainzTokenChange) = rememberPreference(ListenBrainzTokenKey, "")
-
   val isLoggedIn = remember(innerTubeCookie) { "SAPISID" in parseCookieString(innerTubeCookie) }
   val (useLoginForBrowse, onUseLoginForBrowseChange) = rememberPreference(UseLoginForBrowse, true)
   val (ytmSync, onYtmSyncChange) = rememberPreference(YtmSyncKey, true)
@@ -92,7 +87,6 @@ fun AccountSettingsScreen(
   val accountImageUrl by homeViewModel.accountImageUrl.collectAsState()
 
   var showLogoutDialog by remember { mutableStateOf(false) }
-  var showListenBrainzTokenEditor by remember { mutableStateOf(false) }
 
   Scaffold(
     modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -304,9 +298,7 @@ fun AccountSettingsScreen(
         Spacer(modifier = Modifier.height(16.dp))
       }
 
-
       if (isLoggedIn) {
-
 
         Material3SettingsGroup(
           scrollState = scrollState,
@@ -437,23 +429,6 @@ fun AccountSettingsScreen(
           modifier = Modifier.padding(bottom = 8.dp)
         )
       }
-    }
-
-    if (showListenBrainzTokenEditor) {
-      TextFieldDialog(
-        initialTextFieldValue = TextFieldValue(listenBrainzToken),
-        onDone = { data ->
-          onListenBrainzTokenChange(data)
-          showListenBrainzTokenEditor = false
-        },
-        onDismiss = { showListenBrainzTokenEditor = false },
-        singleLine = true,
-        maxLines = 1,
-        isInputValid = { it.isNotEmpty() },
-        extraContent = {
-          InfoLabel(text = stringResource(R.string.listenbrainz_scrobbling_description))
-        }
-      )
     }
 
     Spacer(Modifier.height(100.dp))
