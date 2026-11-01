@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="music_flow">Music Flow</string>
-    <string name="music_flow_caption">Swipe to discover</string>
-    <string name="music_flow_open">Open Music Flow</string>
     <string name="music_flow_offline">You\'re offline. Connect to the internet to discover new music.</string>
     <string name="music_flow_offline_banner">Offline · showing downloaded songs</string>
     <string name="music_flow_empty">Nothing to discover yet. Listen to a few songs or try again.</string>
@@ -30,17 +28,10 @@
 
     <string name="music_flow_settings_description">Vertical swipe discovery</string>
     <string name="music_flow_enable">Show Music Flow</string>
-    <string name="music_flow_enable_description">Adds a Music Flow shortcut to Home</string>
     <string name="music_flow_autoplay">Autoplay</string>
-    <string name="music_flow_autoplay_description">Start playing as soon as a song is shown</string>
     <string name="music_flow_auto_next">Auto-advance</string>
-    <string name="music_flow_auto_next_description">Move to the next song when one finishes</string>
     <string name="music_flow_animated_background">Animated backgrounds</string>
-    <string name="music_flow_animated_background_description">Show Canvas loops when available. Off with Data saver</string>
     <string name="music_flow_lyrics">Lyric preview</string>
-    <string name="music_flow_lyrics_description">Show the current lyric line on each song</string>
     <string name="music_flow_cellular_prefetch">Preload artwork on mobile data</string>
-    <string name="music_flow_cellular_prefetch_description">Only artwork and song details are preloaded, never audio</string>
     <string name="music_flow_hide_recent">Hide recently played</string>
-    <string name="music_flow_hide_recent_description">Skip songs you played recently</string>
 </resources>
