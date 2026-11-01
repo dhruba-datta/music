@@ -17,7 +17,8 @@
     "Player: song name and artist are centered between download and favorite, and the cover sits higher",
     "Home: fuller Spotify and YouTube sections, a new YouTube Music albums row, and no dots under album rows",
     "Songs: liked songs now show a heart in Library and other song lists",
-    "Music Flow: removed the lyric line from the top of the page"
+    "Music Flow: removed the lyric line from the top of the page",
+    "Player: the bottom bar no longer pops a bubble; other buttons dim while Lyrics or Up next is open"
   ],
   "bug_fixes": [
     "Stats: fix NullPointerException crash when opening Stats by making SongWithStats thumbnailUrl and play counts safely nullable, removing unsafe forced unwraps, and guarding date sequence boundaries (#646)",

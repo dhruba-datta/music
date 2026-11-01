@@ -8,16 +8,13 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.remember
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -67,6 +64,9 @@ internal const val StageMutedAlpha = 0.9f
 private val StageHeaderButtonSize = 44.dp
 
 private val StageActionTargetSize = 29.dp
+
+/** How far the bottom bar's other buttons fade while a panel is open. */
+private const val StageDockDimmedAlpha = 0.5f
 
 /**
  * Lays out the artwork and the sections below it, top to bottom. The artwork stays square and takes
@@ -285,7 +285,8 @@ internal fun StageDock(
   color: Color,
   modifier: Modifier = Modifier,
 ) {
-  // The app's bottom bar on the player: fixed to the edge, and what's on rises in a bubble.
+  // The app's bottom bar on the player: fixed to the edge. With a panel open, the rest dim back.
+  val panelOpen = upNextActive || lyricsActive
   Row(
     horizontalArrangement = Arrangement.SpaceEvenly,
     verticalAlignment = Alignment.CenterVertically,
@@ -306,11 +307,16 @@ internal fun StageDock(
         )
         .height(StageDockPeekHeight),
   ) {
-    StageCastAction(color = color, labelWeight = FontWeight.Medium)
+    StageCastAction(
+      color = color,
+      labelWeight = FontWeight.Medium,
+      modifier = Modifier.alpha(if (panelOpen) StageDockDimmedAlpha else 1f),
+    )
     StageDockAction(
       icon = R.drawable.stage_queue,
       label = "Up next",
       active = upNextActive,
+      dimmed = panelOpen && !upNextActive,
       color = color,
       onClick = onUpNext,
     )
@@ -318,6 +324,7 @@ internal fun StageDock(
       icon = R.drawable.stage_lyrics,
       label = stringResource(R.string.lyrics),
       active = lyricsActive,
+      dimmed = panelOpen && !lyricsActive,
       color = color,
       onClick = onLyrics,
     )
@@ -326,12 +333,15 @@ internal fun StageDock(
       label = "Timer",
       active = timerActive,
       enabled = timerEnabled,
+      dimmed = panelOpen,
+      showDot = timerActive,
       color = color,
       onClick = onTimer,
     )
     StageDockAction(
       icon = R.drawable.stage_playlist_add,
       label = "Playlist",
+      dimmed = panelOpen,
       color = color,
       onClick = onPlaylist,
     )
@@ -346,8 +356,9 @@ private fun StageDockAction(
   onClick: () -> Unit,
   active: Boolean = false,
   enabled: Boolean = true,
+  dimmed: Boolean = false,
+  showDot: Boolean = false,
 ) {
-  val bubbleColor = color
   Column(
     horizontalAlignment = Alignment.CenterHorizontally,
     verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
@@ -361,31 +372,25 @@ private fun StageDockAction(
           indication = ripple(bounded = false, radius = 32.dp),
           onClick = onClick,
         )
-        .alpha(if (enabled) 1f else 0.35f),
+        .alpha(
+          when {
+            !enabled -> 0.35f
+            dimmed -> StageDockDimmedAlpha
+            else -> 1f
+          }
+        ),
   ) {
     Box(contentAlignment = Alignment.Center, modifier = Modifier.size(StageActionTargetSize)) {
-      if (active) {
-        Box(
-          contentAlignment = Alignment.Center,
-          modifier =
-            Modifier.offset(y = (-14).dp)
-              .requiredSize(46.dp)
-              .shadow(8.dp, CircleShape)
-              .background(bubbleColor, CircleShape),
-        ) {
-          Icon(
-            painter = painterResource(icon),
-            contentDescription = null,
-            tint = if (bubbleColor.luminance() > 0.5f) Color.Black else Color.White,
-            modifier = Modifier.size(StageActionIconSize),
-          )
-        }
-      } else {
-        Icon(
-          painter = painterResource(icon),
-          contentDescription = null,
-          tint = color,
-          modifier = Modifier.size(StageActionIconSize),
+      Icon(
+        painter = painterResource(icon),
+        contentDescription = null,
+        tint = color,
+        modifier = Modifier.size(StageActionIconSize),
+      )
+      if (showDot) {
+        StageActiveDot(
+          color = color,
+          modifier = Modifier.align(Alignment.BottomCenter).offset(y = 4.dp),
         )
       }
     }
