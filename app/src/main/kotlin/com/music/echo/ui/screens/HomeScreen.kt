@@ -1079,7 +1079,6 @@ fun HomeScreen(
                         RandomizeGridItem(
                             isLoading = isRandomizing,
                             modifier = tileModifier,
-                            colors = listOf(Color(0xFF8E6BD8), Color(0xFF3B2A6B)),
                             onClick = {
                               if (isRandomizing) {
                                 randomizeJob?.cancel()
@@ -1114,26 +1113,7 @@ fun HomeScreen(
                         SpeedDialShortcut(
                           iconRes = R.drawable.download,
                           contentDescription = stringResource(R.string.downloaded_songs),
-                          colors = listOf(Color(0xFF2F9BE0), Color(0xFF123F73)),
                           onClick = { navController.navigate("auto_playlist/downloaded") },
-                          modifier = tileModifier,
-                        )
-                      }
-                      add { tileModifier ->
-                        SpeedDialShortcut(
-                          iconRes = R.drawable.favorite,
-                          contentDescription = stringResource(R.string.liked),
-                          colors = listOf(Color(0xFFE04F7F), Color(0xFF7A1F45)),
-                          onClick = { navController.navigate("auto_playlist/liked") },
-                          modifier = tileModifier,
-                        )
-                      }
-                      add { tileModifier ->
-                        SpeedDialShortcut(
-                          iconRes = R.drawable.trending_up,
-                          contentDescription = stringResource(R.string.my_top) + " 50",
-                          colors = listOf(Color(0xFFF5A623), Color(0xFF8A4B0F)),
-                          onClick = { navController.navigate("top_playlist/50") },
                           modifier = tileModifier,
                         )
                       }
@@ -1141,7 +1121,6 @@ fun HomeScreen(
                         SpeedDialShortcut(
                           iconRes = R.drawable.stage_youtube_music,
                           contentDescription = stringResource(R.string.stage_youtube_music),
-                          colors = listOf(Color(0xFFFF4E45), Color(0xFF7A0F1E)),
                           onClick = { navController.navigate(if (isLoggedIn) "account" else "login") },
                           modifier = tileModifier,
                         )
@@ -1150,7 +1129,6 @@ fun HomeScreen(
                         SpeedDialShortcut(
                           iconRes = R.drawable.ic_spotify,
                           contentDescription = stringResource(R.string.stage_spotify),
-                          colors = listOf(Color(0xFF1DB954), Color(0xFF0B3B20)),
                           onClick = { navController.navigate("spotify_library") },
                           modifier = tileModifier,
                         )
