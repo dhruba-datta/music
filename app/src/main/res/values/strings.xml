@@ -1014,6 +1014,11 @@
     <string name="stage_no_searches">No searches yet</string>
     <string name="stage_manage_account">Manage account</string>
     <string name="stage_sign_in">Sign in</string>
+    <string name="stage_connect_spotify">Connect Spotify</string>
+    <string name="stage_connected">Connected</string>
+    <string name="stage_spotify_recommendations">Sign in for your library and recommendations</string>
+    <string name="stage_check_updates">Check for Updates</string>
+    <string name="stage_update_available">Update available</string>
     <string name="stage_trending_songs">Trending songs</string>
     <string name="stage_all_sources">All sources</string>
 </resources>

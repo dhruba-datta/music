@@ -38,6 +38,10 @@ import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.R
 import echo.music.iad1tya.constants.*
 import echo.music.iad1tya.constants.SavedAccountsKey
+import echo.music.iad1tya.constants.SpotifyAccountAvatarUrlKey
+import echo.music.iad1tya.constants.SpotifyAccountEmailKey
+import echo.music.iad1tya.constants.SpotifyAccountNameKey
+import echo.music.iad1tya.constants.SpotifySpDcKey
 import echo.music.iad1tya.models.AccountData
 import echo.music.iad1tya.ui.component.*
 import echo.music.iad1tya.ui.utils.backToMain
@@ -68,6 +72,12 @@ fun AccountSettingsScreen(
   val (dataSyncId, _) = rememberPreference(DataSyncIdKey, "")
   val (savedAccountsJson, onSavedAccountsJsonChange) = rememberPreference(SavedAccountsKey, "[]")
 
+  val (spotifySpDc) = rememberPreference(SpotifySpDcKey, "")
+  val (spotifyName) = rememberPreference(SpotifyAccountNameKey, "")
+  val (spotifyEmail) = rememberPreference(SpotifyAccountEmailKey, "")
+  val (spotifyAvatarUrl) = rememberPreference(SpotifyAccountAvatarUrlKey, "")
+  val spotifyConnected = spotifySpDc.isNotBlank()
+
   val (listenBrainzEnabled, onListenBrainzEnabledChange) =
     rememberPreference(ListenBrainzEnabledKey, false)
   val (listenBrainzToken, onListenBrainzTokenChange) = rememberPreference(ListenBrainzTokenKey, "")
@@ -81,8 +91,6 @@ fun AccountSettingsScreen(
   val accountName by homeViewModel.accountName.collectAsState()
   val accountImageUrl by homeViewModel.accountImageUrl.collectAsState()
 
-  var showToken by remember { mutableStateOf(false) }
-  var showTokenEditor by remember { mutableStateOf(false) }
   var showLogoutDialog by remember { mutableStateOf(false) }
   var showListenBrainzTokenEditor by remember { mutableStateOf(false) }
 
@@ -151,7 +159,7 @@ fun AccountSettingsScreen(
       if (savedAccounts.isNotEmpty()) {
         Material3SettingsGroup(
           scrollState = scrollState,
-          title = "Switch Accounts",
+          title = stringResource(R.string.stage_youtube_music),
           items =
             savedAccounts.map { account ->
               Material3SettingsItem(
@@ -234,7 +242,7 @@ fun AccountSettingsScreen(
       } else {
         Material3SettingsGroup(
           scrollState = scrollState,
-          title = "Accounts",
+          title = stringResource(R.string.stage_youtube_music),
           items =
             listOf(
               Material3SettingsItem(
@@ -252,11 +260,17 @@ fun AccountSettingsScreen(
                       )
                       Spacer(modifier = Modifier.width(12.dp))
                     }
-                    Text(
-                      text = if (isLoggedIn) accountName else "Log In",
-                      color = MaterialTheme.colorScheme.primary,
-                      style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
-                    )
+                    Column {
+                      Text(
+                        text = if (isLoggedIn) accountName else "Log In",
+                        color = MaterialTheme.colorScheme.primary,
+                        style =
+                          MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+                      )
+                      if (isLoggedIn && accountEmail.isNotBlank()) {
+                        Text(text = accountEmail, style = MaterialTheme.typography.bodySmall)
+                      }
+                    }
                   }
                 },
                 trailingContent =
@@ -290,42 +304,12 @@ fun AccountSettingsScreen(
         Spacer(modifier = Modifier.height(16.dp))
       }
 
-      Material3SettingsGroup(
-        scrollState = scrollState,
-        title = stringResource(R.string.advanced_login),
-        items =
-          listOf(
-            Material3SettingsItem(
-              isHighlighted =
-                (highlightKey == stringResource(R.string.advanced_login) ||
-                  highlightKey == stringResource(R.string.token_shown) ||
-                  highlightKey == stringResource(R.string.token_hidden)),
-              icon = painterResource(R.drawable.token),
-              title = {
-                Text(
-                  when {
-                    !isLoggedIn -> stringResource(R.string.advanced_login)
-                    showToken -> stringResource(R.string.token_shown)
-                    else -> stringResource(R.string.token_hidden)
-                  }
-                )
-              },
-              onClick = {
-                if (!isLoggedIn) showTokenEditor = true
-                else if (!showToken) showToken = true else showTokenEditor = true
-              }
-            )
-          )
-      )
-
-      Spacer(modifier = Modifier.height(16.dp))
 
       if (isLoggedIn) {
 
 
-    Material3SettingsGroup(
+        Material3SettingsGroup(
           scrollState = scrollState,
-          title = stringResource(R.string.settings_section_player_content),
           items =
             listOf(
               Material3SettingsItem(
@@ -363,88 +347,57 @@ fun AccountSettingsScreen(
 
       Material3SettingsGroup(
         scrollState = scrollState,
-        title = stringResource(R.string.integrations),
+        title = stringResource(R.string.stage_spotify),
         items =
           listOf(
             Material3SettingsItem(
               isHighlighted = (highlightKey == "Spotify"),
-              icon = painterResource(R.drawable.ic_spotify),
-              title = { Text("Spotify") },
-              description = { Text("Connect Spotify for recommendations") },
+              icon =
+                if (spotifyConnected && spotifyAvatarUrl.isNotBlank()) null
+                else painterResource(R.drawable.ic_spotify),
+              title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                  if (spotifyConnected && spotifyAvatarUrl.isNotBlank()) {
+                    AsyncImage(
+                      model = spotifyAvatarUrl,
+                      contentDescription = null,
+                      contentScale = ContentScale.Crop,
+                      modifier = Modifier.size(40.dp).clip(CircleShape)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                  }
+                  Column {
+                    Text(
+                      text =
+                        when {
+                          !spotifyConnected -> stringResource(R.string.stage_connect_spotify)
+                          spotifyName.isNotBlank() -> spotifyName
+                          else -> stringResource(R.string.stage_spotify)
+                        },
+                      color =
+                        if (spotifyConnected) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurface,
+                      style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                    Text(
+                      text =
+                        when {
+                          !spotifyConnected ->
+                            stringResource(R.string.stage_spotify_recommendations)
+                          spotifyEmail.isNotBlank() -> spotifyEmail
+                          else -> stringResource(R.string.stage_connected)
+                        },
+                      style = MaterialTheme.typography.bodySmall
+                    )
+                  }
+                }
+              },
               onClick = { navController.navigate("settings/spotify_import") }
-            ),
-            Material3SettingsItem(
-              isHighlighted = (highlightKey == stringResource(R.string.discord)),
-              icon = painterResource(R.drawable.discord),
-              title = { Text(stringResource(R.string.discord)) },
-              description = { Text(stringResource(R.string.discord_integration_desc)) },
-              onClick = { navController.navigate("settings/discord") }
-            ),
-            Material3SettingsItem(
-              isHighlighted = (highlightKey == stringResource(R.string.lastfm_integration)),
-              icon = painterResource(R.drawable.ic_lastfm),
-              title = { Text(stringResource(R.string.lastfm_integration)) },
-              description = { Text(stringResource(R.string.lastfm_integration_desc)) },
-              onClick = { navController.navigate("settings/lastfm") }
             )
           )
       )
     }
 
-    if (showTokenEditor) {
-      val text =
-        """
-                ***INNERTUBE COOKIE*** =$innerTubeCookie
-                ***VISITOR DATA*** =$visitorData
-                ***DATASYNC ID*** =$dataSyncId
-                ***ACCOUNT NAME*** =$accountNamePref
-                ***ACCOUNT EMAIL*** =$accountEmail
-                ***ACCOUNT CHANNEL HANDLE*** =$accountChannelHandle
-            """
-          .trimIndent()
-
-      TextFieldDialog(
-        initialTextFieldValue = TextFieldValue(text),
-        onDone = { data ->
-          var cookie = ""
-          var visitorDataValue = ""
-          var dataSyncIdValue = ""
-          var accountNameValue = ""
-          var accountEmailValue = ""
-          var accountChannelHandleValue = ""
-
-          data.split("\n").forEach {
-            when {
-              it.startsWith("***INNERTUBE COOKIE*** =") -> cookie = it.substringAfter("=")
-              it.startsWith("***VISITOR DATA*** =") -> visitorDataValue = it.substringAfter("=")
-              it.startsWith("***DATASYNC ID*** =") -> dataSyncIdValue = it.substringAfter("=")
-              it.startsWith("***ACCOUNT NAME*** =") -> accountNameValue = it.substringAfter("=")
-              it.startsWith("***ACCOUNT EMAIL*** =") -> accountEmailValue = it.substringAfter("=")
-              it.startsWith("***ACCOUNT CHANNEL HANDLE*** =") ->
-                accountChannelHandleValue = it.substringAfter("=")
-            }
-          }
-          accountSettingsViewModel.saveTokenAndRestart(
-            context = context,
-            cookie = cookie,
-            visitorData = visitorDataValue,
-            dataSyncId = dataSyncIdValue,
-            accountName = accountNameValue,
-            accountEmail = accountEmailValue,
-            accountChannelHandle = accountChannelHandleValue,
-          )
-        },
-        onDismiss = { showTokenEditor = false },
-        singleLine = false,
-        maxLines = 8,
-        isInputValid = { fullText ->
-          val cookieLine = fullText.lines().find { it.startsWith("***INNERTUBE COOKIE*** =") }
-          val cookieValue = cookieLine?.substringAfter("***INNERTUBE COOKIE*** =")?.trim() ?: ""
-          cookieValue.isNotEmpty() && "SAPISID" in parseCookieString(cookieValue)
-        },
-        extraContent = { InfoLabel(text = stringResource(R.string.token_adv_login_description)) }
-      )
-    }
     if (showLogoutDialog) {
       DefaultDialog(
         onDismiss = { showLogoutDialog = false },

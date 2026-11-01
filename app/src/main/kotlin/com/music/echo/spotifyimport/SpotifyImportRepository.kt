@@ -16,6 +16,7 @@ import echo.music.iad1tya.R
 import echo.music.iad1tya.constants.SpotifyAccessTokenExpiresAtKey
 import echo.music.iad1tya.constants.SpotifyAccessTokenKey
 import echo.music.iad1tya.constants.SpotifyAccountAvatarUrlKey
+import echo.music.iad1tya.constants.SpotifyAccountEmailKey
 import echo.music.iad1tya.constants.SpotifyAccountNameKey
 import echo.music.iad1tya.constants.SpotifySpDcKey
 import echo.music.iad1tya.constants.SpotifySpKeyKey
@@ -129,6 +130,7 @@ constructor(
         prefs.remove(SpotifyAccessTokenKey)
         prefs.remove(SpotifyAccessTokenExpiresAtKey)
         prefs.remove(SpotifyAccountNameKey)
+        prefs.remove(SpotifyAccountEmailKey)
         prefs.remove(SpotifyAccountAvatarUrlKey)
       }
       Spotify.accessToken = null
@@ -347,6 +349,18 @@ constructor(
           prefs[SpotifyAccountNameKey] = user.displayName.orEmpty()
           user.images.firstOrNull()?.url?.let { prefs[SpotifyAccountAvatarUrlKey] = it }
             ?: prefs.remove(SpotifyAccountAvatarUrlKey)
+        }
+      }
+      .onFailure { error ->
+        if (error is CancellationException) {
+          throw error
+        }
+      }
+
+    Spotify.accountDetails()
+      .onSuccess { user ->
+        user.email?.takeIf { it.isNotBlank() }?.let { email ->
+          context.dataStore.edit { prefs -> prefs[SpotifyAccountEmailKey] = email }
         }
       }
       .onFailure { error ->

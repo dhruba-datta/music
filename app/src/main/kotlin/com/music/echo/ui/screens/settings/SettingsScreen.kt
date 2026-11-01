@@ -1,11 +1,6 @@
 package echo.music.iad1tya.ui.screens.settings
 
-import android.content.ActivityNotFoundException
-import android.content.Intent
 import android.net.Uri
-import android.os.Build
-import android.provider.Settings
-import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,6 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -38,12 +34,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
+import echo.music.iad1tya.BuildConfig
 import echo.music.iad1tya.R
+import echo.music.iad1tya.echomusic.updater.SelfUpdateDialog
+import echo.music.iad1tya.ui.component.StageButton
 import echo.music.iad1tya.echomusic.updater.getUpdateAvailableState
 import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.Material3SettingsGroup
 import echo.music.iad1tya.ui.component.StageSearchField
-import echo.music.iad1tya.ui.component.StageTile
 import echo.music.iad1tya.ui.component.Material3SettingsItem
 import echo.music.iad1tya.ui.screens.Screens
 import echo.music.iad1tya.ui.utils.backToMain
@@ -57,10 +55,14 @@ fun SettingsScreen(
 ) {
   val uriHandler = LocalUriHandler.current
   val context = LocalContext.current
-  val isAndroid12OrLater = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
   val isUpdateAvailable =
     getUpdateAvailableState(context) &&
       echo.music.iad1tya.echomusic.updater.getAutoUpdateCheckSetting(context)
+
+  var showUpdateDialog by remember { mutableStateOf(false) }
+  if (showUpdateDialog) {
+    SelfUpdateDialog(onDismiss = { showUpdateDialog = false })
+  }
 
   var searchQuery by rememberSaveable { mutableStateOf("") }
   val searchLower = searchQuery.lowercase()
@@ -74,8 +76,6 @@ fun SettingsScreen(
   val privacyText = stringResource(R.string.privacy)
   val storageText = stringResource(R.string.storage)
   val backupText = stringResource(R.string.backup_restore)
-  val systemUpdateText = stringResource(R.string.system_update)
-  val aboutText = stringResource(R.string.about)
 
   val accountDesc = stringResource(R.string.setting_desc_account)
   val appearanceDesc = stringResource(R.string.setting_desc_appearance)
@@ -86,8 +86,6 @@ fun SettingsScreen(
   val privacyDesc = stringResource(R.string.setting_desc_privacy)
   val storageDesc = stringResource(R.string.setting_desc_storage)
   val backupDesc = stringResource(R.string.setting_desc_backup)
-  val systemUpdateDesc = stringResource(R.string.setting_desc_update)
-  val aboutDesc = stringResource(R.string.setting_desc_about)
 
   val scrollState = rememberScrollState()
   Column(
@@ -277,79 +275,6 @@ fun SettingsScreen(
           )
         )
       }
-      if (
-        systemUpdateText.lowercase().contains(searchLower) ||
-          systemUpdateDesc.lowercase().contains(searchLower)
-      ) {
-        add(
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == systemUpdateText),
-            icon =
-              painterResource(
-                if (isUpdateAvailable) R.drawable.ic_launcher_nobg else R.drawable.stage_update
-              ),
-            title = { Text(systemUpdateText) },
-            description =
-              if (isUpdateAvailable) {
-                {
-                  Text(
-                    text = stringResource(R.string.update_available),
-                    color = MaterialTheme.colorScheme.error
-                  )
-                }
-              } else {
-                null
-              },
-            onClick = { navController.navigate("settings/update") }
-          )
-        )
-      }
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        if ("supported links".contains(searchLower)) {
-          add(
-            Material3SettingsItem(
-              isHighlighted = (highlightKey == "supported links"),
-              icon = painterResource(R.drawable.stage_link),
-              title = { Text("Supported Links") },
-              description = { Text("App linking settings") },
-              onClick = {
-                try {
-                  val intent =
-                    Intent(
-                      Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS,
-                      Uri.parse("package:${context.packageName}")
-                    )
-                  intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                  context.startActivity(intent)
-                } catch (e: Exception) {
-                  when (e) {
-                    is ActivityNotFoundException,
-                    is SecurityException -> {
-                      Toast.makeText(context, "Cannot open settings", Toast.LENGTH_SHORT).show()
-                    }
-                    else -> {
-                      Toast.makeText(context, "An error occurred", Toast.LENGTH_SHORT).show()
-                    }
-                  }
-                }
-              }
-            )
-          )
-        }
-      }
-      if (
-        aboutText.lowercase().contains(searchLower) || aboutDesc.lowercase().contains(searchLower)
-      ) {
-        add(
-          Material3SettingsItem(
-            isHighlighted = (highlightKey == aboutText),
-            icon = painterResource(R.drawable.stage_info),
-            title = { Text(aboutText) },
-            description = { Text(aboutDesc) },
-            onClick = { navController.navigate("settings/about") }
-          )
-        )
-      }
     }
 
     val finalItemsList =
@@ -408,12 +333,28 @@ fun SettingsScreen(
             itemsList.drop(1).take(1),
             itemsList.drop(2).take(4),
             itemsList.drop(6).take(4),
-            itemsList.drop(10),
           )
           .forEach { group ->
             Material3SettingsGroup(scrollState = scrollState, items = group)
             Spacer(modifier = Modifier.height(16.dp))
           }
+
+        StageButton(
+          text = stringResource(R.string.stage_check_updates),
+          onClick = { showUpdateDialog = true },
+          modifier = Modifier.padding(horizontal = 18.dp),
+        )
+        Text(
+          text =
+            if (isUpdateAvailable) stringResource(R.string.stage_update_available)
+            else "Version ${BuildConfig.VERSION_NAME}",
+          style = MaterialTheme.typography.bodyMedium,
+          color =
+            if (isUpdateAvailable) MaterialTheme.colorScheme.error
+            else MaterialTheme.colorScheme.onSurfaceVariant,
+          textAlign = TextAlign.Center,
+          modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+        )
       }
     }
 

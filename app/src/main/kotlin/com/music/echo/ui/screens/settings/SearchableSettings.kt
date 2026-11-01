@@ -40,12 +40,6 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
       "settings/account"
     ),
     SearchableSetting(
-      stringResource(R.string.advanced_login),
-      stringResource(R.string.advanced_login_desc),
-      "Account",
-      "settings/account"
-    ),
-    SearchableSetting(
       stringResource(R.string.album_text),
       stringResource(R.string.album_text_desc),
       "Content",
@@ -1499,18 +1493,6 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
       "settings/appearance"
     ),
     SearchableSetting(
-      stringResource(R.string.token_hidden),
-      stringResource(R.string.token_hidden_desc),
-      "Account",
-      "settings/account"
-    ),
-    SearchableSetting(
-      stringResource(R.string.token_shown),
-      stringResource(R.string.token_shown_desc),
-      "Account",
-      "settings/account"
-    ),
-    SearchableSetting(
       stringResource(R.string.top_length),
       stringResource(R.string.top_length_desc),
       "Content",
@@ -2390,7 +2372,9 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
     ),
   ).filterNot {
     it.route == "settings/ambient" ||
-      it.route == "settings/integrations"
+      it.route == "settings/integrations" ||
+      it.route.startsWith("settings/discord") ||
+      it.route.startsWith("settings/lastfm")
   }
     .distinctBy { it.title to it.route }
 }

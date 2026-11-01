@@ -36,7 +36,13 @@ import echo.music.iad1tya.R
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun RandomizeGridItem(isLoading: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun RandomizeGridItem(
+  isLoading: Boolean,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+  colors: List<Color>? = null,
+) {
+  val contentColor = if (colors != null) Color.White else MaterialTheme.colorScheme.onSurface
 
   val loadingAlpha by
     animateFloatAsState(
@@ -50,21 +56,27 @@ fun RandomizeGridItem(isLoading: Boolean, onClick: () -> Unit, modifier: Modifie
       modifier
         .aspectRatio(1f)
         .clip(RoundedCornerShape(18.dp))
-        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+        .then(
+          if (colors != null) {
+            Modifier.background(Brush.linearGradient(colors))
+          } else {
+            Modifier.background(MaterialTheme.colorScheme.surfaceContainerHighest)
+          }
+        )
         .clickable(onClick = onClick),
     contentAlignment = Alignment.Center
   ) {
     Icon(
       painter = painterResource(R.drawable.stage_shuffle),
       contentDescription = stringResource(R.string.shuffle),
-      tint = MaterialTheme.colorScheme.onSurface,
+      tint = contentColor,
       modifier = Modifier.size(28.dp).alpha(1f - loadingAlpha),
     )
 
     Box(modifier = Modifier.alpha(loadingAlpha)) {
       LoadingIndicator(
         modifier = Modifier.size(48.dp),
-        color = MaterialTheme.colorScheme.onSurface,
+        color = contentColor,
       )
     }
   }

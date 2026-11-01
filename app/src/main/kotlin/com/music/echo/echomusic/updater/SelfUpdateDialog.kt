@@ -6,8 +6,6 @@ import android.os.Build
 import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -19,7 +17,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -34,15 +31,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import echo.music.iad1tya.BuildConfig
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.sp
-import echo.music.iad1tya.R
 import echo.music.iad1tya.ui.component.StageButton
 import java.io.File
 import kotlinx.coroutines.CancellationException
@@ -171,7 +167,8 @@ fun SelfUpdateDialog(release: SelfUpdater.Release? = null, onDismiss: () -> Unit
       color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
       Column(
-        modifier = Modifier.padding(22.dp),
+        modifier = Modifier.padding(22.dp).fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
       ) {
         Text(
@@ -179,17 +176,14 @@ fun SelfUpdateDialog(release: SelfUpdater.Release? = null, onDismiss: () -> Unit
           fontSize = 22.sp,
           lineHeight = 28.sp,
           fontWeight = FontWeight.ExtraBold,
+          textAlign = TextAlign.Center,
         )
 
         when (val current = step) {
-          UpdateStep.Checking ->
-            Row(
-              verticalAlignment = Alignment.CenterVertically,
-              horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-              CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.5.dp)
-              UpdateNote("Looking for a newer version of Music…")
-            }
+          UpdateStep.Checking -> {
+            CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 2.5.dp)
+            UpdateNote("Looking for a newer version of Music…")
+          }
           UpdateStep.UpToDate -> UpdateNote("Music ${BuildConfig.VERSION_NAME} is the latest version.")
           is UpdateStep.Available -> {
             ReleaseSummary(current.release)
@@ -232,7 +226,10 @@ fun SelfUpdateDialog(release: SelfUpdater.Release? = null, onDismiss: () -> Unit
           is UpdateStep.Failed -> UpdateNote(current.message)
         }
 
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(
+          modifier = Modifier.fillMaxWidth(),
+          verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
           when (val current = step) {
             UpdateStep.Checking -> StageButton("Cancel", onClick = onDismiss, primary = false)
             UpdateStep.UpToDate -> StageButton("OK", onClick = onDismiss)
@@ -277,11 +274,14 @@ private fun ReleaseSummary(release: SelfUpdater.Release) {
     text = "You have ${BuildConfig.VERSION_NAME}.",
     fontSize = 14.sp,
     color = MaterialTheme.colorScheme.onSurfaceVariant,
+    textAlign = TextAlign.Center,
   )
   if (release.notes.isNotBlank()) {
     Column(
+      horizontalAlignment = Alignment.CenterHorizontally,
       verticalArrangement = Arrangement.spacedBy(12.dp),
-      modifier = Modifier.heightIn(max = 240.dp).verticalScroll(rememberScrollState())
+      modifier =
+        Modifier.fillMaxWidth().heightIn(max = 240.dp).verticalScroll(rememberScrollState())
     ) {
       Text(text = "What's New", fontSize = 16.sp, fontWeight = FontWeight.Bold)
       UpdateNote(release.notes)
@@ -296,6 +296,7 @@ private fun UpdateNote(text: String) {
     fontSize = 14.sp,
     lineHeight = 20.sp,
     color = MaterialTheme.colorScheme.onSurfaceVariant,
+    textAlign = TextAlign.Center,
   )
 }
 

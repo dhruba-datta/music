@@ -488,6 +488,11 @@ object Spotify {
     }
   }
 
+  /** The REST profile, which carries the email the GQL profile leaves out. */
+  suspend fun accountDetails(): Result<SpotifyUser> = runCatching {
+    authenticatedGet<SpotifyUser>("me", failFastOn429 = true)
+  }
+
   // ── Playlists (GQL: libraryV3) ──────────────────────────────────────
 
   suspend fun myPlaylists(
