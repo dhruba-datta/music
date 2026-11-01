@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.LruCache
 import dagger.hilt.android.qualifiers.ApplicationContext
 import echo.music.iad1tya.constants.FetchFasterLyricsKey
+import echo.music.iad1tya.constants.LyricsProviderOrderKey
 import echo.music.iad1tya.db.entities.LyricsEntity.Companion.LYRICS_NOT_FOUND
 import echo.music.iad1tya.models.MediaMetadata
 import echo.music.iad1tya.playback.LyricsWithProvider
@@ -37,7 +38,13 @@ constructor(
 
   private suspend fun resolveLyricsProviders(): List<LyricsProvider> {
     val defaultOrder = LyricsProviderRegistry.getDefaultProviderOrder()
-    return defaultOrder.mapNotNull { LyricsProviderRegistry.getProviderByName(it) }
+    val savedOrder =
+      LyricsProviderRegistry.deserializeProviderOrder(
+        context.dataStore.data.first()[LyricsProviderOrderKey].orEmpty()
+      )
+    return (savedOrder + defaultOrder.filter { it !in savedOrder }).mapNotNull {
+      LyricsProviderRegistry.getProviderByName(it)
+    }
   }
 
   private val cache = LruCache<String, List<LyricsResult>>(MAX_CACHE_SIZE)

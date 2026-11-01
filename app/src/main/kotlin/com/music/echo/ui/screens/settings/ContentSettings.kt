@@ -152,15 +152,6 @@ fun ContentSettings(
 
 
   val (spotifySpDc) = rememberPreference(key = SpotifySpDcKey, defaultValue = "")
-  val (recommendationSource, onRecommendationSourceChange) = rememberEnumPreference(key = RecommendationSourceKey, defaultValue = RecommendationSource.YOUTUBE)
-  
-  LaunchedEffect(spotifySpDc, recommendationSource) {
-      if (spotifySpDc.isBlank() && recommendationSource == RecommendationSource.SPOTIFY) {
-          onRecommendationSourceChange(RecommendationSource.YOUTUBE)
-      }
-  }
-
-
   val (lyricsRomanizeKorean, onLyricsRomanizeKoreanChange) =
     rememberPreference(LyricsRomanizeKoreanKey, defaultValue = true)
   val (lyricsRomanizeChinese, onLyricsRomanizeChineseChange) =
@@ -701,33 +692,6 @@ fun ContentSettings(
               StageSwitch(checked = sponsorBlockEnabled, onCheckedChange = onSponsorBlockEnabledChange)
             },
             onClick = { onSponsorBlockEnabledChange(!sponsorBlockEnabled) }
-          ))
-          add(Material3SettingsItem(
-            isHighlighted = (highlightKey == stringResource(R.string.recommendation_source)),
-            icon = painterResource(R.drawable.explore_outlined),
-            title = { Text(stringResource(R.string.recommendation_source)) },
-            value = {
-              Text(
-                when (recommendationSource) {
-                  RecommendationSource.YOUTUBE -> stringResource(R.string.recommendation_source_youtube)
-                  RecommendationSource.SPOTIFY -> stringResource(R.string.recommendation_source_spotify)
-                }
-              )
-            },
-            onClick = {
-              if (recommendationSource == RecommendationSource.YOUTUBE) {
-                if (spotifySpDc.isBlank()) {
-                   // Cannot switch to Spotify if not logged in
-                   scope.launch {
-                       android.widget.Toast.makeText(context, R.string.spotify_recommendation_login_required, android.widget.Toast.LENGTH_LONG).show()
-                   }
-                } else {
-                   onRecommendationSourceChange(RecommendationSource.SPOTIFY)
-                }
-              } else {
-                onRecommendationSourceChange(RecommendationSource.YOUTUBE)
-              }
-            }
           ))
           add(Material3SettingsItem(
             title = { Text(stringResource(R.string.lyrics_provider_priority)) },

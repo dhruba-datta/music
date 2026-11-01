@@ -1,11 +1,22 @@
 package echo.music.iad1tya.ui.screens.settings
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import echo.music.iad1tya.R
+import echo.music.iad1tya.ui.component.Material3SettingsGroup
+import echo.music.iad1tya.ui.component.Material3SettingsItem
+import echo.music.iad1tya.ui.component.StageChip
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.heightIn
 import echo.music.iad1tya.ui.component.StageTopBar
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -47,81 +58,52 @@ fun BlockedArtistsScreen(navController: NavController) {
         title = { Text("Blocked Artists") },
         navigationIcon = {
           IconButton(onClick = navController::navigateUp) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            Icon(painterResource(R.drawable.arrow_back), contentDescription = stringResource(R.string.cd_back))
           }
         }
 )
     }
   ) { padding ->
     if (blockedArtists.isEmpty()) {
-      Text("No blocked artists", modifier = Modifier.padding(padding).padding(16.dp))
+      Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().padding(padding)) {
+        Text(
+          text = "No blocked artists",
+          style = MaterialTheme.typography.bodyLarge,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
     } else {
-      LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(padding),
+      Column(
+        modifier =
+          Modifier.fillMaxSize()
+            .padding(padding)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 18.dp, vertical = 12.dp)
       ) {
-        items(blockedArtists.size) { index ->
-          val entry = blockedArtists.toList()[index]
-          val id = entry.substringBefore("||")
-          val name = if (entry.contains("||")) entry.substringAfter("||") else "Unknown Artist"
-
-          val shape =
-            when {
-              blockedArtists.size == 1 -> RoundedCornerShape(24.dp)
-              index == 0 ->
-                RoundedCornerShape(
-                  topStart = 24.dp,
-                  topEnd = 24.dp,
-                  bottomStart = 4.dp,
-                  bottomEnd = 4.dp
-                )
-              index == blockedArtists.size - 1 ->
-                RoundedCornerShape(
-                  topStart = 4.dp,
-                  topEnd = 4.dp,
-                  bottomStart = 24.dp,
-                  bottomEnd = 24.dp
-                )
-              else -> RoundedCornerShape(4.dp)
-            }
-
-          Card(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            shape = shape,
-            colors =
-              CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-          ) {
-            ListItem(
-              colors =
-                androidx.compose.material3.ListItemDefaults.colors(
-                  containerColor = androidx.compose.ui.graphics.Color.Transparent
-                ),
-              headlineContent = { Text(name, style = MaterialTheme.typography.titleMedium) },
-              supportingContent = { Text("ID: $id", style = MaterialTheme.typography.bodySmall) },
-              trailingContent = {
-                androidx.compose.material3.Button(
-                  onClick = {
-                    coroutineScope.launch {
-                      context.dataStore.edit { prefs ->
-                        val current = prefs[BlockedArtistsKey] ?: emptySet()
-                        prefs[BlockedArtistsKey] = current - entry
+        Material3SettingsGroup(
+          items =
+            blockedArtists.toList().map { entry ->
+              val name =
+                if (entry.contains("||")) entry.substringAfter("||") else "Unknown Artist"
+              Material3SettingsItem(
+                title = { Text(name) },
+                trailingContent = {
+                  StageChip(
+                    onClick = {
+                      coroutineScope.launch {
+                        context.dataStore.edit { prefs ->
+                          val current = prefs[BlockedArtistsKey] ?: emptySet()
+                          prefs[BlockedArtistsKey] = current - entry
+                        }
                       }
                     }
-                  },
-                  modifier = Modifier.heightIn(min = 44.dp),
-                  shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp),
-                  contentPadding = PaddingValues(horizontal = 16.dp),
-                  colors =
-                    androidx.compose.material3.ButtonDefaults.buttonColors(
-                      containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                      contentColor = MaterialTheme.colorScheme.onSurface,
-                    ),
-                ) {
-                  Text("Unblock")
-                }
-              }
-            )
-          }
-        }
+                  ) {
+                    Text("Unblock")
+                  }
+                },
+              )
+            }
+        )
       }
     }
   }

@@ -112,10 +112,6 @@ fun GlassEffectSettings(
     rememberPreference(LiquidGlassPlayerEnabledKey, defaultValue = true)
   val (miniPlayerEnabled, onMiniPlayerEnabledChange) =
     rememberPreference(LiquidGlassMiniPlayerEnabledKey, defaultValue = true)
-  val (navBarEnabled, onNavBarEnabledChange) =
-    rememberPreference(LiquidGlassNavBarEnabledKey, defaultValue = true)
-  val (useFloatingNavBar, onUseFloatingNavBarChange) =
-    rememberPreference(UseFloatingNavBarKey, defaultValue = false)
 
   var showVibrancyDialog by rememberSaveable { mutableStateOf(false) }
   var showBlurRadiusDialog by rememberSaveable { mutableStateOf(false) }
@@ -148,15 +144,6 @@ fun GlassEffectSettings(
               StageSwitch(checked = globalEnabled, onCheckedChange = onGlobalEnabledChange, enabled = true)
             },
             onClick = { onGlobalEnabledChange(!globalEnabled) }
-          ))
-          add(Material3SettingsItem(
-            icon = painterResource(R.drawable.nav_bar),
-            title = { Text(stringResource(R.string.floating_nav_bar)) },
-            description = { Text(stringResource(R.string.floating_nav_bar_desc)) },
-            trailingContent = {
-              StageSwitch(checked = useFloatingNavBar, onCheckedChange = onUseFloatingNavBarChange)
-            },
-            onClick = { onUseFloatingNavBarChange(!useFloatingNavBar) }
           ))
           add(Material3SettingsItem(
             icon = painterResource(R.drawable.tune),
@@ -242,15 +229,6 @@ fun GlassEffectSettings(
               StageSwitch(checked = miniPlayerEnabled, onCheckedChange = onMiniPlayerEnabledChange)
             },
             onClick = { onMiniPlayerEnabledChange(!miniPlayerEnabled) }
-          ))
-          add(Material3SettingsItem(
-            icon = painterResource(R.drawable.nav_bar),
-            title = { Text(stringResource(R.string.liquid_glass_nav_bar)) },
-            description = { Text(stringResource(R.string.liquid_glass_nav_bar_desc)) },
-            trailingContent = {
-              StageSwitch(checked = navBarEnabled, onCheckedChange = onNavBarEnabledChange)
-            },
-            onClick = { onNavBarEnabledChange(!navBarEnabled) }
           ))
         }
     )

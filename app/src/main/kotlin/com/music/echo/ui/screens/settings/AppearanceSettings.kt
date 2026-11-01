@@ -143,13 +143,9 @@ fun AppearanceSettings(
   val (selectedFontValue) = rememberPreference(SelectedFontKey, defaultValue = AppFont.MANROPE.value)
   val (dynamicTheme, onDynamicThemeChange) =
     rememberPreference(DynamicThemeKey, defaultValue = false)
-  val (enableLegacyIcon, onEnableLegacyIconChange) =
-    rememberPreference(echo.music.iad1tya.constants.EnableLegacyIconKey, defaultValue = false)
 
   val (enableHighRefreshRate, onEnableHighRefreshRateChange) =
     rememberPreference(echo.music.iad1tya.constants.EnableHighRefreshRateKey, defaultValue = true)
-  val (liveBlurDensity, onLiveBlurDensityChange) =
-    rememberPreference(echo.music.iad1tya.constants.LiveBlurDensityKey, defaultValue = 50f)
   val (selectedThemeColorInt) =
     rememberPreference(SelectedThemeColorKey, defaultValue = DefaultThemeColor.toArgb())
 
@@ -194,8 +190,6 @@ fun AppearanceSettings(
     rememberPreference(LyricsLineSpacingKey, defaultValue = unsetLyricsLineSpacing)
   val (lyricsGlowEffect, onLyricsGlowEffectChange) =
     rememberPreference(LyricsGlowEffectKey, defaultValue = false)
-  val (appleMusicLyricsBlur, onAppleMusicLyricsBlurChange) =
-    rememberPreference(AppleMusicLyricsBlurKey, defaultValue = true)
   val (lyricsStandardBlur, onLyricsStandardBlurChange) =
     rememberPreference(LyricsStandardBlurKey, defaultValue = false)
   val (swipeLyrics, onSwipeLyricsChange) = rememberPreference(SwipeLyricsKey, defaultValue = false)
@@ -1330,18 +1324,6 @@ fun AppearanceSettings(
             },
             onClick = { showLyricsAnimationStyleDialog = true }
           ),
-          if (lyricsAnimationStyle == LyricsAnimationStyle.echomusic_1) {
-            Material3SettingsItem(
-              isHighlighted = (highlightKey == stringResource(R.string.apple_music_lyrics_blur)),
-              icon = painterResource(R.drawable.lyrics),
-              title = { Text(stringResource(R.string.apple_music_lyrics_blur)) },
-              description = { Text(stringResource(R.string.apple_music_lyrics_blur_desc)) },
-              trailingContent = {
-                StageSwitch(checked = appleMusicLyricsBlur, onCheckedChange = onAppleMusicLyricsBlurChange)
-              },
-              onClick = { onAppleMusicLyricsBlurChange(!appleMusicLyricsBlur) }
-            )
-          } else null,
           Material3SettingsItem(
             isHighlighted = (highlightKey == stringResource(R.string.standard_lyrics_blur)),
             icon = painterResource(R.drawable.lyrics),

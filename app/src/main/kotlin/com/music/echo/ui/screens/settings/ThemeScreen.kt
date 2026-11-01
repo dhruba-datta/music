@@ -190,13 +190,12 @@ fun ThemeScreen(navController: NavController, highlightKey: String? = null) {
 
         Card(
           modifier = Modifier.fillMaxWidth(),
-          shape = RoundedCornerShape(32.dp),
+          shape = RoundedCornerShape(18.dp),
           colors =
             CardDefaults.cardColors(
-              containerColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.6f)
+              containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
             ),
           elevation = CardDefaults.cardElevation(0.dp),
-          border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
         ) {
           Column(
             modifier = Modifier.fillMaxWidth().padding(24.dp),

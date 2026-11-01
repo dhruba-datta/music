@@ -57,7 +57,6 @@ import echo.music.iad1tya.ui.screens.settings.PrivacySettings
 import echo.music.iad1tya.ui.screens.settings.SettingsScreen
 import echo.music.iad1tya.ui.screens.settings.StorageSettings
 import echo.music.iad1tya.ui.screens.settings.ThemeScreen
-import echo.music.iad1tya.ui.screens.settings.UpdateSettings
 import echo.music.iad1tya.ui.screens.settings.integrations.ListenTogetherSettings
 import echo.music.iad1tya.utils.rememberEnumPreference
 import echo.music.iad1tya.utils.rememberPreference
@@ -299,23 +298,6 @@ fun NavGraphBuilder.navigationBuilder(
 
   composable("settings") { SettingsScreen(navController, scrollBehavior) }
   composable("blocked_artists") { BlockedArtistsScreen(navController) }
-
-  composable(
-    route = "settings/update?highlightKey={highlightKey}",
-    arguments =
-      listOf(
-        navArgument("highlightKey") {
-          type = NavType.StringType
-          nullable = true
-        }
-      )
-  ) { backStackEntry ->
-    UpdateSettings(
-      navController,
-      scrollBehavior,
-      highlightKey = backStackEntry.arguments?.getString("highlightKey")
-    )
-  }
 
   composable(
     route = "settings/account?highlightKey={highlightKey}",

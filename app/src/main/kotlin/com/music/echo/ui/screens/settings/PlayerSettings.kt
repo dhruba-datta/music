@@ -146,8 +146,6 @@ fun PlayerSettings(
   val (enableBitPerfectUsbDac, onEnableBitPerfectUsbDacChange) =
     rememberPreference(key = EnableBitPerfectUsbDacKey, defaultValue = false)
 
-  val (usbDacVolumeMode, onUsbDacVolumeModeChange) =
-    rememberPreference(key = UsbDacVolumeModeKey, defaultValue = "PURE_BIT_PERFECT")
 
   val (preloadNextSongEnabled, onPreloadNextSongEnabledChange) =
     rememberPreference(key = PreloadNextSongEnabledKey, defaultValue = true)

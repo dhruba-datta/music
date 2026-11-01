@@ -799,8 +799,8 @@ class MainActivity : ComponentActivity() {
         }
         val tabOpenedFromShortcut = remember {
           when (intent?.action) {
-            ACTION_SEARCH -> NavigationTab.LIBRARY
-            ACTION_LIBRARY -> NavigationTab.SEARCH
+            ACTION_SEARCH -> NavigationTab.SEARCH
+            ACTION_LIBRARY -> NavigationTab.LIBRARY
             else -> null
           }
         }
@@ -1555,6 +1555,7 @@ class MainActivity : ComponentActivity() {
                   startDestination =
                     when (tabOpenedFromShortcut ?: defaultOpenTab) {
                       NavigationTab.HOME -> Screens.Home
+                      NavigationTab.SEARCH -> Screens.Search
                       NavigationTab.LIBRARY -> Screens.Library
                       else -> Screens.Home
                     }.route,
