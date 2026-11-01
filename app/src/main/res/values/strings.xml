@@ -1011,6 +1011,7 @@
     <string name="stage_search_music">Search music…</string>
     <string name="stage_my_library">My library</string>
     <string name="stage_recent_searches">Recent searches</string>
+    <string name="stage_no_searches">No searches yet</string>
     <string name="stage_trending_songs">Trending songs</string>
     <string name="stage_all_sources">All sources</string>
 </resources>

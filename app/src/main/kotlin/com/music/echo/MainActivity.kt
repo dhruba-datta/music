@@ -824,6 +824,8 @@ class MainActivity : ComponentActivity() {
         val topLevelScreens = remember {
           listOf(
             Screens.Home.route,
+            Screens.Search.route,
+            Screens.Recognize.route,
             Screens.Library.route,
             Screens.ListenTogether.route,
             "settings",
@@ -1078,8 +1080,7 @@ class MainActivity : ComponentActivity() {
         LaunchedEffect(navBackStackEntry, listenTogetherInTopBar) {
           val currentRoute = navBackStackEntry?.destination?.route
           val isListenTogetherScreen =
-            currentRoute == Screens.ListenTogether.route ||
-              currentRoute == "listen_together_from_topbar"
+            currentRoute == Screens.ListenTogether.route
           shouldShowTopBar =
             currentRoute in topLevelScreens &&
               currentRoute != "settings" &&
@@ -1149,6 +1150,7 @@ class MainActivity : ComponentActivity() {
           when (navBackStackEntry?.destination?.route) {
             Screens.Home.route -> stringResource(R.string.home)
             Screens.Search.route -> stringResource(R.string.search)
+            Screens.Recognize.route -> stringResource(R.string.recognition)
             Screens.Library.route -> stringResource(R.string.filter_library)
             Screens.ListenTogether.route -> stringResource(R.string.together)
             else -> ""
@@ -1277,15 +1279,24 @@ class MainActivity : ComponentActivity() {
                 exit = fadeOut(animationSpec = tween(durationMillis = 200))
               ) {
                 Row {
-                  val isHomeTopBar = navBackStackEntry?.destination?.route == Screens.Home.route
+                  val topBarRoute = navBackStackEntry?.destination?.route
+                  val isTabTopBar = Screens.MainScreens.fastAny { it.route == topBarRoute }
+                  // History follows the page: searches, recognitions, or played songs.
+                  val (historyRoute, historyLabel) =
+                    when (topBarRoute) {
+                      Screens.Search.route -> "search_history" to R.string.search_history
+                      Screens.Recognize.route ->
+                        "recognition_history" to R.string.recognition_history
+                      else -> "history" to R.string.history
+                    }
                   TopAppBar(
                     title = {
                       Text(
                         text = currentTitle,
                         modifier =
-                          Modifier.padding(start = 6.dp, top = if (isHomeTopBar) 14.dp else 20.dp),
+                          Modifier.padding(start = 6.dp, top = if (isTabTopBar) 14.dp else 20.dp),
                         style =
-                          if (isHomeTopBar) {
+                          if (isTabTopBar) {
                             MaterialTheme.typography.titleLarge.copy(
                               fontWeight = FontWeight.ExtraBold,
                               fontSize = 26.sp,
@@ -1303,32 +1314,19 @@ class MainActivity : ComponentActivity() {
                       )
                     },
                     actions = {
-                      // The Library board has no top-bar icons; all four stay on Home.
-                      if (isHomeTopBar) {
+                      if (isTabTopBar) {
                         Row(
                           modifier = Modifier.padding(top = 14.dp, end = 8.dp),
                           verticalAlignment = Alignment.CenterVertically
                         ) {
-                          if (showHistoryButton) {
+                          if (historyRoute != "history" || showHistoryButton) {
                             IconButton(
-                              onClick = { navController.navigate("history") },
+                              onClick = { navController.navigate(historyRoute) },
                               modifier = Modifier.size(44.dp)
                             ) {
                               Icon(
                                 painter = painterResource(R.drawable.stage_history),
-                                contentDescription = stringResource(R.string.history),
-                                modifier = Modifier.size(24.dp)
-                              )
-                            }
-                          }
-                          if (listenTogetherInTopBar) {
-                            IconButton(
-                              onClick = { navController.navigate("listen_together_from_topbar") },
-                              modifier = Modifier.size(44.dp)
-                            ) {
-                              Icon(
-                                painter = painterResource(R.drawable.stage_together),
-                                contentDescription = stringResource(R.string.together),
+                                contentDescription = stringResource(historyLabel),
                                 modifier = Modifier.size(24.dp)
                               )
                             }
@@ -1369,7 +1367,7 @@ class MainActivity : ComponentActivity() {
                         }
                       }
                     },
-                    expandedHeight = if (isHomeTopBar) 58.dp else 66.dp,
+                    expandedHeight = if (isTabTopBar) 58.dp else 66.dp,
                     scrollBehavior = topAppBarScrollBehavior,
                     colors =
                       TopAppBarDefaults.topAppBarColors(

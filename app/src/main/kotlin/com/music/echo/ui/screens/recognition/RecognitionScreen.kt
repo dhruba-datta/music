@@ -33,7 +33,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -45,9 +44,7 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -190,76 +187,41 @@ fun RecognitionScreen(navController: NavController) {
           },
           onTryAgain = { startRecognition() },
           onClose = ::resetToReady,
-          onOpenHistory = { navController.navigate("recognition_history") },
           onSaveToHistory = ::saveToHistory
         )
       } else {
         Box(modifier = Modifier.fillMaxSize()) {
           Box(modifier = Modifier.fillMaxSize().background(Color.Transparent))
 
-          Scaffold(
-            containerColor = Color.Transparent,
-            topBar = {
-              Row(
-                modifier =
-                  Modifier.fillMaxWidth()
-                    .windowInsetsPadding(TopAppBarDefaults.windowInsets)
-                    .padding(start = 22.dp, end = 12.dp, top = 20.dp),
-                verticalAlignment = Alignment.CenterVertically
-              ) {
-                Text(
-                  text = stringResource(R.string.recognize_music),
-                  fontSize = 34.sp,
-                  lineHeight = 40.sp,
-                  letterSpacing = (-0.68).sp,
-                  fontWeight = FontWeight.ExtraBold,
-                  color = MaterialTheme.colorScheme.onBackground,
-                  maxLines = 1,
-                  overflow = TextOverflow.Ellipsis,
-                  modifier = Modifier.weight(1f)
+          Column(
+            modifier =
+              Modifier.fillMaxSize()
+                .windowInsetsPadding(
+                  LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Vertical)
                 )
-                androidx.compose.material3.IconButton(
-                  onClick = { navController.navigate("recognition_history") }
-                ) {
-                  Icon(
-                    painter = painterResource(R.drawable.history),
-                    contentDescription = stringResource(R.string.recognition_history)
-                  )
-                }
+                .padding(horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+          ) {
+            when (status) {
+              is RecognitionStatus.Ready -> {
+                ReadyState(onStartRecognition = ::startRecognition)
               }
-            }
-          ) { paddingValues ->
-            Column(
-              modifier =
-                Modifier.fillMaxSize()
-                  .padding(paddingValues)
-                  .windowInsetsPadding(
-                    LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Bottom)
-                  )
-                  .padding(horizontal = 16.dp),
-              horizontalAlignment = Alignment.CenterHorizontally,
-              verticalArrangement = Arrangement.Center
-            ) {
-              when (status) {
-                is RecognitionStatus.Ready -> {
-                  ReadyState(onStartRecognition = ::startRecognition)
-                }
-                is RecognitionStatus.Listening -> {
-                  ListeningState(
-                    onCancel = { echo.music.iad1tya.recognition.MusicRecognitionService.reset() }
-                  )
-                }
-                is RecognitionStatus.Processing -> {
-                  ProcessingState()
-                }
-                is RecognitionStatus.NoMatch -> {
-                  NoMatchState(message = status.message, onTryAgain = { startRecognition() })
-                }
-                is RecognitionStatus.Error -> {
-                  ErrorState(message = status.message, onTryAgain = { startRecognition() })
-                }
-                else -> Unit
+              is RecognitionStatus.Listening -> {
+                ListeningState(
+                  onCancel = { echo.music.iad1tya.recognition.MusicRecognitionService.reset() }
+                )
               }
+              is RecognitionStatus.Processing -> {
+                ProcessingState()
+              }
+              is RecognitionStatus.NoMatch -> {
+                NoMatchState(message = status.message, onTryAgain = { startRecognition() })
+              }
+              is RecognitionStatus.Error -> {
+                ErrorState(message = status.message, onTryAgain = { startRecognition() })
+              }
+              else -> Unit
             }
           }
         }
@@ -435,7 +397,6 @@ private fun SuccessState(
   onPlayOnApp: (RecognitionResult) -> Unit,
   onTryAgain: () -> Unit,
   onClose: () -> Unit,
-  onOpenHistory: () -> Unit,
   onSaveToHistory: (RecognitionResult) -> Unit
 ) {
   LaunchedEffect(result) { onSaveToHistory(result) }
@@ -448,35 +409,17 @@ private fun SuccessState(
       horizontalAlignment = Alignment.CenterHorizontally,
       modifier =
         Modifier.fillMaxSize()
-          .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
-          .windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Bottom))
+          .windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Vertical))
           .verticalScroll(rememberScrollState())
     ) {
       Row(
-        modifier = Modifier.fillMaxWidth().padding(start = 22.dp, end = 12.dp, top = 20.dp),
-        verticalAlignment = Alignment.CenterVertically
+        modifier = Modifier.fillMaxWidth().padding(end = 12.dp),
+        horizontalArrangement = Arrangement.End
       ) {
-        Text(
-          text = stringResource(R.string.recognize_music),
-          fontSize = 34.sp,
-          lineHeight = 40.sp,
-          letterSpacing = (-0.68).sp,
-          fontWeight = FontWeight.ExtraBold,
-          color = MaterialTheme.colorScheme.onBackground,
-          maxLines = 1,
-          overflow = TextOverflow.Ellipsis,
-          modifier = Modifier.weight(1f)
-        )
         androidx.compose.material3.IconButton(onClick = onClose) {
           Icon(
             painter = painterResource(R.drawable.close),
             contentDescription = stringResource(R.string.close)
-          )
-        }
-        androidx.compose.material3.IconButton(onClick = onOpenHistory) {
-          Icon(
-            painter = painterResource(R.drawable.history),
-            contentDescription = stringResource(R.string.recognition_history)
           )
         }
       }

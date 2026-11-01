@@ -45,6 +45,7 @@ import echo.music.iad1tya.ui.screens.playlist.TopPlaylistScreen
 import echo.music.iad1tya.ui.screens.recognition.RecognitionHistoryScreen
 import echo.music.iad1tya.ui.screens.recognition.RecognitionScreen
 import echo.music.iad1tya.ui.screens.search.OnlineSearchResult
+import echo.music.iad1tya.ui.screens.search.SearchHistoryScreen
 import echo.music.iad1tya.ui.screens.search.SearchScreen
 import echo.music.iad1tya.ui.screens.settings.AboutScreen
 import echo.music.iad1tya.ui.screens.settings.AccountSettingsScreen
@@ -93,12 +94,6 @@ fun NavGraphBuilder.navigationBuilder(
 
   composable(Screens.ListenTogether.route) {
     ListenTogetherScreen(navController, showTopBar = false)
-  }
-
-  composable(
-    route = "listen_together_from_topbar",
-  ) {
-    ListenTogetherScreen(navController, showTopBar = true)
   }
 
   composable("listen_together/chat") { CommentTogetherScreen(navController) }
@@ -558,6 +553,7 @@ fun NavGraphBuilder.navigationBuilder(
   composable("recognition") { RecognitionScreen(navController) }
 
   composable("recognition_history") { RecognitionHistoryScreen(navController) }
+  composable("search_history") { SearchHistoryScreen(navController) }
   composable("settings/changelog") { ChangelogScreen(navController, scrollBehavior) }
   composable("settings/commits") { CommitScreen(navController, scrollBehavior) }
   composable("generate") { GenerateScreen(navController) }
