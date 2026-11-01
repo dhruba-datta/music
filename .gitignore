@@ -22,8 +22,6 @@ cast/build/
 cast-empty/build/
 crashlytics/build/
 crashlytics-empty/build/
-lastfm/build/
-lastfm-empty/build/
 */build/
 
 # Gradle

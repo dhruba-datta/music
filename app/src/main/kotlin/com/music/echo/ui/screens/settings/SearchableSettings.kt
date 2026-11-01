@@ -1580,18 +1580,6 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
       "settings/update"
     ),
     SearchableSetting(
-      stringResource(R.string.discord_integration),
-      stringResource(R.string.discord_integration_desc),
-      "Account",
-      "settings/account"
-    ),
-    SearchableSetting(
-      stringResource(R.string.lastfm_integration),
-      stringResource(R.string.lastfm_integration_desc),
-      "Account",
-      "settings/account"
-    ),
-    SearchableSetting(
       stringResource(R.string.listenbrainz_scrobbling),
       stringResource(R.string.listenbrainz_scrobbling_desc),
       "Account",
@@ -1622,137 +1610,8 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
     ),
     SearchableSetting("Hide volume slider", null, "Appearance", "settings/appearance"),
     SearchableSetting("Show codec on player", null, "Appearance", "settings/appearance"),
-    SearchableSetting(
-      stringResource(R.string.experiment_settings),
-      stringResource(R.string.experiment_settings_desc),
-      "Discord",
-      "settings/discord/experimental"
-    ),
-    SearchableSetting("Show Button 1", null, "Discord", "settings/discord/experimental"),
-    SearchableSetting("Button 1 Label", null, "Discord", "settings/discord/experimental"),
-    SearchableSetting("Button 1 URL Source", null, "Discord", "settings/discord/experimental"),
-    SearchableSetting("Button 1 Custom URL", null, "Discord", "settings/discord/experimental"),
-    SearchableSetting("Show Button 2", null, "Discord", "settings/discord/experimental"),
-    SearchableSetting("Button 2 Label", null, "Discord", "settings/discord/experimental"),
-    SearchableSetting("Button 2 URL Source", null, "Discord", "settings/discord/experimental"),
-    SearchableSetting("Button 2 Custom URL", null, "Discord", "settings/discord/experimental"),
-    SearchableSetting(
-      stringResource(R.string.enable_scrobbling),
-      stringResource(R.string.enable_scrobbling_desc),
-      "Last.fm",
-      "settings/lastfm"
-    ),
-    SearchableSetting(
-      stringResource(R.string.lastfm_now_playing),
-      stringResource(R.string.lastfm_now_playing_desc),
-      "Last.fm",
-      "settings/lastfm"
-    ),
-    SearchableSetting(
-      stringResource(R.string.last_fm_send_likes),
-      stringResource(R.string.last_fm_send_likes_desc),
-      "Last.fm",
-      "settings/lastfm"
-    ),
-    SearchableSetting(
-      stringResource(R.string.scrobble_min_track_duration),
-      stringResource(R.string.scrobble_min_track_duration_desc),
-      "Last.fm",
-      "settings/lastfm"
-    ),
-    SearchableSetting(
-      stringResource(R.string.scrobble_delay_percent),
-      stringResource(R.string.scrobble_delay_percent_desc),
-      "Last.fm",
-      "settings/lastfm"
-    ),
-    SearchableSetting(
-      stringResource(R.string.scrobble_delay_minutes),
-      stringResource(R.string.scrobble_delay_minutes_desc),
-      "Last.fm",
-      "settings/lastfm"
-    ),
     SearchableSetting("Import", null, "Backup & Restore", "settings/backup_restore"),
     SearchableSetting("Supported Links", null, "Settings", "settings"),
-    SearchableSetting(
-      stringResource(R.string.refresh),
-      stringResource(R.string.refresh_desc),
-      "Discord",
-      "settings/discord"
-    ),
-    SearchableSetting(
-      stringResource(R.string.activity_status),
-      stringResource(R.string.activity_status_desc),
-      "Discord",
-      "settings/discord"
-    ),
-    SearchableSetting(
-      stringResource(R.string.platform_status),
-      stringResource(R.string.platform_status_desc),
-      "Discord",
-      "settings/discord"
-    ),
-    SearchableSetting(
-      stringResource(R.string.discord_activity_name),
-      stringResource(R.string.discord_activity_name_desc),
-      "Discord",
-      "settings/discord"
-    ),
-    SearchableSetting(
-      stringResource(R.string.discord_activity_details),
-      stringResource(R.string.discord_activity_details_desc),
-      "Discord",
-      "settings/discord"
-    ),
-    SearchableSetting(
-      stringResource(R.string.discord_activity_state),
-      stringResource(R.string.discord_activity_state_desc),
-      "Discord",
-      "settings/discord"
-    ),
-    SearchableSetting(
-      stringResource(R.string.discord_show_when_paused),
-      stringResource(R.string.discord_show_when_paused_desc),
-      "Discord",
-      "settings/discord"
-    ),
-    SearchableSetting(
-      stringResource(R.string.discord_activity_type),
-      stringResource(R.string.discord_activity_type_desc),
-      "Discord",
-      "settings/discord"
-    ),
-    SearchableSetting(
-      stringResource(R.string.large_image),
-      stringResource(R.string.large_image_desc),
-      "Discord",
-      "settings/discord"
-    ),
-    SearchableSetting(
-      stringResource(R.string.large_image_custom_url),
-      stringResource(R.string.large_image_custom_url_desc),
-      "Discord",
-      "settings/discord"
-    ),
-    SearchableSetting(
-      stringResource(R.string.small_image),
-      stringResource(R.string.small_image_desc),
-      "Discord",
-      "settings/discord"
-    ),
-    SearchableSetting(
-      stringResource(R.string.small_image_custom_url),
-      stringResource(R.string.small_image_custom_url_desc),
-      "Discord",
-      "settings/discord"
-    ),
-    SearchableSetting(
-      stringResource(R.string.logout_confirm_title),
-      stringResource(R.string.logout_confirm_title_desc),
-      "Discord",
-      "settings/discord"
-    ),
-    SearchableSetting("Edit", null, "Discord", "settings/discord"),
     SearchableSetting(
       stringResource(R.string.automix),
       stringResource(R.string.automix_desc),
@@ -2092,16 +1951,7 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
       "Content",
       "settings/content"
     ),
-    SearchableSetting(
-      stringResource(R.string.discord),
-      stringResource(R.string.discord_integration_desc),
-      "Account",
-      "settings/account"
-    ),
     SearchableSetting("Add another account", null, "Account", "settings/account"),
-    SearchableSetting("Edit Discord Profile", null, "Discord", "settings/discord"),
-    SearchableSetting(stringResource(R.string.preview), null, "Discord", "settings/discord"),
-    SearchableSetting(stringResource(R.string.not_logged_in), null, "LastFM", "settings/lastfm"),
 
     // About Screen - Social & Support Links
     SearchableSetting("Website", "Visit the Echo Music website", "About", "settings/about"),
@@ -2112,54 +1962,6 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
     SearchableSetting("UPI", "Support the developer via UPI", "About", "settings/about"),
     SearchableSetting("Discord", "Join the Echo Music community", "About", "settings/about"),
   ) + listOf(
-    SearchableSetting(
-      "Show Button 1",
-      "Show Button 1 in Discord Rich Presence",
-      "Discord RPC",
-      "settings/discord/experimental"
-    ),
-    SearchableSetting(
-      "Button 1 Label",
-      "Label for Button 1",
-      "Discord RPC",
-      "settings/discord/experimental"
-    ),
-    SearchableSetting(
-      "Button 1 URL Source",
-      "URL Source for Button 1",
-      "Discord RPC",
-      "settings/discord/experimental"
-    ),
-    SearchableSetting(
-      "Button 1 Custom URL",
-      "Custom URL for Button 1",
-      "Discord RPC",
-      "settings/discord/experimental"
-    ),
-    SearchableSetting(
-      "Show Button 2",
-      "Show Button 2 in Discord Rich Presence",
-      "Discord RPC",
-      "settings/discord/experimental"
-    ),
-    SearchableSetting(
-      "Button 2 Label",
-      "Label for Button 2",
-      "Discord RPC",
-      "settings/discord/experimental"
-    ),
-    SearchableSetting(
-      "Button 2 URL Source",
-      "URL Source for Button 2",
-      "Discord RPC",
-      "settings/discord/experimental"
-    ),
-    SearchableSetting(
-      "Button 2 Custom URL",
-      "Custom URL for Button 2",
-      "Discord RPC",
-      "settings/discord/experimental"
-    ),
     SearchableSetting(
       "Local Backup",
       "Create a local backup",
@@ -2372,9 +2174,7 @@ fun getAllSearchableSettings(): List<SearchableSetting> {
     ),
   ).filterNot {
     it.route == "settings/ambient" ||
-      it.route == "settings/integrations" ||
-      it.route.startsWith("settings/discord") ||
-      it.route.startsWith("settings/lastfm")
+      it.route == "settings/integrations"
   }
     .distinctBy { it.title to it.route }
 }

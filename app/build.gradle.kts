@@ -41,13 +41,6 @@ android {
 
     buildConfigField("String", "UPDATE_REPOSITORY", "\"dhruba-datta/EchoMusicMod\"")
 
-    // LastFM API keys from GitHub Secrets
-    val lastFmKey = "266d77b5790e413ada7e41ef100d017a"
-    val lastFmSecret = "41d3ae3b039ddac06c37fb30055bf93b"
-
-    buildConfigField("String", "LASTFM_API_KEY", "\"$lastFmKey\"")
-    buildConfigField("String", "LASTFM_SECRET", "\"$lastFmSecret\"")
-
     // GitHub OAuth keys
     val githubClientId =
       localProperties.getProperty("GH_CLIENT_ID") ?: System.getenv("GH_CLIENT_ID") ?: ""
@@ -72,14 +65,6 @@ android {
     val isNightly = project.hasProperty("nightly") && project.property("nightly") == "true"
     buildConfigField("Boolean", "IS_NIGHTLY", isNightly.toString())
 
-    val discordApplicationId = "1518210534070292541"
-    val discordApplicationIdLong = 1518210534070292541L
-    val discordRedirectScheme = "discord-$discordApplicationId"
-
-    buildConfigField("String", "DISCORD_APPLICATION_ID", "\"$discordApplicationId\"")
-    buildConfigField("long", "DISCORD_APPLICATION_ID_LONG", "${discordApplicationIdLong}L")
-    buildConfigField("String", "DISCORD_REDIRECT_SCHEME", "\"$discordRedirectScheme\"")
-    manifestPlaceholders["discordRedirectScheme"] = discordRedirectScheme
   }
 
   flavorDimensions += listOf("abi", "variant")

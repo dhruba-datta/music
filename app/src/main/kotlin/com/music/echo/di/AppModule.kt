@@ -18,7 +18,6 @@ import echo.music.iad1tya.db.InternalDatabase
 import echo.music.iad1tya.db.MusicDatabase
 import echo.music.iad1tya.db.daos.TasteProfileDao
 import echo.music.iad1tya.generate.GenerationStatus
-import echo.music.iad1tya.generate.GenresRepository
 import echo.music.iad1tya.generate.LocalTasteEngine
 import echo.music.iad1tya.generate.RealGenerationStatus
 import echo.music.iad1tya.generate.RecommendationEngine
@@ -26,8 +25,6 @@ import echo.music.iad1tya.listentogether.ListenTogetherClient
 import echo.music.iad1tya.listentogether.ListenTogetherManager
 import echo.music.iad1tya.utils.dataStore
 import echo.music.iad1tya.utils.get
-import echo.music.iad1tya.utils.lastfm.LastFmTasteApi
-import echo.music.iad1tya.utils.lastfm.RealLastFmTasteApi
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -67,12 +64,6 @@ object AppModule {
   fun provideTasteProfileDao(
     database: InternalDatabase,
   ) = database.tasteProfileDao
-
-  @Singleton
-  @Provides
-  fun provideLastFmTasteApi(
-    api: RealLastFmTasteApi,
-  ): LastFmTasteApi = api
 
   @Singleton
   @Provides

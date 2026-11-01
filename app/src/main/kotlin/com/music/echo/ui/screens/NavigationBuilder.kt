@@ -502,18 +502,6 @@ fun NavGraphBuilder.navigationBuilder(
     )
   }
 
-  composable("settings/discord") {
-    echo.music.iad1tya.ui.screens.settings.DiscordSettings(navController, scrollBehavior)
-  }
-
-  composable("settings/lastfm") {
-    echo.music.iad1tya.ui.screens.settings.LastFMSettingsScreen(navController)
-  }
-
-  composable("settings/discord/experimental") {
-    echo.music.iad1tya.ui.screens.settings.DiscordExperimental(navController)
-  }
-
   composable("settings/spotify_import") { SpotifyImportScreen(navController) }
 
   composable(route = "settings/integrations/listen_together") {

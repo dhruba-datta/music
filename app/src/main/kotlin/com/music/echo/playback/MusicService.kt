@@ -88,18 +88,12 @@ import echo.music.iad1tya.constants.CrossfadeEnabledKey
 import echo.music.iad1tya.constants.CrossfadeGaplessKey
 import echo.music.iad1tya.constants.StopMusicOnTaskClearKey
 import echo.music.iad1tya.constants.DisableLoadMoreWhenRepeatAllKey
-import echo.music.iad1tya.constants.DiscordTokenKey
 import echo.music.iad1tya.constants.EnableBitPerfectUsbDacKey
-import echo.music.iad1tya.constants.EnableDiscordRPCKey
-import echo.music.iad1tya.constants.EnableLastFMScrobblingKey
 import echo.music.iad1tya.constants.ForceOpusKey
 import echo.music.iad1tya.constants.HideExplicitKey
 import echo.music.iad1tya.constants.HideVideoSongsKey
 import echo.music.iad1tya.constants.HistoryDuration
 import echo.music.iad1tya.constants.IpVersionKey
-import echo.music.iad1tya.constants.LastFMSessionKey
-import echo.music.iad1tya.constants.LastFMUseNowPlaying
-import echo.music.iad1tya.constants.LastFMUseSendLikes
 import echo.music.iad1tya.constants.MediaSessionConstants.CommandToggleLike
 import echo.music.iad1tya.constants.MediaSessionConstants.CommandToggleRepeatMode
 import echo.music.iad1tya.constants.MediaSessionConstants.CommandToggleShuffle
@@ -130,7 +124,6 @@ import echo.music.iad1tya.db.entities.Event
 import echo.music.iad1tya.db.entities.FormatEntity
 import echo.music.iad1tya.db.entities.LyricsEntity
 import echo.music.iad1tya.db.entities.RelatedSongMap
-import echo.music.iad1tya.db.entities.Song
 import echo.music.iad1tya.di.DownloadCache
 import echo.music.iad1tya.di.PlayerCache
 import echo.music.iad1tya.echomusic.updater.downloadmanager.EchoNotificationProvider
@@ -167,10 +160,8 @@ import echo.music.iad1tya.playback.queues.Queue
 import echo.music.iad1tya.playback.queues.YouTubeQueue
 import echo.music.iad1tya.playback.queues.filterExplicit
 import echo.music.iad1tya.playback.queues.filterVideoSongs
-import echo.music.iad1tya.ui.screens.settings.DiscordPresenceManager
 import echo.music.iad1tya.utils.CoilBitmapLoader
 import echo.music.iad1tya.utils.NetworkConnectivityObserver
-import echo.music.iad1tya.utils.ScrobbleManager
 import echo.music.iad1tya.utils.YTPlayerUtils
 import echo.music.iad1tya.utils.YTPlayerUtils.PlaybackData
 import echo.music.iad1tya.utils.dataStore
@@ -510,12 +501,6 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
   // Holds the outgoing track's enhancer alive through the crossfade so its normalization
   // isn't stripped mid-fade (which would make a heavily-cut track jump louder as it fades).
   private var fadingLoudnessEnhancer: LoudnessEnhancer? = null
-  private var lastPresenceToken: String? = null
-
-  private var lastPlaybackSpeed = 1.0f
-  private var discordUpdateJob: kotlinx.coroutines.Job? = null
-
-  private var scrobbleManager: ScrobbleManager? = null
 
   private var listenBrainzEnabled = false
   private var listenBrainzToken = ""
@@ -553,24 +538,6 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
 
   var castConnectionHandler: CastConnectionHandler? = null
     private set
-
-  private val screenStateReceiver =
-    object : BroadcastReceiver() {
-      override fun onReceive(context: Context, intent: Intent) {
-        when (intent.action) {
-          Intent.ACTION_SCREEN_OFF -> {
-            if (!player.isPlaying) {
-              scope.launch(Dispatchers.IO) { DiscordPresenceManager.stop() }
-            }
-          }
-          Intent.ACTION_SCREEN_ON -> {
-            if (player.isPlaying) {
-              scope.launch { currentSong.value?.let { song -> ensurePresenceManager() } }
-            }
-          }
-        }
-      }
-    }
 
   private val audioDeviceCallback =
     object : AudioDeviceCallback() {
@@ -628,57 +595,6 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
     )
 
     playerInitialized.value = false
-
-    scrobbleManager = ScrobbleManager(scope)
-
-    scope.launch {
-      dataStore.data
-        .map {
-          (try {
-            it[EnableLastFMScrobblingKey]
-          } catch (e: Exception) {
-            null
-          }) ?: false
-        }
-        .distinctUntilChanged()
-        .collect { scrobbleManager?.enableScrobbling = it }
-    }
-    scope.launch {
-      dataStore.data
-        .map {
-          (try {
-            it[LastFMUseNowPlaying]
-          } catch (e: Exception) {
-            null
-          }) ?: false
-        }
-        .distinctUntilChanged()
-        .collect { scrobbleManager?.useNowPlaying = it }
-    }
-    scope.launch {
-      dataStore.data
-        .map {
-          (try {
-            it[LastFMUseSendLikes]
-          } catch (e: Exception) {
-            null
-          }) ?: false
-        }
-        .distinctUntilChanged()
-        .collect { scrobbleManager?.useSendLikes = it }
-    }
-    scope.launch {
-      dataStore.data
-        .map {
-          (try {
-            it[LastFMSessionKey]
-          } catch (e: Exception) {
-            null
-          })
-        }
-        .distinctUntilChanged()
-        .collect { sessionKey -> echo.music.iad1tya.utils.lastfm.LastFM.sessionKey = sessionKey }
-    }
 
     try {
       val nm = getSystemService(NotificationManager::class.java)
@@ -758,13 +674,6 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
     connectivityManager = getSystemService()!!
     connectivityObserver = NetworkConnectivityObserver(this)
 
-    val screenStateFilter =
-      IntentFilter().apply {
-        addAction(Intent.ACTION_SCREEN_ON)
-        addAction(Intent.ACTION_SCREEN_OFF)
-      }
-    registerReceiver(screenStateReceiver, screenStateFilter)
-
     audioManager.registerAudioDeviceCallback(audioDeviceCallback, null)
     usbDacManager.register()
 
@@ -815,13 +724,6 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
         isNetworkConnected.value = isConnected
         if (isConnected && waitingForNetworkConnection.value) {
           triggerRetry()
-        }
-
-        if (isConnected && player.isPlaying) {
-          val mediaId = player.currentMetadata?.id
-          if (mediaId != null) {
-            database.song(mediaId).first()?.let { song -> ensurePresenceManager() }
-          }
         }
       }
     }
@@ -2550,20 +2452,12 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
     }
     previousMediaItemIndex = player.currentMediaItemIndex
 
-    lastPlaybackSpeed = -1.0f
-
     preloadUpcomingItems()
     setupLoudnessEnhancer()
 
-    discordUpdateJob?.cancel()
-
-    scrobbleManager?.onSongStop()
     checkAndSubmitListenBrainzFinished()
 
     if (player.playWhenReady && player.playbackState == Player.STATE_READY) {
-      val canonicalDur = (player.currentMetadata?.duration ?: 0) * 1000L
-      val safeDur = if (canonicalDur > 0L) canonicalDur else player.duration
-      scrobbleManager?.onSongStart(player.currentMetadata, duration = safeDur)
       player.currentMediaItem?.mediaId?.let { mediaId ->
         if (listenBrainzCurrentMediaId != mediaId) {
           listenBrainzCurrentMediaId = mediaId
@@ -2729,7 +2623,6 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
     }
 
     if (playbackState == Player.STATE_IDLE || playbackState == Player.STATE_ENDED) {
-      scrobbleManager?.onSongStop()
       checkAndSubmitListenBrainzFinished()
     }
   }
@@ -2795,25 +2688,6 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
         stopWidgetUpdates()
         releaseWifiLock()
       }
-      if (
-        !player.isPlaying &&
-          !events.containsAny(
-            Player.EVENT_POSITION_DISCONTINUITY,
-            Player.EVENT_MEDIA_ITEM_TRANSITION
-          )
-      ) {
-        scope.launch { DiscordPresenceManager.stop() }
-      }
-    }
-
-    if (
-      events.containsAny(Player.EVENT_MEDIA_ITEM_TRANSITION, Player.EVENT_IS_PLAYING_CHANGED) &&
-        player.isPlaying
-    ) {
-      val mediaId = player.currentMetadata?.id
-      if (mediaId != null) {
-        scope.launch { database.song(mediaId).first()?.let { song -> ensurePresenceManager() } }
-      }
     }
 
     if (events.containsAny(Player.EVENT_PLAYBACK_STATE_CHANGED)) {
@@ -2823,8 +2697,6 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
     }
 
     if (events.containsAny(Player.EVENT_IS_PLAYING_CHANGED)) {
-      val canonicalDur = (player.currentMetadata?.duration ?: 0) * 1000L
-      val safeDur = if (canonicalDur > 0L) canonicalDur else player.duration
       if (player.isPlaying) {
         if (trackedPlayStartTs == 0L) {
           trackedPlayStartTs = System.currentTimeMillis()
@@ -2835,19 +2707,12 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
           trackedPlayStartTs = 0L
         }
       }
-      scrobbleManager?.onPlayerStateChanged(
-        player.isPlaying,
-        player.currentMetadata,
-        duration = safeDur
-      )
-
       if (player.isPlaying) {
         player.currentMediaItem?.mediaId?.let { mediaId ->
           if (listenBrainzCurrentMediaId != mediaId) {
             checkAndSubmitListenBrainzFinished()
             listenBrainzCurrentMediaId = mediaId
             listenBrainzCurrentStartTs = System.currentTimeMillis()
-            scrobbleManager?.onSongStart(player.currentMetadata, duration = safeDur)
           }
           checkAndSubmitListenBrainzPlayingNow(mediaId)
         }
@@ -2924,22 +2789,6 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
         shuffledIndices[currentItemIndexInShuffled] = temp
       }
       player.setShuffleOrder(DefaultShuffleOrder(shuffledIndices, System.currentTimeMillis()))
-    }
-  }
-
-  override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
-    super.onPlaybackParametersChanged(playbackParameters)
-    if (playbackParameters.speed != lastPlaybackSpeed) {
-      lastPlaybackSpeed = playbackParameters.speed
-      discordUpdateJob?.cancel()
-
-      discordUpdateJob =
-        scope.launch {
-          delay(1000)
-          if (player.playWhenReady && player.playbackState == Player.STATE_READY) {
-            currentSong.value?.let { song -> ensurePresenceManager() }
-          }
-        }
     }
   }
 
@@ -3522,63 +3371,6 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
     }
   }
 
-  private fun currentPresenceSong(): Song? {
-    val mediaId = player.currentMediaItem?.mediaId ?: return null
-    return runBlocking(Dispatchers.IO) { database.song(mediaId).firstOrNull() }
-  }
-
-  private fun ensurePresenceManager() {
-    if (DiscordPresenceManager.lastRpcStartTime != null && lastPresenceToken != null) {
-      if (
-        dataStore.get(EnableDiscordRPCKey, true) && dataStore.get(DiscordTokenKey, "").isNotBlank()
-      ) {
-        DiscordPresenceManager.restart()
-      }
-      return
-    }
-
-    scope.launch {
-      if (!dataStore.get(EnableDiscordRPCKey, true)) {
-        if (DiscordPresenceManager.lastRpcStartTime != null) {
-          try {
-            DiscordPresenceManager.stop()
-          } catch (_: Exception) {}
-          lastPresenceToken = null
-        }
-        return@launch
-      }
-
-      val key = dataStore.get(DiscordTokenKey, "")
-      if (key.isBlank()) {
-        if (DiscordPresenceManager.lastRpcStartTime != null) {
-          try {
-            DiscordPresenceManager.stop()
-          } catch (_: Exception) {}
-          lastPresenceToken = null
-        }
-        return@launch
-      }
-
-      if (DiscordPresenceManager.lastRpcStartTime != null && lastPresenceToken == key) {
-        return@launch
-      }
-
-      try {
-        DiscordPresenceManager.stop()
-        DiscordPresenceManager.start(
-          context = this@MusicService,
-          token = key,
-          songProvider = { currentPresenceSong() },
-          positionProvider = { player.currentPosition },
-          isPausedProvider = { !player.isPlaying }
-        )
-        lastPresenceToken = key
-      } catch (ex: Exception) {
-        Timber.tag(TAG).e(ex, "Failed to start presence manager")
-      }
-    }
-  }
-
   private fun createDataSourceFactory(): DataSource.Factory {
     return ResolvingDataSource.Factory(DefaultDataSource.Factory(this, createCacheDataSource())) {
       dataSpec ->
@@ -4085,17 +3877,12 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
     secondaryPlayer = null
     if (fadingPlayer != null) cleanupCrossfade()
 
-    try {
-      unregisterReceiver(screenStateReceiver)
-    } catch (e: Exception) {}
-
     audioManager.unregisterAudioDeviceCallback(audioDeviceCallback)
     usbDacManager.unregister()
     castConnectionHandler?.release()
     if (dataStore.get(PersistentQueueKey, true)) {
       saveQueueToDisk()
     }
-    DiscordPresenceManager.stop()
     connectivityObserver.unregister()
     releaseWifiLock()
     abandonAudioFocus()
@@ -4115,7 +3902,6 @@ class MusicService : MediaLibraryService(), Player.Listener, PlaybackStatsListen
     playerEqProcessors.remove(player)?.let { dspController.removeAudioProcessor(it) }
 
     player.release()
-    discordUpdateJob?.cancel()
     scope.cancel()
     super.onDestroy()
   }

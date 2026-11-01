@@ -62,8 +62,6 @@ object StageTile {
   val Blue = Color(0xFF2A6F97)
   val Green = Color(0xFF386641)
   val Slate = Color(0xFF3F3F4A)
-  val Discord = Color(0xFF5865F2)
-  val LastFm = Color(0xFFB91C1C)
   val Spotify = Color(0xFF1F6B3A)
 }
 

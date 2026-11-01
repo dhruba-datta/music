@@ -23,7 +23,7 @@ NAME = re.compile(r'\bname="([^"]+)"')
 # Crediting the original author is kept on purpose.
 KEEP_STRINGS = {"developer_name", "wrapped_special_thanks"}
 
-# Only user-facing literals. The Discord, ListenBrainz and AI playlist names are left out because
+# Only user-facing literals. The ListenBrainz and AI playlist names are left out because
 # they identify the client or match data that is already saved.
 KOTLIN_FILES = [
     "app/src/main/kotlin/com/music/echo/MainActivity.kt",
@@ -31,8 +31,6 @@ KOTLIN_FILES = [
     "app/src/main/kotlin/com/music/echo/ui/screens/WelcomeDialog.kt",
     "app/src/main/kotlin/com/music/echo/ui/screens/settings/AboutScreen.kt",
     "app/src/main/kotlin/com/music/echo/ui/screens/settings/AppIconSettingsScreen.kt",
-    "app/src/main/kotlin/com/music/echo/ui/screens/settings/DiscordExperimental.kt",
-    "app/src/main/kotlin/com/music/echo/ui/screens/settings/DiscordSettings.kt",
     "app/src/main/kotlin/com/music/echo/ui/screens/settings/SearchableSettings.kt",
     "app/src/main/kotlin/com/music/echo/utils/CrashHandler.kt",
 ]

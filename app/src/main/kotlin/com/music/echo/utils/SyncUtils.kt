@@ -11,7 +11,6 @@ import com.music.innertube.utils.completed
 import com.music.innertube.utils.parseCookieString
 import dagger.hilt.android.qualifiers.ApplicationContext
 import echo.music.iad1tya.constants.InnerTubeCookieKey
-import echo.music.iad1tya.constants.LastFMUseSendLikes
 import echo.music.iad1tya.constants.LastFullSyncKey
 import echo.music.iad1tya.constants.SYNC_COOLDOWN
 import echo.music.iad1tya.db.MusicDatabase
@@ -19,7 +18,6 @@ import echo.music.iad1tya.db.entities.ArtistEntity
 import echo.music.iad1tya.db.entities.PlaylistEntity
 import echo.music.iad1tya.db.entities.PlaylistSongMap
 import echo.music.iad1tya.db.entities.SongEntity
-import echo.music.iad1tya.extensions.collectLatest
 import echo.music.iad1tya.extensions.isInternetConnected
 import echo.music.iad1tya.extensions.isSyncEnabled
 import echo.music.iad1tya.models.toMediaMetadata
@@ -38,7 +36,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
@@ -118,8 +115,6 @@ constructor(
   private val _syncState = MutableStateFlow(SyncState())
   val syncState: StateFlow<SyncState> = _syncState.asStateFlow()
 
-  private var lastfmSendLikes = false
-
   companion object {
     private const val MAX_RETRIES = 3
     private const val INITIAL_RETRY_DELAY_MS = 1000L
@@ -127,17 +122,6 @@ constructor(
   }
 
   init {
-    context.dataStore.data
-      .map {
-        (try {
-          it[LastFMUseSendLikes]
-        } catch (e: Exception) {
-          null
-        }) ?: false
-      }
-      .distinctUntilChanged()
-      .collectLatest(syncScope) { lastfmSendLikes = it }
-
     startProcessingQueue()
   }
 
