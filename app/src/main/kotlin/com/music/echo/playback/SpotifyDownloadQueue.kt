@@ -45,6 +45,7 @@ constructor(
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
   private val prefs = context.getSharedPreferences("spotify_downloads", Context.MODE_PRIVATE)
   private val statePrefs = context.getSharedPreferences("spotify_download_state", Context.MODE_PRIVATE)
+  private val matchedSongs = context.getSharedPreferences("spotify_matched_songs", Context.MODE_PRIVATE)
   private val jobs = ConcurrentHashMap<String, Job>()
 
   private val _preparing = MutableStateFlow<Set<String>>(emptySet())
@@ -84,7 +85,12 @@ constructor(
               .map { track ->
                 launch {
                   val song = resolver.resolveTrack(track)
-                  if (song == null) missing.incrementAndGet() else queue(playlistId, song)
+                  if (song == null) {
+                    missing.incrementAndGet()
+                  } else {
+                    matchedSongs.edit().putString(track.id, song.id).apply()
+                    queue(playlistId, song)
+                  }
                 }
               }
               .joinAll()
@@ -97,6 +103,9 @@ constructor(
         withContext(Dispatchers.Main) { onFinished(queued, missing.get()) }
       }
   }
+
+  /** The YouTube song a download matched to this Spotify track, kept across restarts. */
+  fun songIdFor(trackId: String): String? = matchedSongs.getString(trackId, null)
 
   private suspend fun queue(playlistId: String, song: SongItem) {
     try {

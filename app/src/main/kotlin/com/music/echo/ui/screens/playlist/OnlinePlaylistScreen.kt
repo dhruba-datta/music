@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.screens.playlist
 
+import echo.music.iad1tya.ui.screens.onlinePlaylistRoute
 import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -106,6 +107,7 @@ import echo.music.iad1tya.ui.component.NavigationTitle
 import echo.music.iad1tya.ui.component.StageHero
 import echo.music.iad1tya.ui.component.StageHeroAction
 import echo.music.iad1tya.ui.component.StageHeroArtwork
+import echo.music.iad1tya.ui.component.StageHeroBlendedArtwork
 import echo.music.iad1tya.ui.component.StageHeroDownloadButton
 import echo.music.iad1tya.ui.component.StageHeroIconButton
 import echo.music.iad1tya.ui.component.StageHeroPlayButton
@@ -247,6 +249,11 @@ fun OnlinePlaylistScreen(
     ) {
       if (playlist == null || songs.isEmpty()) {
         if (isLoading) {
+          viewModel.tappedCover?.let { cover ->
+            item(key = "loading_cover") {
+              StageHero(title = "", artwork = { StageHeroArtwork(cover) })
+            }
+          }
           item(key = "loading_placeholder") {
             Box(
               modifier = Modifier.fillMaxWidth().padding(32.dp),
@@ -367,7 +374,7 @@ fun OnlinePlaylistScreen(
                           onClick = {
                             when (item) {
                               is PlaylistItem ->
-                                navController.navigate("online_playlist/${item.id}")
+                                navController.navigate(onlinePlaylistRoute(item.id, item.thumbnail))
                               is AlbumItem -> navController.navigate("album/${item.browseId}")
                               is ArtistItem -> navController.navigate("artist/${item.id}")
                               is SongItem ->
@@ -603,7 +610,12 @@ private fun OnlinePlaylistHeader(
           }
         }
       },
-    artwork = { StageHeroArtwork(playlist.thumbnail?.resize(1200, 1200)) },
+    artwork = {
+      StageHeroBlendedArtwork(
+        songs.map { it.thumbnail },
+        fallback = playlist.thumbnail?.resize(1200, 1200),
+      )
+    },
     subtitleContent = {
       if (hasExplicitContent) {
         Row(

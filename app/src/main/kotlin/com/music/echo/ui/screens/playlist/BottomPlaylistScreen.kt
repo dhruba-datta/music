@@ -83,7 +83,7 @@ import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.SongListItem
 import echo.music.iad1tya.ui.component.StageHero
-import echo.music.iad1tya.ui.component.StageHeroArtwork
+import echo.music.iad1tya.ui.component.StageHeroBlendedArtwork
 import echo.music.iad1tya.ui.component.StageHeroDownloadButton
 import echo.music.iad1tya.ui.component.StageHeroPlayButton
 import echo.music.iad1tya.ui.component.StageHeroShuffleButton
@@ -349,7 +349,6 @@ fun BottomPlaylistScreen(
             song = song,
             isActive = song.song.id == mediaMetadata?.id,
             isPlaying = isPlaying,
-            showInLibraryIcon = true,
             shape = listItemShape(index, filteredSongs.size),
             trailingContent = {
               if (inSelectMode) {
@@ -556,7 +555,7 @@ private fun BottomPlaylistHeader(
             append(makeTimeString(likeLength * 1000L))
           }
         },
-      artwork = { StageHeroArtwork(songs[0].thumbnailUrl?.resize(1200, 1200)) },
+      artwork = { StageHeroBlendedArtwork(songs.map { it.thumbnailUrl }) },
       leadingActions = {
         StageHeroDownloadButton(downloadState = downloadState, onClick = onDownload)
       },

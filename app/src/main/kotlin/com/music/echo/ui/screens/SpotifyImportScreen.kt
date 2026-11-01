@@ -147,7 +147,7 @@ fun SpotifyAccountSection(
     scrollState = scrollState,
     title = stringResource(R.string.stage_spotify),
     items =
-      if (!state.isAuthenticated) {
+      if (!connected) {
         listOf(accountRow, byLinkRow)
       } else {
         listOf(
@@ -157,7 +157,8 @@ fun SpotifyAccountSection(
             description = {
               Text(
                 when {
-                  state.isLoading -> stringResource(R.string.spotify_loading_library)
+                  state.isLoadingSources && !state.hasSources ->
+                    stringResource(R.string.spotify_loading_library)
                   state.selectedSourceIds.isNotEmpty() ->
                     stringResource(R.string.spotify_selected_count, state.selectedSourceIds.size)
                   state.hasSources ->
@@ -176,7 +177,7 @@ fun SpotifyAccountSection(
             title = { Text(stringResource(R.string.spotify_refresh)) },
             icon = painterResource(R.drawable.cached),
             iconBackground = StageTile.Slate,
-            enabled = idle,
+            enabled = idle && !state.isLoadingSources,
             onClick = { spotifyImportViewModel.loadSources() },
           ),
         )

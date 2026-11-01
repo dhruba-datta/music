@@ -508,6 +508,18 @@ internal fun StageNowPlayingTitle(textColor: Color, modifier: Modifier = Modifie
   )
 }
 
+/** "Now playing" alone, for a header that shows the song itself below it. */
+@Composable
+internal fun StageNowPlayingLabel(textColor: Color, modifier: Modifier = Modifier) {
+  ThumbnailHeader(
+    queueTitle = null,
+    albumTitle = null,
+    textColor = textColor,
+    stage = true,
+    modifier = modifier,
+  )
+}
+
 @Composable
 private fun ThumbnailHeader(
   queueTitle: String?,

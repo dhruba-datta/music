@@ -14,7 +14,6 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
@@ -63,6 +62,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.exoplayer.offline.Download
@@ -97,7 +97,7 @@ fun MusicFlowPage(
   lyricsAvailable: Boolean,
   showLyrics: Boolean,
   lyricsText: String?,
-  progress: () -> Float,
+  bottomPadding: Dp,
   position: () -> Long,
   duration: () -> Long,
   actions: MusicFlowPageActions,
@@ -222,8 +222,7 @@ fun MusicFlowPage(
               1f to Color.Black.copy(alpha = 0.92f),
             )
           )
-          .windowInsetsPadding(WindowInsets.safeDrawing)
-          .padding(start = 22.dp, end = 10.dp, top = 56.dp, bottom = 16.dp),
+          .padding(start = 22.dp, end = 10.dp, top = 56.dp, bottom = bottomPadding + 16.dp),
     ) {
       MetadataSection(
         title = song.title,
@@ -238,15 +237,6 @@ fun MusicFlowPage(
         downloadState = downloadState,
         actions = actions,
       )
-    }
-
-    // 6. PROGRESS HAIRLINE
-    if (isCurrentPlayback) {
-      val trackColor = Color.White.copy(alpha = 0.18f)
-      Canvas(modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(2.dp)) {
-        drawRect(trackColor)
-        drawRect(Color.White, size = size.copy(width = size.width * progress().coerceIn(0f, 1f)))
-      }
     }
   }
 }

@@ -193,10 +193,15 @@ fun NavGraphBuilder.navigationBuilder(
   }
 
   composable(
-    route = "online_playlist/{playlistId}",
+    route = "online_playlist/{playlistId}?cover={cover}",
     arguments =
       listOf(
         navArgument("playlistId") { type = NavType.StringType },
+        navArgument("cover") {
+          type = NavType.StringType
+          nullable = true
+          defaultValue = null
+        },
       ),
   ) {
     OnlinePlaylistScreen(navController, scrollBehavior)
@@ -492,3 +497,8 @@ fun NavGraphBuilder.navigationBuilder(
   composable("search_history") { SearchHistoryScreen(navController) }
   composable("generate") { GenerateScreen(navController) }
 }
+
+/** Opens a YouTube playlist, passing the [cover] that was tapped so it shows at once. */
+fun onlinePlaylistRoute(playlistId: String, cover: String?): String =
+  "online_playlist/$playlistId" +
+    cover.orEmpty().takeIf { it.isNotBlank() }?.let { "?cover=${java.net.URLEncoder.encode(it, "UTF-8")}" }.orEmpty()

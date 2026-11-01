@@ -8,7 +8,13 @@
     "Home: Liked, Spotify and YouTube sections after Speed Dial, sideways paging for song sections, fixed-width playlist and album cards, and tapping a side card activates it before playing",
     "Controls: one outline icon style across the player, notifications and widgets, with no circular backgrounds",
     "Shuffle: the last on or off choice now carries across every playlist",
-    "Music Flow: reliable swipes in all directions, sync with the bottom player and a cleaner button layout"
+    "Music Flow: reliable swipes in all directions, sync with the bottom player and a cleaner button layout",
+    "Music Flow: the cover now fills the page behind the top bar and mini player, and stops at the solid bottom bar",
+    "Home: dots under sideways sections show they can be scrolled",
+    "Player: lyrics now open in the cover's place, and the controls below stay where they are",
+    "Sleep timer: new sheet with presets, a time-left view, Add 10 min and Turn off",
+    "Playlists: covers now softly blend up to four songs, on lists and page banners",
+    "Player: song name and artist are centered at the top, with download and favorite under the cover"
   ],
   "bug_fixes": [
     "Stats: fix NullPointerException crash when opening Stats by making SongWithStats thumbnailUrl and play counts safely nullable, removing unsafe forced unwraps, and guarding date sequence boundaries (#646)",
@@ -32,7 +38,13 @@
     "Sync: stop partial YouTube results or signing out from removing likes and library songs, and send the correct move when reordering synced playlists",
     "Spotify import: fix playlists and playlist lists stopping early, and stop failed searches from shrinking a playlist",
     "Listen Together: fix reconnect crashes, and block guests from controlling playback in the floating mini player",
-    "Fix the crash when creating a synced playlist offline, launch actions repeating after rotation, and What's New reading from the wrong repository"
+    "Fix the crash when creating a synced playlist offline, launch actions repeating after rotation, and What's New reading from the wrong repository",
+    "Home: bring back the YouTube Music song section",
+    "Mini player: show one progress bar along the bottom edge in every style and on every page",
+    "Song rows: show only the downloaded icon, the same across YouTube Music, Spotify and local lists",
+    "Account: the Spotify section opens straight away and keeps the loaded library instead of reloading each visit",
+    "Covers: stop single covers being cut off at the sides, and reduce corner clipping on song thumbnails",
+    "Playlists: open with the cover already showing, without a dark flash or a jump in the image"
   ],
   "contributors": []
 }

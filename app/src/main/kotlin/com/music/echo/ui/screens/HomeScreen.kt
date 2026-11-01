@@ -51,14 +51,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.itemsIndexed
@@ -208,7 +211,7 @@ private fun NavController.navigateToPlaylistItem(playlist: PlaylistItem) {
   when (val playlistId = playlist.id.removePrefix("VL")) {
     "LM" -> navigate("auto_playlist/liked")
     "SE" -> navigate("auto_playlist/downloaded")
-    else -> navigate("online_playlist/$playlistId")
+    else -> navigate(onlinePlaylistRoute(playlistId, playlist.thumbnail))
   }
 }
 
@@ -244,6 +247,7 @@ private val StageCardArtHeight = 92.dp
 private val StageCardTextHeight = 49.dp
 private val HomeRowCardWidth = 160.dp
 private const val HomeRowsPerPage = 5
+private const val HomeMaxDots = 8
 private const val HomePagedSongs = 20
 private val StageRowPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 12.dp)
 
@@ -495,13 +499,52 @@ private fun <T> HomePagedRows(
   val pages = remember(items) { items.chunked(HomeRowsPerPage) }
   val pagerState = rememberPagerState(pageCount = { pages.size })
 
-  HorizontalPager(
-    state = pagerState,
-    verticalAlignment = Alignment.Top,
-    modifier = modifier.fillMaxWidth().animateContentSize(tween(300, easing = FastOutSlowInEasing)),
-  ) { page ->
-    Column(modifier = Modifier.fillMaxWidth()) { pages.getOrNull(page)?.forEach { row(it) } }
+  Column(modifier = modifier.fillMaxWidth()) {
+    HorizontalPager(
+      state = pagerState,
+      verticalAlignment = Alignment.Top,
+      modifier = Modifier.fillMaxWidth().animateContentSize(tween(300, easing = FastOutSlowInEasing)),
+    ) { page ->
+      Column(modifier = Modifier.fillMaxWidth()) { pages.getOrNull(page)?.forEach { row(it) } }
+    }
+    HomeScrollDots(count = pages.size, activeIndex = { pagerState.currentPage })
   }
+}
+
+/** Dots under a sideways section, so it reads as something that scrolls. Long rows get [HomeMaxDots]. */
+@Composable
+private fun HomeScrollDots(count: Int, activeIndex: () -> Int) {
+  if (count < 2) return
+  val dots = count.coerceAtMost(HomeMaxDots)
+  val activeDot = (activeIndex().coerceIn(0, count - 1) * (dots - 1) + (count - 1) / 2) / (count - 1)
+
+  Row(
+    horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+    modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 4.dp),
+  ) {
+    repeat(dots) { dot ->
+      val color by
+        animateColorAsState(
+          if (dot == activeDot) MaterialTheme.colorScheme.onSurface
+          else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f)
+        )
+      Box(modifier = Modifier.size(6.dp).background(color, CircleShape))
+    }
+  }
+}
+
+@Composable
+private fun HomeScrollDots(state: LazyListState) {
+  if (!state.canScrollForward && !state.canScrollBackward) return
+  val count = state.layoutInfo.totalItemsCount
+  HomeScrollDots(count, { if (state.canScrollForward) state.firstVisibleItemIndex else count - 1 })
+}
+
+@Composable
+private fun HomeScrollDots(state: LazyGridState) {
+  if (!state.canScrollForward && !state.canScrollBackward) return
+  val count = state.layoutInfo.totalItemsCount
+  HomeScrollDots(count, { if (state.canScrollForward) state.firstVisibleItemIndex else count - 1 })
 }
 
 /** A titled row of equal, fixed-width cards that scrolls sideways. */
@@ -513,9 +556,12 @@ private fun HomeCardRow(
 ) {
   if (cards.isEmpty()) return
 
+  val rowState = rememberLazyListState()
+
   Column(modifier = modifier) {
     NavigationTitle(title = title)
     LazyRow(
+      state = rowState,
       contentPadding = StageRowPadding,
       horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -535,6 +581,7 @@ private fun HomeCardRow(
         }
       }
     }
+    HomeScrollDots(rowState)
   }
 }
 
@@ -620,6 +667,7 @@ fun HomeScreen(
   val explorePage by viewModel.explorePage.collectAsState()
   val dailyDiscover by viewModel.dailyDiscover.collectAsState()
   val communityPlaylists by viewModel.communityPlaylists.collectAsState()
+  val similarRecommendations by viewModel.similarRecommendations.collectAsState()
 
   val allLocalItems by viewModel.allLocalItems.collectAsState()
   val allYtItems by viewModel.allYtItems.collectAsState()
@@ -1208,7 +1256,6 @@ fun HomeScreen(
                 HomePagedRows(items = likedSongs.take(HomePagedSongs), modifier = Modifier.animateItem()) { song ->
                   SongListItem(
                     song = song,
-                    showInLibraryIcon = true,
                     isActive = song.id == mediaMetadata?.id,
                     isPlaying = isPlaying,
                     isSwipeable = false,
@@ -1243,7 +1290,9 @@ fun HomeScreen(
                   )
                 }
                 item(key = "ai_recommendation_list") {
+                  val rowState0 = rememberLazyListState()
                   LazyRow(
+                    state = rowState0,
                     contentPadding = StageRowPadding,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.animateItem()
@@ -1252,10 +1301,33 @@ fun HomeScreen(
                       localGridItem(songObj)
                     }
                   }
+                  HomeScrollDots(rowState0)
                 }
               }
             }
             HomeSection.YouTubeMusic -> {
+              item(key = "youtube_music") {
+                val songs =
+                  remember(similarRecommendations, homePage) {
+                    (similarRecommendations.orEmpty().flatMap { it.items } +
+                        homePage?.sections.orEmpty().flatMap { it.items })
+                      .filterIsInstance<SongItem>()
+                      .distinctBy { it.id }
+                      .take(HomePagedSongs)
+                  }
+                HomeSourceSection(
+                  title = stringResource(R.string.stage_youtube_music),
+                  iconRes = R.drawable.stage_youtube_music,
+                  iconTint = Color(0xFFFF4E45),
+                  songs = songs,
+                  connected = isLoggedIn,
+                  connectText = "Sign in to Google",
+                  onOpen = { navController.navigate(if (isLoggedIn) "account" else "login") },
+                  onShowMenu = ::showHomeSongMenu,
+                  onPlay = ::playHomeSong,
+                  modifier = Modifier.animateItem(),
+                )
+              }
               item(key = "youtube_trending_playlists") {
                 val playlists =
                   remember(communityPlaylists, homePage) {
@@ -1498,7 +1570,9 @@ fun HomeScreen(
                     )
                   }
                   item(key = "daily_discover_content") {
+                    val rowState1 = rememberLazyListState()
                     LazyRow(
+                      state = rowState1,
                       contentPadding = StageRowPadding,
                       horizontalArrangement = Arrangement.spacedBy(12.dp),
                       modifier = Modifier.animateItem()
@@ -1523,6 +1597,7 @@ fun HomeScreen(
                         )
                       }
                     }
+                    HomeScrollDots(rowState1)
                   }
                 }
             }
@@ -1539,8 +1614,9 @@ fun HomeScreen(
 
                   item(key = "keep_listening_list") {
                     val rows = if (keepListening.size > 6) 2 else 1
+                    val rowState2 = rememberLazyGridState()
                     LazyHorizontalGrid(
-                      state = rememberLazyGridState(),
+                      state = rowState2,
                       rows = GridCells.Fixed(rows),
                       contentPadding = StageRowPadding,
                       horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -1557,6 +1633,7 @@ fun HomeScreen(
                         localGridItem(it)
                       }
                     }
+                    HomeScrollDots(rowState2)
                   }
                 }
             }
@@ -1574,7 +1651,9 @@ fun HomeScreen(
                   }
 
                   item(key = "account_playlists_list") {
+                    val rowState3 = rememberLazyListState()
                     LazyRow(
+                      state = rowState3,
                       contentPadding = StageRowPadding,
                       horizontalArrangement = Arrangement.spacedBy(12.dp),
                       modifier = Modifier.animateItem()
@@ -1586,6 +1665,7 @@ fun HomeScreen(
                         ytGridItem(item, StageCardArtHeight)
                       }
                     }
+                    HomeScrollDots(rowState3)
                   }
                 }
             }
@@ -1631,7 +1711,6 @@ fun HomeScreen(
 
                         SongListItem(
                           song = song!!,
-                          showInLibraryIcon = true,
                           isActive = song!!.id == mediaMetadata?.id,
                           isPlaying = isPlaying,
                           isSwipeable = false,
@@ -1676,6 +1755,7 @@ fun HomeScreen(
                         )
                       }
                     }
+                    HomeScrollDots(forgottenFavoritesLazyGridState)
                   }
                 }
             }
@@ -1735,8 +1815,9 @@ fun HomeScreen(
                 if (isSongsOnlySection) {
 
                   item(key = "home_section_list_${section.index}") {
+                    val rowState5 = rememberLazyGridState()
                     LazyHorizontalGrid(
-                      state = rememberLazyGridState(),
+                      state = rowState5,
                       rows = GridCells.Fixed(4),
                       contentPadding =
                         WindowInsets.systemBars
@@ -1793,11 +1874,14 @@ fun HomeScreen(
                         )
                       }
                     }
+                    HomeScrollDots(rowState5)
                   }
                 } else {
 
                   item(key = "home_section_list_${section.index}") {
+                    val rowState6 = rememberLazyListState()
                     LazyRow(
+                      state = rowState6,
                       contentPadding = StageRowPadding,
                       horizontalArrangement = Arrangement.spacedBy(12.dp),
                       modifier = Modifier.animateItem()
@@ -1806,6 +1890,7 @@ fun HomeScreen(
                         ytGridItem(item, StageCardArtHeight)
                       }
                     }
+                    HomeScrollDots(rowState6)
                   }
                 }
               }
@@ -1820,7 +1905,9 @@ fun HomeScreen(
                   )
                 }
                 item(key = "mood_and_genres_list") {
+                  val rowState7 = rememberLazyGridState()
                   LazyHorizontalGrid(
+                    state = rowState7,
                     rows = GridCells.Fixed(4),
                     contentPadding = PaddingValues(6.dp),
                     modifier =
@@ -1838,6 +1925,7 @@ fun HomeScreen(
                       )
                     }
                   }
+                  HomeScrollDots(rowState7)
                 }
               }
             }

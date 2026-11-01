@@ -25,7 +25,7 @@ val SuggestionItemHeight = 56.dp
 val ListThumbnailSize = 52.dp
 val SmallGridThumbnailHeight = 104.dp
 val GridThumbnailHeight = 128.dp
-val ThumbnailCornerRadius = 12.dp
+val ThumbnailCornerRadius = 6.dp
 val GridThumbnailCornerRadius = 18.dp
 
 val PlayerHorizontalPadding = 32.dp

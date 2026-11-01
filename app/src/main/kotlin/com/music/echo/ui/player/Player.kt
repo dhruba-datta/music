@@ -802,55 +802,8 @@ fun BottomSheetPlayer(
 
   var showSleepTimerDialog by remember { mutableStateOf(false) }
 
-  var sleepTimerValue by remember { mutableFloatStateOf(30f) }
   if (showSleepTimerDialog) {
-    StageAlertDialog(
-      onDismissRequest = { showSleepTimerDialog = false },
-      icon = { Icon(painter = painterResource(R.drawable.stage_moon), contentDescription = null) },
-      title = { Text(stringResource(R.string.sleep_timer)) },
-      confirmButton = {
-        StagePillButton(onClick = {
-            showSleepTimerDialog = false
-            playerConnection.service.sleepTimer.start(sleepTimerValue.roundToInt())
-          }) {
-          Text(stringResource(android.R.string.ok))
-        }
-      },
-      dismissButton = {
-        StagePillButton(onClick = { showSleepTimerDialog = false }, primary = false) {
-          Text(stringResource(android.R.string.cancel))
-        }
-      },
-      text = {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-          Text(
-            text =
-              pluralStringResource(
-                R.plurals.minute,
-                sleepTimerValue.roundToInt(),
-                sleepTimerValue.roundToInt()
-              ),
-            style = MaterialTheme.typography.bodyLarge,
-          )
-
-          Slider(
-            value = sleepTimerValue,
-            onValueChange = { sleepTimerValue = it },
-            valueRange = 5f..120f,
-            steps = (120 - 5) / 5 - 1,
-          )
-
-          OutlinedIconButton(
-            onClick = {
-              showSleepTimerDialog = false
-              playerConnection.service.sleepTimer.start(-1)
-            },
-          ) {
-            Text(stringResource(R.string.end_of_song))
-          }
-        }
-      }
-)
+    SleepTimerSheet(onDismiss = { showSleepTimerDialog = false })
   }
 
   var showChoosePlaylistDialog by rememberSaveable { mutableStateOf(false) }
@@ -1508,9 +1461,11 @@ fun BottomSheetPlayer(
       }
     }
 
-    val songTitleBlock: @Composable (MediaMetadata, Modifier, TextStyle, TextUnit) -> Unit =
-      { mediaMetadata, blockModifier, titleStyle, artistSize ->
+    val songTitleBlock:
+      @Composable (MediaMetadata, Modifier, TextStyle, TextUnit, Alignment.Horizontal) -> Unit =
+      { mediaMetadata, blockModifier, titleStyle, artistSize, alignment ->
       Column(
+        horizontalAlignment = alignment,
         modifier =
           blockModifier
             .SwipeGesture(
@@ -2301,7 +2256,28 @@ fun BottomSheetPlayer(
           onClick = { state.collapseSoft() },
         )
 
-        StageNowPlayingTitle(textColor = TextBackgroundColor, modifier = Modifier.weight(1f))
+        val headerSong = mediaMetadata
+        if (headerSong == null || isFullScreen) {
+          StageNowPlayingTitle(textColor = TextBackgroundColor, modifier = Modifier.weight(1f))
+        } else {
+          Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.weight(1f),
+          ) {
+            StageNowPlayingLabel(textColor = TextBackgroundColor)
+            songTitleBlock(
+              headerSong,
+              Modifier,
+              MaterialTheme.typography.titleLarge.copy(
+                fontSize = 20.sp,
+                lineHeight = 24.sp,
+                fontWeight = FontWeight.ExtraBold,
+              ),
+              14.sp,
+              Alignment.CenterHorizontally,
+            )
+          }
+        }
 
         if (showCommentButton) {
           StageHeaderButton(
@@ -2356,21 +2332,12 @@ fun BottomSheetPlayer(
       }
     }
 
-    val stageSongRow: @Composable (MediaMetadata) -> Unit = { meta ->
+    val stageActionRow: @Composable (MediaMetadata) -> Unit = { meta ->
       Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth().padding(horizontal = playerPadding),
       ) {
-        songTitleBlock(
-          meta,
-          Modifier.weight(1f),
-          MaterialTheme.typography.headlineSmall.copy(
-            fontSize = 24.sp,
-            lineHeight = 28.sp,
-            fontWeight = FontWeight.ExtraBold,
-          ),
-          16.sp,
-        )
         Box(
           contentAlignment = Alignment.Center,
           modifier =
@@ -2470,6 +2437,7 @@ fun BottomSheetPlayer(
               fontWeight = FontWeight.ExtraBold,
             ),
             15.sp,
+            Alignment.Start,
           )
         }
 
@@ -2531,6 +2499,7 @@ fun BottomSheetPlayer(
           Modifier.weight(1f),
           MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
           16.sp,
+          Alignment.Start,
         )
 
         Spacer(modifier = Modifier.width(12.dp))
@@ -2960,7 +2929,7 @@ fun BottomSheetPlayer(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)
                       )
                     }
-                    stageSongRow(meta)
+                    stageActionRow(meta)
                     Column { progressBlock() }
                     if (!isFullScreen) {
                       seekButtonsBlock()
@@ -3060,31 +3029,49 @@ fun BottomSheetPlayer(
             val sliderPositionProvider = remember { { currentSliderPosition } }
             val isExpandedProvider = remember(state) { { state.isExpanded } }
             AnimatedContent(
-              targetState = showInlineLyrics,
+              targetState = showInlineLyrics && isFullScreen,
               label = "StagePlayerBody",
               transitionSpec = { fadeIn() togetherWith fadeOut() },
               modifier = Modifier.weight(1f).fillMaxWidth(),
-            ) { showLyrics ->
+            ) { fullScreenLyrics ->
               val meta = mediaMetadata
               when {
                 meta == null -> Spacer(Modifier.fillMaxSize())
-                showLyrics -> stageLyricsBody(meta, showLyrics)
+                fullScreenLyrics -> stageLyricsBody(meta, true)
                 else ->
                   StageEvenLayout(
-                    modifier = Modifier.fillMaxSize().padding(bottom = 16.dp),
+                    modifier = Modifier.fillMaxSize(),
+                    // Lyrics take the cover's place, so everything below it stays where it is.
                     artwork = {
-                      Thumbnail(
-                        sliderPositionProvider = sliderPositionProvider,
-                        modifier =
-                          Modifier.nestedScroll(state.preUpPostDownNestedScrollConnection),
-                        isPlayerExpanded = isExpandedProvider,
-                        stage = true,
-                        isListenTogetherGuest = isListenTogetherGuest
-                      )
+                      AnimatedContent(
+                        targetState = showInlineLyrics,
+                        label = "StagePlayerArtwork",
+                        transitionSpec = { fadeIn() togetherWith fadeOut() },
+                        modifier = Modifier.fillMaxSize(),
+                      ) { showLyrics ->
+                        if (showLyrics) {
+                          InlineLyricsView(
+                            mediaMetadata = meta,
+                            showLyrics = true,
+                            positionProvider = { effectivePosition },
+                            modifier = Modifier.fillMaxSize(),
+                            stage = true,
+                          )
+                        } else {
+                          Thumbnail(
+                            sliderPositionProvider = sliderPositionProvider,
+                            modifier =
+                              Modifier.nestedScroll(state.preUpPostDownNestedScrollConnection),
+                            isPlayerExpanded = isExpandedProvider,
+                            stage = true,
+                            isListenTogetherGuest = isListenTogetherGuest
+                          )
+                        }
+                      }
                     },
                     sections =
                       listOfNotNull(
-                        if (showLyricsOnPlayer) {
+                        if (showLyricsOnPlayer && !showInlineLyrics) {
                           {
                             PlayerSyncedLyricsView(
                               mediaMetadata = meta,
@@ -3095,7 +3082,7 @@ fun BottomSheetPlayer(
                         } else null,
                         {
                           Column {
-                            stageSongRow(meta)
+                            stageActionRow(meta)
                             Spacer(Modifier.height(10.dp))
                             progressBlock()
                           }
@@ -3195,13 +3182,7 @@ fun BottomSheetPlayer(
         showInlineLyrics = showInlineLyrics,
         playerBackground = playerBackground,
         onToggleLyrics = { showInlineLyrics = !showInlineLyrics },
-        onStageTimer = {
-          if (playerConnection.service.sleepTimer.isActive) {
-            playerConnection.service.sleepTimer.clear()
-          } else {
-            showStageSleepTimerDialog = true
-          }
-        },
+        onStageTimer = { showStageSleepTimerDialog = true },
         stageTimerEnabled = !isListenTogetherGuest,
         onStagePlaylist = { showChoosePlaylistDialog = true },
         playerMenuRequested = stagePlayerMenuRequested,
@@ -3213,7 +3194,7 @@ fun BottomSheetPlayer(
     }
 
     if (showStageSleepTimerDialog) {
-      SleepTimerPromptDialog(onDismiss = { showStageSleepTimerDialog = false })
+      SleepTimerSheet(onDismiss = { showStageSleepTimerDialog = false })
     }
 
     if (showCommentSheet) {

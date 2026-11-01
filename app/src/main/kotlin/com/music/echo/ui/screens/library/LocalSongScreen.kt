@@ -603,7 +603,6 @@ fun LocalSongScreen(
           }
           SongListItem(
             song = song,
-            showInLibraryIcon = false,
             showDownloadIcon = false,
             shape = echo.music.iad1tya.utils.listItemShape(index, visibleSongs.size),
             isActive = song.id == mediaMetadata?.id,

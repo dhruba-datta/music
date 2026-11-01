@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.screens.artist
 
+import echo.music.iad1tya.ui.screens.onlinePlaylistRoute
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -537,7 +538,6 @@ fun ArtistScreen(
             ) { index, song ->
               SongListItem(
                 song = song,
-                showInLibraryIcon = true,
                 isActive = song.id == mediaMetadata?.id,
                 isPlaying = isPlaying,
                 shape = listItemShape(index, filteredLibrarySongs.size),
@@ -750,7 +750,7 @@ fun ArtistScreen(
                                 is AlbumItem -> navController.navigate("album/${item.id}")
                                 is ArtistItem -> navController.navigate("artist/${item.id}")
                                 is PlaylistItem ->
-                                  navController.navigate("online_playlist/${item.id}")
+                                  navController.navigate(onlinePlaylistRoute(item.id, item.thumbnail))
                               }
                             },
                             onLongClick = {

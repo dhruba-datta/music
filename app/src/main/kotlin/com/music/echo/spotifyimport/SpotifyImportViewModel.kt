@@ -30,7 +30,7 @@ class SpotifyImportViewModel
 constructor(
   private val repository: SpotifyImportRepository,
 ) : ViewModel() {
-  private val _uiState = MutableStateFlow(SpotifyImportUiState(isLoading = true))
+  private val _uiState = MutableStateFlow(SpotifyImportUiState())
   val uiState: StateFlow<SpotifyImportUiState> = _uiState.asStateFlow()
 
   @Volatile private var sources: List<SpotifyImportSource> = emptyList()
@@ -46,11 +46,19 @@ constructor(
     sourcesMutex.withLock {
       val (nextSources, uiStateUpdate) = updateAction(sources)
       sources = nextSources
+      repository.cachedSources = nextSources
       _uiState.update(uiStateUpdate)
     }
   }
 
   init {
+    sources = repository.cachedSources
+    _uiState.update { state ->
+      state.copy(
+        sources = sources.map(SpotifyImportSource::toUi),
+        selectedSourceIds = sources.mapTo(LinkedHashSet()) { it.id },
+      )
+    }
     restoreSession()
   }
 
@@ -66,7 +74,7 @@ constructor(
               isLoading = false,
             )
           }
-          if (session.isAuthenticated) {
+          if (session.isAuthenticated && sources.isEmpty()) {
             loadSources()
           }
         }
@@ -118,7 +126,7 @@ constructor(
 
   fun loadSources() {
     viewModelScope.launch(Dispatchers.IO) {
-      _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+      _uiState.update { it.copy(isLoadingSources = true, errorMessage = null) }
       runCatching { repository.loadSources() }
         .onSuccess { loadedSources ->
           updateSources {
@@ -129,7 +137,7 @@ constructor(
                   isAuthenticated = true,
                   sources = loadedSources.map(SpotifyImportSource::toUi),
                   selectedSourceIds = selectedIds,
-                  isLoading = false,
+                  isLoadingSources = false,
                 )
               }
           }
@@ -139,7 +147,7 @@ constructor(
           reportException(error)
           _uiState.update {
             it.copy(
-              isLoading = false,
+              isLoadingSources = false,
               errorMessage = error.message,
             )
           }

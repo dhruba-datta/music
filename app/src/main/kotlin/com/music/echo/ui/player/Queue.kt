@@ -429,11 +429,7 @@ fun Queue(
               checked = sleepTimerEnabled,
               onCheckedChange = {
                 if (!isListenTogetherGuest) {
-                  if (sleepTimerEnabled) {
-                    playerConnection.service.sleepTimer.clear()
-                  } else {
-                    showSleepTimerDialog = true
-                  }
+                  showSleepTimerDialog = true
                 }
               },
               shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
@@ -488,7 +484,7 @@ fun Queue(
       }
 
       if (showSleepTimerDialog) {
-        SleepTimerPromptDialog(onDismiss = { showSleepTimerDialog = false })
+        SleepTimerSheet(onDismiss = { showSleepTimerDialog = false })
       }
     },
   ) {
@@ -1530,56 +1526,4 @@ private fun StageQueueRow(
     }
     Row(verticalAlignment = Alignment.CenterVertically, content = trailing)
   }
-}
-
-@Composable
-internal fun SleepTimerPromptDialog(onDismiss: () -> Unit) {
-  val playerConnection = LocalPlayerConnection.current ?: return
-  var sleepTimerValue by remember { mutableFloatStateOf(30f) }
-
-  ActionPromptDialog(
-    titleBar = {
-      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-        Text(
-          text = stringResource(R.string.sleep_timer),
-          overflow = TextOverflow.Ellipsis,
-          maxLines = 1,
-          style = MaterialTheme.typography.headlineSmall,
-        )
-      }
-    },
-    onDismiss = onDismiss,
-    onConfirm = {
-      onDismiss()
-      playerConnection.service.sleepTimer.start(sleepTimerValue.roundToInt())
-    },
-    onCancel = onDismiss,
-    onReset = { sleepTimerValue = 30f },
-    content = {
-      Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        StageSliderRow(
-          title = stringResource(R.string.stage_stop_after),
-          valueText =
-            pluralStringResource(
-              R.plurals.minute,
-              sleepTimerValue.roundToInt(),
-              sleepTimerValue.roundToInt()
-            ),
-          value = sleepTimerValue,
-          onValueChange = { sleepTimerValue = it },
-          valueRange = 5f..120f,
-          steps = (120 - 5) / 5 - 1,
-        )
-
-        StageButton(
-          text = stringResource(R.string.end_of_song),
-          primary = false,
-          onClick = {
-            onDismiss()
-            playerConnection.service.sleepTimer.start(-1)
-          },
-        )
-      }
-    }
-  )
 }

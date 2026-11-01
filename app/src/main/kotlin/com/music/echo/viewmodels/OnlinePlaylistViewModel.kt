@@ -36,6 +36,9 @@ constructor(
 ) : ViewModel() {
   private val playlistId = savedStateHandle.get<String>("playlistId")!!
 
+  /** The cover of the tile that opened this page, shown until the playlist loads. */
+  val tappedCover: String? = savedStateHandle.get<String>("cover")?.takeIf { it.isNotBlank() }
+
   val playlist = MutableStateFlow<PlaylistItem?>(null)
   val playlistSongs = MutableStateFlow<List<SongItem>>(emptyList())
   val relatedItems = MutableStateFlow<List<YTItem>>(emptyList())

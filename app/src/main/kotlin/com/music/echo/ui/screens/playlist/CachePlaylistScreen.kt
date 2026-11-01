@@ -85,7 +85,7 @@ import echo.music.iad1tya.ui.component.LocalMenuState
 import echo.music.iad1tya.ui.component.SongListItem
 import echo.music.iad1tya.ui.component.SortHeader
 import echo.music.iad1tya.ui.component.StageHero
-import echo.music.iad1tya.ui.component.StageHeroArtwork
+import echo.music.iad1tya.ui.component.StageHeroBlendedArtwork
 import echo.music.iad1tya.ui.component.StageHeroDownloadButton
 import echo.music.iad1tya.ui.component.StageHeroPlayButton
 import echo.music.iad1tya.ui.component.StageHeroShuffleButton
@@ -328,7 +328,6 @@ fun CachePlaylistScreen(
             song = song,
             isActive = song.id == mediaMetadata?.id,
             isPlaying = isPlaying,
-            showInLibraryIcon = true,
             shape = listItemShape(index, filteredSongs.size),
             trailingContent = {
               if (inSelectMode) {
@@ -540,7 +539,7 @@ private fun CachePlaylistHeader(
             append(makeTimeString(cacheLength * 1000L))
           }
         },
-      artwork = { StageHeroArtwork(songs.firstOrNull()?.thumbnailUrl?.resize(1200, 1200)) },
+      artwork = { StageHeroBlendedArtwork(songs.map { it.thumbnailUrl }) },
       leadingActions = {
         StageHeroDownloadButton(downloadState = downloadState, onClick = onDownload)
       },

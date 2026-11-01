@@ -20,13 +20,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -47,7 +45,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -73,6 +70,7 @@ import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
@@ -86,6 +84,7 @@ import com.music.innertube.models.SongItem
 import echo.music.iad1tya.LocalDatabase
 import echo.music.iad1tya.LocalDownloadUtil
 import echo.music.iad1tya.LocalExpandPlayer
+import echo.music.iad1tya.LocalNavigationBarInset
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.LocalSetTabMenu
 import echo.music.iad1tya.LocalPlayerConnection
@@ -152,7 +151,6 @@ fun MusicFlowScreen(
     !preferences.dataSaver && (preferences.cellularPrefetch || !context.isActiveNetworkMetered())
   }
 
-  var progress by remember(currentMediaId) { mutableFloatStateOf(0f) }
   var positionMs by remember(currentMediaId) { mutableLongStateOf(0L) }
   var durationMs by remember(currentMediaId) { mutableLongStateOf(0L) }
 
@@ -161,7 +159,6 @@ fun MusicFlowScreen(
       val (position, duration) = playerConnection.positionAndDuration()
       positionMs = position
       durationMs = duration
-      progress = if (duration > 0) position.toFloat() / duration else 0f
       delay(POSITION_POLL_MS)
     }
   }
@@ -258,12 +255,18 @@ fun MusicFlowScreen(
     onDispose { setTabMenu(null) }
   }
 
-  // A tab like the others: the page sits between the shared top bar and the bottom bars.
+  // The cover runs from the top of the screen, behind the top bar and the mini player, and stops
+  // at the bottom bar, which stays solid as on every other tab.
+  val navigationBarInset = LocalNavigationBarInset.current
+  val barInsets = LocalPlayerAwareWindowInsets.current.asPaddingValues()
+  val topBarInset = barInsets.calculateTopPadding()
+  val miniPlayerSpace = (barInsets.calculateBottomPadding() - navigationBarInset).coerceAtLeast(0.dp)
+
   Box(
     modifier =
       Modifier.fillMaxSize()
         .background(MaterialTheme.colorScheme.surface)
-        .windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Vertical))
+        .padding(bottom = navigationBarInset)
         .background(Color.Black)
   ) {
     when {
@@ -324,7 +327,7 @@ fun MusicFlowScreen(
                 lyricsAvailable = isCurrent && lyricsReady,
                 showLyrics = isCurrent && preferences.lyrics,
                 lyricsText = currentLyricsText,
-                progress = { progress },
+                bottomPadding = miniPlayerSpace,
                 position = { if (isCurrent) positionMs else 0L },
                 duration = { if (isCurrent && durationMs > 0) durationMs else songDuration },
                 actions =
@@ -364,7 +367,15 @@ fun MusicFlowScreen(
         }
     }
 
+    Box(
+      modifier =
+        Modifier.fillMaxWidth()
+          .height(topBarInset + TopScrimOverhang)
+          .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.55f), Color.Transparent)))
+    )
+
     PlaybackStatus(
+      topPadding = topBarInset,
       state = state,
       onStatusAction = viewModel::togglePlayPause,
       onRetryPlayback = viewModel::retryPlayback,
@@ -377,7 +388,7 @@ fun MusicFlowScreen(
         modifier =
           Modifier.fillMaxSize()
             .background(Color.Black.copy(alpha = 0.94f))
-            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .padding(top = topBarInset, bottom = miniPlayerSpace)
       ) {
         InlineLyricsView(
           mediaMetadata = mediaMetadata,
@@ -411,13 +422,14 @@ fun MusicFlowScreen(
 /** The offline note and playback problems, over the top of the page. */
 @Composable
 private fun PlaybackStatus(
+  topPadding: Dp,
   state: MusicFlowUiState,
   onStatusAction: () -> Unit,
   onRetryPlayback: () -> Unit,
   onSkip: () -> Unit,
   hasPlaybackError: Boolean,
 ) {
-  Box(modifier = Modifier.fillMaxWidth()) {
+  Box(modifier = Modifier.fillMaxWidth().padding(top = topPadding)) {
     Column(
       horizontalAlignment = Alignment.CenterHorizontally,
       modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
@@ -557,3 +569,5 @@ private fun Context.isActiveNetworkMetered(): Boolean =
 private const val POSITION_POLL_MS = 50L
 private const val SWIPE_THRESHOLD = 0.15f
 private val HORIZONTAL_SWIPE_DISTANCE = 56.dp
+
+private val TopScrimOverhang = 32.dp

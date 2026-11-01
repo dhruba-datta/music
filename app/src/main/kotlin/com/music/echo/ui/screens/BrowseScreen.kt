@@ -78,7 +78,7 @@ fun BrowseScreen(
               onClick = {
                 when (item) {
                   is AlbumItem -> navController.navigate("album/${item.id}")
-                  is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
+                  is PlaylistItem -> navController.navigate(onlinePlaylistRoute(item.id, item.thumbnail))
                   is ArtistItem -> navController.navigate("artist/${item.id}")
                   else -> {}
                 }

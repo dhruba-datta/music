@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -51,6 +52,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.exoplayer.offline.Download
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import echo.music.iad1tya.R
 import echo.music.iad1tya.constants.AppBarHeight
 import echo.music.iad1tya.ui.utils.resize
@@ -65,6 +68,7 @@ private val HeroBottomPadding = 14.dp
 
 /** The size `ItemThumbnail` loads, so the hero can reuse what a list already fetched. */
 private const val HeroPreviewSize = 544
+private const val HeroBlendSize = 800
 
 /**
  * Stage collection header: full-width artwork that runs under the status bar and top bar, a fade
@@ -188,20 +192,36 @@ fun BoxScope.StageHeroArtwork(thumbnailUrl: String?) {
   if (thumbnailUrl.isNullOrEmpty()) return
 
   val preview = thumbnailUrl.resize(HeroPreviewSize, HeroPreviewSize)
-  if (preview != thumbnailUrl) {
-    AsyncImage(
-      model = preview,
-      contentDescription = null,
-      contentScale = ContentScale.Crop,
-      modifier = Modifier.matchParentSize(),
-    )
-  }
+  if (preview != thumbnailUrl) HeroImage(preview)
+  HeroImage(thumbnailUrl)
+}
+
+/** The full width, so a title printed on the cover isn't cut off at the sides. */
+@Composable
+private fun BoxScope.HeroImage(url: String) {
   AsyncImage(
-    model = thumbnailUrl,
+    model = ImageRequest.Builder(LocalContext.current).data(url).crossfade(false).build(),
     contentDescription = null,
-    contentScale = ContentScale.Crop,
+    contentScale = ContentScale.FillWidth,
+    alignment = Alignment.TopCenter,
     modifier = Modifier.matchParentSize(),
   )
+}
+
+/**
+ * The hero of a list of songs: its first covers blended, over [fallback] or the only cover it has
+ * so the hero is never empty. The blend starts from the sizes the lists already loaded.
+ */
+@Composable
+fun BoxScope.StageHeroBlendedArtwork(thumbnails: List<String?>, fallback: String? = null) {
+  val covers = blendedCovers(thumbnails)
+  StageHeroArtwork(fallback ?: covers.firstOrNull()?.resize(HeroBlendSize, HeroBlendSize))
+  if (covers.size < 2) return
+
+  val previews = covers.map { it.resize(HeroPreviewSize, HeroPreviewSize) }
+  val sharp = covers.map { it.resize(HeroBlendSize, HeroBlendSize) }
+  CoverBlend(covers = previews, modifier = Modifier.matchParentSize())
+  if (sharp != previews) CoverBlend(covers = sharp, modifier = Modifier.matchParentSize())
 }
 
 /** Round action on the hero's row. Use for anything that is not a plain icon. */

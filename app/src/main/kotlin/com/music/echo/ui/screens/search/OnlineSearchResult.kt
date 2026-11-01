@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.screens.search
 
+import echo.music.iad1tya.ui.screens.onlinePlaylistRoute
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.DropdownMenu
@@ -280,7 +281,7 @@ fun OnlineSearchResult(
                   }
                   is AlbumItem -> navController.navigate("album/${item.id}")
                   is ArtistItem -> navController.navigate("artist/${item.id}")
-                  is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
+                  is PlaylistItem -> navController.navigate(onlinePlaylistRoute(item.id, item.thumbnail))
                 }
               },
               onLongClick = longClick,

@@ -511,7 +511,6 @@ fun AlbumScreen(
             song = song,
             isActive = song.id == mediaMetadata?.id,
             isPlaying = isPlaying,
-            showInLibraryIcon = true,
             shape = listItemShape(index, filteredSongs.size),
             trailingContent = {
               if (inSelectMode) {

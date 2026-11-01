@@ -60,6 +60,9 @@ constructor(
 ) {
   private val mapperMutex = Mutex()
 
+  /** The library as last loaded, so reopening a page shows it without asking Spotify again. */
+  @Volatile var cachedSources: List<SpotifyImportSource> = emptyList()
+
   suspend fun restoreSession(): SpotifyImportSession =
     withContext(Dispatchers.IO) {
       val prefs = context.dataStore.data.first()
@@ -134,6 +137,7 @@ constructor(
         prefs.remove(SpotifyAccountAvatarUrlKey)
       }
       Spotify.accessToken = null
+      cachedSources = emptyList()
       runCatching { clearWebAuthSession(context) }.onFailure(::reportException)
     }
   }

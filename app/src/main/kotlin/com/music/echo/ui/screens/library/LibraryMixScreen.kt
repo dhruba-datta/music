@@ -307,10 +307,8 @@ fun LibraryMixScreen(
       ) { index, song ->
         SongListItem(
           song = song,
-          showInLibraryIcon = true,
           isActive = song.id == mediaMetadata?.id,
           isPlaying = isPlaying,
-          showLikedIcon = true,
           shape = listItemShape(index, songs.size),
           trailingContent = {
             IconButton(

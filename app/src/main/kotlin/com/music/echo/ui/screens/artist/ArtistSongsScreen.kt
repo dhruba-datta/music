@@ -123,7 +123,6 @@ fun ArtistSongsScreen(
       ) { index, song ->
         SongListItem(
           song = song,
-          showInLibraryIcon = true,
           isActive = song.id == mediaMetadata?.id,
           isPlaying = isPlaying,
           shape = listItemShape(index, songs.size),

@@ -180,7 +180,6 @@ fun LocalSearchScreen(
           is Song ->
             SongListItem(
               song = item,
-              showInLibraryIcon = true,
               isActive = item.id == mediaMetadata?.id,
               isPlaying = isPlaying,
               shape = listItemShape(items.indexOfFirst { it.id == item.id }, items.size),

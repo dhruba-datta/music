@@ -410,19 +410,11 @@ fun SongListItem(
   song: Song,
   modifier: Modifier = Modifier,
   albumIndex: Int? = null,
-  showLikedIcon: Boolean = true,
-  showInLibraryIcon: Boolean = false,
   showDownloadIcon: Boolean = true,
   showSize: Boolean = false,
   badges: @Composable RowScope.() -> Unit = {
-    if (showLikedIcon && song.song.liked) {
-      Icon.Favorite()
-    }
     if (song.song.explicit) {
       Icon.Explicit()
-    }
-    if (showInLibraryIcon && song.song.inLibrary != null) {
-      Icon.Library()
     }
     if (showDownloadIcon) {
       val download by LocalDownloadUtil.current.getDownload(song.id).collectAsState(initial = null)
@@ -995,19 +987,12 @@ fun YouTubeListItem(
   trailingContent: @Composable RowScope.() -> Unit = {},
   badges: @Composable RowScope.() -> Unit = {
     val database = LocalDatabase.current
-    val song by
-      produceState<Song?>(initialValue = null, item.id) {
-        if (item is SongItem) value = database.song(item.id).firstOrNull()
-      }
     val album by
       produceState<Album?>(initialValue = null, item.id) {
         if (item is AlbumItem) value = database.album(item.id).firstOrNull()
       }
 
-    if (
-      (item is SongItem && song?.song?.liked == true) ||
-        (item is AlbumItem && album?.album?.bookmarkedAt != null)
-    ) {
+    if (item is AlbumItem && album?.album?.bookmarkedAt != null) {
       Icon.Favorite()
     }
     if (item.explicit) Icon.Explicit()
@@ -1092,19 +1077,12 @@ fun YouTubeGridItem(
   coroutineScope: CoroutineScope? = null,
   badges: @Composable RowScope.() -> Unit = {
     val database = LocalDatabase.current
-    val song by
-      produceState<Song?>(initialValue = null, item.id) {
-        if (item is SongItem) value = database.song(item.id).firstOrNull()
-      }
     val album by
       produceState<Album?>(initialValue = null, item.id) {
         if (item is AlbumItem) value = database.album(item.id).firstOrNull()
       }
 
-    if (
-      item is SongItem && song?.song?.liked == true ||
-        item is AlbumItem && album?.album?.bookmarkedAt != null
-    ) {
+    if (item is AlbumItem && album?.album?.bookmarkedAt != null) {
       Icon.Favorite()
     }
     if (item.explicit) Icon.Explicit()
@@ -1305,26 +1283,10 @@ fun PlaylistThumbnail(
         modifier = Modifier.size(size).clip(shape)
       )
     else ->
-      Box(modifier = Modifier.size(size).clip(shape)) {
-        listOf(Alignment.TopStart, Alignment.TopEnd, Alignment.BottomStart, Alignment.BottomEnd)
-          .fastForEachIndexed { index, alignment ->
-            AsyncImage(
-              model =
-                ImageRequest.Builder(LocalContext.current)
-                  .data(thumbnails.getOrNull(index)?.resize(544, 544))
-                  .apply {}
-                  .memoryCachePolicy(coil3.request.CachePolicy.ENABLED)
-                  .diskCachePolicy(coil3.request.CachePolicy.ENABLED)
-                  .networkCachePolicy(coil3.request.CachePolicy.ENABLED)
-                  .build(),
-              contentDescription = null,
-              contentScale = if (cropAlbumArt) ContentScale.Crop else ContentScale.Fit,
-              placeholder = painterResource(R.drawable.ic_launcher_nobg),
-              error = painterResource(R.drawable.ic_launcher_nobg),
-              modifier = Modifier.align(alignment).size(size / 2)
-            )
-          }
-      }
+      CoverBlend(
+        covers = blendedCovers(thumbnails).map { it.resize(544, 544) },
+        modifier = Modifier.size(size).clip(shape),
+      )
   }
 }
 
@@ -1480,15 +1442,6 @@ object Icon {
       painter = painterResource(R.drawable.favorite),
       contentDescription = null,
       tint = MaterialTheme.colorScheme.error,
-      modifier = Modifier.size(18.dp).padding(end = 2.dp)
-    )
-  }
-
-  @Composable
-  fun Library() {
-    Icon(
-      painter = painterResource(R.drawable.library_add_check),
-      contentDescription = null,
       modifier = Modifier.size(18.dp).padding(end = 2.dp)
     )
   }

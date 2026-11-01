@@ -132,6 +132,7 @@ import echo.music.iad1tya.ui.component.SortHeader
 import echo.music.iad1tya.ui.component.StageCheckbox
 import echo.music.iad1tya.ui.component.StageHero
 import echo.music.iad1tya.ui.component.StageHeroArtwork
+import echo.music.iad1tya.ui.component.StageHeroBlendedArtwork
 import echo.music.iad1tya.ui.component.StageHeroDownloadButton
 import echo.music.iad1tya.ui.component.StageHeroIconButton
 import echo.music.iad1tya.ui.component.StageHeroPlayButton
@@ -690,7 +691,6 @@ fun LocalPlaylistScreen(
               song = song.song,
               isActive = song.song.id == mediaMetadata?.id,
               isPlaying = isPlaying,
-              showInLibraryIcon = true,
               shape =
                 listItemShape(
                   index = index,
@@ -1183,24 +1183,7 @@ fun LocalPlaylistHeader(
           }
           1 ->
             StageHeroArtwork((overrideThumbnail.value ?: playlist.thumbnails[0]).resize(1200, 1200))
-          else -> {
-            Box(modifier = Modifier.matchParentSize()) {
-              listOf(
-                  Alignment.TopStart,
-                  Alignment.TopEnd,
-                  Alignment.BottomStart,
-                  Alignment.BottomEnd,
-                )
-                .fastForEachIndexed { index, alignment ->
-                  AsyncImage(
-                    model = playlist.thumbnails.getOrNull(index),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.align(alignment).fillMaxSize(0.5f)
-                  )
-                }
-            }
-          }
+          else -> StageHeroBlendedArtwork(playlist.thumbnails)
         }
       },
       leadingActions = {

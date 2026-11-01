@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.screens.search
 
+import echo.music.iad1tya.ui.screens.onlinePlaylistRoute
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -294,7 +295,7 @@ fun OnlineSearchScreen(
                     onDismiss()
                   }
                   is PlaylistItem -> {
-                    navController.navigate("online_playlist/${item.id}")
+                    navController.navigate(onlinePlaylistRoute(item.id, item.thumbnail))
                     onDismiss()
                   }
                 }

@@ -731,6 +731,13 @@
     <string name="stage_tempo">Tempo</string>
     <string name="stage_pitch">Pitch</string>
     <string name="stage_stop_after">Stop after</string>
+    <string name="stage_timer_start">Start</string>
+    <string name="stage_timer_minutes">minutes</string>
+    <string name="stage_timer_minutes_short">%1$d min</string>
+    <string name="stage_timer_hours_short">%1$s hr</string>
+    <string name="stage_timer_stops_at">Music stops at %1$s</string>
+    <string name="stage_timer_add_minutes">Add %1$d min</string>
+    <string name="stage_timer_turn_off">Turn off</string>
     <string name="stage_youtube_music" translatable="false">YouTube Music</string>
     <string name="stage_spotify" translatable="false">Spotify</string>
     <string name="stage_guest">Guest</string>

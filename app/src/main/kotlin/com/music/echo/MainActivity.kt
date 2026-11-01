@@ -186,6 +186,7 @@ import echo.music.iad1tya.ui.component.floatingtabbar.rememberFloatingTabBarScro
 import echo.music.iad1tya.ui.component.shimmer.getShimmerTheme
 import echo.music.iad1tya.ui.menu.YouTubeSongMenu
 import echo.music.iad1tya.ui.player.BottomSheetPlayer
+import echo.music.iad1tya.ui.player.LocalMiniPlayerOverArtwork
 import echo.music.iad1tya.ui.screens.Screens
 import echo.music.iad1tya.ui.utils.navigateToTab
 import echo.music.iad1tya.ui.screens.SettingDialoge
@@ -1246,6 +1247,13 @@ class MainActivity : ComponentActivity() {
             if (pureBlack) Color.White else contentColorFor(MaterialTheme.colorScheme.surface),
           LocalPlayerConnection provides playerConnection,
           LocalPlayerAwareWindowInsets provides playerAwareWindowInsets,
+          LocalNavigationBarInset provides
+            (bottomInset +
+              if (shouldShowNavigationBar && !showRail) {
+                NavigationBarHeight + FloatingToolbarBottomPadding
+              } else {
+                0.dp
+              }),
           LocalDownloadUtil provides downloadUtil,
           LocalShimmerTheme provides getShimmerTheme(),
           LocalSyncUtils provides syncUtils,
@@ -1264,6 +1272,8 @@ class MainActivity : ComponentActivity() {
                 Row {
                   val topBarRoute = navBackStackEntry?.destination?.route
                   val isTabTopBar = Screens.MainScreens.fastAny { it.route == topBarRoute }
+                  // Music Flow's cover runs up behind the bar.
+                  val onMusicFlow = topBarRoute == Screens.MusicFlow.route
                   // History follows the page: searches, recognitions, or played songs.
                   val (historyRoute, historyLabel) =
                     when (topBarRoute) {
@@ -1339,10 +1349,16 @@ class MainActivity : ComponentActivity() {
                     scrollBehavior = topAppBarScrollBehavior,
                     colors =
                       TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                        titleContentColor = MaterialTheme.colorScheme.onSurface,
-                        actionIconContentColor = MaterialTheme.colorScheme.onSurface,
+                        containerColor =
+                          if (onMusicFlow) Color.Transparent
+                          else MaterialTheme.colorScheme.surface,
+                        scrolledContainerColor =
+                          if (onMusicFlow) Color.Transparent
+                          else MaterialTheme.colorScheme.surfaceContainer,
+                        titleContentColor =
+                          if (onMusicFlow) Color.White else MaterialTheme.colorScheme.onSurface,
+                        actionIconContentColor =
+                          if (onMusicFlow) Color.White else MaterialTheme.colorScheme.onSurface,
                         navigationIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                       ),
                     windowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Top),
@@ -1390,6 +1406,9 @@ class MainActivity : ComponentActivity() {
                   currentRoute?.startsWith("settings") != true
               ) {
                 Box {
+                  CompositionLocalProvider(
+                    LocalMiniPlayerOverArtwork provides (currentRoute == Screens.MusicFlow.route)
+                  ) {
                   BottomSheetPlayer(
                     state = playerBottomSheetState,
                     navController = navController,
@@ -1401,6 +1420,7 @@ class MainActivity : ComponentActivity() {
                     showLyricsRequested = showLyricsRequested,
                     onLyricsShown = { showLyricsRequested = false },
                   )
+                  }
 
                   val navSlideDistance =
                     bottomInset + FloatingToolbarBottomPadding + NavigationBarHeight
@@ -1968,6 +1988,9 @@ val LocalRingtoneViewModel =
 
 val LocalPlayerConnection =
   staticCompositionLocalOf<PlayerConnection?> { error("No PlayerConnection provided") }
+
+/** The height of the bottom navigation bar, without the mini player above it. */
+val LocalNavigationBarInset = compositionLocalOf { 0.dp }
 
 val LocalPlayerAwareWindowInsets =
   compositionLocalOf<WindowInsets> { error("No WindowInsets provided") }

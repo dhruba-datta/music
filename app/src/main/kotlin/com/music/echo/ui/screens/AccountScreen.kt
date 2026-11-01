@@ -148,7 +148,7 @@ fun AccountScreen(
         )
       is AlbumItem -> navController.navigate("album/${item.id}")
       is ArtistItem -> navController.navigate("artist/${item.id}")
-      is PlaylistItem -> navController.navigate("online_playlist/${item.id.removePrefix("VL")}")
+      is PlaylistItem -> navController.navigate(onlinePlaylistRoute(item.id.removePrefix("VL"), item.thumbnail))
     }
   }
 
@@ -178,7 +178,7 @@ fun AccountScreen(
           title = item.title,
           subtitle = item.author?.name ?: item.songCountText,
           imageUrl = item.thumbnail,
-          onClick = { navController.navigate("online_playlist/${item.id}") },
+          onClick = { navController.navigate(onlinePlaylistRoute(item.id, item.thumbnail)) },
           onLongClick = { playlistMenu(item) },
         )
       }
@@ -294,7 +294,7 @@ fun AccountScreen(
             fillMaxWidth = true,
             modifier =
               Modifier.combinedClickable(
-                onClick = { navController.navigate("online_playlist/${item.id}") },
+                onClick = { navController.navigate(onlinePlaylistRoute(item.id, item.thumbnail)) },
                 onLongClick = {
                   haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                   menuState.show {

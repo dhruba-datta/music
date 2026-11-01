@@ -140,6 +140,10 @@ constructor(
     }
   }
 
+  /** The YouTube song matched to [track], if a download or playback has matched it yet. */
+  fun songIdFor(track: SpotifyTrack): String? =
+    spotifyDownloadQueue.songIdFor(track.id) ?: spotifyPlaybackResolver.getCached(track.id)?.id
+
   /** Waits for the track list if it is still loading, then hands it to the download queue. */
   fun downloadAll(onFinished: (queued: Int, missing: Int) -> Unit) {
     if (_uiState.value.isPreparingDownload) return

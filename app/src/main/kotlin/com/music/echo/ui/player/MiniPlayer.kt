@@ -50,6 +50,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableLongState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -145,6 +146,27 @@ class ProgressState(
     }
 }
 
+private const val MiniPlayerArtworkScrim = 0.45f
+
+/** True while the mini player sits on top of full-screen artwork, as on Music Flow. */
+val LocalMiniPlayerOverArtwork = compositionLocalOf { false }
+
+/** The song's progress along the mini player's bottom edge, the same in every mini player style. */
+@Composable
+internal fun MiniPlayerProgressBar(
+  progress: () -> Float,
+  color: Color,
+  modifier: Modifier = Modifier,
+) {
+  Box(
+    modifier =
+      modifier.fillMaxWidth().height(3.dp).drawWithContent {
+        drawRect(color.copy(alpha = 0.25f))
+        drawRect(color, size = Size(size.width * progress(), size.height))
+      }
+  )
+}
+
 @Composable
 fun MiniPlayer(
   positionState: MutableLongState,
@@ -183,12 +205,15 @@ fun MiniPlayer(
       (miniPlayerBackground == PlayerBackgroundStyle.LIQUID_GLASS ||
         glassConfig.isEnabledFor(GlassComponent.MINI_PLAYER)) && isGlassSupported()
 
+    val overArtwork = LocalMiniPlayerOverArtwork.current
     val contentColor =
-      if (useGlass && glassConfig.textColor != androidx.compose.ui.graphics.Color.Unspecified)
+      if (overArtwork) Color.White
+      else if (useGlass && glassConfig.textColor != androidx.compose.ui.graphics.Color.Unspecified)
         glassConfig.textColor
       else if (pureBlack) Color.White else MaterialTheme.colorScheme.onSurface
     val bgTint =
-      if (useGlass) Color.Transparent
+      if (overArtwork) Color.Black.copy(alpha = MiniPlayerArtworkScrim)
+      else if (useGlass) Color.Transparent
       else if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainerHighest
     android.util.Log.d(
       "COLOR_MATCH",
@@ -235,6 +260,7 @@ fun MiniPlayer(
 
 @Composable
 private fun NewMiniPlayer(progressState: ProgressState, modifier: Modifier = Modifier) {
+  val overArtwork = LocalMiniPlayerOverArtwork.current
   val playerConnection = LocalPlayerConnection.current ?: return
 
   val pureBlackMini by rememberPreference(PureBlackMiniPlayerKey, defaultValue = false)
@@ -262,7 +288,8 @@ private fun NewMiniPlayer(progressState: ProgressState, modifier: Modifier = Mod
     (miniPlayerBackground == PlayerBackgroundStyle.LIQUID_GLASS ||
       glassConfig.isEnabledFor(GlassComponent.MINI_PLAYER)) && isGlassSupported()
   val bgTint =
-    if (useGlass) Color.Transparent
+    if (overArtwork) Color.Black.copy(alpha = MiniPlayerArtworkScrim)
+    else if (useGlass) Color.Transparent
     else if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainerHighest
 
   val playbackState by playerConnection.playbackState.collectAsState()
@@ -336,7 +363,8 @@ private fun NewMiniPlayer(progressState: ProgressState, modifier: Modifier = Mod
     }
 
   val primaryColor =
-    if (useGlass && glassConfig.textColor != androidx.compose.ui.graphics.Color.Unspecified)
+    if (overArtwork) Color.White
+    else if (useGlass && glassConfig.textColor != androidx.compose.ui.graphics.Color.Unspecified)
       glassConfig.textColor
     else if (isDynamicBackground && !useGlass) androidx.compose.ui.graphics.Color.White
     else androidx.compose.material3.MaterialTheme.colorScheme.onSurface
@@ -352,7 +380,8 @@ private fun NewMiniPlayer(progressState: ProgressState, modifier: Modifier = Mod
       androidx.compose.ui.graphics.Color.White.copy(alpha = 0.5f)
     else androidx.compose.material3.MaterialTheme.colorScheme.outline
   val onSurfaceColor =
-    if (useGlass && glassConfig.textColor != androidx.compose.ui.graphics.Color.Unspecified)
+    if (overArtwork) Color.White
+    else if (useGlass && glassConfig.textColor != androidx.compose.ui.graphics.Color.Unspecified)
       glassConfig.textColor
     else if (isDynamicBackground && !useGlass) androidx.compose.ui.graphics.Color.White
     else androidx.compose.material3.MaterialTheme.colorScheme.onSurface
@@ -513,6 +542,12 @@ private fun NewMiniPlayer(progressState: ProgressState, modifier: Modifier = Mod
           onPrimaryColor = onPrimaryColor
         )
       }
+
+      MiniPlayerProgressBar(
+        progress = { progressState.progress },
+        color = primaryColor,
+        modifier = Modifier.align(Alignment.BottomCenter),
+      )
     }
   }
 
@@ -672,7 +707,6 @@ private fun LegacyMiniPlayer(progressState: ProgressState, modifier: Modifier = 
     }
 
   val primaryColor = MaterialTheme.colorScheme.onSurface
-  val trackColor = MaterialTheme.colorScheme.surfaceVariant
 
   Box(
     modifier =
@@ -745,13 +779,10 @@ private fun LegacyMiniPlayer(progressState: ProgressState, modifier: Modifier = 
           } else baseModifier
         }
   ) {
-    Box(
-      modifier =
-        Modifier.fillMaxWidth().height(2.dp).align(Alignment.BottomCenter).drawWithContent {
-          val progress = progressState.progress
-          drawRect(trackColor)
-          drawRect(primaryColor, size = Size(size.width * progress, size.height))
-        }
+    MiniPlayerProgressBar(
+      progress = { progressState.progress },
+      color = primaryColor,
+      modifier = Modifier.align(Alignment.BottomCenter),
     )
 
     Row(

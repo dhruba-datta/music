@@ -28,6 +28,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import kotlinx.coroutines.delay
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -86,6 +88,17 @@ fun FloatingMiniPlayer(
   val listenTogetherManager = LocalListenTogetherManager.current
   val isListenTogetherGuest = listenTogetherManager?.let { it.isInRoom && !it.isHost } ?: false
   val swipeEnabled = swipeThumbnailPref && !isListenTogetherGuest
+
+  var progress by remember { mutableFloatStateOf(0f) }
+  LaunchedEffect(playerConnection) {
+    while (true) {
+      val duration = playerConnection.player.duration
+      progress =
+        if (duration > 0) (playerConnection.player.currentPosition.toFloat() / duration).coerceIn(0f, 1f)
+        else 0f
+      delay(500)
+    }
+  }
 
   val layoutDirection = LocalLayoutDirection.current
   val coroutineScope = rememberCoroutineScope()
@@ -213,6 +226,11 @@ fun FloatingMiniPlayer(
           }
         ),
   ) {
+    MiniPlayerProgressBar(
+      progress = { progress },
+      color = effectiveContentColor,
+      modifier = Modifier.align(Alignment.BottomCenter),
+    )
     Row(
       verticalAlignment = Alignment.CenterVertically,
       modifier =

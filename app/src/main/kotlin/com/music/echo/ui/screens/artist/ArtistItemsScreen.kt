@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.screens.artist
 
+import echo.music.iad1tya.ui.screens.onlinePlaylistRoute
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -180,7 +181,7 @@ fun ArtistItemsScreen(
                 }
                 is AlbumItem -> navController.navigate("album/${item.id}")
                 is ArtistItem -> navController.navigate("artist/${item.id}")
-                is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
+                is PlaylistItem -> navController.navigate(onlinePlaylistRoute(item.id, item.thumbnail))
               }
             },
         )
@@ -224,7 +225,7 @@ fun ArtistItemsScreen(
                       )
                     is AlbumItem -> navController.navigate("album/${item.id}")
                     is ArtistItem -> navController.navigate("artist/${item.id}")
-                    is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
+                    is PlaylistItem -> navController.navigate(onlinePlaylistRoute(item.id, item.thumbnail))
                   }
                 },
                 onLongClick = {
