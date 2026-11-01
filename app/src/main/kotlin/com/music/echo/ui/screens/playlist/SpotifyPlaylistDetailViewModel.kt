@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.music.echo.spotify.SpotifyPlaybackResolver
 import dagger.hilt.android.lifecycle.HiltViewModel
+import echo.music.iad1tya.db.MusicDatabase
 import echo.music.iad1tya.playback.SpotifyDownloadQueue
 import echo.music.iad1tya.playback.SpotifyQueue
 import echo.music.iad1tya.playback.queues.Queue
@@ -16,10 +17,13 @@ import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -46,6 +50,7 @@ constructor(
   private val spotifyImportRepository: SpotifyImportRepository,
   private val spotifyPlaybackResolver: SpotifyPlaybackResolver,
   private val spotifyDownloadQueue: SpotifyDownloadQueue,
+  database: MusicDatabase,
 ) : ViewModel() {
 
   private val playlistId: String = savedStateHandle.get<String>("playlistId").orEmpty()
@@ -61,6 +66,27 @@ constructor(
     )
   )
   val uiState: StateFlow<SpotifyPlaylistDetailUiState> = _uiState.asStateFlow()
+
+  /** The tracks here that are in the app's Liked songs, by matched song or by title and artist. */
+  val likedTrackIds: StateFlow<Set<String>> =
+    combine(_uiState, database.likedSongsByCreateDateAsc()) { state, likedSongs ->
+        val likedIds = likedSongs.mapTo(HashSet()) { it.id }
+        val likedByTitle =
+          likedSongs.groupBy(
+            keySelector = { matchableTitle(it.song.title) },
+            valueTransform = { song -> song.artists.map { it.name } },
+          )
+        state.tracks
+          .filter { track ->
+            songIdFor(track) in likedIds ||
+              likedByTitle[matchableTitle(track.name)].orEmpty().any { artists ->
+                sharesArtist(track.artists.map { it.name }, artists)
+              }
+          }
+          .mapTo(HashSet()) { it.id }
+      }
+      .flowOn(Dispatchers.Default)
+      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
   private var pendingDownload: Job? = null
 
@@ -234,3 +260,20 @@ constructor(
 
 private const val MAX_START_ATTEMPTS = 5
 private const val PAGE_SIZE = 50
+
+private val TitleExtras = Regex("""\(.*?\)|\[.*?]""")
+
+/** A title without the extras the same song carries on one service only, like "(Remastered)". */
+internal fun matchableTitle(title: String): String {
+  val plain = title.lowercase().replace(TitleExtras, "").substringBefore(" - ").trim()
+  return plain.ifEmpty { title.lowercase().trim() }
+}
+
+/** Whether two artist lists share a name. One may join several artists, as in "A & B". */
+internal fun sharesArtist(first: List<String>, second: List<String>): Boolean =
+  first.any { a ->
+    second.any { b ->
+      a.isNotBlank() && b.isNotBlank() &&
+        (a.contains(b, ignoreCase = true) || b.contains(a, ignoreCase = true))
+    }
+  }

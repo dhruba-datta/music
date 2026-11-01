@@ -92,6 +92,7 @@ fun SpotifyPlaylistDetailScreen(
   viewModel: SpotifyPlaylistDetailViewModel = hiltViewModel(),
 ) {
   val uiState by viewModel.uiState.collectAsState()
+  val likedTrackIds by viewModel.likedTrackIds.collectAsState()
   val playerConnection = LocalPlayerConnection.current
   val mediaMetadata by playerConnection?.mediaMetadata?.collectAsState()
     ?: remember { androidx.compose.runtime.mutableStateOf(null) }
@@ -281,6 +282,7 @@ fun SpotifyPlaylistDetailScreen(
         ListItem(
           title = track.name,
           subtitle = {
+            if (track.id in likedTrackIds) SongIcon.Favorite()
             SongIcon.Download(viewModel.songIdFor(track)?.let { downloads[it]?.state })
             val artistsText = track.artists.joinToString(", ") { it.name }
             val sub = joinByBullet(artistsText, durationText)

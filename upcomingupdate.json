@@ -17,6 +17,7 @@
     "Player: song name and artist are centered between download and favorite, and the cover sits higher",
     "Home: fuller Spotify and YouTube sections, and no dots under the Popular albums row",
     "Songs: liked songs now show a heart in Library and other song lists",
+    "Spotify: songs in your app's Liked folder now show a heart on Spotify playlists and liked songs",
     "Music Flow: removed the lyric line from the top of the page",
     "Player: the bottom bar no longer pops a bubble; other buttons dim while Lyrics or Up next is open"
   ],
