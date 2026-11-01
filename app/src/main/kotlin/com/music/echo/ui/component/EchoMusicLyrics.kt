@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.component
 
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -214,7 +215,7 @@ fun echomusicLyricsLine(
           text = wordText,
           fontSize = textSize.sp,
           style =
-            TextStyle(
+            TextStyle(fontFamily = LocalTextStyle.current.fontFamily, 
               brush =
                 Brush.horizontalGradient(
                   0.0f to textColor,
@@ -240,7 +241,7 @@ fun echomusicLyricsLine(
             color = textColor.copy(alpha = if (lineRelTime >= endRelative) 1f else 0.45f),
             lineHeight = (textSize * lineSpacing.coerceAtMost(1.3f)).sp,
             style =
-              TextStyle(
+              TextStyle(fontFamily = LocalTextStyle.current.fontFamily, 
                 shadow =
                   if (lineRelTime >= endRelative) {
                     androidx.compose.ui.graphics.Shadow(

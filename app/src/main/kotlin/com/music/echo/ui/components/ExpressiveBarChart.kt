@@ -1,5 +1,6 @@
 package com.music.echo.ui.components
 
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -51,8 +52,8 @@ fun ExpressiveBarChart(
   val tooltipTextColor = MaterialTheme.colorScheme.surface
 
   val textMeasurer = rememberTextMeasurer()
-  val labelStyle = TextStyle(fontSize = 10.sp, color = labelColor)
-  val yLabelStyle = TextStyle(fontSize = 9.sp, color = labelColor)
+  val labelStyle = TextStyle(fontFamily = LocalTextStyle.current.fontFamily, fontSize = 10.sp, color = labelColor)
+  val yLabelStyle = TextStyle(fontFamily = LocalTextStyle.current.fontFamily, fontSize = 9.sp, color = labelColor)
 
   // Today = index 0 (Mon) … 6 (Sun)
   val todayIndex = remember {
@@ -258,7 +259,7 @@ fun ExpressiveBarChart(
       if (selectedIndex == index) {
         val tooltipText = formatMsFull(dayData.totalMs)
         val tipStyle =
-          TextStyle(fontSize = 12.sp, color = tooltipTextColor, fontWeight = FontWeight.SemiBold)
+          TextStyle(fontFamily = labelStyle.fontFamily, fontSize = 12.sp, color = tooltipTextColor, fontWeight = FontWeight.SemiBold)
         val tipResult = textMeasurer.measure(tooltipText, tipStyle)
 
         val tipPadX = 8.dp.toPx()

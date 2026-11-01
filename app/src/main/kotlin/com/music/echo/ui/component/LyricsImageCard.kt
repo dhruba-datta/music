@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.component
 
+import androidx.compose.material3.LocalTextStyle
 import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -328,7 +329,7 @@ fun LyricsImageCard(
           val availableWidth = maxWidth
           val availableHeight = maxHeight
           val textStyle =
-            TextStyle(
+            TextStyle(fontFamily = LocalTextStyle.current.fontFamily, 
               color = mainTextColor,
               fontWeight = FontWeight.Bold,
               textAlign = textAlign,

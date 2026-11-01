@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.screens.search
 
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -424,7 +425,7 @@ fun OnlineSearchResult(
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         keyboardActions = KeyboardActions(onSearch = { onSearch(query.text) }),
-        textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp),
+        textStyle = TextStyle(fontFamily = LocalTextStyle.current.fontFamily, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp),
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         decorationBox = { innerTextField ->
           Row(

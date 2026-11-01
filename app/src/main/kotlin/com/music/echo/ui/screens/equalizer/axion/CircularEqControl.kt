@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.screens.equalizer.axion
 
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -44,8 +45,8 @@ fun CircularEqControl(
   val outline = MaterialTheme.colorScheme.outline
   val onSurface = MaterialTheme.colorScheme.onSurface
   val surfaceContainer = MaterialTheme.colorScheme.surfaceContainerLow
-  val labelStyle = TextStyle(fontSize = 11.sp, color = onSurface)
-  val valueStyle = TextStyle(fontSize = 13.sp, color = onSurface)
+  val labelStyle = TextStyle(fontFamily = LocalTextStyle.current.fontFamily, fontSize = 11.sp, color = onSurface)
+  val valueStyle = TextStyle(fontFamily = LocalTextStyle.current.fontFamily, fontSize = 13.sp, color = onSurface)
 
   val labelMid = stringResource(R.string.eq_label_mid)
   val labelBass = stringResource(R.string.eq_label_bass)

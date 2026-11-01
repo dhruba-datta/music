@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.player
 
+import androidx.compose.material3.LocalTextStyle
 import echo.music.iad1tya.ui.component.StageAlertDialog
 import echo.music.iad1tya.ui.component.StagePillButton
 import android.content.BroadcastReceiver
@@ -1897,7 +1898,7 @@ fun BottomSheetPlayer(
 
       val timeStyle =
         if (useNewPlayerDesign) {
-          TextStyle(fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+          TextStyle(fontFamily = LocalTextStyle.current.fontFamily, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
         } else {
           MaterialTheme.typography.labelMedium
         }

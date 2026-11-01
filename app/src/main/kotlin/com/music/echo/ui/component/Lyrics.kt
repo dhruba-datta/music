@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.component
 
+import androidx.compose.material3.LocalTextStyle
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
@@ -2243,7 +2244,7 @@ fun Lyrics(
         }
 
       val textStyleForMeasurement =
-        TextStyle(
+        TextStyle(fontFamily = LocalTextStyle.current.fontFamily, 
           color = previewTextColor,
           fontWeight = FontWeight.Bold,
           textAlign = lyricsTextAlign

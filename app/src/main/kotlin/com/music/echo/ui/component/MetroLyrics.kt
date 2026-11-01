@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.component
 
+import androidx.compose.material3.LocalTextStyle
 import android.graphics.BlurMaskFilter
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -225,7 +226,7 @@ fun MetroLyricsLine(
     }
 
   val lyricStyle =
-    TextStyle(
+    TextStyle(fontFamily = LocalTextStyle.current.fontFamily, 
       fontSize = lyricsTextSize.sp,
       fontWeight = FontWeight.Bold,
       fontStyle = if (entry.isBackground) FontStyle.Italic else FontStyle.Normal,

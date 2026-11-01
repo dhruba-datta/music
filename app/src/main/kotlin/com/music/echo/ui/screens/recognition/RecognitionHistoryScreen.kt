@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.screens.recognition
 
+import androidx.compose.material3.LocalTextStyle
 import echo.music.iad1tya.ui.component.StagePillButton
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -194,7 +195,7 @@ fun RecognitionHistoryScreen(navController: NavController) {
           onValueChange = { query = it },
           singleLine = true,
           keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-          textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp),
+          textStyle = TextStyle(fontFamily = LocalTextStyle.current.fontFamily, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp),
           cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
           modifier = Modifier.fillMaxWidth().height(48.dp),
           decorationBox = { innerTextField ->

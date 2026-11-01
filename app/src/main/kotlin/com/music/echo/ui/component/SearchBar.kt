@@ -203,7 +203,7 @@ private fun SearchBarInputField(
           },
       enabled = enabled,
       singleLine = true,
-      textStyle = LocalTextStyle.current.merge(TextStyle(color = textColor)),
+      textStyle = LocalTextStyle.current.merge(TextStyle(fontFamily = LocalTextStyle.current.fontFamily, color = textColor)),
       cursorBrush = SolidColor(colors.cursorColor),
       keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
       keyboardActions = KeyboardActions(onSearch = { onSearch(query.text) }),

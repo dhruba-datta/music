@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.screens.search
 
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -220,7 +221,7 @@ fun SearchScreen(navController: NavController, pureBlack: Boolean) {
                     searchActive = false
                   }
                 ),
-              textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp),
+              textStyle = TextStyle(fontFamily = LocalTextStyle.current.fontFamily, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp),
               cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
               decorationBox = { innerTextField ->
                 Row(
@@ -253,7 +254,7 @@ fun SearchScreen(navController: NavController, pureBlack: Boolean) {
                       Text(
                         text = stringResource(R.string.stage_search_music),
                         style =
-                          TextStyle(
+                          TextStyle(fontFamily = LocalTextStyle.current.fontFamily, 
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 15.sp
                           )

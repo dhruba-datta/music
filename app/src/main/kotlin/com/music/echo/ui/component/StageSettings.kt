@@ -1,5 +1,6 @@
 package echo.music.iad1tya.ui.component
 
+import androidx.compose.material3.LocalTextStyle
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
@@ -346,7 +347,7 @@ fun StageSearchField(
     value = value,
     onValueChange = onValueChange,
     singleLine = true,
-    textStyle = TextStyle(fontSize = 15.sp, color = colors.onSurface),
+    textStyle = TextStyle(fontFamily = LocalTextStyle.current.fontFamily, fontSize = 15.sp, color = colors.onSurface),
     cursorBrush = SolidColor(colors.onSurface),
     modifier = modifier.fillMaxWidth(),
     decorationBox = { field ->

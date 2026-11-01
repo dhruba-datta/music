@@ -97,7 +97,7 @@ val PlusJakartaSansFontFamily =
   )
 
 @OptIn(ExperimentalTextApi::class)
-fun getTypography(brandFont: FontFamily, plainFont: FontFamily = FontFamily.Default): Typography =
+fun getTypography(brandFont: FontFamily): Typography =
   Typography(
     displayLarge =
       TextStyle(
@@ -173,7 +173,7 @@ fun getTypography(brandFont: FontFamily, plainFont: FontFamily = FontFamily.Defa
       ),
     bodyLarge =
       TextStyle(
-        fontFamily = plainFont,
+        fontFamily = brandFont,
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
         lineHeight = 24.sp,
@@ -181,7 +181,7 @@ fun getTypography(brandFont: FontFamily, plainFont: FontFamily = FontFamily.Defa
       ),
     bodyMedium =
       TextStyle(
-        fontFamily = plainFont,
+        fontFamily = brandFont,
         fontWeight = FontWeight.Normal,
         fontSize = 14.sp,
         lineHeight = 20.sp,
@@ -189,7 +189,7 @@ fun getTypography(brandFont: FontFamily, plainFont: FontFamily = FontFamily.Defa
       ),
     bodySmall =
       TextStyle(
-        fontFamily = plainFont,
+        fontFamily = brandFont,
         fontWeight = FontWeight.Normal,
         fontSize = 12.sp,
         lineHeight = 16.sp,
@@ -197,7 +197,7 @@ fun getTypography(brandFont: FontFamily, plainFont: FontFamily = FontFamily.Defa
       ),
     labelLarge =
       TextStyle(
-        fontFamily = plainFont,
+        fontFamily = brandFont,
         fontWeight = FontWeight.Medium,
         fontSize = 14.sp,
         lineHeight = 20.sp,
@@ -205,7 +205,7 @@ fun getTypography(brandFont: FontFamily, plainFont: FontFamily = FontFamily.Defa
       ),
     labelMedium =
       TextStyle(
-        fontFamily = plainFont,
+        fontFamily = brandFont,
         fontWeight = FontWeight.Medium,
         fontSize = 12.sp,
         lineHeight = 16.sp,
@@ -213,7 +213,7 @@ fun getTypography(brandFont: FontFamily, plainFont: FontFamily = FontFamily.Defa
       ),
     labelSmall =
       TextStyle(
-        fontFamily = plainFont,
+        fontFamily = brandFont,
         fontWeight = FontWeight.Medium,
         fontSize = 11.sp,
         lineHeight = 16.sp,
