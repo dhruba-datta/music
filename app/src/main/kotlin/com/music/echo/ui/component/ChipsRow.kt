@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import echo.music.iad1tya.R
 
@@ -58,6 +59,7 @@ fun <E> ChipsRow(
   onValueUpdate: (E) -> Unit,
   modifier: Modifier = Modifier,
   containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
+  startPadding: Dp = 22.dp,
 ) {
   Row(
     modifier =
@@ -67,7 +69,7 @@ fun <E> ChipsRow(
         .horizontalScroll(rememberScrollState())
         .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal)),
   ) {
-    Spacer(Modifier.width(22.dp))
+    Spacer(Modifier.width(startPadding))
 
     chips.forEach { (value, label) ->
       val isSelected = currentValue == value

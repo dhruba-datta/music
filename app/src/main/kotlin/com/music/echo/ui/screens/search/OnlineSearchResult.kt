@@ -1,5 +1,11 @@
 package echo.music.iad1tya.ui.screens.search
 
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.ui.text.font.FontWeight
+import echo.music.iad1tya.viewmodels.LocalFilter
+import echo.music.iad1tya.viewmodels.LocalSearchViewModel
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.layout.size
@@ -381,6 +387,8 @@ fun OnlineSearchResult(
     }
 
   val searchSource by viewModel.source.collectAsState()
+  val localSearchViewModel: LocalSearchViewModel = hiltViewModel()
+  val localFilter by localSearchViewModel.filter.collectAsState()
   val showSource = searchSource == SearchResultSource.ALL && viewModel.spotifyConnected
   val youtubeLoading =
     searchSource != SearchResultSource.SPOTIFY &&
@@ -457,57 +465,77 @@ fun OnlineSearchResult(
 
     Box(modifier = Modifier.weight(1f)) {
       Column(modifier = Modifier.fillMaxWidth()) {
-        ChipsRow(
-          chips =
-            buildList {
-              add(SearchResultSource.ALL to stringResource(R.string.filter_all))
-              add(SearchResultSource.YOUTUBE to stringResource(R.string.stage_youtube_music))
-              if (viewModel.spotifyConnected) {
-                add(SearchResultSource.SPOTIFY to stringResource(R.string.stage_spotify))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+          SearchSourcePicker(
+            selected = searchSource,
+            sources =
+              buildList {
+                add(SearchResultSource.ALL to stringResource(R.string.stage_all_sources))
+                add(SearchResultSource.YOUTUBE to stringResource(R.string.stage_youtube_music))
+                if (viewModel.spotifyConnected) {
+                  add(SearchResultSource.SPOTIFY to stringResource(R.string.stage_spotify))
+                }
+                add(SearchResultSource.LIBRARY to stringResource(R.string.stage_my_library))
+              },
+            onSelect = {
+              viewModel.source.value = it
+              if (it == SearchResultSource.SPOTIFY && searchFilter == FILTER_VIDEO) {
+                viewModel.filter.value = null
               }
-              add(SearchResultSource.LIBRARY to stringResource(R.string.stage_my_library))
+              coroutineScope.launch { lazyListState.scrollToItem(0) }
             },
-          currentValue = searchSource,
-          onValueUpdate = {
-            viewModel.source.value = it
-            if (it == SearchResultSource.SPOTIFY && searchFilter == FILTER_VIDEO) {
-              viewModel.filter.value = null
-            }
-            coroutineScope.launch { lazyListState.scrollToItem(0) }
-          },
-          modifier = Modifier.fillMaxWidth()
-        )
+          )
+
+          if (searchSource == SearchResultSource.LIBRARY) {
+            ChipsRow(
+              chips =
+                listOf(
+                  LocalFilter.ALL to stringResource(R.string.filter_all),
+                  LocalFilter.SONG to stringResource(R.string.filter_songs),
+                  LocalFilter.ALBUM to stringResource(R.string.filter_albums),
+                  LocalFilter.ARTIST to stringResource(R.string.filter_artists),
+                  LocalFilter.PLAYLIST to stringResource(R.string.filter_playlists),
+                ),
+              currentValue = localFilter,
+              onValueUpdate = { localSearchViewModel.filter.value = it },
+              startPadding = 10.dp,
+              modifier = Modifier.weight(1f),
+            )
+          } else {
+            ChipsRow(
+              chips =
+                buildList {
+                  add(null to stringResource(R.string.filter_all))
+                  add(FILTER_SONG to stringResource(R.string.filter_songs))
+                  add(FILTER_ALBUM to stringResource(R.string.filter_albums))
+                  add(FILTER_ARTIST to stringResource(R.string.filter_artists))
+                  add(FILTER_COMMUNITY_PLAYLIST to stringResource(R.string.filter_playlists))
+                  if (searchSource != SearchResultSource.SPOTIFY) {
+                    add(FILTER_VIDEO to stringResource(R.string.filter_videos))
+                  }
+                },
+              currentValue = searchFilter,
+              onValueUpdate = {
+                if (viewModel.filter.value != it) {
+                  viewModel.filter.value = it
+                }
+                coroutineScope.launch { lazyListState.animateScrollToItem(0) }
+              },
+              startPadding = 10.dp,
+              modifier = Modifier.weight(1f),
+            )
+          }
+        }
 
         if (searchSource == SearchResultSource.LIBRARY) {
           LocalSearchScreen(
             query = decodedQuery,
             navController = navController,
             onDismiss = {},
+            showFilters = false,
             pureBlack = pureBlack,
           )
         } else {
-          ChipsRow(
-            chips =
-              buildList {
-                add(null to stringResource(R.string.filter_all))
-                add(FILTER_SONG to stringResource(R.string.filter_songs))
-                add(FILTER_ALBUM to stringResource(R.string.filter_albums))
-                add(FILTER_ARTIST to stringResource(R.string.filter_artists))
-                add(FILTER_COMMUNITY_PLAYLIST to stringResource(R.string.filter_playlists))
-                if (searchSource != SearchResultSource.SPOTIFY) {
-                  add(FILTER_VIDEO to stringResource(R.string.filter_videos))
-                }
-              },
-            currentValue = searchFilter,
-            onValueUpdate = {
-              if (viewModel.filter.value != it) {
-                viewModel.filter.value = it
-              }
-              coroutineScope.launch { lazyListState.animateScrollToItem(0) }
-            },
-            modifier = Modifier.fillMaxWidth()
-          )
-
           LazyColumn(
             state = lazyListState,
             contentPadding =
@@ -649,4 +677,50 @@ private fun LazyItemScope.SpotifySearchRow(
         .combinedClickable(onClick = onClick, onLongClick = onMenu)
         .animateItem(),
   )
+}
+
+/** The pill that chooses where to search, at the start of the filter row. */
+@Composable
+private fun SearchSourcePicker(
+  selected: SearchResultSource,
+  sources: List<Pair<SearchResultSource, String>>,
+  onSelect: (SearchResultSource) -> Unit,
+) {
+  var expanded by remember { mutableStateOf(false) }
+
+  Box(modifier = Modifier.padding(start = 18.dp, top = 12.dp)) {
+    Row(
+      verticalAlignment = Alignment.CenterVertically,
+      modifier =
+        Modifier.clip(CircleShape)
+          .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+          .clickable { expanded = true }
+          .padding(start = 14.dp, end = 8.dp, top = 7.dp, bottom = 7.dp),
+    ) {
+      Text(
+        text = sources.firstOrNull { it.first == selected }?.second.orEmpty(),
+        fontSize = 14.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurface,
+        maxLines = 1,
+      )
+      Icon(
+        painter = painterResource(R.drawable.expand_more),
+        contentDescription = null,
+        modifier = Modifier.size(20.dp),
+      )
+    }
+
+    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+      sources.forEach { (source, label) ->
+        DropdownMenuItem(
+          text = { Text(label) },
+          onClick = {
+            expanded = false
+            onSelect(source)
+          },
+        )
+      }
+    }
+  }
 }

@@ -73,6 +73,7 @@ fun LocalSearchScreen(
   navController: NavController,
   onDismiss: () -> Unit,
   isFromCache: Boolean = false,
+  showFilters: Boolean = true,
   pureBlack: Boolean,
   viewModel: LocalSearchViewModel = hiltViewModel(),
 ) {
@@ -113,7 +114,7 @@ fun LocalSearchScreen(
           } else base
         }
   ) {
-    stickyHeader {
+    if (showFilters) stickyHeader {
       Box(
         modifier =
           Modifier.fillMaxWidth()

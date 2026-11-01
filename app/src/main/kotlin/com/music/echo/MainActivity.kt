@@ -868,6 +868,21 @@ class MainActivity : ComponentActivity() {
               currentRoute!!.startsWith("artist/")
           }
 
+        // Pages opened from a tab, such as search results or an album, keep that tab lit.
+        var lastTabRoute by rememberSaveable { mutableStateOf<String?>(null) }
+        LaunchedEffect(currentRoute) {
+          when {
+            currentRoute in navigationItemRoutes -> lastTabRoute = currentRoute
+            inSearchScreen -> lastTabRoute = Screens.Search.route
+          }
+        }
+        val selectedTabRoute =
+          when {
+            inSearchScreen -> Screens.Search.route
+            currentRoute in navigationItemRoutes -> currentRoute
+            else -> lastTabRoute
+          }
+
         val isLandscape = configuration.containerDpSize.width > configuration.containerDpSize.height
 
         val showRail =
@@ -1391,7 +1406,7 @@ class MainActivity : ComponentActivity() {
                       playerBottomSheetState.collapseSoft()
                     }
 
-                    if (isSelected) {
+                    if (isSelected && currentRoute == screen.route) {
                       navController.currentBackStackEntry
                         ?.savedStateHandle
                         ?.set("scrollToTop", true)
@@ -1448,7 +1463,7 @@ class MainActivity : ComponentActivity() {
                   if (useFloatingNavBar) {
                     AppFloatingNavBar(
                       navigationItems = navigationItems,
-                      currentRoute = currentRoute,
+                      currentRoute = selectedTabRoute,
                       onItemClick = onNavItemClick,
                       scrollConnection = floatingNavBarScrollConnection,
                       pureBlack = pureBlack,
@@ -1496,7 +1511,7 @@ class MainActivity : ComponentActivity() {
                         shuffleContentDescription = stringResource(R.string.shuffle),
                         onSearchLongClick = onRailSearchLongClick,
                         isSelected = { screen ->
-                          currentRoute == screen.route ||
+                          selectedTabRoute == screen.route ||
                             currentRoute?.startsWith("${screen.route}/") == true
                         },
                         onItemClick = onNavItemClick,
